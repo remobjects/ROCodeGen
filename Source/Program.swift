@@ -5,9 +5,9 @@ import RemObjects.SDK.CodeGen4
 func writeSyntax() {
 	writeLn("Syntax:")
 	writeLn()
-	writeLn("  CodeGen4 <file.rodl> --type:<type> --platform:<platform> --language:<language> --namespace:<namespace>")
-	writeLn("  CodeGen4 <file.rodl> --service:<name> --platform:<platform> --language:<language> --namespace:<namespace>")
-	writeLn("  CodeGen4 <file.rodl> --services --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn("  rodl2code <file.rodl> --type:<type> --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn("  rodl2code <file.rodl> --service:<name> --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn("  rodl2code <file.rodl> --services --platform:<platform> --language:<language> --namespace:<namespace>")
 	writeLn()
 	writeLn("Valid <type> values:")
 	writeLn()
