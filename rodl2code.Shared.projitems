@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+        <HasSharedItems>true</HasSharedItems>
+        <SharedGUID>37995C14-DAB7-4461-B35A-E316BD5F4E02</SharedGUID>
+    </PropertyGroup>
+    <PropertyGroup Label="Configuration">
+        <Import_RootNamespace>codegen4.Shared</Import_RootNamespace>
+    </PropertyGroup>
+    <ItemGroup/>
+    <ItemGroup>
+        <Folder Include="CG4">
+            <Virtual>True</Virtual>
+        </Folder>
+        <Folder Include="RODL">
+            <Virtual>True</Virtual>
+        </Folder>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)CocoaRodlCodeGen.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)CPlusPlusBuilderRODLCodegen.pas"/>
+        <Compile Include="$(MSBuildThisFileDirectory)DelphiRodlCodeGen.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)Helpers.swift"/>
+        <Compile Include="$(MSBuildThisFileDirectory)JavaRodlCodeGen.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)RodlCodeGen.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)RodlReader.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCPlusPlusCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCSharpCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCStyleCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGDelphiCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGJavaCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGObjectiveCCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGObjectiveCHCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGObjectiveCMCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGOxygeneCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGPascalCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGSkeletonCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGSwiftCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGVisualBasicNetCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\Expressions.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\Extensions.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\Statements.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\TypeDefinitions.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\TypeReferences.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\Base.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGJavaScriptCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)JavaScriptRodlCodeGen.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
+        <None Include="$(MSBuildThisFileDirectory)EchoesCodeDomRodlCodeGen.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </None>
+        <Compile Include="$(MSBuildThisFileDirectory)ServerAccessCodeGen.swift">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCPlusPlusCPPCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCPlusPlusHCodeGenerator.swift">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+        <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\Properties\FakeSugar.pas">
+            <VirtualFolder>CG4</VirtualFolder>
+        </Compile>
+    </ItemGroup>
+</Project>
