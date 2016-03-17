@@ -1,11 +1,6 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # RemObjects Fire
-Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "ROServiceImporter", "..\..\..\RemObjects SDK\Tools\ROServiceImporter\ROServiceImporter.elements", "{91ED24B4-DEA5-428D-BC9B-4E9392732F55}"
-	ProjectSection(ProjectDependencies) = postProject
-		{5FC49704-B393-45D9-B944-B5EF8FAE1DAC} = {5FC49704-B393-45D9-B944-B5EF8FAE1DAC}
-	EndProjectSection
-EndProject
 Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Echoes", "rodl2code.Echoes.elements", "{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}"
 EndProject
 Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Nougat", "rodl2code.Nougat.elements", "{EAE7DA8A-6033-4785-AF39-D67681B97B95}"
@@ -18,10 +13,6 @@ Global
 		Release|AnyCPU = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{91ED24B4-DEA5-428D-BC9B-4E9392732F55}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
-		{91ED24B4-DEA5-428D-BC9B-4E9392732F55}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
-		{91ED24B4-DEA5-428D-BC9B-4E9392732F55}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
-		{91ED24B4-DEA5-428D-BC9B-4E9392732F55}.Release|AnyCPU.Build.0 = Release|AnyCPU
 		{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
 		{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
 		{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}.Release|AnyCPU.ActiveCfg = Release|AnyCPU

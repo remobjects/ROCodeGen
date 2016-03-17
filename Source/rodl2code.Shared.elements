@@ -7,7 +7,7 @@
         <RootNamespace>codegen4.Shared</RootNamespace>
     </PropertyGroup>
     <Import Project="rodl2code.Shared.projitems" Label="Shared"/>
-    <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Oxygene\RemObjects.Elements.SharedProject.targets"/>
+    <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.SharedProject.targets"/>
     <PropertyGroup>
         <PreBuildEvent/>
     </PropertyGroup>
