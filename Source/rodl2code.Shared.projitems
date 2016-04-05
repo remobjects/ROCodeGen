@@ -21,7 +21,9 @@
         <Compile Include="$(MSBuildThisFileDirectory)CocoaRodlCodeGen.pas">
             <VirtualFolder>RODL</VirtualFolder>
         </Compile>
-        <Compile Include="$(MSBuildThisFileDirectory)CPlusPlusBuilderRODLCodegen.pas"/>
+        <Compile Include="$(MSBuildThisFileDirectory)CPlusPlusBuilderRODLCodegen.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
         <Compile Include="$(MSBuildThisFileDirectory)DelphiRodlCodeGen.pas">
             <VirtualFolder>RODL</VirtualFolder>
         </Compile>

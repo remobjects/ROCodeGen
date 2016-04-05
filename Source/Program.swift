@@ -34,7 +34,7 @@ func writeSyntax() {
 	writeLn("  - swift (Apple Swift)")
 	writeLn("  - objective-c, Objc")
 	writeLn("  - delphi, pas, c++builder, cpp, c++")
-	writeLn("  - java)")
+	writeLn("  - java")
 	writeLn()
 	
 	#hint add --await
@@ -142,12 +142,10 @@ switch options["platform"]?.ToLower() {
 		options["platform"] = "delphi"
 		options["language"] = "delphi" // force language to Delphi
 		activeRodlCodeGen = DelphiRodlCodeGen()
-		return 2
 	case "bcb", "c++builder":
 		options["platform"] = "bcb"
 		options["language"] = "bcb" // force language to C++(Builder)
 		activeRodlCodeGen = CPlusPlusBuilderRodlCodeGen()
-		return 2
 	case "javascript", "js":
 		options["platform"] = "javascript"
 		//activeRodlCodeGen = JavaScriptRodlCodeGen()
@@ -215,7 +213,7 @@ switch options["language"]?.ToLower() {
 }
 
 func targetFileNameWithSuffix(suffix: String) -> String {
-	return Path.Combine(Path.GetParentDirectory(rodlFileName), Path.GetFileNameWithoutExtension(rodlFileName)+"_"+suffix+"."+fileExtension)
+	return Path.Combine(Path.GetParentDirectory(rodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(rodlFileName))+"_"+suffix+"."+fileExtension)
 }
 
 if activeRodlCodeGen == nil {

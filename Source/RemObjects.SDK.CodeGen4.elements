@@ -70,7 +70,7 @@
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="RemObjects.SDK">
-      <HintPath>..\..\..\RemObjects SDK for .NET\Bin\RemObjects.SDK.dll</HintPath>
+      <HintPath>..\..\..\..\RemObjects SDK for .NET\Bin\RemObjects.SDK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
@@ -79,73 +79,73 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\..\CodeGen4\Base.swift">
+    <Compile Include="..\..\..\..\CodeGen4\Base.swift">
       <Link>Base.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGCodeGenerator.swift">
       <Link>CGCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGCPlusPlusCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGCPlusPlusCodeGenerator.swift">
       <Link>CGCPlusPlusCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGCPlusPlusCPPCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGCPlusPlusCPPCodeGenerator.swift">
       <Link>CGCPlusPlusCPPCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGCPlusPlusHCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGCPlusPlusHCodeGenerator.swift">
       <Link>CGCPlusPlusHCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGCSharpCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGCSharpCodeGenerator.swift">
       <Link>CGCSharpCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGCStyleCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGCStyleCodeGenerator.swift">
       <Link>CGCStyleCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGDelphiCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGDelphiCodeGenerator.swift">
       <Link>CGDelphiCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGJavaCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGJavaCodeGenerator.swift">
       <Link>CGJavaCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGJavaScriptCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGJavaScriptCodeGenerator.swift">
       <Link>CGJavaScriptCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGObjectiveCCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGObjectiveCCodeGenerator.swift">
       <Link>CGObjectiveCCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGObjectiveCHCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGObjectiveCHCodeGenerator.swift">
       <Link>CGObjectiveCHCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGObjectiveCMCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGObjectiveCMCodeGenerator.swift">
       <Link>CGObjectiveCMCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGOxygeneCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGOxygeneCodeGenerator.swift">
       <Link>CGOxygeneCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGPascalCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGPascalCodeGenerator.swift">
       <Link>CGPascalCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGSkeletonCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGSkeletonCodeGenerator.swift">
       <Link>CGSkeletonCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGSwiftCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGSwiftCodeGenerator.swift">
       <Link>CGSwiftCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\CGVisualBasicNetCodeGenerator.swift">
+    <Compile Include="..\..\..\..\CodeGen4\CGVisualBasicNetCodeGenerator.swift">
       <Link>CGVisualBasicNetCodeGenerator.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\Expressions.swift">
+    <Compile Include="..\..\..\..\CodeGen4\Expressions.swift">
       <Link>Expressions.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\Extensions.swift">
+    <Compile Include="..\..\..\..\CodeGen4\Extensions.swift">
       <Link>Extensions.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\Statements.swift">
+    <Compile Include="..\..\..\..\CodeGen4\Statements.swift">
       <Link>Statements.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\TypeDefinitions.swift">
+    <Compile Include="..\..\..\..\CodeGen4\TypeDefinitions.swift">
       <Link>TypeDefinitions.swift</Link>
     </Compile>
-    <Compile Include="..\..\..\CodeGen4\TypeReferences.swift">
+    <Compile Include="..\..\..\..\CodeGen4\TypeReferences.swift">
       <Link>TypeReferences.swift</Link>
     </Compile>
     <Compile Include="CocoaRodlCodeGen.pas">
@@ -186,7 +186,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
     </None>
     <Compile Include="Properties\Settings.Designer.pas" />
-    <Compile Include="..\..\..\CodeGen4\Properties\FakeSugar.pas" />
+    <Compile Include="..\..\..\..\CodeGen4\Properties\FakeSugar.pas" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
