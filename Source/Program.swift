@@ -41,6 +41,10 @@ func writeSyntax() {
 	writeLn("  - delphi, pas, c++builder, cpp, c++")
 	writeLn("  - java")
 	writeLn()
+	writeLn("Additional options:")
+	writeLn()
+	writeLn("  --fulltypenames (Currently Delphi/BCB only)")
+	writeLn()
 	
 	#hint add --await
 }
@@ -186,6 +190,12 @@ switch options["platform"]?.ToLower() {
 		return 2
 	default:
 }
+
+if options["fulltypenames"] == nil {
+	(activeRodlCodeGen as? DelphiRodlCodeGen)?.IncludeUnitNameForOwnTypes = true
+	return 1
+}
+
 
 var codegen: CGCodeGenerator?
 
