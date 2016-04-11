@@ -76,7 +76,7 @@ begin
   lRodl.LoadFromString(library.ToString);
 
   var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
-  var lunitname := library.Name + '_Impl.'+GetCodeDomProviderForLanguage().FileExtension;
+  var lunitname := aServiceName + '_Impl.'+GetCodeDomProviderForLanguage().FileExtension;
   result := new Dictionary<String,String>;
   result.Add(lunitname, GenerateCodeFromCompileUnit(lUnit));
 end;
@@ -113,7 +113,7 @@ begin
     for each p in CodeDomProvider.GetAllCompilerInfo do begin
       //Console.Write("  ");
       for each l in p.GetLanguages index i do begin
-        if i > 0 then Console.Write(", ");
+        //if i > 0 then Console.Write(", ");
         if (result = nil) and (l = lLookingForCodeDomName) then 
           result := p.CreateProvider();
         //Console.Write(l);

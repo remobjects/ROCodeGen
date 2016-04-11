@@ -5,16 +5,21 @@ import RemObjects.SDK.CodeGen4
 func writeSyntax() {
 	writeLn("Syntax:")
 	writeLn()
-	writeLn("  rodl2code <file.rodl> --type:<type> --platform:<platform> --language:<language> --namespace:<namespace>")
-	writeLn("  rodl2code <file.rodl> --service:<name> --platform:<platform> --language:<language> --namespace:<namespace>")
-	writeLn("  rodl2code <file.rodl> --services --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn("  rodl2code <rodl> --type:<type> --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn("  rodl2code <rodl> --service:<name> --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn("  rodl2code <rodl> --services --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn()
+	writeLn("<rodl> can be:")
+	writeLn()
+	writeLn("  - the path to a local .RODL file")
+	writeLn("  - the path to a local .remoteRODL file")
+	writeLn("  - a http:// or https:// URL for a remote server")
 	writeLn()
 	writeLn("Valid <type> values:")
 	writeLn()
 	writeLn("  - intf")
-	writeLn("  - invk (not supported yet)")
-	writeLn("  - impl (not supported yet")
-	writeLn("  - events")
+	writeLn("  - invk")
+	writeLn("  - impl (same as --services)")
 	writeLn()
 	writeLn("Valid <platform> values:")
 	writeLn()
@@ -72,12 +77,37 @@ if params.count < 1 { //70956: Silver: problem with boolean short circuit
 	writeSyntax()
 	return 1
 }
-if params.count < 1 || !FileUtils.Exists(params[0]) {
+if params.count < 1 {
 	//writeLn("File \(params[0]) not found")
 	writeLn()
 	writeSyntax()
 	return 1
 }
+
+//
+// Load RODL
+//
+
+var rodlFileName = params[0];
+writeLn("Processing RODL file "+rodlFileName)
+
+var isUrl = rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
+
+if !isUrl && !FileUtils.Exists(params[0]) {
+	writeLn("File \(params[0]) not found")
+	writeLn()
+	return 2
+}
+
+let rodlLibrary = RodlLibrary(rodlFileName) // todo:handle remoteRodl files
+
+if isUrl {
+	rodlFileName = "./"+rodlLibrary.Name+".rodl" //used for relative output paths.
+}
+
+//
+// Check options
+//
 
 if options["platform"] == nil {
 	writeSyntax()
@@ -87,8 +117,11 @@ if options["type"] == nil && options["service"] == nil && options["services"] ==
 	writeSyntax()
 	return 1
 }
-if options["platform"]?.ToLower() == "delphi" || options["language"] == nil {
+if options["platform"]?.ToLower() == "delphi" && options["language"] == nil {
 	options["language"] = "delphi"
+}  
+if options["platform"]?.ToLower() == "bcb" && options["language"] == nil {
+	options["language"] = "cpp"
 }  
 if options["language"] == nil {
 	writeSyntax()
@@ -98,10 +131,6 @@ if options["language"] == nil {
 if options["namespace"] == nil {
 	options["namespace"] = "YourNamespace"
 }
-
-let rodlFileName = params[0];
-writeLn("Processing RODL file "+rodlFileName)
-let rodlLibrary = RodlLibrary(rodlFileName) // todo:handle remoteRodl files
 
 switch options["type"]?.ToLower() {
 	case "intf": break
@@ -115,6 +144,7 @@ switch options["type"]?.ToLower() {
 		return 2
 }
 
+var serverSupport = false
 var activeRodlCodeGen: RodlCodeGen?
 switch options["platform"]?.ToLower() {
 	case "cooper", "java":
@@ -131,6 +161,7 @@ switch options["platform"]?.ToLower() {
 		activeRodlCodeGen = CocoaRodlCodeGen()
 	case "echoes", "net", ".net":
 		options["platform"] = ".net"
+		serverSupport = true
 		#if ECHOES
 		activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
 		#else
@@ -141,10 +172,12 @@ switch options["platform"]?.ToLower() {
 	case "delphi":
 		options["platform"] = "delphi"
 		options["language"] = "delphi" // force language to Delphi
+		serverSupport = true
 		activeRodlCodeGen = DelphiRodlCodeGen()
 	case "bcb", "c++builder":
 		options["platform"] = "bcb"
 		options["language"] = "bcb" // force language to C++(Builder)
+		serverSupport = true
 		activeRodlCodeGen = CPlusPlusBuilderRodlCodeGen()
 	case "javascript", "js":
 		options["platform"] = "javascript"
@@ -216,6 +249,10 @@ func targetFileNameWithSuffix(suffix: String) -> String {
 	return Path.Combine(Path.GetParentDirectory(rodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(rodlFileName))+"_"+suffix+"."+fileExtension)
 }
 
+func targetFileName(name: String) -> String {
+	return Path.Combine(Path.GetParentDirectory(rodlFileName), name)
+}
+
 if activeRodlCodeGen == nil {
 	writeLn("Unsupported platform: "+options["platform"])
 	return 2
@@ -237,32 +274,17 @@ if codegen == nil {
 }
 
 if options["service"] != nil {
-	if options["platform"] != ".NET" && options["platform"] != "delphi" {
-		writeLn("Generating server code is not supported for this platform.")
-		return 2
-	}
-
-	writeLn("Generating Service "+options["service"])
-	// to geneate service
+	options["type"] = "impl"
 } else if options["services"] != nil {
-	if options["platform"] != ".NET" && options["platform"] != "delphi" {
-		writeLn("Generating server code is not supported for this platform")
-		return 2
-	}
-
-	writeLn("Generating All Services")
-	// to geneate all services
+	options["type"] = "impl"
 }
+
 if let type = options["type"] {
-	if options["platform"] != ".NET" && options["platform"] != "delphi" {
-		if type.ToLower() != "intf" {
-			writeLn("Generating server code is not supported for this platform")
-			return 2
-		}
-	}
 	writeLn("Generating "+options["type"])
 
 	if let activeRodlCodeGen = activeRodlCodeGen {
+		activeRodlCodeGen.Generator = codegen
+
 		switch type.ToLower() {
 			case "intf":		
 
@@ -270,7 +292,6 @@ if let type = options["type"] {
 					codegen.splitLinesLongerThan = 200
 				}
 				
-				activeRodlCodeGen.Generator = codegen
 				if codegen is CGJavaCodeGenerator {
 					let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
 					for name in sourceFiles.Keys {
@@ -298,11 +319,42 @@ if let type = options["type"] {
 					}
 				}
 			
-			case "impl": fallthrough
-			case "invk": fallthrough
-			case "events":
-				writeLn("Generating this type is not supported in rodl2code yet.")
-			return 2
+			case "invk":
+				if !serverSupport {
+					writeLn("Generating server code is not supported for this platform.")
+				}
+				let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
+				FileUtils.WriteText(targetFileNameWithSuffix("Invk"), source);
+				writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
+
+			case "impl":
+				
+				let processServices = {
+					for i in 0 ..< rodlLibrary.Services.Count {
+						let s = rodlLibrary.Services[i]
+					
+						if options["service"] == nil || s.Name == options["service"] {
+
+							if let sourceFiles = activeRodlCodeGen?.GenerateImplementationFiles(rodlLibrary, options["namespace"], s.Name) {
+								//for (n,c)  in sourceFiles {
+								for n in sourceFiles.Keys {
+									FileUtils.WriteText(targetFileName(n), sourceFiles[n]);
+									writeLn("Wrote file \(targetFileName(n))")
+								}
+							}
+						}
+					}
+				}
+				
+				processServices()
+				if options["language"] == "cpp" {
+					activeRodlCodeGen?.Generator = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
+					(activeRodlCodeGen as? DelphiRodlCodeGen)?.GenerateDFMs = false
+					fileExtension = "h";
+					processServices()
+				}
+
+				break
 			default:
 		}	// todo: generate services
 	}

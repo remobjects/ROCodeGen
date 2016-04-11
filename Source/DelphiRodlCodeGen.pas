@@ -134,6 +134,8 @@ type
     property CustomAncestor: String read fCustomAncestor write set_CustomAncestor;
     property CustomUses: String;
     method isDFMNeeded: Boolean;
+    
+    property GenerateDFMs: Boolean := true;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -3194,7 +3196,7 @@ begin
   result := new Dictionary<String,String>;
   result.Add(Path.ChangeExtension(lunit.FileName, Generator.defaultFileExtension),
              Generator.GenerateUnit(lunit));
-  if isDFMNeeded then
+  if isDFMNeeded and GenerateDFMs then
     result.Add(Path.ChangeExtension(lunit.FileName, 'dfm'),
                String.Format(iif(String.IsNullOrEmpty(service.AncestorName), DFM_template, DFM_template2),[aServiceName]));
 end;

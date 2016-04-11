@@ -135,6 +135,7 @@ type
     method LoadFromXmlNode(node: XmlElement); override;
     method LoadFromXmlNode(node: XmlElement; use: RodlUse);
     method LoadRemoteRodlFromXmlNode(node: XmlElement);
+    method LoadFromUrl(aUrl: String);
     method LoadFromFile(aFilename: String);
     method LoadFromXmlString(aString: String);
     method LoadUsedFibraryFromFile(aFilename: String; use: RodlUse);
@@ -578,7 +579,13 @@ end;
 constructor RodlLibrary(aFilename: String);
 begin
   constructor();
-  LoadFromFile(aFilename);
+  if aFilename.StartsWith('http://') or aFilename.StartsWith('https://') or
+    aFilename.StartsWith('superhttp://') or aFilename.StartsWith('superhttps://') or
+    aFilename.StartsWith('tcp://') or aFilename.StartsWith('tcps://') or
+    aFilename.StartsWith('supertcp://') or aFilename.StartsWith('supertcps://') then
+    LoadFromUrl(aFilename)
+  else
+    LoadFromFile(aFilename);
 end;
 
 constructor RodlLibrary(node: XmlElement);
@@ -638,20 +645,32 @@ method RodlLibrary.LoadRemoteRodlFromXmlNode(node: XmlElement);
 begin
   {$MESSAGE optimize code}
   var lServers := node.GetElementsByTagName("Server");
-  {$IFDEF FAKESUGAR}
+
   if lServers.Count ≠ 1 then
     raise new Exception("Server element not found in remoteRODL.");
 
+  {$IFDEF FAKESUGAR}
   var lServerUris := (lServers.Item(0)as XmlElement):GetElementsByTagName("ServerUri");
   if lServerUris.Count ≠ 1 then
     raise new Exception("lServerUris element not found in remoteRODL.");
+  LoadFromUrl(lServerUris.Items(0).Value);  
+  {$ELSE}
+  var lServerUris := lServers[0].GetElementsByTagName("ServerUri");
+  if length(lServerUris) ≠ 1 then
+    raise new Exception("lServerUris element not found in remoteRODL.");
+  LoadFromUrl(lServerUris[0].Value);  
+  {$ENDIF}
+end;
 
-  var lUrl := new Uri(lServerUris.Item(0).Value);
+method RodlLibrary.LoadFromUrl(aUrl: String);
+begin
+  {$IFDEF FAKESUGAR}
+  var lUrl := new Uri(aURL);
   if lUrl.Scheme in ["http", "https"] then begin
     var allData := new System.IO.MemoryStream();
     using webRequest := System.Net.WebRequest.Create(lUrl) as System.Net.HttpWebRequest do begin
       webRequest.AllowAutoRedirect := true;
-      webRequest.UserAgent := "RemObjects Sugar/8.0 http://www.elementscompiler.com/elements/sugar";
+      //webRequest.UserAgent := "RemObjects Sugar/8.0 http://www.elementscompiler.com/elements/sugar";
       webRequest.Method := 'GET';
       var webResponse := webRequest.GetResponse() as System.Net.HttpWebResponse;
       webResponse.GetResponseStream().CopyTo(allData);
@@ -667,15 +686,7 @@ begin
     raise new Exception("Unspoorted URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
   end;
   {$ELSE}
-  if length(lServers) ≠ 1 then
-
-    raise new Exception("Server element not found in remoteRODL.");
-
-  var lServerUris := lServers[0].GetElementsByTagName("ServerUri");
-  if length(lServerUris) ≠ 1 then
-    raise new Exception("lServerUris element not found in remoteRODL.");
-
-  var lUrl := new Url(lServerUris[0].ValueOrText);
+  var lUrl := new Url(aUrl);
   if lUrl.Scheme in ["http", "https"] then begin
     var lXml := Http.GetXml(new HttpRequest(lUrl));// why is this cast needed, we have operator Implicit from Url to HttpRequest
     LoadFromXmlNode(lXml.DocumentElement);
