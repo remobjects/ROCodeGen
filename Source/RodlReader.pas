@@ -653,7 +653,7 @@ begin
   var lServerUris := (lServers.Item(0)as XmlElement):GetElementsByTagName("ServerUri");
   if lServerUris.Count ≠ 1 then
     raise new Exception("lServerUris element not found in remoteRODL.");
-  LoadFromUrl(lServerUris.Items(0).Value);  
+  LoadFromUrl(lServerUris.Item(0).Value);  
   {$ELSE}
   var lServerUris := lServers[0].GetElementsByTagName("ServerUri");
   if length(lServerUris) ≠ 1 then
