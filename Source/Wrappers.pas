@@ -73,6 +73,7 @@ type
     ServerAddress = 'ServerAddress';
     FullFramework = 'FullFramework';
     AsyncSupport = 'AsyncSupport';
+    DelphiFullQualifiedNames = 'DelphiFullQualified';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;    
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -105,14 +106,20 @@ begin
   var lfileext:= '';
   var codegen :RodlCodeGen; 
   case &Platform of
-    Codegen4Platform.Delphi: codegen := new DelphiRodlCodeGen;
+    Codegen4Platform.Delphi: begin
+      codegen := new DelphiRodlCodeGen;
+      if ParseAddParams(lparams,DelphiFullQualifiedNames) = '1' then begin
+        DelphiRodlCodeGen(codegen).IncludeUnitNameForOwnTypes := true;
+        DelphiRodlCodeGen(codegen).IncludeUnitNameForOtherTypes := true;        
+      end;
+    end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
     Codegen4Platform.Java: codegen := new JavaRodlCodeGen;
     Codegen4Platform.Cocoa: codegen := new CocoaRodlCodeGen;
     Codegen4Platform.Net: begin
       codegen := new EchoesCodeDomRodlCodeGen;
-      EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) <> '0';
-      EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) <> '0';
+      EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
+      EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
     end;
    // Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;

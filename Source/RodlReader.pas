@@ -665,7 +665,7 @@ end;
 method RodlLibrary.LoadFromUrl(aUrl: String);
 begin
   {$IFDEF FAKESUGAR}
-  var lUrl := new Uri(aURL);
+  var lUrl := new Uri(aUrl);
   if lUrl.Scheme in ["http", "https"] then begin
     var allData := new System.IO.MemoryStream();
     using webRequest := System.Net.WebRequest.Create(lUrl) as System.Net.HttpWebRequest do begin
