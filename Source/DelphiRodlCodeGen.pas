@@ -2580,7 +2580,7 @@ begin
                                             CallSiteKind:= CGCallSiteKind.Reference));
 
         if (lmemparam.ParamFlag = ParamFlags.InOut) and isComplex(library, lmemparam.DataType) then
-           ltry.Add(new CGAssignmentStatement(('__in_'+lmemparam.Name).AsNamedIdentifierExpression,lmemparam.Name.AsNamedIdentifierExpression));
+           ltry.Add(new CGAssignmentStatement(('__in_'+lmemparam.Name).AsNamedIdentifierExpression,('l_'+lmemparam.Name).AsNamedIdentifierExpression));
       end;
     end;
     if lmem.Count>0 then ltry.Add(new CGEmptyStatement);
