@@ -51,6 +51,7 @@ implementation
 
 constructor CPlusPlusBuilderRodlCodeGen;
 begin
+  PureDelphi := False;
   IncludeUnitNameForOwnTypes := true;
   IncludeUnitNameForOtherTypes := true;
   PredefinedTypes.Add(CGPredefinedTypeKind.String,new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));

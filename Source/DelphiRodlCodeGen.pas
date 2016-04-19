@@ -39,6 +39,7 @@ type
     method get_IROMessage_typeref: CGTypeReference;
     method get_IROTransport_typeref: CGTypeReference;
   protected
+    property PureDelphi: Boolean;
     property Intf_name: String;
     property Invk_name: String;
     property Impl_name: String;
@@ -133,6 +134,8 @@ type
     property DefaultServerAncestor: DelphiServerAncestor := DelphiServerAncestor.RemoteDataModule;
     property CustomAncestor: String read fCustomAncestor write set_CustomAncestor;
     property CustomUses: String;
+    // include {$SCOPEDENUMS ON} into _Intf
+    property ScopedEnums: Boolean := false;
     method isDFMNeeded: Boolean;
     
     property GenerateDFMs: Boolean := true;
@@ -151,6 +154,7 @@ implementation
 
 constructor DelphiRodlCodeGen;
 begin
+  PureDelphi := True;
   CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
   CodeGenTypes.Add("datetime", String("DateTime").AsTypeReference);
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
@@ -3557,9 +3561,15 @@ begin
   cpp_pragmalink(lUnit,CapitalizeString('uROProxy'));
   cpp_pragmalink(lUnit,CapitalizeString('uROAsync'));
   AddGlobalConstants(lUnit, &library);
-  for entity: RodlEnum in library.Enums.Items.OrderBy(b->b.Name) do begin
-    if not EntityNeedsCodeGen(entity) then Continue;
-    Intf_GenerateEnum(lUnit, &library, entity);
+
+  if library.Enums.Count >0 then begin
+    if PureDelphi and ScopedEnums then 
+      lUnit.Directives.Add(new CGCompilerDirective('{$SCOPEDENUMS ON}'));
+  
+    for entity: RodlEnum in library.Enums.Items.OrderBy(b->b.Name) do begin
+      if not EntityNeedsCodeGen(entity) then Continue;
+      Intf_GenerateEnum(lUnit, &library, entity);
+    end;
   end;
 
   for entity: RodlStruct in library.Structs.SortedByAncestor do begin
