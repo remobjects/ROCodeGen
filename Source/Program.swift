@@ -43,7 +43,8 @@ func writeSyntax() {
 	writeLn()
 	writeLn("Additional options:")
 	writeLn()
-	writeLn("  --fulltypenames (Currently Delphi/BCB only)")
+	writeLn("  --full-type-names (Currently Delphi/BCB only)")
+	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
 	writeLn()
 	
 	#hint add --await
@@ -191,8 +192,12 @@ switch options["platform"]?.ToLower() {
 	default:
 }
 
-if options["fulltypenames"] == nil {
+if options["full-type-names"] == nil {
 	(activeRodlCodeGen as? DelphiRodlCodeGen)?.IncludeUnitNameForOwnTypes = true
+	return 1
+}
+if options["scoped-enums"] == nil {
+	(activeRodlCodeGen as? DelphiRodlCodeGen)?.ScopedEnums = true
 	return 1
 }
 
@@ -346,7 +351,7 @@ if let type = options["type"] {
 						if options["service"] == nil || s.Name == options["service"] {
 
 							if let sourceFiles = activeRodlCodeGen?.GenerateImplementationFiles(rodlLibrary, options["namespace"], s.Name) {
-								//for (n,c)  in sourceFiles {
+								//for (n,c) in sourceFiles {
 								for n in sourceFiles.Keys {
 									FileUtils.WriteText(targetFileName(n), sourceFiles[n]);
 									writeLn("Wrote file \(targetFileName(n))")
