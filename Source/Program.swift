@@ -192,15 +192,12 @@ switch options["platform"]?.ToLower() {
 	default:
 }
 
-if options["full-type-names"] == nil {
+if options["full-type-names"] != nil {
 	(activeRodlCodeGen as? DelphiRodlCodeGen)?.IncludeUnitNameForOwnTypes = true
-	return 1
 }
-if options["scoped-enums"] == nil {
+if options["scoped-enums"] != nil {
 	(activeRodlCodeGen as? DelphiRodlCodeGen)?.ScopedEnums = true
-	return 1
 }
-
 
 var codegen: CGCodeGenerator?
 
