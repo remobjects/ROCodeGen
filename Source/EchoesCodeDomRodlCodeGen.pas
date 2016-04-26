@@ -26,6 +26,7 @@ type
     method GetGlobalName(library: RodlLibrary): String; override;
     method GenerateInterfaceFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
     method GenerateInvokerFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
+    method GenerateLegacyEventsFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
     method GenerateImplementationFiles(library: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>; override;
   end;
 
@@ -57,8 +58,18 @@ end;
 
 method EchoesCodeDomRodlCodeGen.GenerateInvokerFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): not nullable String;
 begin
-  //raise new NotImplementedException('EchoesCodeDomRodlCodeGen.GenerateInvokerFile');
   var lCodegen := new CodeGen_Invk();
+  
+  var lRodl := new RemObjects.SDK.Rodl.RodlLibrary();
+  lRodl.LoadFromString(library.ToString);
+
+  var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
+  result := GenerateCodeFromCompileUnit(lUnit);
+end;
+
+method EchoesCodeDomRodlCodeGen.GenerateLegacyEventsFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
+begin
+  var lCodegen := new CodeGen_Events();
   
   var lRodl := new RemObjects.SDK.Rodl.RodlLibrary();
   lRodl.LoadFromString(library.ToString);
@@ -69,7 +80,6 @@ end;
 
 method EchoesCodeDomRodlCodeGen.GenerateImplementationFiles(library: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>;
 begin
-  //raise new NotImplementedException('EchoesCodeDomRodlCodeGen.GenerateImplementationFiles');
   var lCodegen := new CodeGen_Impl();
   
   var lRodl := new RemObjects.SDK.Rodl.RodlLibrary();

@@ -19,6 +19,9 @@ func writeSyntax() {
 	writeLn()
 	writeLn("  - intf")
 	writeLn("  - invk")
+	#if ECHOES
+	writeLn("  - events (.NET only)")
+	#endif
 	writeLn("  - impl (same as --services)")
 	writeLn()
 	writeLn("Valid <platform> values:")
@@ -338,6 +341,14 @@ if let type = options["type"] {
 				let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
 				FileUtils.WriteText(targetFileNameWithSuffix("Invk"), source);
 				writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
+
+			case "events":
+				if options["platform"] != ".net" {
+					writeLn("Generating _Events files is not supported for this platform.")
+				}
+				let source = (activeRodlCodeGen as? EchoesCodeDomRodlCodeGen)?.GenerateLegacyEventsFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
+				FileUtils.WriteText(targetFileNameWithSuffix("Events"), source);
+					writeLn("Wrote file \(targetFileNameWithSuffix("Events"))")
 
 			case "impl":
 				
