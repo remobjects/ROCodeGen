@@ -143,7 +143,9 @@ if options["namespace"] == nil {
 switch options["type"]?.ToLower() {
 	case "intf": break
 	case "invk": break
+	#if ECHOES
 	case "events": break
+	#endif
 	case "async": break
 	case "impl": break
 	default:
@@ -342,6 +344,7 @@ if let type = options["type"] {
 				FileUtils.WriteText(targetFileNameWithSuffix("Invk"), source);
 				writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
 
+			#if ECHOES
 			case "events":
 				if options["platform"] != ".net" {
 					writeLn("Generating _Events files is not supported for this platform.")
@@ -349,7 +352,8 @@ if let type = options["type"] {
 				let source = (activeRodlCodeGen as? EchoesCodeDomRodlCodeGen)?.GenerateLegacyEventsFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
 				FileUtils.WriteText(targetFileNameWithSuffix("Events"), source);
 					writeLn("Wrote file \(targetFileNameWithSuffix("Events"))")
-
+			#endif
+			
 			case "impl":
 				
 				let processServices = {
