@@ -2331,8 +2331,9 @@ begin
     else if isEnum(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadEnumerated',
                                                                                                             [aName,
                                                                                                             GenerateTypeInfoCall(library,aDataType).AsCallParameter,
-                                                                                                            aValue].ToList);
-
+                                                                                                            aValue].ToList)
+    else 
+      raise new Exception(String.Format("unknown type: {0}",[aElementType]));
   end;
   if assigned(aIndex) then k.Parameters.Add(aIndex);
   k.CallSiteKind := CGCallSiteKind.Reference;
