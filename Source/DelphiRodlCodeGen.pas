@@ -3691,12 +3691,12 @@ begin
   {$ENDREGION}
   cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
 
-  for entity: RodlService in library.Services.Items.OrderBy(b->b.Name) do begin
+  for entity: RodlService in library.Services.SortedByAncestor do begin
     if not EntityNeedsCodeGen(entity) then Continue;
     Invk_GenerateService(lUnit, &library, entity);
   end;
 
-  for entity: RodlEventSink in library.EventSinks.Items.OrderBy(b->b.Name) do begin
+  for entity: RodlEventSink in library.EventSinks.SortedByAncestor do begin
     if not EntityNeedsCodeGen(entity) then Continue;
     Invk_GenerateEventSink(lUnit, &library, entity);
   end;
