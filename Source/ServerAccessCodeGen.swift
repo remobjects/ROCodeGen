@@ -34,6 +34,7 @@ public __abstract class ServerAccessCodeGen {
 	public func generateCodeUnit() -> CGCodeUnit {
 
 		let unit = CGCodeUnit()
+		unit.FileName =  rodl.Name+"_ServerAccess"
 
 		defineNamespace(unit)
 		generateStandardImports(unit)
@@ -119,6 +120,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		field.Static = true
 
 		let fieldAccess = CGFieldAccessExpression(CGSelfExpression.`Self`, "_sharedInstance")
+		fieldAccess.CallSiteKind = .Static
 
 		let property = CGPropertyDefinition("sharedInstance", serverAccess.Name.AsTypeReference().NotNullable)
 		serverAccess.Members.Add(property)
@@ -189,7 +191,15 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 	}
 
 	override func generateService(serverAccess: CGClassTypeDefinition, service: RodlService) {
-		let proxyType = (service.Name+"_AsyncProxy").AsTypeReference()
+		if isLoginService(service.Name) {
+			generateService(serverAccess, service: service, async: false)
+		} else {
+			generateService(serverAccess, service: service, async: true)
+		}
+	}
+
+	func generateService(serverAccess: CGClassTypeDefinition, service: RodlService, async: Boolean) {
+		let proxyType = async ? (service.Name+"_AsyncProxy").AsTypeReference() : (service.Name+"_Proxy").AsTypeReference()
 		let property = CGPropertyDefinition(CGCodeGenerator.lowercaseFirstLetter(service.Name), proxyType.NotNullable)
 		serverAccess.Members.Add(property)
 		if isLoginService(service.Name) {
@@ -201,13 +211,19 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		//property.GetExpression = CGNewInstanceExpression(proxyType, [CGCallParameter(CGFieldAccessExpression(CGSelfExpression.`Self`, "_message"), "message"),
 		//															 CGCallParameter(CGFieldAccessExpression(CGSelfExpression.`Self`, "_channel"), "channel")])
 
-		let serviceVar = CGNewInstanceExpression("RORemoteService".AsTypeReference(), [CGPropertyAccessExpression(CGSelfExpression.`Self`, "serverURL").AsCallParameter("targetURL"),
-		service.Name.AsLiteralExpression().AsCallParameter("serviceName")])
+		let remoteService = "RORemoteService".AsTypeReference()
+		let service = CGNewInstanceExpression(remoteService, [CGPropertyAccessExpression(CGSelfExpression.`Self`, "serverURL").AsCallParameter("targetURL"),
+																					   service.Name.AsLiteralExpression().AsCallParameter("serviceName")])
+		service.ConstructorName = "withTargetURL"
 
 		let propertyGetter = List<CGStatement>()
-		propertyGetter.Add(CGVariableDeclarationStatement("service", nil, serviceVar, readOnly: true))
+		propertyGetter.Add(CGVariableDeclarationStatement("service", remoteService, service, readOnly: true))
 		propertyGetter.Add(CGAssignmentStatement(CGPropertyAccessExpression(CGPropertyAccessExpression("service".AsNamedIdentifierExpression(), "channel"), "delegate"), CGSelfExpression.`Self`))
-		propertyGetter.Add(CGNewInstanceExpression(proxyType, ["service".AsNamedIdentifierExpression().AsCallParameter("service")]).AsReturnStatement())
+
+		var proxy = CGNewInstanceExpression(proxyType, ["service".AsNamedIdentifierExpression().AsCallParameter("service")])
+		proxy.ConstructorName = "withService"
+		propertyGetter.Add(proxy.AsReturnStatement())
+
 		property.GetStatements = propertyGetter
 	}
 }
