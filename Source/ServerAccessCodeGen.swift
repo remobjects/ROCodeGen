@@ -104,6 +104,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 	override func generateStandardImports(unit: CGCodeUnit) {
 		unit.Imports.Add(CGImport("Foundation"))
 		unit.Imports.Add(CGImport("RemObjectsSDK"))
+		unit.FileImports.Add(CGImport(rodl.Name+"_Intf"))
 	}
 
 	override func getPlatformSpecificNamespace(reference: RodlUse) -> String! {
