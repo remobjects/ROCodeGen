@@ -293,6 +293,22 @@ begin
   end;
   {$ENDREGION}
 
+  if (lclasscnt > 0) or (String.IsNullOrEmpty(entity.AncestorName)) then begin
+    {$REGION protected procedure FreeInternalProperties; override;}
+      var lm := new CGMethodDefinition('FreeInternalProperties',
+                                       Visibility := CGMemberVisibilityKind.Protected,
+                                       Virtuality := CGMemberVirtualityKind.Override,
+                                       CallingConvention := CGCallingConventionKind.Register);
+      if (not String.IsNullOrEmpty(entity.AncestorName)) then 
+        lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'FreeInternalProperties'));
+      for lentityItem :RodlTypedEntity in entity.Items do begin
+        if isComplex(library,lentityItem.DataType) then
+          lm.Statements.Add(new CGDestroyInstanceExpression(('f'+lentityItem.Name).AsNamedIdentifierExpression));
+      end;
+      ltype.Members.Add(lm);
+    {$ENDREGION}
+  end;
+
   {$REGION public constructor Create(aCollection : TCollection); override;}
   if lNeedInitSimpleTypeWithDefaultValues then begin
     var lm := new CGConstructorDefinition(
