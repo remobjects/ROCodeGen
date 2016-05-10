@@ -23,6 +23,7 @@ type
     method cpp_AddressOf(value: CGExpression): CGExpression;override;
     method CapitalizeString(aValue: String):String;override;
     method cpp_GenerateArrayDestructor(anArray: CGTypeDefinition); override;
+    method cpp_smartInit(file: CGCodeUnit); override;
   protected
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
@@ -442,7 +443,6 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.Impl_GenerateDFMInclude(file: CGCodeUnit);
 begin
-  file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma package(smart_init)'));
   file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma resource "*.dfm"'));
 end;
 
@@ -633,6 +633,11 @@ begin
                                                  Virtuality := CGMemberVirtualityKind.Virtual,
                                                  Visibility := CGMemberVisibilityKind.Public,
                                                  CallingConvention := CGCallingConventionKind.Register));
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_smartInit(file: CGCodeUnit);
+begin
+  file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma package(smart_init)'));
 end;
 
 

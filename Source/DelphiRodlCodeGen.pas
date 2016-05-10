@@ -90,6 +90,7 @@ type
     method cpp_Impl_constructor(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); virtual; empty;
     {$ENDREGION}
     {$REGION cpp support}
+    method cpp_smartInit(file: CGCodeUnit);virtual; empty;
     method cpp_GenerateAsyncAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); virtual; empty;
     method cpp_GenerateAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition; aMode: ModeKind); virtual; empty;
     method cpp_GenerateProxyConstructors(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); virtual; empty;
@@ -3568,6 +3569,7 @@ begin
   end;
   {$ENDREGION}
 
+  cpp_smartInit(lUnit);
   {$REGION implementation uses}
   lUnit.ImplementationImports.Add(GenerateCGImport('uROSerializer'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uROClient'));
@@ -3700,6 +3702,7 @@ begin
 
   {$ENDREGION}
 
+  cpp_smartInit(lUnit);
   {$REGION implementation uses}
   lUnit.ImplementationImports.Add(GenerateCGImport('uROEventRepository'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uRORes'));
@@ -3800,7 +3803,7 @@ begin
 
   lUnit.Imports.Add(GenerateCGImport(Intf_name,'','h'));
   {$ENDREGION}
-
+  cpp_smartInit(lUnit);
   cpp_pragmalink(lUnit,CapitalizeString('uRORemoteDataModule'));
   cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
   if isDFMNeeded then Impl_GenerateDFMInclude(lUnit);
