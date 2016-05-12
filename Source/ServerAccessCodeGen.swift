@@ -19,7 +19,7 @@ public __abstract class ServerAccessCodeGen {
 	}
 
 	func hasLoginService() -> Boolean{
-		for var i = 0; i < rodl.Services.Count; i++ {
+		for i in 0 ..< rodl.Services.Count {
 			let service = rodl.Services[i]
 			if service.DontCodegen || service.FromUsedRodl?.DontApplyCodeGen {
 				continue
@@ -48,7 +48,7 @@ public __abstract class ServerAccessCodeGen {
 		generateSingletonPattern(serverAccess)
 		generateBasics(serverAccess)
 
-		for var i = 0; i < rodl.Services.Count; i++ {
+		for i in 0 ..< rodl.Services.Count {
 			let service = rodl.Services[i]
 			if service.DontCodegen || service.FromUsedRodl?.DontApplyCodeGen {
 				continue
