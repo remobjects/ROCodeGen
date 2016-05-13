@@ -282,13 +282,15 @@ begin
   //var __item: %ARRAY_TYPE% := self.itemAtIndex(aIndex);
   var getItemAtIndex: CGExpression := new CGArrayElementAccessExpression(new CGSelfExpression, ["aIndex".AsNamedIdentifierExpression]);
   if lIsSimple then begin
+    var getItemAtIndexAsNSNumber := new CGTypeCastExpression(getItemAtIndex, "NSNumber".AsTypeReference, ThrowsException := true);
     case entity.ElementType.ToLower of
-      "integer": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndex, "integerValue");
-      "int64": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndex, "longLongValue");
-      "double": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndex, "doubleValue");
-      "boolean": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndex, "boolValue");
+      "integer": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "intValue");
+      "int64": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "longLongValue");
+      "double": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "doubleValue");
+      "boolean": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "boolValue");
     end;
   end else if lisEnum then begin
+    getItemAtIndex := new CGTypeCastExpression(getItemAtIndex, "NSNumber".AsTypeReference, ThrowsException := true);
     getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndex, "integerValue");
     getItemAtIndex := new CGTypeCastExpression(getItemAtIndex, l_elementType, ThrowsException := true);
   end else begin
@@ -1020,7 +1022,8 @@ begin
   if lisEnum then l_methodName := "Enum"
   else if isArray(&library, entity.DataType) then  l_methodName := "MutableArray"
   else if isStruct(&library, entity.DataType) then l_methodName := "Complex"
-  else if ReaderFunctions.ContainsKey(lLower) then l_methodName := ReaderFunctions[lLower];
+  else if ReaderFunctions.ContainsKey(lLower) then l_methodName := ReaderFunctions[lLower]
+  else l_methodName := "UnknownType";
 
   var l_ident : CGExpression := if isMethod then
                                    SafeIdentifier(entity.Name).AsNamedIdentifierExpression
@@ -1067,7 +1070,8 @@ begin
   if lisEnum then l_methodName := "Enum"
   else if lisArray then  l_methodName := "MutableArray"
   else if lisStruct then l_methodName := "Complex"
-  else if ReaderFunctions.ContainsKey(lLower) then l_methodName := ReaderFunctions[lLower];
+  else if ReaderFunctions.ContainsKey(lLower) then l_methodName := ReaderFunctions[lLower]
+  else l_methodName := "UnknownType";
 
   var lNameString := CleanedWsdlName(entity.Name).AsLiteralExpression.AsCallParameter;
   if isClassType(library, entity.DataType) then begin
