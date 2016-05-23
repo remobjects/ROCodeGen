@@ -729,6 +729,8 @@ begin
     end;
   end
   else begin
+    inherited LoadFromXmlNode(node);
+    use.Name := self.Name;
     use.UsedRodlId := Guid.Parse(node.Attributes["UID"].Value);
     use.DontApplyCodeGen := use.DontApplyCodeGen or
                   (((node.Attributes["SkipCodeGen"] <> nil) and (node.Attributes["SkipCodeGen"].Value = "1")) or
