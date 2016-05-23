@@ -154,6 +154,7 @@ type
     property &Namespace: String;
     property Includes: RodlInclude;
     property DontApplyCodeGen: Boolean;
+    property DataSnap: Boolean := false;
   end;
 
   RodlGroup = public class(RodlEntity)
@@ -713,7 +714,8 @@ begin
     inherited LoadFromXmlNode(node);
     if (node.Attributes["Namespace"] <> nil) then
       &Namespace := node.Attributes["Namespace"].Value;
-
+    if (node.Attributes["DataSnap"] <> nil) then
+      DataSnap := node.Attributes["DataSnap"].Value = "1";
     DontApplyCodeGen := ((node.Attributes["SkipCodeGen"] <> nil) and (node.Attributes["SkipCodeGen"].Value = "1")) or
                         ((node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1"));
 

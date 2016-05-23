@@ -212,14 +212,22 @@ begin
   {$REGION initialization/finalization}
   var param2 := GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,entity.Name,Intf_name));
   file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROEnum',
-                                                                [entity.Name.AsLiteralExpression.AsCallParameter,param2.AsCallParameter].ToList));
+                                                    [entity.Name.AsLiteralExpression.AsCallParameter,
+                                                     param2.AsCallParameter, 
+                                                     'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   for enumvalue: RodlEnumValue in entity.Items do begin
-    file.Initialization:Add(new CGMethodCallExpression(nil,'RegisterEnumMapping',[entity.Name.AsLiteralExpression.AsCallParameter,
+    file.Initialization:Add(new CGMethodCallExpression(nil,'RegisterEnumMapping',
+                                                 [entity.Name.AsLiteralExpression.AsCallParameter,
                                                   enumvalue.Name.AsLiteralExpression.AsCallParameter,
-                                                  enumvalue.OriginalName.AsLiteralExpression.AsCallParameter].ToList));
+                                                  enumvalue.OriginalName.AsLiteralExpression.AsCallParameter, 
+                                                  'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   end;
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnRegisterEnumMappings',[entity.Name.AsLiteralExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROEnum',[entity.Name.AsLiteralExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnRegisterEnumMappings',
+                                                   [entity.Name.AsLiteralExpression.AsCallParameter, 
+                                                    'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROEnum',
+                                                    [entity.Name.AsLiteralExpression.AsCallParameter, 
+                                                     'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -471,8 +479,8 @@ begin
   {$ENDREGION}
 
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',  [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass', [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',  [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass', [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -1065,8 +1073,8 @@ begin
   cpp_GenerateArrayDestructor(ltype);
 
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 
   {$REGION %arrayname%Enumerator}
@@ -1372,8 +1380,8 @@ begin
   end;
   {$ENDREGION}
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -1489,6 +1497,8 @@ begin
 
   {$ENDREGION}
 
+  var ldef := 'aDefaultNamespaces'.AsNamedIdentifierExpression.AsCallParameter;
+
   {$REGION Co%service%}
   var ltype1 := new CGClassTypeDefinition(l_CoName,
                                           new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
@@ -1498,44 +1508,67 @@ begin
 
   {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%; overload;}
   var lmember_ct:= new CGMethodDefinition("Create",
-                                          cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_Proxy_typeref,
-                                                                      ['aMessage'.AsNamedIdentifierExpression.AsCallParameter,
-                                                                        'aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_typeref),
                                           &Static := true,
                                           Overloaded := true,
                                           ReturnType := l_IName_typeref,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           CallingConvention := CGCallingConventionKind.Register);
+  if library.DataSnap then
+    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
   lmember_ct.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
   lmember_ct.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
+
+  var l_new := new CGNewInstanceExpression(l_Tname_Proxy_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aMessage'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter);
+
+  lmember_ct.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_typeref));
   ltype1.Members.Add(lmember_ct);
   {$ENDREGION}
 
-  {$REGION public class function Create(const aUri: TROUri): I%service%; overload;}
+  {$REGION public class function Create(aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
   lmember_ct:= new CGMethodDefinition("Create",
-                                      cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_Proxy_typeref,
-                                                                  ['aUri'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_typeref),
                                       &Static := true,
                                       Overloaded := true,
                                       ReturnType := l_IName_typeref,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
-  lmember_ct.Parameters.Add(new CGParameterDefinition('aUri',
-                                                      new CGConstantTypeReference('TROUri'.AsTypeReference)
-                                                      {, Modifier := CGParameterModifierKind.Const}));
+  if library.DataSnap then 
+    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+
+  l_new := new CGNewInstanceExpression(l_Tname_Proxy_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aUri'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add(ldef);
+
+  lmember_ct.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_typeref));
   ltype1.Members.Add(lmember_ct);
   {$ENDREGION}
 
-  {$REGION public class function Create(const aUrl: string): I%service%; overload;}
+  {$REGION public class function Create(const aUrl: string; aDefaultNamespaces: string = ''): I%service%; overload;}
   lmember_ct:= new CGMethodDefinition("Create",
-                                      cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_Proxy_typeref,
-                                                                  ['aUrl'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_typeref),
                                       &Static := true,
                                       Overloaded := true,
                                       ReturnType := l_IName_typeref,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
+  if library.DataSnap then 
+    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
   lmember_ct.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+
+  l_new := new CGNewInstanceExpression(l_Tname_Proxy_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aUrl'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add(ldef);
+
+  lmember_ct.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_typeref));
   ltype1.Members.Add(lmember_ct);
   {$ENDREGION}
 
@@ -1549,46 +1582,69 @@ begin
 
   {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_Async; overload;}
   lmember:= new CGMethodDefinition("Create",
-                                  cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref,
-                                                              ['aMessage'.AsNamedIdentifierExpression.AsCallParameter,
-                                                                'aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_Async_typeref),
                                   &Static := true,
                                   Overloaded := true,
                                   ReturnType := l_IName_Async_typeref,
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
+  if library.DataSnap then
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+
   lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
 
+  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aMessage'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter);
+
+  lmember.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
   ltype1.Members.Add(lmember);
   {$ENDREGION}
 
 
-  {$REGION public class function Create(const aUri: TROUri): I%service%; overload;}
+  {$REGION public class function Create(aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
   lmember:= new CGMethodDefinition("Create",
-                                  cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref,
-                                                              ['aUri'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_Async_typeref),
                                   &Static := true,
                                   Overloaded := true,
                                   ReturnType := l_IName_Async_typeref,
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
-  lmember.Parameters.Add(new CGParameterDefinition('aUri',
-                                                  new CGConstantTypeReference('TROUri'.AsTypeReference)
-                                                  {, Modifier := CGParameterModifierKind.Const}));
+  if library.DataSnap then
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+
+  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aUri'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add(ldef);
+
+  lmember.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
   ltype1.Members.Add(lmember);
   {$ENDREGION}
 
-  {$REGION public class function Create(const aUrl: string): I%service%; overload;}
+  {$REGION public class function Create(const aUrl: string; aDefaultNamespaces: string = ''): I%service%; overload;}
   lmember:= new CGMethodDefinition("Create",
-                                   cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref,
-                                                               ['aUrl'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_Async_typeref),
                                   &Static := true,
                                   Overloaded := true,
                                   ReturnType := l_IName_Async_typeref,
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
+  if library.DataSnap then
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+  
+  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aUrl'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add(ldef);
+  
+  lmember.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
   ltype1.Members.Add(lmember);
   {$ENDREGION}
 
@@ -1602,44 +1658,68 @@ begin
 
   {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_AsyncEx; overload;}
   lmember:= new CGMethodDefinition("Create",
-                                   cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref,
-                                                              ['aMessage'.AsNamedIdentifierExpression.AsCallParameter,
-                                                               'aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_AsyncEx_typeref),
                                   &Static := true,
                                   Overloaded := true,
                                   ReturnType := l_IName_AsyncEx_typeref,
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
+  if library.DataSnap then
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
+
+  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aMessage'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter);
+
+  lmember.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
   ltype1.Members.Add(lmember);
   {$ENDREGION}
 
-  {$REGION public class function Create(const aUri: TROUri): I%service%; overload;}
+  {$REGION public class function Create(aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
   lmember:= new CGMethodDefinition("Create",
-                                   cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref,
-                                                              ['aUri'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_AsyncEx_typeref),
                                   &Static := true,
                                   Overloaded := true,
                                   ReturnType := l_IName_AsyncEx_typeref,
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
-  lmember.Parameters.Add(new CGParameterDefinition('aUri',
-                                                    new CGConstantTypeReference('TROUri'.AsTypeReference)
-                                                    {, Modifier := CGParameterModifierKind.Const}));
+  if library.DataSnap then
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+
+  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aUri'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add(ldef);
+
+  lmember.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
   ltype1.Members.Add(lmember);
   {$ENDREGION}
 
   {$REGION public class function Create(const aUrl: string): I%service%; overload;}
   lmember:= new CGMethodDefinition("Create",
-                                   cppGenerateProxyCast(new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref,
-                                                              ['aUrl'.AsNamedIdentifierExpression.AsCallParameter].ToList),l_IName_AsyncEx_typeref),
                                   &Static := true,
                                   Overloaded := true,
                                   ReturnType := l_IName_AsyncEx_typeref,
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
+  if library.DataSnap then
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+
+  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
+  if library.DataSnap then 
+    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add('aUrl'.AsNamedIdentifierExpression.AsCallParameter);
+  l_new.Parameters.Add(ldef);
+
+  lmember.Statements.AddRange(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
+
   ltype1.Members.Add(lmember);
   {$ENDREGION}
 
@@ -1697,6 +1777,7 @@ begin
       mem.LocalVariables:Add(new CGVariableDeclarationStatement("lResult",mem.ReturnType));
 
     mem.Statements.Add(new CGAssignmentStatement(lMessage, new CGMethodCallExpression(nil, '__GetMessage')));
+    mem.Statements.Add(new CGMethodCallExpression(lMessage,'SetAutoGeneratedNamespaces',[new CGMethodCallExpression(nil,'DefaultNamespaces').AsCallParameter]));
     mem.Statements.Add(new CGAssignmentStatement(lTransportChannel, new CGFieldAccessExpression(nil, '__TransportChannel')));
     ////
     var p1: List<CGExpression>;
@@ -1720,7 +1801,7 @@ begin
     ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                     'InitializeRequestMessage',
                                                     [lTransportChannel.AsCallParameter,
-                                                    library.Name.AsLiteralExpression.AsCallParameter,
+                                                    iif(library.DataSnap,'',library.Name).AsLiteralExpression.AsCallParameter,
                                                     '__InterfaceName'.AsNamedIdentifierExpression.AsCallParameter,
                                                     lmem.Name.AsLiteralExpression.AsCallParameter
                                                     ].ToList,
@@ -1744,18 +1825,21 @@ begin
     ltry.Statements.Add(new CGEmptyStatement);
     ltry.Statements.Add(new CGMethodCallExpression(lTransportChannel,'Dispatch',[lMessage.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     ltry.Statements.Add(new CGEmptyStatement);
-    if assigned(lmem.Result) then begin
-      var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-      if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+    {$REGION ! DataSnap}
+    if not library.DataSnap then 
+      if assigned(lmem.Result) then begin
+        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
-      ltry.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                    'Read',
-                                                    [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                                    GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
-                                                    new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                    sa.AsCallParameter].ToList,
-                                                    CallSiteKind:= CGCallSiteKind.Reference));
-    end;
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                      sa.AsCallParameter].ToList,
+                                                      CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+    {$ENDREGION}
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
@@ -1772,7 +1856,21 @@ begin
       end;
 
     end;
+    {$REGION DataSnap}
+    if library.DataSnap then 
+      if assigned(lmem.Result) then begin
+        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                      sa.AsCallParameter].ToList,
+                                                      CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+  {$ENDREGION}
     ltry.FinallyStatements.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes',[lTransportChannel.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     ltry.FinallyStatements.Add(new CGMethodCallExpression(lMessage,'FreeStream',CallSiteKind:= CGCallSiteKind.Reference));
     ltry.FinallyStatements.Add(new CGAssignmentStatement(lMessage,CGNilExpression.Nil));
@@ -2624,24 +2722,26 @@ begin
     ltry.Add(new CGMethodCallExpression(lMessage,
                                         'InitializeResponseMessage',
                                         ['__Transport'.AsNamedIdentifierExpression.AsCallParameter,
-                                        library.Name.AsLiteralExpression.AsCallParameter,
-                                        l_EntityName.AsLiteralExpression.AsCallParameter,
+                                        iif(library.DataSnap,'',library.Name).AsLiteralExpression.AsCallParameter,
+                                        iif(library.DataSnap,l_Iname,l_EntityName).AsLiteralExpression.AsCallParameter,
                                         (lmem.Name+'Response').AsLiteralExpression.AsCallParameter
                                         ].ToList,
                                         CallSiteKind:= CGCallSiteKind.Reference));
-    if assigned(lmem.Result) then begin
-      sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-      if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+    {$REGION ! DataSnap}
+    if not library.DataSnap then
+      if assigned(lmem.Result) then begin
+        sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
-      ltry.Add(new CGMethodCallExpression(lMessage,
-                                          'Write',
-                                          [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                          GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
-                                          new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                          sa.AsCallParameter].ToList,
-                                          CallSiteKind:= CGCallSiteKind.Reference));
-    end;
-
+        ltry.Add(new CGMethodCallExpression(lMessage,
+                                            'Write',
+                                            [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                            GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                            new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            sa.AsCallParameter].ToList,
+                                            CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+    {$ENDREGION}
     for lmemparam in lmem.Items do begin
       if (lmemparam.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
@@ -2657,6 +2757,21 @@ begin
 
       end;
     end;
+    {$REGION DataSnap}
+    if library.DataSnap then
+      if assigned(lmem.Result) then begin
+        sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+
+        ltry.Add(new CGMethodCallExpression(lMessage,
+                                            'Write',
+                                            [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                            GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                            new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            sa.AsCallParameter].ToList,
+                                            CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+    {$ENDREGION}
     ltry.Add(new CGMethodCallExpression(lMessage,'Finalize',CallSiteKind:= CGCallSiteKind.Reference));
     ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes',['__Transport'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     ltry.Add(new CGEmptyStatement);
@@ -2916,6 +3031,7 @@ begin
     result.LocalVariables:Add(new CGVariableDeclarationStatement("lMessage",IROMessage_typeref));
     result.LocalVariables:Add(new CGVariableDeclarationStatement("lTransportChannel",IROTransportChannel_typeref));
     result.Statements.Add(new CGAssignmentStatement(lMessage, new CGMethodCallExpression(nil, '__GetMessage')));
+    result.Statements.Add(new CGMethodCallExpression(lMessage,'SetAutoGeneratedNamespaces',[new CGMethodCallExpression(nil,'DefaultNamespaces').AsCallParameter]));
     result.Statements.Add(new CGAssignmentStatement(lTransportChannel, new CGFieldAccessExpression(nil, '__TransportChannel')));
     var ltry:=new CGTryFinallyCatchStatement();
     ////
@@ -2933,7 +3049,7 @@ begin
     ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                     'InitializeRequestMessage',
                                                     [lTransportChannel.AsCallParameter,
-                                                    library.Name.AsLiteralExpression.AsCallParameter,
+                                                    iif(library.DataSnap,'',library.Name).AsLiteralExpression.AsCallParameter,
                                                     '__InterfaceName'.AsNamedIdentifierExpression.AsCallParameter,
                                                     operation.Name.AsLiteralExpression.AsCallParameter
                                                     ].ToList,
@@ -3001,6 +3117,7 @@ begin
       result.LocalVariables:Add(new CGVariableDeclarationStatement("lResult",result.ReturnType));
 
     result.Statements.Add(new CGAssignmentStatement(lMessage, new CGMethodCallExpression(nil, '__GetMessage')));
+    result.Statements.Add(new CGMethodCallExpression(lMessage,'SetAutoGeneratedNamespaces',[new CGMethodCallExpression(nil,'DefaultNamespaces').AsCallParameter]));
     result.Statements.Add(new CGAssignmentStatement(lTransportChannel, new CGFieldAccessExpression(nil, '__TransportChannel')));
     result.Statements.Add(new CGAssignmentStatement(lFreeStream, new CGBooleanLiteralExpression(false)));
 ////
@@ -3023,17 +3140,20 @@ begin
     var ltry3 := new CGTryFinallyCatchStatement();
     ltry3.Statements.Add(ltry4);
     ltry3.Statements.Add(new CGEmptyStatement);
-    if assigned(operation.Result) then begin
-      var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-      if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-      ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                    'Read',
-                                                    [operation.Result.Name.AsLiteralExpression.AsCallParameter,
-                                                    GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
-                                                    new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                    sa.AsCallParameter].ToList,
-                                                    CallSiteKind:= CGCallSiteKind.Reference));
-    end;
+    {$REGION ! DataSnap}
+    if not library.DataSnap then 
+      if assigned(operation.Result) then begin
+        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [operation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                      sa.AsCallParameter].ToList,
+                                                      CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+    {$ENDREGION}
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
@@ -3049,6 +3169,20 @@ begin
 
       end;
     end;
+    {$REGION DataSnap}
+    if library.DataSnap then 
+      if assigned(operation.Result) then begin
+        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [operation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                      sa.AsCallParameter].ToList,
+                                                      CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+    {$ENDREGION}
     var lEROSessionNotFound := new CGCatchBlockStatement('E','EROSessionNotFound'.AsTypeReference);
     lEROSessionNotFound.Statements.Add(new CGAssignmentStatement(ltc,new CGTypeCastExpression(new CGMethodCallExpression(lTransportChannel,'GetTransportObject',CallSiteKind:= CGCallSiteKind.Reference),'TMyTransportChannel'.AsTypeReference)));
     lEROSessionNotFound.Statements.Add(new CGAssignmentStatement(lretry, new CGBooleanLiteralExpression(false)));
@@ -3103,6 +3237,7 @@ begin
     result.LocalVariables:Add(new CGVariableDeclarationStatement("lTransportChannel",IROTransportChannel_typeref));
     result.LocalVariables:Add(new CGVariableDeclarationStatement("lResult",result.ReturnType));
     result.Statements.Add(new CGAssignmentStatement(lMessage, new CGMethodCallExpression(nil, '__GetMessage')));
+    result.Statements.Add(new CGMethodCallExpression(lMessage,'SetAutoGeneratedNamespaces',[new CGMethodCallExpression(nil,'DefaultNamespaces').AsCallParameter]));
     result.Statements.Add(new CGAssignmentStatement(lTransportChannel, new CGFieldAccessExpression(nil, '__TransportChannel')));
     var ltry:=new CGTryFinallyCatchStatement();
     var p1: List<CGExpression>;
@@ -3118,7 +3253,7 @@ begin
     ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                     'InitializeRequestMessage',
                                                     [lTransportChannel.AsCallParameter,
-                                                    library.Name.AsLiteralExpression.AsCallParameter,
+                                                    iif(library.DataSnap,'',library.Name).AsLiteralExpression.AsCallParameter,
                                                     '__InterfaceName'.AsNamedIdentifierExpression.AsCallParameter,
                                                     operation.Name.AsLiteralExpression.AsCallParameter
                                                     ].ToList,
@@ -3183,18 +3318,22 @@ begin
       result.Statements.Add(new CGAssignmentStatement('lResult'.AsNamedIdentifierExpression, CGNilExpression.Nil));
     result.Statements.Add(new CGMethodCallExpression('aRequest'.AsNamedIdentifierExpression,'ReadResponse',CallSiteKind:= CGCallSiteKind.Reference));
     var lMessage := new CGFieldAccessExpression('aRequest'.AsNamedIdentifierExpression, 'Message',CallSiteKind:= CGCallSiteKind.Reference);
+    result.Statements.Add(new CGMethodCallExpression(lMessage,'SetAutoGeneratedNamespaces',[new CGMethodCallExpression(nil,'DefaultNamespaces').AsCallParameter]));
 
-    if assigned(operation.Result) then begin
-      var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-      if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-      result.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                    'Read',
-                                                    [operation.Result.Name.AsLiteralExpression.AsCallParameter,
-                                                    GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
-                                                    new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                    sa.AsCallParameter].ToList,
-                                                    CallSiteKind:= CGCallSiteKind.Reference));
-    end;
+    {$REGION ! DataSnap}
+    if not library.DataSnap then 
+      if assigned(operation.Result) then begin
+        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        result.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [operation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                      sa.AsCallParameter].ToList,
+                                                      CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+    {$ENDREGION}
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
@@ -3210,6 +3349,21 @@ begin
 
       end;
     end;
+    {$REGION DataSnap}
+    if library.DataSnap then 
+      if assigned(operation.Result) then begin
+        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
+        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        result.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [operation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                      sa.AsCallParameter].ToList,
+                                                      CallSiteKind:= CGCallSiteKind.Reference));
+      end;
+    {$ENDREGION}
+
     if assigned(operation.Result) then
         result.Statements.Add('lResult'.AsNamedIdentifierExpression.AsReturnStatement);
   end;
@@ -3573,6 +3727,30 @@ begin
     end;
   end;
   {$ENDREGION}
+
+
+  {$REGION 'function DefaultNamespaces:string;'}
+  var m:= new CGMethodDefinition('DefaultNamespaces',
+                                  ReturnType :=ResolveStdtypes(CGPredefinedTypeKind.String),
+                                  Visibility := CGMemberVisibilityKind.Public,
+                                  CallingConvention := CGCallingConventionKind.Register);
+
+  m.LocalVariables := new List<CGVariableDeclarationStatement>;
+  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeKind.String), new CGLocalVariableAccessExpression('TargetNamespace')));
+
+  var lres := new CGLocalVariableAccessExpression('lres');
+  var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
+  for k in list do begin
+    m.Statements.Add(new CGAssignmentStatement(lres, 
+                                               new CGBinaryOperatorExpression(lres1, 
+                                                                              new CGFieldAccessExpression(k.AsNamedIdentifierExpression,'TargetNamespace',CallSiteKind := CGCallSiteKind.Static), 
+                                                                              CGBinaryOperatorKind.Addition)
+                                                ));
+  end;
+  m.Statements.Add(lres.AsReturnStatement);
+  lUnit.Globals.Add(m.AsGlobal);
+  {$ENDREGION}
+
 
   cpp_smartInit(lUnit);
   {$REGION implementation uses}

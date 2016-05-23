@@ -71,7 +71,7 @@ public __abstract class ServerAccessCodeGen {
 	private func generateStandardImports(unit: CGCodeUnit) {
 		// no-op, but platforms will override
 	}
-	
+
 	private func generatUsedRodlImports(unit: CGCodeUnit) {
 		for uses in rodl.Uses.Items {
 			let platformNamespace = self.getPlatformSpecificNamespace(uses);
@@ -150,7 +150,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		serverAccess.Members.Add(addressProperty)
 		addressProperty.Visibility = .Public
 		addressProperty.ReadOnly = true
-		
+
 		var addressLiteral: CGExpression
 		if let serverAddress = self.serverAddress {
 			addressLiteral = serverAddress.AsLiteralExpression()
@@ -352,6 +352,8 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 	var ch_name: String!;
 	var mes_name: String!;
 	var server_Address: String!;
+	var serverAccessName1: String!;
+	var serverAccessName2: String!;
 	let string_type = CGNamedTypeReference("String", isClassType:false)
 	private var dfm: StringBuilder = StringBuilder();
 
@@ -367,14 +369,14 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		lunit.Directives.Add("{$I RemObjects.inc}".AsCompilerDirective());
 	}
 
-	func generateImplementationInclude(){	
+	func generateImplementationInclude(){
 		lunit.ImplementationDirectives.Add("{$IFDEF DELPHIXE2}".AsCompilerDirective());
 		lunit.ImplementationDirectives.Add("  {%CLASSGROUP 'System.Classes.TPersistent'}".AsCompilerDirective());
 		lunit.ImplementationDirectives.Add("{$ENDIF}".AsCompilerDirective());
 		lunit.ImplementationDirectives.Add("{$R *.dfm}".AsCompilerDirective());
 	}
 
-	func generatePragma(value: String){	
+	func generatePragma(value: String){
 		//empty
 	}
 
@@ -410,7 +412,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		generateInclude()
 		generateImplementationInclude()
 		generatePragma(rodl.Name + "_Intf")
-		
+
 		// add some std units like SysUtils, Classes, etc
 		unit.Imports.Add(generateImport("SysUtils", aExt: "hpp", aNamespace:"System", aGeneratePragma: false));
 		unit.Imports.Add(generateImport("Classes", aExt: "hpp", aNamespace:"System", aGeneratePragma: false));
@@ -424,41 +426,41 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		mes_name = "TROBinMessage";
 
 		if let serverAddress = self.serverAddress {
-			server_Address = self.serverAddress!;			  
+			server_Address = self.serverAddress!;
 			let sa = self.serverAddress!.ToLower();
-			if sa.EndsWith("/bin") {			
+			if sa.EndsWith("/bin") {
 				lunit.Imports.Add(generateImport("uROBinMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				mes_name = "TROBinMessage";
 			}
-			else if sa.EndsWith("/soap") {			
+			else if sa.EndsWith("/soap") {
 				lunit.Imports.Add(generateImport("uROSOAPMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				mes_name = "TROSOAPMessage";
 			}
-			else if sa.EndsWith("/post") {			
+			else if sa.EndsWith("/post") {
 				lunit.Imports.Add(generateImport("uROPostMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				mes_name = "TROPostMessage";
 			}
-			else if sa.EndsWith("/xmlrpc") {			
+			else if sa.EndsWith("/xmlrpc") {
 				lunit.Imports.Add(generateImport("uROXmlRpcMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				mes_name = "TROXmlRpcMessage";
 			}
-			if sa.StartsWith("http://") || sa.StartsWith("https://") {			
+			if sa.StartsWith("http://") || sa.StartsWith("https://") {
 				lunit.Imports.Add(generateImport("uROBaseHTTPClient", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROIndyHTTPChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				ch_name = "TROIndyHTTPChannel";
 			}
-			else if sa.StartsWith("tcp://") {			
+			else if sa.StartsWith("tcp://") {
 				lunit.Imports.Add(generateImport("uROIndyTCPChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				ch_name = "TROIndyTCPChannel";
 			}
-			else if sa.StartsWith("superhttp://") {			
+			else if sa.StartsWith("superhttp://") {
 				lunit.Imports.Add(generateImport("uROBaseActiveEventChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperHttpChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROIndySuperHttpChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				ch_name = "TROIndySuperHTTPChannel";
 			}
-			else if sa.StartsWith("supertcp://") {			
+			else if sa.StartsWith("supertcp://") {
 				lunit.Imports.Add(generateImport("uROBaseActiveEventChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperTCPChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
@@ -475,7 +477,9 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 	}
 
 	override func generateSingletonPattern(serverAccess: CGClassTypeDefinition) {
-		let serverAccessType = ("T" + serverAccess.Name).AsTypeReference()		
+		serverAccessName1 = serverAccess.Name+"_"+rodl.Name;
+		serverAccessName2 = "T" + serverAccessName1;
+		let serverAccessType = serverAccessName2.AsTypeReference()
 
 		let const = CGFieldDefinition("SERVER_URL");
 		const.Constant = true;
@@ -491,7 +495,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		let meth = CGMethodDefinition("ServerAccess");
 		meth.ReturnType = serverAccessType;
 		meth.CallingConvention = CGCallingConventionKind.Register;
-		meth.Visibility = CGMemberVisibilityKind.Public;	
+		meth.Visibility = CGMemberVisibilityKind.Public;
 		meth.Statements.Add(CGIfThenElseStatement(CGAssignedExpression(fServerAccess, inverted: true),
 												  CGAssignmentStatement(fServerAccess,
 																		 CGNewInstanceExpression(serverAccessType,[CGNilExpression.Nil.AsCallParameter()]))));
@@ -507,23 +511,36 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 	}
 
 	override func generateBasics(serverAccess: CGClassTypeDefinition) {
-		let origName = serverAccess.Name;
-		serverAccess.Name = "T"+serverAccess.Name;
+		serverAccess.Name = serverAccessName2;
 		serverAccess.Visibility = CGTypeVisibilityKind.Public;
 		serverAccess.Ancestors.Add("TDataModule".AsTypeReference())
 
-		dfm.AppendLine("object " + origName + ": " + serverAccess.Name)
+		dfm.AppendLine("object " + serverAccessName1 + ": " + serverAccessName2)
 		dfm.AppendLine("  OldCreateOrder = False")
 		dfm.AppendLine("  OnCreate = DataModuleCreate")
 		dfm.AppendLine("  Height = 150")
 		dfm.AppendLine("  Width = 215")
-		
+
 		#region Message
 		let lmes = CGFieldDefinition("Message",mes_name.AsTypeReference());
 		lmes.Visibility = .Published;
 		serverAccess.Members.Add(lmes);
 		dfm.AppendLine("  object Message: " + mes_name)
 		dfm.AppendLine("	Envelopes = <>")
+    	dfm.Append    ("	DefaultNamespaces = '")
+		if let ns = lunit.Namespace {
+			dfm.Append(ns.Name)
+		}
+		for uses in rodl.Uses.Items {
+			dfm.Append(";");
+			let platformNamespace = self.getPlatformSpecificNamespace(uses);
+			if length(platformNamespace) > 0 {
+				dfm.Append(platformNamespace)
+			} else {
+				dfm.Append(uses.Name)
+			}
+		}
+		dfm.AppendLine("'")
 		dfm.AppendLine("	Left = 40")
 		dfm.AppendLine("	Top = 24")
 		dfm.AppendLine("  end")
@@ -535,7 +552,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		serverAccess.Members.Add(ch);
 		dfm.AppendLine("  object Channel: " + ch_name)
 		dfm.AppendLine("	DispatchOptions = []")
-		if hasLoginService() {		
+		if hasLoginService() {
 			dfm.AppendLine("	OnLoginNeeded = ChannelLoginNeeded")
 		}
 		dfm.AppendLine("	ServerLocators = <>")
@@ -548,7 +565,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 
 		#region DataModuleCreate
 		let ctor = CGMethodDefinition("DataModuleCreate");
-		ctor.Parameters.Add(CGParameterDefinition("Sender", "TObject".AsTypeReference()));			
+		ctor.Parameters.Add(CGParameterDefinition("Sender", "TObject".AsTypeReference()));
 		ctor.Visibility = .Published
 		ctor.CallingConvention = .Register
 		ctor.Statements = List<CGStatement>()
@@ -588,7 +605,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		needsLoginMethod.CallingConvention = .Register
 		needsLoginMethod.Parameters.Add(CGParameterDefinition("Sender", "TROTransportChannel".AsTypeReference()));
 		needsLoginMethod.Parameters.Add(CGParameterDefinition("anException", "Exception".AsTypeReference()));
-		var aParam = CGParameterDefinition("aRetry", CGPredefinedTypeReference(.Boolean)); 
+		var aParam = CGParameterDefinition("aRetry", CGPredefinedTypeReference(.Boolean));
 		aParam.Modifier = .Var;
 		needsLoginMethod.Parameters.Add(aParam);
 		needsLoginMethod.Statements.Add(CGCommentStatement("Implement authentication here by calling LoginService.needsLoginMethod"))
@@ -611,7 +628,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		var propertyName: String
 		var proxyInterfaceType: CGTypeReference
 		let pa = CGPropertyAccessExpression(CGSelfExpression.`Self`, "ServerUrl")
-		
+
 		propertyName = serviceName+suffix
 		proxyInterfaceType = generateInterfaceType("I" + serviceName+suffix)
 
@@ -652,7 +669,7 @@ public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 		var propertyName: String
 		var proxyInterfaceType: CGTypeReference
 		let pa = CGPropertyAccessExpression(CGSelfExpression.`Self`, "ServerUrl")
-		
+
 		propertyName = serviceName+suffix
 		proxyInterfaceType = generateInterfaceType("I" + serviceName+suffix)
 
@@ -686,19 +703,19 @@ public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 		// empty
 	}
 
-	override func generateImplementationInclude(){	
+	override func generateImplementationInclude(){
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma package(smart_init)"));
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma classgroup \"System.Classes.TPersistent\""));
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma resource \"*.dfm\""));
 	}
-	override func generatePragma(value: String){	
+	override func generatePragma(value: String){
 		lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma link \""+value+"\""));
 	}
 
 	override func generateImport(aName: String, aExt: String, aNamespace: String, aGeneratePragma: Boolean)-> CGImport{
-		if aGeneratePragma {		
+		if aGeneratePragma {
 			var lname = aName;
-			if !String.IsNullOrEmpty(aNamespace){ 
+			if !String.IsNullOrEmpty(aNamespace){
 				lname = aNamespace + "." + lname;
 			}
 			generatePragma(lname);
@@ -706,7 +723,7 @@ public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 
 		let lns = aName+"."+aExt;
 		if aExt == "hpp" {
-			if String.IsNullOrEmpty(aNamespace){ 
+			if String.IsNullOrEmpty(aNamespace){
 				return CGImport(lns)
 			}
 			else {
