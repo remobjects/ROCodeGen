@@ -361,7 +361,7 @@ end;
 
 method Codegen4Wrapper.GenerateAsyncFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl: RodlLibrary; &namespace: String; fileext: String);
 begin
-  var lunitname := rodl.Name + '_Async.'+fileext;
+  var lunitname := rodl.Name + '_Async';
   if codegen.CodeUnitSupport then begin
     if (codegen is DelphiRodlCodeGen) then begin
       // generate unit for backward compatibility, Delphi/C++Builder only
@@ -373,7 +373,7 @@ begin
       lUnit.Namespace := new CGNamespaceReference(ltargetNamespace);
       lUnit.FileName := lunitname;
 
-      Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lUnit), Codegen4FileType.Unit));
+      Res.Add(new Codegen4Record(Path.ChangeExtension(lunitname,codegen.Generator.defaultFileExtension), codegen.Generator.GenerateUnit(lUnit), Codegen4FileType.Unit));
       if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
         var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect);
         lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
