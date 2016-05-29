@@ -279,10 +279,10 @@ type
   end;
 
 extension method XmlElement.ValueOrText: String; assembly;
-extension method XmlElement.ItemByName(tagname: String): XmlElement; assembly;
-extension method String.isFileExists: Boolean; assembly;
-extension method String.IsPathRooted: Boolean; assembly;
+extension method String.FileExists: Boolean; assembly;
+extension method String.PathIsRooted: Boolean; assembly;
 extension method String.GetParentDirectory: String;
+
 implementation
 
 extension method String.GetParentDirectory: String;
@@ -303,14 +303,7 @@ begin
   {$ENDIF}
 end;
 
-extension method XmlElement.ItemByName(tagname: String): XmlElement;
-begin
-  for item in ChildNodes do
-    if (item is XmlElement) and XmlElement(item).Name.EqualsIgnoreCase(tagname) then exit XmlElement(item);
-  exit nil;
-end;
-
-extension method String.isFileExists: Boolean;
+extension method String.FileExists: Boolean;
 begin
   {$IFDEF FAKESUGAR}
   exit File.Exists(self);
@@ -319,7 +312,7 @@ begin
   {$ENDIF}
 end;
 
-extension method String.IsPathRooted: Boolean;
+extension method String.PathIsRooted: Boolean;
 begin
   if not(Self.Length >0) then exit false;
   {$IFDEF FAKESUGAR}
@@ -849,19 +842,19 @@ begin
   DontApplyCodeGen := (node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1");
 
   var usedRodlFileName: String := Path.GetFullPath(FileName);
-  if (not usedRodlFileName.isFileExists and not FileName.IsPathRooted) then begin
+  if (not usedRodlFileName.FileExists and not FileName.PathIsRooted) then begin
     if (OwnerLibrary.Filename <> nil) then
       usedRodlFileName := Path.GetFullPath(Path.Combine(Path.GetFullPath(OwnerLibrary.Filename).GetParentDirectory, FileName));
   end;
 
-  if (not usedRodlFileName.isFileExists and not FileName.IsPathRooted) then begin
+  if (not usedRodlFileName.FileExists and not FileName.PathIsRooted) then begin
     if (FromUsedRodl:AbsoluteFileName <> nil) then
       usedRodlFileName := Path.GetFullPath(Path.Combine(FromUsedRodl:AbsoluteFileName:GetParentDirectory, FileName));
   end;
 
 
-  if (not usedRodlFileName.isFileExists) then usedRodlFileName := AbsoluteRodl;
-  if (not usedRodlFileName.isFileExists) then begin
+  if (not usedRodlFileName.FileExists) then usedRodlFileName := AbsoluteRodl;
+  if (not usedRodlFileName.FileExists) then begin
     usedRodlFileName := usedRodlFileName.Replace("/", l_Separator).Replace("\", l_Separator);
     var lFilename := Path.GetFileName(usedRodlFileName).ToLower;
     //writeLn("checking for "+lFilename);
@@ -871,7 +864,7 @@ begin
 
   //writeLn("using rodl: "+usedRodlFileName);
 
-  if (usedRodlFileName.isFileExists) then begin
+  if (usedRodlFileName.FileExists) then begin
     AbsoluteFileName := usedRodlFileName;
     OwnerLibrary.LoadUsedFibraryFromFile(usedRodlFileName, self);
     Loaded := true;
