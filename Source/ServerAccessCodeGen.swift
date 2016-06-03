@@ -14,7 +14,7 @@ public __abstract class ServerAccessCodeGen {
 		self.rodl = rodl
 	}
 
-	func isLoginService(serviceName: String)-> Boolean{
+	func isLoginService(_ serviceName: String)-> Boolean{
 		return  serviceName.EqualsIgnoreCase("LoginService");
 	}
 
@@ -63,16 +63,16 @@ public __abstract class ServerAccessCodeGen {
 		return unit
 	}
 
-	private func defineNamespace(unit: CGCodeUnit) {
+	private func defineNamespace(_ unit: CGCodeUnit) {
 		if let namespace = self.namespace {
 			unit.Namespace = CGNamespaceReference(namespace)
 		}
 	}
-	private func generateStandardImports(unit: CGCodeUnit) {
+	private func generateStandardImports(_ unit: CGCodeUnit) {
 		// no-op, but platforms will override
 	}
 
-	private func generatUsedRodlImports(unit: CGCodeUnit) {
+	private func generatUsedRodlImports(_ unit: CGCodeUnit) {
 		for uses in rodl.Uses.Items {
 			let platformNamespace = self.getPlatformSpecificNamespace(uses);
 			if length(platformNamespace) > 0 {
@@ -86,11 +86,11 @@ public __abstract class ServerAccessCodeGen {
 			}
 		}
 	}
-	private __abstract func getPlatformSpecificNamespace(reference: RodlUse) -> String!;
-	private __abstract func generateSingletonPattern(serverAccess: CGClassTypeDefinition)
-	private __abstract func generateBasics(serverAccess: CGClassTypeDefinition)
-	private __abstract func generateService(serverAccess: CGClassTypeDefinition, service: RodlService)
-	private __abstract func generateLoginPattern(serverAccess: CGClassTypeDefinition)
+	private __abstract func getPlatformSpecificNamespace(_ reference: RodlUse) -> String!;
+	private __abstract func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition)
+	private __abstract func generateBasics(_ serverAccess: CGClassTypeDefinition)
+	private __abstract func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService)
+	private __abstract func generateLoginPattern(_ serverAccess: CGClassTypeDefinition)
 }
 
 public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
@@ -179,7 +179,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 
 	}
 
-	override func generateLoginPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateLoginPattern(_ serverAccess: CGClassTypeDefinition) {
 
 		let needsLoginMethod = CGMethodDefinition("clientChannelNeedsLoginOnMainThread")
 		serverAccess.Members.Add(needsLoginMethod);
@@ -191,7 +191,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		needsLoginMethod.Attributes.Add(CGAttribute("objc".AsTypeReference()))
 	}
 
-	override func generateService(serverAccess: CGClassTypeDefinition, service: RodlService) {
+	override func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService) {
 		if isLoginService(service.Name) {
 			generateService(serverAccess, service: service, async: false)
 		} else {
@@ -199,7 +199,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
-	func generateService(serverAccess: CGClassTypeDefinition, service: RodlService, async: Boolean) {
+	func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService, async: Boolean) {
 		let proxyType = async ? (service.Name+"_AsyncProxy").AsTypeReference() : (service.Name+"_Proxy").AsTypeReference()
 		let property = CGPropertyDefinition(CGCodeGenerator.lowercaseFirstLetter(service.Name), proxyType.NotNullable)
 		serverAccess.Members.Add(property)
@@ -298,12 +298,12 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		// Not implemented
 	}
 
-	override func generateService(serverAccess: CGClassTypeDefinition, service: RodlService) {
+	override func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService) {
 		generateService(serverAccess, serviceName: service.Name, isAsync: false)
 		generateService(serverAccess, serviceName: service.Name, isAsync: true)
 	}
 
-	private func generateService(serverAccess: CGClassTypeDefinition, serviceName: String, isAsync: Boolean) {
+	private func generateService(_ serverAccess: CGClassTypeDefinition, serviceName: String, isAsync: Boolean) {
 		var propertyName: String
 		var proxyInterfaceType: CGTypeReference
 		var proxyClassType: CGTypeReference
@@ -365,22 +365,22 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
-	func generateInclude(){
+	func generateInclude() {
 		lunit.Directives.Add("{$I RemObjects.inc}".AsCompilerDirective());
 	}
 
-	func generateImplementationInclude(){
+	func generateImplementationInclude() {
 		lunit.ImplementationDirectives.Add("{$IFDEF DELPHIXE2}".AsCompilerDirective());
 		lunit.ImplementationDirectives.Add("  {%CLASSGROUP 'System.Classes.TPersistent'}".AsCompilerDirective());
 		lunit.ImplementationDirectives.Add("{$ENDIF}".AsCompilerDirective());
 		lunit.ImplementationDirectives.Add("{$R *.dfm}".AsCompilerDirective());
 	}
 
-	func generatePragma(value: String){
+	func generatePragma(_ value: String) {
 		//empty
 	}
 
-	func generateImport(aName: String, aExt: String, aNamespace: String, aGeneratePragma: Boolean)-> CGImport{
+	func generateImport(_ aName: String, aExt: String, aNamespace: String, aGeneratePragma: Boolean)-> CGImport{
 		if String.IsNullOrEmpty(aNamespace) {
 			return CGImport(CGNamedTypeReference(aName))
 		}else{
@@ -388,7 +388,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
-	override func generatUsedRodlImports(unit: CGCodeUnit) {
+	override func generatUsedRodlImports(_ unit: CGCodeUnit) {
 		for uses in rodl.Uses.Items {
 			let platformNamespace = self.getPlatformSpecificNamespace(uses);
 			if length(platformNamespace) > 0 {
@@ -399,7 +399,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
-	override func generateStandardImports(unit: CGCodeUnit) {
+	override func generateStandardImports(_ unit: CGCodeUnit) {
 		self.lunit = unit; // store unit for later usage;
 		unit.FileName = rodl.Name+"_ServerAccess";
 		if unit.Namespace == nil {
@@ -527,7 +527,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		serverAccess.Members.Add(lmes);
 		dfm.AppendLine("  object Message: " + mes_name)
 		dfm.AppendLine("	Envelopes = <>")
-    	dfm.Append    ("	DefaultNamespaces = '")
+		dfm.Append	("	DefaultNamespaces = '")
 		if let ns = lunit.Namespace {
 			dfm.Append(ns.Name)
 		}
@@ -613,18 +613,18 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		serverAccess.Members.Add(needsLoginMethod);
 	}
 
-	override func generateService(serverAccess: CGClassTypeDefinition, service: RodlService) {
+	override func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService) {
 		generateService(serverAccess, serviceName: service.Name, suffix: "")
 		generateService(serverAccess, serviceName: service.Name, suffix: "_Async")
 		generateService(serverAccess, serviceName: service.Name, suffix: "_AsyncEx")
 	}
 
-	private func generateInterfaceType(aName: String) -> CGTypeReference{
+	private func generateInterfaceType(_ aName: String) -> CGTypeReference{
 		return aName.AsTypeReference()
 	}
 
 
-	private func generateService(serverAccess: CGClassTypeDefinition, serviceName: String, suffix: String) {
+	private func generateService(_ serverAccess: CGClassTypeDefinition, serviceName: String, suffix: String) {
 		var propertyName: String
 		var proxyInterfaceType: CGTypeReference
 		let pa = CGPropertyAccessExpression(CGSelfExpression.`Self`, "ServerUrl")
@@ -695,27 +695,27 @@ public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 
 
 
-	override func generateInterfaceType(aName: String) -> CGTypeReference{
+	override func generateInterfaceType(_ aName: String) -> CGTypeReference{
 		return CGNamedTypeReference("_di_"+aName, isClassType:false)
 	}
 
-	override func generateInclude(){
+	override func generateInclude() {
 		// empty
 	}
 
-	override func generateImplementationInclude(){
+	override func generateImplementationInclude() {
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma package(smart_init)"));
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma classgroup \"System.Classes.TPersistent\""));
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma resource \"*.dfm\""));
 	}
-	override func generatePragma(value: String){
+	override func generatePragma(value: String) {
 		lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma link \""+value+"\""));
 	}
 
 	override func generateImport(aName: String, aExt: String, aNamespace: String, aGeneratePragma: Boolean)-> CGImport{
 		if aGeneratePragma {
 			var lname = aName;
-			if !String.IsNullOrEmpty(aNamespace){
+			if !String.IsNullOrEmpty(aNamespace) {
 				lname = aNamespace + "." + lname;
 			}
 			generatePragma(lname);
@@ -723,7 +723,7 @@ public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 
 		let lns = aName+"."+aExt;
 		if aExt == "hpp" {
-			if String.IsNullOrEmpty(aNamespace){
+			if String.IsNullOrEmpty(aNamespace) {
 				return CGImport(lns)
 			}
 			else {

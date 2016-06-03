@@ -55,7 +55,7 @@ func writeSyntax() {
 
 let options = [String:String]()
 
-func parseParameters(cmdlineParams: [String]) {
+func parseParameters(_ cmdlineParams: [String]) {
 	for s in cmdlineParams {
 		var param: Sugar.String = s
 		if param.StartsWith("--") {
@@ -262,11 +262,11 @@ switch options["language"]?.ToLower() {
 	default:
 }
 
-func targetFileNameWithSuffix(suffix: String) -> String {
+func targetFileNameWithSuffix(_ suffix: String) -> String {
 	return Path.Combine(Path.GetParentDirectory(rodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(rodlFileName))+"_"+suffix+"."+fileExtension)
 }
 
-func targetFileName(name: String) -> String {
+func targetFileName(_ name: String) -> String {
 	return Path.Combine(Path.GetParentDirectory(rodlFileName), name)
 }
 
