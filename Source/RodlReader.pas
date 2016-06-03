@@ -350,12 +350,12 @@ begin
   if (node.Attributes["FromUsedRodlUID"] <> nil) then FromUsedRodlId := Guid.Parse(node.Attributes["FromUsedRodlUID"].Value);
   &Abstract := node.Attributes["Abstract"]:Value = "1";
   DontCodegen :=  node.Attributes["DontCodeGen"]:Value = "1";
-  var ldoc := node.ItemByName("Documentation");
+  var ldoc := node.GetFirstElementWithName("Documentation");
   if (ldoc <> nil) and (ldoc.FirstChild <> nil) then
       // FirstChild because data should be enclosed within CDATA
       Documentation := ldoc.FirstChild.Value;
 
-  var lSubNode: XmlElement := node.ItemByName("CustomAttributes");
+  var lSubNode: XmlElement := node.GetFirstElementWithName("CustomAttributes");
   if (lSubNode <> nil) then begin
     for each childNode: XmlElement in lSubNode.ChildNodes do begin
       var lValue: XmlAttribute := childNode.Attributes["Value"];
@@ -414,7 +414,7 @@ end;
 method RodlComplexEntity<T>.LoadFromXmlNode(node: XmlElement; aActivator: method : T);
 begin
   inherited LoadFromXmlNode(node);
-  fItems.LoadFromXmlNode(node.ItemByName(fItemsNodeName), nil, aActivator);
+  fItems.LoadFromXmlNode(node.GetFirstElementWithName(fItemsNodeName), nil, aActivator);
 end;
 
 constructor RodlComplexEntity<T>(nodeName: String);
@@ -712,7 +712,7 @@ begin
     DontApplyCodeGen := ((node.Attributes["SkipCodeGen"] <> nil) and (node.Attributes["SkipCodeGen"].Value = "1")) or
                         ((node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1"));
 
-    var lInclude := node.ItemByName("Includes");
+    var lInclude := node.GetFirstElementWithName("Includes");
     if (lInclude <> nil) then begin
       Includes := new RodlInclude();
       Includes.LoadFromXmlNode(lInclude);
@@ -729,7 +729,7 @@ begin
                    ((node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1")));
     if (node.Attributes["Namespace"] <> nil) then use.Namespace := node.Attributes["Namespace"].Value;
 
-    var lInclude := node.ItemByName("Includes");
+    var lInclude := node.GetFirstElementWithName("Includes");
     if (lInclude <> nil) then begin
       use.Includes := new RodlInclude();
       use.Includes.LoadFromXmlNode(lInclude);
@@ -737,14 +737,14 @@ begin
     if isUsedRODLLoaded(use) then exit; 
   end;
 
-  fUses.LoadFromXmlNode(node.ItemByName("Uses"), use, -> new RodlUse);
-  fStructs.LoadFromXmlNode(node.ItemByName("Structs"), use, -> new RodlStruct);
-  fArrays.LoadFromXmlNode(node.ItemByName("Arrays"), use, -> new RodlArray);
-  fEnums.LoadFromXmlNode(node.ItemByName("Enums"), use, -> new RodlEnum);
-  fExceptions.LoadFromXmlNode(node.ItemByName("Exceptions"), use, -> new RodlException);
-  fGroups.LoadFromXmlNode(node.ItemByName("Groups"), use, -> new RodlGroup);
-  fServices.LoadFromXmlNode(node.ItemByName("Services"), use, -> new RodlService);
-  fEventSinks.LoadFromXmlNode(node.ItemByName("EventSinks"), use, -> new RodlEventSink);
+  fUses.LoadFromXmlNode(node.GetFirstElementWithName("Uses"), use, -> new RodlUse);
+  fStructs.LoadFromXmlNode(node.GetFirstElementWithName("Structs"), use, -> new RodlStruct);
+  fArrays.LoadFromXmlNode(node.GetFirstElementWithName("Arrays"), use, -> new RodlArray);
+  fEnums.LoadFromXmlNode(node.GetFirstElementWithName("Enums"), use, -> new RodlEnum);
+  fExceptions.LoadFromXmlNode(node.GetFirstElementWithName("Exceptions"), use, -> new RodlException);
+  fGroups.LoadFromXmlNode(node.GetFirstElementWithName("Groups"), use, -> new RodlGroup);
+  fServices.LoadFromXmlNode(node.GetFirstElementWithName("Services"), use, -> new RodlService);
+  fEventSinks.LoadFromXmlNode(node.GetFirstElementWithName("EventSinks"), use, -> new RodlEventSink);
 end;
 
 method RodlLibrary.LoadUsedFibraryFromFile(aFilename: String; use: RodlUse);
@@ -821,7 +821,7 @@ begin
 
   inherited LoadFromXmlNode(node);
 
-  var linclude: XmlElement := node.ItemByName("Includes");
+  var linclude: XmlElement := node.GetFirstElementWithName("Includes");
   if (linclude <> nil) then begin
     Includes := new RodlInclude();
     Includes.LoadFromXmlNode(linclude);
@@ -940,7 +940,7 @@ end;
 
 method RodlRoles.LoadFromXmlNode(node: XmlElement);
 begin
-  var el := node.ItemByName("Roles") as XmlElement;
+  var el := node.GetFirstElementWithName("Roles") as XmlElement;
 
   if (el = nil) or (el.ChildCount = 0) then exit;
 
