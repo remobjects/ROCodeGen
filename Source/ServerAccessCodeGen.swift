@@ -101,13 +101,13 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 	}
 	let swiftDialect: CGSwiftCodeGeneratorDialect
 
-	override func generateStandardImports(unit: CGCodeUnit) {
+	override func generateStandardImports(_ unit: CGCodeUnit) {
 		unit.Imports.Add(CGImport("Foundation"))
 		unit.Imports.Add(CGImport("RemObjectsSDK"))
 		unit.FileImports.Add(CGImport(rodl.Name+"_Intf"))
 	}
 
-	override func getPlatformSpecificNamespace(reference: RodlUse) -> String! {
+	override func getPlatformSpecificNamespace(_ reference: RodlUse) -> String! {
 		if length(reference.Includes?.NougatModule) > 0 {
 			return reference.Includes.NougatModule;
 		} else {
@@ -115,7 +115,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
-	override func generateSingletonPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition) {
 		let field = CGFieldDefinition("_sharedInstance", serverAccess.Name.AsTypeReference().NullableNotUnwrapped)
 		serverAccess.Members.Add(field)
 		field.Static = true
@@ -135,7 +135,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		property.GetStatements = propertyGetter
 	}
 
-	override func generateBasics(serverAccess: CGClassTypeDefinition) {
+	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
 
 		if swiftDialect == .Silver {
 			serverAccess.ImplementedInterfaces.Add("IROClientChannelDelegate".AsTypeReference())
@@ -236,11 +236,11 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		self.namespace = namespace;
 	}
 
-	override func generateStandardImports(unit: CGCodeUnit) {
+	override func generateStandardImports(_ unit: CGCodeUnit) {
 		unit.Imports.Add(CGImport("RemObjects.SDK"))
 	}
 
-	override func getPlatformSpecificNamespace(reference: RodlUse) -> String! {
+	override func getPlatformSpecificNamespace(_ reference: RodlUse) -> String! {
 		if length(reference.Includes?.NetModule) > 0 {
 			return reference.Includes.NetModule;
 		} else {
@@ -248,7 +248,7 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
-	override func generateSingletonPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition) {
 		let serverAccessType = serverAccess.Name.AsTypeReferenceExpression()
 
 		let field = CGFieldDefinition("_instance", serverAccess.Name.AsTypeReference().NullableNotUnwrapped)
@@ -269,7 +269,7 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		property.GetStatements = propertyGetter
 	}
 
-	override func generateBasics(serverAccess: CGClassTypeDefinition) {
+	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
 		let field = CGFieldDefinition("_serverUrl", "System.String".AsTypeReference().NotNullable)
 		serverAccess.Members.Add(field)
 
@@ -294,7 +294,7 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
-	override func generateLoginPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateLoginPattern(_ serverAccess: CGClassTypeDefinition) {
 		// Not implemented
 	}
 
@@ -329,20 +329,20 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 }
 
 public class JavaServerAccessCodeGen : ServerAccessCodeGen {
-	override func getPlatformSpecificNamespace(reference: RodlUse) -> String! {
+	override func getPlatformSpecificNamespace(_ reference: RodlUse) -> String! {
 		if length(reference.Includes?.JavaModule) > 0 {
 			return reference.Includes.JavaModule;
 		} else {
 			return "";
 		}
 	}
-	override func generateSingletonPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition) {
 	}
-	override func generateBasics(serverAccess: CGClassTypeDefinition) {
+	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
 	}
-	override func generateService(serverAccess: CGClassTypeDefinition, service: RodlService) {
+	override func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService) {
 	}
-	override func generateLoginPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateLoginPattern(_ serverAccess: CGClassTypeDefinition) {
 	}
 }
 
@@ -357,7 +357,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 	let string_type = CGNamedTypeReference("String", isClassType:false)
 	private var dfm: StringBuilder = StringBuilder();
 
-	override func getPlatformSpecificNamespace(reference: RodlUse) -> String! {
+	override func getPlatformSpecificNamespace(_ reference: RodlUse) -> String! {
 		if length(reference.Includes?.DelphiModule) > 0 {
 			return reference.Includes.DelphiModule;
 		} else {
@@ -476,7 +476,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		unit.Imports.Add(generateImport(rodl.Name+"_Intf", aExt: "h", aNamespace:"" , aGeneratePragma: false));
 	}
 
-	override func generateSingletonPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition) {
 		serverAccessName1 = serverAccess.Name+"_"+rodl.Name;
 		serverAccessName2 = "T" + serverAccessName1;
 		let serverAccessType = serverAccessName2.AsTypeReference()
@@ -510,7 +510,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		lunit.Finalization = finalblock;
 	}
 
-	override func generateBasics(serverAccess: CGClassTypeDefinition) {
+	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
 		serverAccess.Name = serverAccessName2;
 		serverAccess.Visibility = CGTypeVisibilityKind.Public;
 		serverAccess.Ancestors.Add("TDataModule".AsTypeReference())
@@ -599,7 +599,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 
 	}
 
-	override func generateLoginPattern(serverAccess: CGClassTypeDefinition) {
+	override func generateLoginPattern(_ serverAccess: CGClassTypeDefinition) {
 		var needsLoginMethod = CGMethodDefinition("ChannelLoginNeeded");
 		needsLoginMethod.Visibility = .Published;
 		needsLoginMethod.CallingConvention = .Register
@@ -655,7 +655,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 
 public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 
-	override func generateBasics(serverAccess: CGClassTypeDefinition) {
+	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
 		super.generateBasics(serverAccess);
 		var ctor = CGConstructorDefinition();
 		ctor.Parameters.Add(CGParameterDefinition("Owner","TComponent".AsTypeReference()));
@@ -665,7 +665,7 @@ public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 		serverAccess.Members.Add(ctor);
 	}
 
-	override func generateService(serverAccess: CGClassTypeDefinition, serviceName: String, suffix: String) {
+	override func generateService(_ serverAccess: CGClassTypeDefinition, serviceName: String, suffix: String) {
 		var propertyName: String
 		var proxyInterfaceType: CGTypeReference
 		let pa = CGPropertyAccessExpression(CGSelfExpression.`Self`, "ServerUrl")
@@ -708,11 +708,11 @@ public class CPlusPlusBuilderServerAccessCodeGen : DelphiServerAccessCodeGen {
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma classgroup \"System.Classes.TPersistent\""));
 		  lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma resource \"*.dfm\""));
 	}
-	override func generatePragma(value: String) {
+	override func generatePragma(_ value: String) {
 		lunit.ImplementationDirectives.Add(CGCompilerDirective("#pragma link \""+value+"\""));
 	}
 
-	override func generateImport(aName: String, aExt: String, aNamespace: String, aGeneratePragma: Boolean)-> CGImport{
+	override func generateImport(_ aName: String, aExt: String, aNamespace: String, aGeneratePragma: Boolean)-> CGImport{
 		if aGeneratePragma {
 			var lname = aName;
 			if !String.IsNullOrEmpty(aNamespace) {
