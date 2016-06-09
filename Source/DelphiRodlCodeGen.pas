@@ -214,20 +214,20 @@ begin
   file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROEnum',
                                                     [entity.Name.AsLiteralExpression.AsCallParameter,
                                                      param2.AsCallParameter, 
-                                                     'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                     'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   for enumvalue: RodlEnumValue in entity.Items do begin
     file.Initialization:Add(new CGMethodCallExpression(nil,'RegisterEnumMapping',
                                                  [entity.Name.AsLiteralExpression.AsCallParameter,
                                                   enumvalue.Name.AsLiteralExpression.AsCallParameter,
                                                   enumvalue.OriginalName.AsLiteralExpression.AsCallParameter, 
-                                                  'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                  'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   end;
   file.Finalization:Add(new CGMethodCallExpression(nil, 'UnRegisterEnumMappings',
                                                    [entity.Name.AsLiteralExpression.AsCallParameter, 
-                                                    'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                    'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROEnum',
                                                     [entity.Name.AsLiteralExpression.AsCallParameter, 
-                                                     'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                     'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -479,8 +479,8 @@ begin
   {$ENDREGION}
 
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',  [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass', [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',  [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass', [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -1073,8 +1073,8 @@ begin
   cpp_GenerateArrayDestructor(ltype);
 
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 
   {$REGION %arrayname%Enumerator}
@@ -1380,8 +1380,8 @@ begin
   end;
   {$ENDREGION}
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'TargetNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -2316,6 +2316,11 @@ begin
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := ("'"+library.CustomAttributes_lower.Item['wsdl']+"'").AsLiteralExpression).AsGlobal());
 
+  file.Globals.Add(new CGFieldDefinition("DefaultNamespace",
+                  Constant := true,
+                  Visibility := CGMemberVisibilityKind.Public,
+                  Initializer := targetNamespace.AsLiteralExpression).AsGlobal());
+
   var ltargetnamespace: String := '';
   if library.CustomAttributes_lower.ContainsKey('targetnamespace') then
     ltargetnamespace := library.CustomAttributes_lower.Item['targetnamespace'];
@@ -2325,6 +2330,7 @@ begin
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
+
 
   for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
@@ -3736,14 +3742,14 @@ begin
                                   CallingConvention := CGCallingConventionKind.Register);
 
   m.LocalVariables := new List<CGVariableDeclarationStatement>;
-  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeKind.String), new CGLocalVariableAccessExpression('TargetNamespace')));
+  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeKind.String), new CGLocalVariableAccessExpression('DefaultNamespace')));
 
   var lres := new CGLocalVariableAccessExpression('lres');
   var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
   for k in list do begin
     m.Statements.Add(new CGAssignmentStatement(lres, 
                                                new CGBinaryOperatorExpression(lres1, 
-                                                                              new CGFieldAccessExpression(k.AsNamedIdentifierExpression,'TargetNamespace',CallSiteKind := CGCallSiteKind.Static), 
+                                                                              new CGFieldAccessExpression(k.AsNamedIdentifierExpression,'DefaultNamespace',CallSiteKind := CGCallSiteKind.Static), 
                                                                               CGBinaryOperatorKind.Addition)
                                                 ));
   end;
