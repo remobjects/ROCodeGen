@@ -65,7 +65,33 @@ type
     method GenerateImplementationFiles(file: CGCodeUnit; library: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;virtual;
   end;
 
+  CompareFunc<T,U> = method(Value:T):U;
+
+extension method List<T>.Sort_OrdinalIgnoreCase(cond: CompareFunc<T,String>): List<T>;assembly;
 implementation
+
+extension method List<T>.Sort_OrdinalIgnoreCase(cond: CompareFunc<T,String>): List<T>;
+begin  
+  var r:= new List<T>;
+  r.AddRange(Self);
+  r.Sort((x,y)-> begin
+                  var x1 := cond(x);
+                  var y1 := cond(y);
+                  if (x1 = nil) and (y1 = nil) then exit 0;
+                  if (x1 = nil) then exit -1;
+                  if (y1 = nil) then exit 1;
+                  x1 := x1.ToUpper;
+                  y1 := y1.ToUpper;
+                  var min_length := iif(x1.Length > y1.Length, y1.Length, x1.Length);
+                  for i: Integer :=0 to min_length-1 do begin
+                    if x1[i] > y1[i] then exit 1;
+                    if x1[i] < y1[i] then exit -1;
+                  end;
+                  exit x1.Length - y1.Length;                   
+                 end);
+  exit r;
+end;
+
 
 method RodlCodeGen.GenerateInterfaceFile(&library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin

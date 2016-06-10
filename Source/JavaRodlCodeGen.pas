@@ -144,7 +144,7 @@ begin
       );
     end;
 
-  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
+  for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
     lIfRecordStrictOrder_False.Statements.Add(
       iif(useDefaultValues, GetWriterStatement_DefaultValues(library, lSortedFields.Item[lvalue]),GetWriterStatement(library, lSortedFields.Item[lvalue]))
     );
@@ -819,7 +819,7 @@ begin
       lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
     end;
 
-  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
+  for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
     lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lSortedFields.Item[lvalue]));
 
 end;
@@ -1320,7 +1320,7 @@ begin
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := if assigned(TargetNamespaceName) then TargetNamespaceName.AsLiteralExpression));
 
-  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase) do begin
+  for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
     if lentity.Count > 0 then
@@ -1331,7 +1331,7 @@ begin
                                   Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpper+'}').AsLiteralExpression));
   end;
 
-  for lentity: RodlEntity in &library.EventSinks.Items.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase) do begin
+  for lentity: RodlEntity in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lName := lentity.Name;
     ltype.Members.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeKind.String),

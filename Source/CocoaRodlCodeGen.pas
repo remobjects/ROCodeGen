@@ -950,7 +950,7 @@ begin
       lIfRecordStrictOrder_True.Statements.Add(GetWriterStatement(library, field, false));
     end;
 
-  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
+  for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
     lIfRecordStrictOrder_False.Statements.Add(GetWriterStatement(library, lSortedFields.Item[lvalue], false));
 end;
 
@@ -995,7 +995,7 @@ begin
       lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
     end;
 
-  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
+  for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
     lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lSortedFields.Item[lvalue]));
 
 end;

@@ -412,7 +412,7 @@ begin
     {$ENDREGION}
 
     var litemList := entity.GetAllItems;
-    var litemList_Sorted := litemList.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase).ToList;
+    var litemList_Sorted := litemList.Sort_OrdinalIgnoreCase(b->b.Name);
     var TROSerializer_typeref := 'TROSerializer'.AsTypeReference;
     var lSerializer_cast := new CGTypeCastExpression('aSerializer'.AsNamedIdentifierExpression,TROSerializer_typeref);
     var lSerializer := '__Serializer'.AsNamedIdentifierExpression;
@@ -1314,7 +1314,7 @@ begin
     {$ENDREGION}
 
     var litemList := entity.GetAllItems;
-    var litemList_Sorted := litemList.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase).ToList;
+    var litemList_Sorted := litemList.ToList.Sort_OrdinalIgnoreCase(b->b.Name);
     var TROSerializer_typeref := 'TROSerializer'.AsTypeReference;
     var lSerializer_cast := new CGTypeCastExpression('aSerializer'.AsNamedIdentifierExpression,TROSerializer_typeref);
     var lSerializer := '__Serializer'.AsNamedIdentifierExpression;
@@ -2334,12 +2334,12 @@ begin
                   Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
 
 
-  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
+  for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     GlobalsConst_GenerateServerGuid(file, &library,lentity);
   end;
 
-  for lentity : RodlEventSink in &library.EventSinks.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
+  for lentity : RodlEventSink in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
     file.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lname]), {new CGPredefinedTypeReference(CGPredefinedTypeKind.String),}
@@ -2348,7 +2348,7 @@ begin
                                 Initializer := (lentity.Name).AsLiteralExpression).AsGlobal);
   end;
 
-  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
+  for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
     if lentity.CustomAttributes_lower.ContainsKey('type') and
@@ -3776,7 +3776,7 @@ begin
     if PureDelphi and ScopedEnums then 
       lUnit.Directives.Add(new CGCompilerDirective('{$SCOPEDENUMS ON}'));
   
-    for entity: RodlEnum in library.Enums.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
+    for entity: RodlEnum in library.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
       if not EntityNeedsCodeGen(entity) then Continue;
       Intf_GenerateEnum(lUnit, &library, entity);
     end;
@@ -3788,7 +3788,7 @@ begin
     Intf_GenerateStructCollection(lUnit, &library, entity);
   end;
 
-  for entity: RodlArray in library.Arrays.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
+  for entity: RodlArray in library.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(entity) then Continue;
     Intf_GenerateArray(lUnit, &library, entity);
   end;
