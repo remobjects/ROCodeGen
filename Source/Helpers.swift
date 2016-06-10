@@ -3,7 +3,7 @@ import Sugar
 
 public class CGHelpers {
 
-	public static func CodeGeneratorForLanguage(language: String) -> CGCodeGenerator? {
+	public static func CodeGeneratorForLanguage(_ language: String) -> CGCodeGenerator? {
 		switch language {
 			case "oxygene", "pas":
 				return CGOxygeneCodeGenerator()
@@ -26,7 +26,7 @@ public class CGHelpers {
 		}
 	}
 
-	public static func FileExtensionForLanguage(language: String) -> String? {
+	public static func FileExtensionForLanguage(_ language: String) -> String? {
 		switch language.ToLower() {
 			case "objc", "obj-c", "objectivec", "objective-c": return "m"
 			case "swift", "silver": return "swift"
