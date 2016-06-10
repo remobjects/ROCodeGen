@@ -412,6 +412,7 @@ begin
     {$ENDREGION}
 
     var litemList := entity.GetAllItems;
+    var litemList_Sorted := litemList.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase).ToList;
     var TROSerializer_typeref := 'TROSerializer'.AsTypeReference;
     var lSerializer_cast := new CGTypeCastExpression('aSerializer'.AsNamedIdentifierExpression,TROSerializer_typeref);
     var lSerializer := '__Serializer'.AsNamedIdentifierExpression;
@@ -425,9 +426,9 @@ begin
     ltype.Members.Add(lm);
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
     lm.LocalVariables:Add(new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref, lSerializer_cast));
-    for lmem in litemList.OrderBy(b->b.Name) do
-      lm.LocalVariables:Add(new CGVariableDeclarationStatement('l_'+lmem.Name,ResolveDataTypeToTypeRefFullQualified(library,lmem.DataType,Intf_name)));
     
+    for lmem in litemList_Sorted do
+      lm.LocalVariables:Add(new CGVariableDeclarationStatement('l_'+lmem.Name,ResolveDataTypeToTypeRefFullQualified(library,lmem.DataType,Intf_name)));    
     var lSorted := new CGBeginEndBlockStatement;
     var lStrict := new CGBeginEndBlockStatement;
     lm.Statements.Add(new CGIfThenElseStatement(new CGFieldAccessExpression(lSerializer,'RecordStrictOrder',CallSiteKind:= CGCallSiteKind.Reference),
@@ -437,7 +438,7 @@ begin
     if entity.Count <> litemList.Count then
         lStrict.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'ReadComplex',['aSerializer'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Static));
     Intf_GenerateRead(file,library,entity.Items,lStrict.Statements, lSerializeInitializedStructValues,lSerializer);
-    Intf_GenerateRead(file,library,litemList.OrderBy(b->b.Name).ToList,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
+    Intf_GenerateRead(file,library,litemList_Sorted,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
     {$ENDREGION}
 
     {$REGION public procedure WriteComplex(aSerializer: TObject); override;}
@@ -450,7 +451,7 @@ begin
     ltype.Members.Add(lm);
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
     lm.LocalVariables:Add(new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref, lSerializer_cast));
-    for lmem in litemList.OrderBy(b->b.Name) do
+    for lmem in litemList_Sorted do
       lm.LocalVariables:Add(new CGVariableDeclarationStatement('l_'+lmem.Name,ResolveDataTypeToTypeRefFullQualified(library,lmem.DataType,Intf_name)));
     lSorted := new CGBeginEndBlockStatement;
     lStrict := new CGBeginEndBlockStatement;
@@ -461,7 +462,7 @@ begin
     if entity.Count <> litemList.Count then lStrict.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'WriteComplex',['aSerializer'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Static));
     lStrict.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     Intf_GenerateWrite(file,library,entity.Items,lStrict.Statements, lSerializeInitializedStructValues,lSerializer);
-    Intf_GenerateWrite(file,library,litemList.OrderBy(b->b.Name).ToList,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
+    Intf_GenerateWrite(file,library,litemList_Sorted,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
     {$ENDREGION}
   end;
 
@@ -1313,6 +1314,7 @@ begin
     {$ENDREGION}
 
     var litemList := entity.GetAllItems;
+    var litemList_Sorted := litemList.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase).ToList;
     var TROSerializer_typeref := 'TROSerializer'.AsTypeReference;
     var lSerializer_cast := new CGTypeCastExpression('aSerializer'.AsNamedIdentifierExpression,TROSerializer_typeref);
     var lSerializer := '__Serializer'.AsNamedIdentifierExpression;
@@ -1329,7 +1331,7 @@ begin
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
     lm.LocalVariables:Add(new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref, lSerializer_cast));
 
-    for lmem in litemList.OrderBy(b->b.Name) do
+    for lmem in litemList_Sorted do
       lm.LocalVariables:Add(new CGVariableDeclarationStatement('l_'+lmem.Name,ResolveDataTypeToTypeRefFullQualified(library,lmem.DataType,Intf_name)));
     var lSorted := new CGBeginEndBlockStatement;
     var lStrict := new CGBeginEndBlockStatement;
@@ -1339,7 +1341,7 @@ begin
 
     if entity.Count <> litemList.Count then lStrict.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'ReadException',['aSerializer'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Static));
     Intf_GenerateRead(file,library,entity.Items,lStrict.Statements, lSerializeInitializedStructValues,lSerializer);
-    Intf_GenerateRead(file,library,litemList.OrderBy(b->b.Name).ToList,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
+    Intf_GenerateRead(file,library,litemList_Sorted,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
     {$ENDREGION}
 
     {$REGION public procedure WriteException(aSerializer: TROBaseSerializer); override;}
@@ -1352,7 +1354,7 @@ begin
     ltype.Members.Add(lm);
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
     lm.LocalVariables:Add(new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref, lSerializer_cast));
-    for lmem in litemList.OrderBy(b->b.Name) do
+    for lmem in litemList_Sorted do
       lm.LocalVariables:Add(new CGVariableDeclarationStatement('l_'+lmem.Name,ResolveDataTypeToTypeRefFullQualified(library,lmem.DataType,Intf_name)));
     lSorted := new CGBeginEndBlockStatement;
     lStrict := new CGBeginEndBlockStatement;
@@ -1363,7 +1365,7 @@ begin
     if entity.Count <> litemList.Count then lStrict.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'WriteException',['aSerializer'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Static));
     lStrict.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     Intf_GenerateWrite(file,library,entity.Items,lStrict.Statements, lSerializeInitializedStructValues,lSerializer);
-    Intf_GenerateWrite(file,library,litemList.OrderBy(b->b.Name).ToList,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
+    Intf_GenerateWrite(file,library,litemList_Sorted,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
     {$ENDREGION}
   end;
 
@@ -2332,12 +2334,12 @@ begin
                   Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
 
 
-  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name) do begin
+  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     GlobalsConst_GenerateServerGuid(file, &library,lentity);
   end;
 
-  for lentity : RodlEventSink in &library.EventSinks.Items.OrderBy(b->b.Name) do begin
+  for lentity : RodlEventSink in &library.EventSinks.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
     file.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lname]), {new CGPredefinedTypeReference(CGPredefinedTypeKind.String),}
@@ -2346,7 +2348,7 @@ begin
                                 Initializer := (lentity.Name).AsLiteralExpression).AsGlobal);
   end;
 
-  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name) do begin
+  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
     if lentity.CustomAttributes_lower.ContainsKey('type') and
@@ -3774,7 +3776,7 @@ begin
     if PureDelphi and ScopedEnums then 
       lUnit.Directives.Add(new CGCompilerDirective('{$SCOPEDENUMS ON}'));
   
-    for entity: RodlEnum in library.Enums.Items.OrderBy(b->b.Name) do begin
+    for entity: RodlEnum in library.Enums.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
       if not EntityNeedsCodeGen(entity) then Continue;
       Intf_GenerateEnum(lUnit, &library, entity);
     end;
@@ -3786,7 +3788,7 @@ begin
     Intf_GenerateStructCollection(lUnit, &library, entity);
   end;
 
-  for entity: RodlArray in library.Arrays.Items.OrderBy(b->b.Name) do begin
+  for entity: RodlArray in library.Arrays.Items.OrderBy(b->b.Name,StringComparer.OrdinalIgnoreCase) do begin
     if not EntityNeedsCodeGen(entity) then Continue;
     Intf_GenerateArray(lUnit, &library, entity);
   end;

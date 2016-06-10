@@ -950,14 +950,8 @@ begin
       lIfRecordStrictOrder_True.Statements.Add(GetWriterStatement(library, field, false));
     end;
 
-  var llist := new List<KeyValuePair<String, RodlField>>;
-  for each k in lSortedFields.Keys do
-    llist.Add(new KeyValuePair<String, RodlField>(k, lSortedFields.Item[k]));
-  //lSortedFields.ForEach(x -> llist.Add(x));
-  llist.Sort((x, y) -> x.Key.CompareTo(y.Key));
-
-  for lvalue:KeyValuePair<String, RodlField> in llist do
-    lIfRecordStrictOrder_False.Statements.Add(GetWriterStatement(library, lvalue.Value, false));
+  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
+    lIfRecordStrictOrder_False.Statements.Add(GetWriterStatement(library, lSortedFields.Item[lvalue], false));
 end;
 
 method CocoaRodlCodeGen.ReadFromMessage_Method(&library: RodlLibrary; entity: RodlStructEntity): CGMethodDefinition;
@@ -1001,14 +995,9 @@ begin
       lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
     end;
 
-  var llist := new List<KeyValuePair<String, RodlField>>;
-  for each k in lSortedFields.Keys do
-    llist.Add(new KeyValuePair<String, RodlField>(k, lSortedFields.Item[k]));
-//  lSortedFields.ForEach(x -> llist.Add(x));
-  llist.Sort((x, y) -> x.Key.CompareTo(y.Key));
+  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
+    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lSortedFields.Item[lvalue]));
 
-  for lvalue:KeyValuePair<String, RodlField> in llist do
-    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lvalue.Value));
 end;
 
 method CocoaRodlCodeGen.GetWriterStatement(&library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"; isMethod: Boolean; aInOnly: Boolean := false): CGStatement;

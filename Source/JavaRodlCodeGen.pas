@@ -144,17 +144,10 @@ begin
       );
     end;
 
-  var llist := new List<KeyValuePair<String, RodlField>>;
-  for each k in lSortedFields.Keys do
-    llist.Add(new KeyValuePair<String, RodlField>(k, lSortedFields.Item[k]));
-  //lSortedFields.ForEach(x -> llist.Add(x));  
-  llist.Sort((x, y) -> x.Key.CompareTo(y.Key)); 
-
-  for lvalue:KeyValuePair<String, RodlField> in llist do
+  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
     lIfRecordStrictOrder_False.Statements.Add(
-      iif(useDefaultValues, GetWriterStatement_DefaultValues(library, lvalue.Value),GetWriterStatement(library, lvalue.Value))
+      iif(useDefaultValues, GetWriterStatement_DefaultValues(library, lSortedFields.Item[lvalue]),GetWriterStatement(library, lSortedFields.Item[lvalue]))
     );
-
 end;
 
 
@@ -826,14 +819,9 @@ begin
       lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
     end;
 
-  var llist := new List<KeyValuePair<String, RodlField>>;
-  for each k in lSortedFields.Keys do
-    llist.Add(new KeyValuePair<String, RodlField>(k, lSortedFields.Item[k]));
-  //lSortedFields.ForEach(x -> llist.Add(x));  
-  llist.Sort((x, y) -> x.Key.CompareTo(y.Key)); 
+  for lvalue: String in lSortedFields.Keys.OrderBy(b->b,StringComparer.OrdinalIgnoreCase) do
+    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lSortedFields.Item[lvalue]));
 
-  for lvalue: KeyValuePair<String, RodlField> in llist do
-    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lvalue.Value));
 end;
 
 method JavaRodlCodeGen.GetReaderStatement(&library: RodlLibrary; entity: RodlTypedEntity; variableName: String): CGStatement;
@@ -1332,7 +1320,7 @@ begin
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := if assigned(TargetNamespaceName) then TargetNamespaceName.AsLiteralExpression));
 
-  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name) do begin
+  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
     if lentity.Count > 0 then
@@ -1343,7 +1331,7 @@ begin
                                   Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpper+'}').AsLiteralExpression));
   end;
 
-  for lentity: RodlEntity in &library.EventSinks.Items do begin
+  for lentity: RodlEntity in &library.EventSinks.Items.OrderBy(b->b.Name, StringComparer.OrdinalIgnoreCase) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lName := lentity.Name;
     ltype.Members.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeKind.String),
