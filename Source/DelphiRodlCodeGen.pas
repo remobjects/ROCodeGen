@@ -3914,9 +3914,13 @@ begin
   {$REGION initialization}
   if (library.Services.Count > 0) or (library.EventSinks.Count > 0) then begin
     for latr in library.CustomAttributes.Keys do begin
-      lUnit.Initialization.Add(new CGMethodCallExpression(nil, 'RegisterServiceAttribute',[''.AsLiteralExpression.AsCallParameter,
-                                                                        latr.AsLiteralExpression.AsCallParameter,
-                                                                        library.CustomAttributes[latr].AsLiteralExpression.AsCallParameter].ToList));
+      var latr1 := latr.ToLower;
+      lUnit.Initialization.Add(new CGMethodCallExpression(nil, 'RegisterServiceAttribute',
+                                                               [''.AsLiteralExpression.AsCallParameter,
+                                                                latr.AsLiteralExpression.AsCallParameter,
+                                                               (if latr1 = 'wsdl' then 'WSDLLocation'.AsNamedIdentifierExpression
+                                                                else if latr1 = 'targetnamespace' then 'TargetNamespace'.AsNamedIdentifierExpression
+                                                                else library.CustomAttributes[latr].AsLiteralExpression).AsCallParameter].ToList));
     end;
   end;
   {$ENDREGION}
