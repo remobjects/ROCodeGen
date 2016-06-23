@@ -340,7 +340,7 @@ if let type = options["type"] {
 				if !serverSupport {
 					writeLn("Generating server code is not supported for this platform.")
 				}
-				let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
+				let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Invk"))
 				FileUtils.WriteText(targetFileNameWithSuffix("Invk"), source);
 				writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
 
