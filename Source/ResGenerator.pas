@@ -13,7 +13,7 @@ type
        $00,$00];
       RODLFile = 'RODLFILE';
 
-    class method WriteLong(buf: array of Byte; var pos: Integer; Value: Int32);
+    class method WriteLong(buf: array of Byte; var pos: Int32; Value: Int32);
     begin
       buf[pos] := Value and $FF;
       buf[pos+1] := (Value shr 8) and $FF;
@@ -40,7 +40,7 @@ type
       WriteLong(result, var pos, cnt_size); // Resource Size
       WriteLong(result, var pos, 32+length(aName)*2); // Header Size
       WriteLong(result, var pos, $000AFFFF); // RT_RCDATA
-      for i: Integer := 0 to length(aName)-1 do begin
+      for i: Int32 := 0 to length(aName)-1 do begin
         var ch := ord(aName[i]);
         result[pos] := ch and $FF;
         result[pos+1] := (ch shr 8) and $FF;
