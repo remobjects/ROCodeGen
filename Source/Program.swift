@@ -23,6 +23,7 @@ func writeSyntax() {
 	writeLn("  - events (.NET only)")
 	#endif
 	writeLn("  - impl (same as --services)")
+	writeLn("  - res")
 	writeLn()
 	writeLn("Valid <platform> values:")
 	writeLn()
@@ -100,6 +101,7 @@ var rodlFileName = params[0];
 writeLn("Processing RODL file "+rodlFileName)
 
 var isUrl = rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
+var url = isUrl ? rodlFileName : nil
 
 if !isUrl && !FileUtils.Exists(params[0]) {
 	writeLn("File \(params[0]) not found")
@@ -148,10 +150,24 @@ switch options["type"]?.ToLower() {
 	#endif
 	case "async": break
 	case "impl": break
+	case "res": break
 	default:
 		writeSyntax()
 		writeLn("Unsupported type: "+options["type"])
 		return 2
+}
+
+if options["type"]?.ToLower() == "res" {
+	
+	let resFileName = Path.ChangeExtension(rodlFileName, ".res")
+	if isUrl {
+		var data = Http.GetBinary(HttpRequest(Url(url))).ToArray()
+		ResGenerator.GenerateResFile(data, resFileName);
+	} else {
+		ResGenerator.GenerateResFile(rodlFileName, resFileName);
+	}
+	writeLn("Wrote file \(resFileName)")
+	return
 }
 
 var serverSupport = false

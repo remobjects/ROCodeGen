@@ -22,7 +22,7 @@ type
       inc(pos,4);
     end;
 
-    class method GenerateRes(Content: array of Byte; aName: String): array of Byte;
+    class method GenerateResBufferFromBuffer(Content: array of Byte; aName: String): array of Byte;
     begin
       var len_name := length(aName)*2+2; // aName + #0#0
       if len_name mod 4 <> 0 then inc(len_name,2); // extra 0 for dword alignment      
@@ -33,7 +33,8 @@ type
                  length(Content);
       result := new array of Byte(len);
 
-      FirstEmptyResource.CopyTo(Result, 0);
+      for i: Int32 := 0 to length(FirstEmptyResource)-1 do
+        result[i]:= FirstEmptyResource[i];
       var pos: Int32 := length(FirstEmptyResource);
       var cnt_size: Int32 := length(Content);
       WriteLong(result, var pos, cnt_size); // Resource Size
@@ -52,11 +53,11 @@ type
       WriteLong(result, var pos, 0); // Flags + Language
       WriteLong(result, var pos, 0); // Resource Version
       WriteLong(result, var pos, 0); // Characteristics
-      Content.CopyTo(Result, pos);
+      for i: Int32 := 0 to length(Content)-1 do
+        result[pos+i]:= Content[i];
     end;
     
-  public
-    class method GenerateRes(RODLFileName: String): array of Byte;
+    class method GenerateResBufferFromFile(RODLFileName: String): array of Byte;
     begin      
       {$IFDEF FAKESUGAR}
       if not File.Exists(RODLFileName) then raise new Exception('file is not found: '+RODLFileName);
@@ -67,21 +68,35 @@ type
       {$ENDIF}
       var cont := new array of Byte(rodl.Length);
       rodl.Read(cont,0, rodl.Length);
-      exit GenerateRes(cont, RODLFile);
+      exit GenerateResBufferFromBuffer(cont, RODLFile);
     end;
 
-    class method GenerateRes(RODLFileName: String; ResFileName: String);
+    class method SaveBufferToFile(Content: array of Byte; ResFileName: String);
     begin
-      var buf := GenerateRes(RODLFileName);
       {$IFDEF FAKESUGAR}
       var res := File.Create(ResFileName);      
       {$ELSE}
       var res := new FileHandle(ResFileName,FileOpenMode.Create);      
       {$ENDIF}
-      res.Write(buf, 0, length(buf));
+      res.Write(Content, 0, length(Content));
       res.Flush;
       res.Close;
     end;
+
+  public
+  
+    class method GenerateResFile(Content: array of Byte; ResFileName: String);
+    begin
+      var buf := GenerateResBufferFromBuffer(Content, RODLFileName);
+      SaveBufferToFile(buf, ResFileName)
+    end;
+    
+    class method GenerateResFile(RODLFileName: String; ResFileName: String);
+    begin
+      var buf := GenerateResBufferFromFile(RODLFileName);
+      SaveBufferToFile(buf, ResFileName)
+    end;
+    
   end;
 
 end.
