@@ -69,11 +69,11 @@ public __abstract class ServerAccessCodeGen {
 		}
 	}
 	
-	fileprivate func generateStandardImports(_ unit: CGCodeUnit) {
+	/*fileprivate*/internal func generateStandardImports(_ unit: CGCodeUnit) {
 		// no-op, but platforms will override
 	}
 
-	fileprivate func generatUsedRodlImports(_ unit: CGCodeUnit) {
+	/*fileprivate*/internal func generatUsedRodlImports(_ unit: CGCodeUnit) {
 		for uses in rodl.Uses.Items {
 			let platformNamespace = self.getPlatformSpecificNamespace(uses);
 			if length(platformNamespace) > 0 {
@@ -87,11 +87,11 @@ public __abstract class ServerAccessCodeGen {
 			}
 		}
 	}
-	fileprivate __abstract func getPlatformSpecificNamespace(_ reference: RodlUse) -> String!;
-	fileprivate __abstract func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition)
-	fileprivate __abstract func generateBasics(_ serverAccess: CGClassTypeDefinition)
-	fileprivate __abstract func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService)
-	fileprivate __abstract func generateLoginPattern(_ serverAccess: CGClassTypeDefinition)
+	/*fileprivate*/internal __abstract func getPlatformSpecificNamespace(_ reference: RodlUse) -> String!;
+	/*fileprivate*/internal __abstract func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition)
+	/*fileprivate*/internal __abstract func generateBasics(_ serverAccess: CGClassTypeDefinition)
+	/*fileprivate*/internal __abstract func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService)
+	/*fileprivate*/internal __abstract func generateLoginPattern(_ serverAccess: CGClassTypeDefinition)
 }
 
 public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
@@ -620,12 +620,12 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		generateService(serverAccess, serviceName: service.Name, suffix: "_AsyncEx")
 	}
 
-	fileprivate func generateInterfaceType(_ aName: String) -> CGTypeReference{
+	/*fileprivate*/internal func generateInterfaceType(_ aName: String) -> CGTypeReference{
 		return aName.AsTypeReference()
 	}
 
 
-	fileprivate func generateService(_ serverAccess: CGClassTypeDefinition, serviceName: String, suffix: String) {
+	/*fileprivate*/internal func generateService(_ serverAccess: CGClassTypeDefinition, serviceName: String, suffix: String) {
 		var propertyName: String
 		var proxyInterfaceType: CGTypeReference
 		let pa = CGPropertyAccessExpression(CGSelfExpression.`Self`, "ServerUrl")
