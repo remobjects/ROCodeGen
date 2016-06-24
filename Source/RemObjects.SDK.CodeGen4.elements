@@ -170,6 +170,7 @@
     <Compile Include="RodlCodeGen.pas">
       <Link>RodlCodeGen.pas</Link>
     </Compile>
+    <Compile Include="ResGenerator.pas" />
     <Compile Include="RodlReader.pas">
       <Link>RodlReader.pas</Link>
     </Compile>

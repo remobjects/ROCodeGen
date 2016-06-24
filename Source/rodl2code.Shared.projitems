@@ -18,6 +18,9 @@
         </Folder>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)ResGenerator.pas">
+            <VirtualFolder>RODL</VirtualFolder>
+        </Compile>
         <Compile Include="$(MSBuildThisFileDirectory)CocoaRodlCodeGen.pas">
             <VirtualFolder>RODL</VirtualFolder>
         </Compile>
