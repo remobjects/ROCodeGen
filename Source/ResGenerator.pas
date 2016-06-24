@@ -34,7 +34,7 @@ type
       result := new array of Byte(len);
 
       FirstEmptyResource.CopyTo(Result, 0);
-      var pos := length(FirstEmptyResource);
+      var pos: Int32 := length(FirstEmptyResource);
       var cnt_size: Int32 := length(Content);
       WriteLong(result, var pos, cnt_size); // Resource Size
       WriteLong(result, var pos, 32+length(aName)*2); // Header Size
@@ -54,6 +54,7 @@ type
       WriteLong(result, var pos, 0); // Characteristics
       Content.CopyTo(Result, pos);
     end;
+    
   public
     class method GenerateRes(RODLFileName: String): array of Byte;
     begin      
