@@ -160,12 +160,7 @@ switch options["type"]?.ToLower() {
 if options["type"]?.ToLower() == "res" {
 	
 	let resFileName = Path.ChangeExtension(rodlFileName, ".res")
-	if isUrl {
-		var data = Http.GetBinary(HttpRequest(Url(url))).ToArray()
-		ResGenerator.GenerateResFile(data, resFileName);
-	} else {
-		ResGenerator.GenerateResFile(rodlFileName, resFileName);
-	}
+	ResGenerator.GenerateResFile(rodlLibrary, resFileName);
 	writeLn("Wrote file \(resFileName)")
 	return
 }

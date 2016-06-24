@@ -11,7 +11,7 @@ type
       [$00,$00,$00,$00,$20,$00,$00,$00,$FF,$FF,$00,$00,$FF,$FF,$00,
        $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,
        $00,$00];
-      RODLFile = 'RODLFILE';
+      NAME_RODLFile = 'RODLFILE';
 
     class method WriteLong(buf: array of Byte; var pos: Int32; Value: Int32);
     begin
@@ -68,7 +68,7 @@ type
       {$ENDIF}
       var cont := new array of Byte(rodl.Length);
       rodl.Read(cont,0, rodl.Length);
-      exit GenerateResBufferFromBuffer(cont, RODLFile);
+      exit GenerateResBufferFromBuffer(cont, NAME_RODLFile);
     end;
 
     class method SaveBufferToFile(Content: array of Byte; ResFileName: String);
@@ -85,16 +85,23 @@ type
 
   public
   
-    class method GenerateResFile(Content: array of Byte; ResFileName: String);
+    class method GenerateResFile(aBytes: array of Byte; aResFileName: String);
     begin
-      var buf := GenerateResBufferFromBuffer(Content, RODLFileName);
-      SaveBufferToFile(buf, ResFileName)
+      var lBuffer := GenerateResBufferFromBuffer(aBytes, NAME_RODLFile);
+      SaveBufferToFile(lBuffer, aResFileName)
     end;
     
-    class method GenerateResFile(RODLFileName: String; ResFileName: String);
+    class method GenerateResFile(aRODLFileName: String; aResFileName: String);
     begin
-      var buf := GenerateResBufferFromFile(RODLFileName);
-      SaveBufferToFile(buf, ResFileName)
+      var lBuffer := GenerateResBufferFromFile(aRODLFileName);
+      SaveBufferToFile(lBuffer, aResFileName)
+    end;
+
+    class method GenerateResFile(aRODL: RodlLibrary; aResFileName: String);
+    begin
+      var lContent := Encoding.UTF8.GetBytes(aRODL.ToString());
+      var lBuffer := GenerateResBufferFromBuffer(lContent, aRODL.Name);
+      SaveBufferToFile(lBuffer, aResFileName)
     end;
     
   end;
