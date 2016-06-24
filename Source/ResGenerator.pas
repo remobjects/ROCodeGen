@@ -33,7 +33,8 @@ type
                  length(Content);
       result := new array of Byte(len);
 
-      FirstEmptyResource.CopyTo(Result, 0);
+      for i:Int32 := 0 to length(FirstEmptyResource)-1 do
+        result[i]:= FirstEmptyResource[i];
       var pos: Int32 := length(FirstEmptyResource);
       var cnt_size: Int32 := length(Content);
       WriteLong(result, var pos, cnt_size); // Resource Size
@@ -52,9 +53,9 @@ type
       WriteLong(result, var pos, 0); // Flags + Language
       WriteLong(result, var pos, 0); // Resource Version
       WriteLong(result, var pos, 0); // Characteristics
-      Content.CopyTo(Result, pos);
+      for i:Integer := 0 to length(Content)-1 do
+        result[pos+i]:= Content[i];
     end;
-    
   public
     class method GenerateRes(RODLFileName: String): array of Byte;
     begin      
