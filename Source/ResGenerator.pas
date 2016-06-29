@@ -100,7 +100,7 @@ type
     class method GenerateResFile(aRODL: RodlLibrary; aResFileName: String);
     begin
       var lContent := Encoding.UTF8.GetBytes(aRODL.ToString());
-      var lBuffer := GenerateResBufferFromBuffer(lContent, aRODL.Name);
+      var lBuffer := GenerateResBufferFromBuffer(lContent, NAME_RODLFile);
       SaveBufferToFile(lBuffer, aResFileName)
     end;
     
