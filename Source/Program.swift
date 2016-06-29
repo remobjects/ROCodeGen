@@ -30,7 +30,7 @@ func writeSyntax() {
 	#if ECHOES
 	writeLn("  - .net, net, echoes")
 	#endif
-	writeLn("  - cocoa, xcode, nougat")
+	writeLn("  - cocoa, xcode, toffee")
 	writeLn("  - java, cooper")
 	writeLn("  - delphi, c++builder, bcb")
 	writeLn("  - javascript, js (not supported yet)")
@@ -65,7 +65,7 @@ func parseParameters(_ cmdlineParams: [String]) {
 			if p > 0 {
 				var name = param.Substring(0, p)
 				var value = param.Substring(p+1)
-				options[name.ToLower()] = value // retest 72610: Nougat: Sugar mapping fails at runtime, trying to call the mapped method
+				options[name.ToLower()] = value // retest 72610: Sugar mapping fails at runtime, trying to call the mapped method
 				//(options as! NSMutableDictionary)[name] = value.ToLower() // Parameter 1 is "String", should be "TValue", in call to NSMutableDictionary<TKey,TValue>!.setObject(anObject: TValue, forKeyedSubscript aKey: TKey)
 																		  // Parameter 2 is "String!", should be "TKey", in call to NSMutableDictionary<TKey,TValue>!.setObject(anObject: TValue, forKeyedSubscript aKey: TKey)
 			}
@@ -174,9 +174,9 @@ switch options["platform"]?.ToLower() {
 			options["language"] = "silver" // force our Swift
 		}
 		activeRodlCodeGen = JavaRodlCodeGen()
-	case "nougat", "cocoa", "xcode":
+	case "toffee", "nougat", "cocoa", "xcode": // keep Nougat, undocumdented, for backwards comopatibility 
 		options["platform"] = "cocoa"
-		if options["language"]?.ToLower() == "swift" && options["platform"]?.ToLower() == "nougat" {
+		if options["language"]?.ToLower() == "swift" && (options["platform"]?.ToLower() == "toffee" || options["platform"]?.ToLower() == "nougat") {
 				options["language"] = "silver" // force our Swift
 		}
 		activeRodlCodeGen = CocoaRodlCodeGen()
