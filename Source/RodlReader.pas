@@ -155,6 +155,7 @@ type
     property Includes: RodlInclude;
     property DontApplyCodeGen: Boolean;
     property DataSnap: Boolean := false;
+    property ScopedEnums: Boolean := false;
   end;
 
   RodlGroup = public class(RodlEntity)
@@ -169,7 +170,7 @@ type
     property JavaModule: String;
     property JavaScriptModule: String;
     property NetModule: String;
-    property NougatModule: String;
+    property ToffeeModule: String;
     property ObjCModule: String;
   end;
 
@@ -709,6 +710,8 @@ begin
       &Namespace := node.Attributes["Namespace"].Value;
     if (node.Attributes["DataSnap"] <> nil) then
       DataSnap := node.Attributes["DataSnap"].Value = "1";
+    if (node.Attributes["ScopedEnums"] <> nil) then
+      ScopedEnums := node.Attributes["ScopedEnums"].Value = "1";
     DontApplyCodeGen := ((node.Attributes["SkipCodeGen"] <> nil) and (node.Attributes["SkipCodeGen"].Value = "1")) or
                         ((node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1"));
 
@@ -803,8 +806,10 @@ begin
   ObjCModule := LoadAttribute(node, "ObjC");
   JavaModule := LoadAttribute(node, "Java");
   JavaScriptModule := LoadAttribute(node, "JavaScript");
-  NougatModule := LoadAttribute(node, "Nougat");
-
+  ToffeeModule := LoadAttribute(node, "Toffee");
+  //backward compatibility
+  if String.IsNullOrEmpty(ToffeeModule) then 
+    ToffeeModule := LoadAttribute(node, "Nougat");
 end;
 
 constructor RodlUse;

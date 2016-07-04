@@ -3677,6 +3677,9 @@ end;
 
 method DelphiRodlCodeGen.GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
 begin
+  ScopedEnums := ScopedEnums or library.ScopedEnums;
+  //special mode, only if library.ScopedEnums is set 
+  IncludeUnitNameForOwnTypes := IncludeUnitNameForOwnTypes or library.ScopedEnums;
   targetNamespace := aTargetNamespace;
   if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Namespace;
   if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Name;

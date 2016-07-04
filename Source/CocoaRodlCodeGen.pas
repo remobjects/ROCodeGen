@@ -68,8 +68,8 @@ begin
   file.Imports.Add(new CGImport(new CGNamespaceReference("Foundation")));
   file.Imports.Add(new CGImport(new CGNamespaceReference("RemObjectsSDK")));
   for rodl: RodlUse in library.Uses.Items do begin
-    if length(rodl.Includes:NougatModule) > 0 then
-      file.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Includes.NougatModule)))
+    if length(rodl.Includes:ToffeeModule) > 0 then
+      file.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Includes.ToffeeModule)))
      else if length(rodl.Namespace) > 0 then
       file.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Namespace)))
     else
@@ -1365,7 +1365,7 @@ end;
 
 method CocoaRodlCodeGen.GetNamespace(library: RodlLibrary): String;
 begin
-  if assigned(library.Includes) then result := library.Includes.NougatModule;
+  if assigned(library.Includes) then result := library.Includes.ToffeeModule;
   if String.IsNullOrWhiteSpace(result) then result := inherited GetNamespace(library);
 end;
 
