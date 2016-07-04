@@ -109,8 +109,8 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 	}
 
 	override func getPlatformSpecificNamespace(_ reference: RodlUse) -> String! {
-		if length(reference.Includes?.ToffeeModule) > 0 {
-			return reference.Includes.ToffeeModule;
+		if length(reference.Includes?.CocoaModule) > 0 {
+			return reference.Includes.CocoaModule;
 		} else {
 			return "";
 		}

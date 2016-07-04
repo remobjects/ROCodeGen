@@ -170,7 +170,7 @@ type
     property JavaModule: String;
     property JavaScriptModule: String;
     property NetModule: String;
-    property ToffeeModule: String;
+    property CocoaModule: String;
     property ObjCModule: String;
   end;
 
@@ -806,10 +806,10 @@ begin
   ObjCModule := LoadAttribute(node, "ObjC");
   JavaModule := LoadAttribute(node, "Java");
   JavaScriptModule := LoadAttribute(node, "JavaScript");
-  ToffeeModule := LoadAttribute(node, "Toffee");
+  CocoaModule := LoadAttribute(node, "Cocoa");
   //backward compatibility
-  if String.IsNullOrEmpty(ToffeeModule) then 
-    ToffeeModule := LoadAttribute(node, "Nougat");
+  if String.IsNullOrEmpty(CocoaModule) then 
+    CocoaModule := LoadAttribute(node, "Nougat");
 end;
 
 constructor RodlUse;
