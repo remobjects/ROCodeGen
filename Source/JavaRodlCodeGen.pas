@@ -836,7 +836,7 @@ begin
   if (entity.CustomAttributes.Count = 0) then exit;
   exit new CGFieldDefinition("_attributes",
                              new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeKind.String),ResolveStdtypes(CGPredefinedTypeKind.String)].ToList),
-                            //&Static := true,
+                            &Static := true,
                             Visibility := CGMemberVisibilityKind.Private);
 end;
 
@@ -847,6 +847,7 @@ begin
   Result := new CGMethodDefinition("getAttributeValue",
                                   Parameters:=[new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
                                   ReturnType := ResolveStdtypes(CGPredefinedTypeKind.String),
+                                  &Static := True,
                                   Virtuality := CGMemberVirtualityKind.Override,
                                   Visibility := CGMemberVisibilityKind.Public);
 
@@ -869,7 +870,7 @@ begin
                               EscapeString(entity.CustomAttributes[l_key]).AsLiteralExpression.AsCallParameter].ToList
         ));
   end;
-  Result.Statements.Add(new CGMethodCallExpression(l_attributes,"get", [new CGFieldAccessExpression("aName".AsNamedIdentifierExpression,"toLowerCase").AsCallParameter].ToList).AsReturnStatement);
+  Result.Statements.Add(new CGMethodCallExpression(l_attributes,"get", [new CGMethodCallExpression("aName".AsNamedIdentifierExpression,"toLowerCase").AsCallParameter].ToList).AsReturnStatement);
 end;
 
 method JavaRodlCodeGen.GetWriterStatement(&library: RodlLibrary; entity: RodlTypedEntity; useGetter: Boolean := True; variableName: String := "aMessage"): CGStatement;
@@ -1266,10 +1267,10 @@ begin
   var lunit := DoGenerateInterfaceFile(library, lnamespace);
   var lgn := GetGlobalName(library);
   for k in lunit.Types do begin
-    if (k is CGInterfaceTypeDefinition) and (CGInterfaceTypeDefinition(k).Name = lgn) then 
+{    if (k is CGInterfaceTypeDefinition) and (CGInterfaceTypeDefinition(k).Name = lgn) then 
       result.Add(Path.ChangeExtension('Defines', Generator.defaultFileExtension), (Generator.GenerateUnitForSingleType(k) &unit(lunit)))
     else
-      result.Add(Path.ChangeExtension(k.Name, Generator.defaultFileExtension), (Generator.GenerateUnitForSingleType(k) &unit(lunit)));
+}      result.Add(Path.ChangeExtension(k.Name, Generator.defaultFileExtension), (Generator.GenerateUnitForSingleType(k) &unit(lunit)));
   end;
 end;
 
