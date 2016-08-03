@@ -489,7 +489,7 @@ end;
 method EntityCollection<T>.FindEntity(name: String): T;
 begin
   for lRodlEntity: T in fItems do
-    if lRodlEntity.Name.EqualsIgnoringCase(name) then exit lRodlEntity;
+    if lRodlEntity.Name.EqualsIgnoringCaseInvariant(name) then exit lRodlEntity;
   exit nil;
 end;
 
@@ -508,7 +508,7 @@ begin
       var lIsNew := true;
       for entity:T in fItems do
         if entity.EntityID.Equals(lEntity.EntityID) then begin
-          if entity.Name.EqualsIgnoringCase(lEntity.Name) then begin
+          if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
             lIsNew := false;
             break;
           end
@@ -533,7 +533,7 @@ begin
 
   for each lt in fItems do begin
     var laname:= RodlEntityWithAncestor(lt):AncestorName;
-    if not String.IsNullOrEmpty(laname) and (fItems.Where(b->b.Name.EqualsIgnoringCase(laname)).Count>0) then
+    if not String.IsNullOrEmpty(laname) and (fItems.Where(b->b.Name.EqualsIgnoringCaseInvariant(laname)).Count>0) then
       lAncestors.Add(lt)
     else
       lResult.Add(lt);

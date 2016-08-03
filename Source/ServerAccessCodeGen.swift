@@ -15,7 +15,7 @@ public __abstract class ServerAccessCodeGen {
 	}
 
 	func isLoginService(_ serviceName: String)-> Boolean{
-		return  serviceName.EqualsIgnoringCase("LoginService");
+		return  serviceName.EqualsIgnoringCaseInvariant("LoginService");
 	}
 
 	func hasLoginService() -> Boolean{
