@@ -216,7 +216,7 @@ end;
 
 method RodlCodeGen.isBinary(dataType: String): Boolean;
 begin
-  exit dataType.EqualsIgnoreCase('binary');
+  exit dataType.EqualsIgnoringCase('binary');
 end;
 
 method RodlCodeGen.CleanedWsdlName(aName: String): String;

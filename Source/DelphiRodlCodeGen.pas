@@ -172,21 +172,21 @@ begin
   CodeGenTypes.Add("utf8string", String("UTF8String").AsTypeReference);
   CodeGenTypes.Add("xsdatetime", String("XsDateTime").AsTypeReference);
 
-	// Delphi Seattle + FPC reserved list
-	// http://docwiki.embarcadero.com/RADStudio/Seattle/en/Fundamental_Syntactic_Elements#Reserved_Words
-	// http://www.freepascal.org/docs-html/ref/refse3.html
-	ReservedWords.AddRange(["absolute", "abstract", "alias", "and", "array", "as", "asm", "assembler", "at", "automated", "begin", 
-	"bitpacked", "break", "case", "cdecl", "class", "const", "constructor", "continue", "cppdecl", "cvar", "default", 
-	"deprecated", "destructor", "dispinterface", "dispose", "div", "do", "downto", "dynamic", "else", "end", "enumerator",
-	"except", "exit", "experimental", "export", "exports", "external", "false", "far", "far16", "file", "finalization", 
-	"finally", "for", "forward", "function", "generic", "goto", "helper", "if", "implementation", "implements", "in", 
-	"index", "inherited", "initialization", "inline", "interface", "interrupt", "iochecks", "is", "label", "library", 
-	"local", "message", "mod", "name", "near", "new", "nil", "nodefault", "noreturn", "nostackframe", "not", "object", 
-	"of", "oldfpccall", "on", "operator", "or", "otherwise", "out", "overload", "override", "packed", "pascal", "platform", 
-	"private", "procedure", "program", "property", "protected", "public", "published", "raise", "read", "record", "register", 
-	"reintroduce", "repeat", "resourcestring", "result", "safecall", "saveregisters", "self", "set", "shl", "shr", "softfloat", 
-	"specialize", "static", "stdcall", "stored", "strict", "string", "then", "threadvar", "to", "true", "try", "type", "unaligned", 
-	"unimplemented", "unit", "until", "uses", "var", "varargs", "virtual", "while", "with", "write", "xor"]); 
+  // Delphi Seattle + FPC reserved list
+  // http://docwiki.embarcadero.com/RADStudio/Seattle/en/Fundamental_Syntactic_Elements#Reserved_Words
+  // http://www.freepascal.org/docs-html/ref/refse3.html
+  ReservedWords.AddRange(["absolute", "abstract", "alias", "and", "array", "as", "asm", "assembler", "at", "automated", "begin", 
+  "bitpacked", "break", "case", "cdecl", "class", "const", "constructor", "continue", "cppdecl", "cvar", "default", 
+  "deprecated", "destructor", "dispinterface", "dispose", "div", "do", "downto", "dynamic", "else", "end", "enumerator",
+  "except", "exit", "experimental", "export", "exports", "external", "false", "far", "far16", "file", "finalization", 
+  "finally", "for", "forward", "function", "generic", "goto", "helper", "if", "implementation", "implements", "in", 
+  "index", "inherited", "initialization", "inline", "interface", "interrupt", "iochecks", "is", "label", "library", 
+  "local", "message", "mod", "name", "near", "new", "nil", "nodefault", "noreturn", "nostackframe", "not", "object", 
+  "of", "oldfpccall", "on", "operator", "or", "otherwise", "out", "overload", "override", "packed", "pascal", "platform", 
+  "private", "procedure", "program", "property", "protected", "public", "published", "raise", "read", "record", "register", 
+  "reintroduce", "repeat", "resourcestring", "result", "safecall", "saveregisters", "self", "set", "shl", "shr", "softfloat", 
+  "specialize", "static", "stdcall", "stored", "strict", "string", "then", "threadvar", "to", "true", "try", "type", "unaligned", 
+  "unimplemented", "unit", "until", "uses", "var", "varargs", "virtual", "while", "with", "write", "xor"]); 
 end;
 
 method DelphiRodlCodeGen.Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary);
@@ -1811,7 +1811,7 @@ begin
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if litem.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Write',
@@ -1831,7 +1831,7 @@ begin
     if not library.DataSnap then 
       if assigned(lmem.Result) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if lmem.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
@@ -1845,7 +1845,7 @@ begin
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if litem.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Read',
@@ -1862,7 +1862,7 @@ begin
     if library.DataSnap then 
       if assigned(lmem.Result) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if lmem.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
@@ -2236,7 +2236,7 @@ begin
   lm.Statements.Add(new CGTypeCastExpression( new CGMethodCallExpression(CGInheritedExpression.Inherited,'Add',CallSiteKind:= CGCallSiteKind.Static),ltyperef).AsReturnStatement);
   {$ENDREGION}
 
-  var arr := library.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoreCase(entity.Name)).ToList;
+  var arr := library.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoringCase(entity.Name)).ToList;
   for mem in arr do begin
     {$REGION public procedure LoadFromArray(anArray: %arraytype%);}
     lm := new CGMethodDefinition('LoadFromArray',
@@ -2352,7 +2352,7 @@ begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
     if lentity.CustomAttributes_lower.ContainsKey('type') and
-       lentity.CustomAttributes_lower['type']:EqualsIgnoreCase('SOAP') then begin
+       lentity.CustomAttributes_lower['type']:EqualsIgnoringCase('SOAP') then begin
       var loc:='';
       if lentity.CustomAttributes_lower.ContainsKey('location') then loc := lentity.CustomAttributes_lower['location'];
       file.Globals.Add(new CGFieldDefinition(String.Format("{0}_EndPointURI",[lname]),
@@ -2702,7 +2702,7 @@ begin
     for lmemparam in lmem.Items do begin
       if (lmemparam.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
         sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmemparam.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if lmemparam.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Read',
@@ -2739,7 +2739,7 @@ begin
     if not library.DataSnap then
       if assigned(lmem.Result) then begin
         sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if lmem.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Write',
@@ -2753,7 +2753,7 @@ begin
     for lmemparam in lmem.Items do begin
       if (lmemparam.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmemparam.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if lmemparam.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Write',
@@ -2769,7 +2769,7 @@ begin
     if library.DataSnap then
       if assigned(lmem.Result) then begin
         sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if lmem.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Write',
@@ -3004,8 +3004,8 @@ begin
     lsa1.Add(li, lsa[li]);
   for li in lsa1.Keys do begin
     aNames.Add(li.AsLiteralExpression);
-    if li.EqualsIgnoreCase('TargetNamespace') then aValues.Add('TargetNamespace'.AsNamedIdentifierExpression)
-    else if li.EqualsIgnoreCase('Wsdl') then aValues.Add('WSDLLocation'.AsNamedIdentifierExpression)
+    if li.EqualsIgnoringCase('TargetNamespace') then aValues.Add('TargetNamespace'.AsNamedIdentifierExpression)
+    else if li.EqualsIgnoringCase('Wsdl') then aValues.Add('WSDLLocation'.AsNamedIdentifierExpression)
     else aValues.Add(lsa1[li].AsLiteralExpression);
   end;
 end;
@@ -3065,7 +3065,7 @@ begin
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if litem.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Write',
@@ -3152,7 +3152,7 @@ begin
     if not library.DataSnap then 
       if assigned(operation.Result) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if operation.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
@@ -3165,7 +3165,7 @@ begin
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if litem.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Read',
@@ -3181,7 +3181,7 @@ begin
     if library.DataSnap then 
       if assigned(operation.Result) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if operation.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
@@ -3269,7 +3269,7 @@ begin
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if litem.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Write',
@@ -3332,7 +3332,7 @@ begin
     if not library.DataSnap then 
       if assigned(operation.Result) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if operation.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         result.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
@@ -3345,7 +3345,7 @@ begin
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if litem.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
 
         result.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Read',
@@ -3361,7 +3361,7 @@ begin
     if library.DataSnap then 
       if assigned(operation.Result) then begin
         var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoreCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+        if operation.Result.DataType.EqualsIgnoringCase('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         result.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
