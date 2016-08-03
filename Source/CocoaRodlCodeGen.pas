@@ -283,7 +283,7 @@ begin
   var getItemAtIndex: CGExpression := new CGArrayElementAccessExpression(new CGSelfExpression, ["aIndex".AsNamedIdentifierExpression]);
   if lIsSimple then begin
     var getItemAtIndexAsNSNumber := new CGTypeCastExpression(getItemAtIndex, "NSNumber".AsTypeReference, ThrowsException := true);
-    case entity.ElementType.ToLower of
+    case entity.ElementType.ToLowerInvariant of
       "integer": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "intValue");
       "int64": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "longLongValue");
       "double": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "doubleValue");
@@ -298,7 +298,7 @@ begin
   end;
   lst.Add(new CGVariableDeclarationStatement("__item", l_elementType, getItemAtIndex, &ReadOnly := true));
 
-  var lLower: String  := entity.ElementType.ToLower();
+  var lLower: String  := entity.ElementType.ToLowerInvariant();
   var l_methodName: String;
   if ReaderFunctions.ContainsKey(lLower) then begin
     l_methodName := ReaderFunctions[lLower];
@@ -348,7 +348,7 @@ begin
 
   var item: CGExpression := "__item".AsNamedIdentifierExpression;
   if lIsSimple then begin
-    case entity.ElementType.ToLower of
+    case entity.ElementType.ToLowerInvariant of
       "integer": item := new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithInteger", [item.AsCallParameter]);
       "int64": item := new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithLongLong", [item.AsCallParameter]);
       "double": item := new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithDouble", [item.AsCallParameter]);
@@ -517,7 +517,7 @@ begin
   lst := new List<CGStatement>;
   //var __item: %ARRAY_TYPE% := self.itemAtIndex(aIndex);
   lst.Add(new CGVariableDeclarationStatement("__item",l_elementType,new CGMethodCallExpression(new CGSelfExpression,"itemAtIndex",["aIndex".AsNamedIdentifierExpression.AsCallParameter].ToList), &ReadOnly := true));
-  var lLower: String  := entity.ElementType.ToLower();
+  var lLower: String  := entity.ElementType.ToLowerInvariant();
   var l_methodName: String;
   if ReaderFunctions.ContainsKey(lLower) then begin
     l_methodName := ReaderFunctions[lLower];
@@ -894,7 +894,7 @@ begin
   var list:= new List<CGCallParameter>;
   list.Add(new CGBooleanLiteralExpression(False).AsCallParameter);
   for l_key: String in entity.CustomAttributes.Keys do begin
-    list.Add(EscapeString(l_key.ToLower).AsLiteralExpression.AsCallParameter);
+    list.Add(EscapeString(l_key.ToLowerInvariant).AsLiteralExpression.AsCallParameter);
     list.Add(EscapeString(entity.CustomAttributes[l_key]).AsLiteralExpression.AsCallParameter);
   end;
   list.Add(new CGNilExpression().AsCallParameter);
@@ -939,14 +939,14 @@ begin
   var lAncestorEntity := entity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
     for field: RodlField in lAncestorEntity.Items do
-      lSortedFields.Add(field.Name.ToLower, field);
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
 
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
   for field: RodlField in entity.Items do
-    if not lSortedFields.ContainsKey(field.Name.ToLower) then begin
-      lSortedFields.Add(field.Name.ToLower, field);
+    if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
       lIfRecordStrictOrder_True.Statements.Add(GetWriterStatement(library, field, false));
     end;
 
@@ -984,14 +984,14 @@ begin
   var lAncestorEntity := entity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
     for field: RodlField in lAncestorEntity.Items do
-      lSortedFields.Add(field.Name.ToLower, field);
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
 
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
   for field: RodlField in entity.Items do
-    if not lSortedFields.ContainsKey(field.Name.ToLower) then begin
-      lSortedFields.Add(field.Name.ToLower, field);
+    if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
       lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
     end;
 
@@ -1002,7 +1002,7 @@ end;
 
 method CocoaRodlCodeGen.GetWriterStatement(&library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"; isMethod: Boolean; aInOnly: Boolean := false): CGStatement;
 begin
-  var lLower: String  := entity.DataType.ToLower();
+  var lLower: String  := entity.DataType.ToLowerInvariant();
   var l_methodName: String;
   var lisEnum := isEnum(&library,entity.DataType);
   var lisComplex := iif(not lisEnum,isComplex(&library,entity.DataType), false);
@@ -1048,7 +1048,7 @@ end;
 
 method CocoaRodlCodeGen.GetReaderExpression(&library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"): CGExpression;
 begin
-  var lLower: String  := entity.DataType.ToLower();
+  var lLower: String  := entity.DataType.ToLowerInvariant();
   var l_methodName: String;
   var lisEnum := isEnum(&library,entity.DataType);
   var lisComplex := iif(not lisEnum,isComplex(&library,entity.DataType), false);
@@ -1104,12 +1104,12 @@ end;
 
 method CocoaRodlCodeGen.isClassType(&library: RodlLibrary; dataType: String): Boolean;
 begin
-  exit not (fCachedNumberFN.ContainsKey(dataType.ToLower) or isEnum(&library,dataType));
+  exit not (fCachedNumberFN.ContainsKey(dataType.ToLowerInvariant) or isEnum(&library,dataType));
 end;
 
 method CocoaRodlCodeGen.GetNumberFN(dataType: String): String;
 begin
-  var ln := dataType.ToLower;
+  var ln := dataType.ToLowerInvariant;
   if fCachedNumberFN.ContainsKey(ln) then
     exit fCachedNumberFN[ln]
   else
@@ -1274,7 +1274,7 @@ begin
     var list:= new List<CGCallParameter>;
     list.Add(new CGBooleanLiteralExpression(False).AsCallParameter);
     for l_key: String in ld.Keys do begin
-      list.Add(EscapeString(l_key.ToLower).AsLiteralExpression.AsCallParameter);
+      list.Add(EscapeString(l_key.ToLowerInvariant).AsLiteralExpression.AsCallParameter);
       list.Add(EscapeString(ld[l_key]).AsLiteralExpression.AsCallParameter);
     end;
     list.Add(new CGNilExpression().AsCallParameter);
@@ -1390,7 +1390,7 @@ begin
       file.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]), CGPredefinedTypeReference.String.NotNullable,
                                   Constant := true,
                                   Visibility := CGMemberVisibilityKind.Public,
-                                  Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpper+'}').AsLiteralExpression).AsGlobal);
+                                  Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression).AsGlobal);
   end;
 
 

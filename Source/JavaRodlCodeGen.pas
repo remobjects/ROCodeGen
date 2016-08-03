@@ -131,14 +131,14 @@ begin
   var lAncestorEntity := entity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
     for field: RodlField in lAncestorEntity.Items do
-      lSortedFields.Add(field.Name.ToLower, field);
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
 
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
   for field: RodlField in entity.Items do
-    if not lSortedFields.ContainsKey(field.Name.ToLower) then begin
-      lSortedFields.Add(field.Name.ToLower, field);
+    if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
       lIfRecordStrictOrder_True.Statements.Add(
         iif(useDefaultValues, GetWriterStatement_DefaultValues(library, field),GetWriterStatement(library, field))
       );
@@ -426,7 +426,7 @@ begin
   {$ENDREGION}
 
   {$REGION method writeItemToMessage(aMessage: Message; anIndex: Integer); override;}
-  var lLower: String  := entity.ElementType.ToLower();
+  var lLower: String  := entity.ElementType.ToLowerInvariant();
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
@@ -726,7 +726,7 @@ end;
 method JavaRodlCodeGen.GetWriterStatement_DefaultValues(&library: RodlLibrary; entity: RodlTypedEntity;variableName: String): CGStatement;
 begin
   var lentityname := entity.Name;
-  var lLower: String  := entity.DataType.ToLower();
+  var lLower: String  := entity.DataType.ToLowerInvariant();
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
@@ -808,14 +808,14 @@ begin
   var lAncestorEntity := entity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
     for field: RodlField in lAncestorEntity.Items do
-      lSortedFields.Add(field.Name.ToLower, field);
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
 
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
   for field: RodlField in entity.Items do
-    if not lSortedFields.ContainsKey(field.Name.ToLower) then begin
-      lSortedFields.Add(field.Name.ToLower, field);
+    if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
+      lSortedFields.Add(field.Name.ToLowerInvariant, field);
       lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
     end;
 
@@ -866,7 +866,7 @@ begin
   for l_key: String in entity.CustomAttributes.Keys do begin
     l_if_true.Statements.Add(
       new CGMethodCallExpression(l_attributes,"put",
-                                [EscapeString(l_key.ToLower).AsLiteralExpression.AsCallParameter,
+                                [EscapeString(l_key.ToLowerInvariant).AsLiteralExpression.AsCallParameter,
                               EscapeString(entity.CustomAttributes[l_key]).AsLiteralExpression.AsCallParameter].ToList
         ));
   end;
@@ -876,7 +876,7 @@ end;
 method JavaRodlCodeGen.GetWriterStatement(&library: RodlLibrary; entity: RodlTypedEntity; useGetter: Boolean := True; variableName: String := "aMessage"): CGStatement;
 begin
   var lentityname := entity.Name;
-  var lLower: String  := entity.DataType.ToLower();
+  var lLower: String  := entity.DataType.ToLowerInvariant();
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
@@ -918,7 +918,7 @@ end;
 
 method JavaRodlCodeGen.GetReaderExpression(&library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"): CGExpression;
 begin
-  var lLower: String  := entity.DataType.ToLower();
+  var lLower: String  := entity.DataType.ToLowerInvariant();
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
@@ -1241,7 +1241,7 @@ begin
     for l_key: String in ld.Keys do begin
       Statements.Add(
         new CGMethodCallExpression(l_attributes, "put",
-                                  [EscapeString(l_key.ToLower).AsLiteralExpression.AsCallParameter,
+                                  [EscapeString(l_key.ToLowerInvariant).AsLiteralExpression.AsCallParameter,
                                   EscapeString(ld[l_key]).AsLiteralExpression.AsCallParameter].ToList));
     end;
     Statements.Add(new CGMethodCallExpression("_localMessage".AsNamedIdentifierExpression,"setupAttributes",[l_attributes.AsCallParameter].ToList));
@@ -1329,7 +1329,7 @@ begin
                                   Constant := true,
                                   &Static := true,
                                   Visibility := CGMemberVisibilityKind.Public,
-                                  Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpper+'}').AsLiteralExpression));
+                                  Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression));
   end;
 
   for lentity: RodlEntity in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
@@ -1353,11 +1353,11 @@ end;
 
 method JavaRodlCodeGen.isPrimitive(&type: String): Boolean;
 begin
-  result := not CodeGenTypes.ContainsKey(&type.ToLower);
+  result := not CodeGenTypes.ContainsKey(&type.ToLowerInvariant);
   if result then begin
-    var k := CodeGenTypes[&type.ToLower];
+    var k := CodeGenTypes[&type.ToLowerInvariant];
     result := (k is CGPredefinedTypeReference) and 
-              (CodeGenTypes[&type.ToLower].Nullability <> CGTypeNullabilityKind.NullableNotUnwrapped);
+              (CodeGenTypes[&type.ToLowerInvariant].Nullability <> CGTypeNullabilityKind.NullableNotUnwrapped);
   end;
 end;
 

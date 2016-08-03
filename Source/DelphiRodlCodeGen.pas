@@ -336,7 +336,7 @@ begin
     for lentityItem :RodlTypedEntity in entity.Items do begin
       if not isComplex(library,lentityItem.DataType) and lentityItem.CustomAttributes_lower.ContainsKey('default') then begin
         var lDefaultValue: CGExpression;
-        case lentityItem.DataType.ToLower of
+        case lentityItem.DataType.ToLowerInvariant of
           "widestring",
           "guid",
           "variant",
@@ -2096,7 +2096,7 @@ end;
 
 method DelphiRodlCodeGen.isComplex(&library: RodlLibrary; dataType: String): Boolean;
 begin
-  result := (dataType.ToLower in ['binary','xsdatetime']) or
+  result := (dataType.ToLowerInvariant in ['binary','xsdatetime']) or
             inherited isComplex(library,dataType);
 end;
 
@@ -2311,7 +2311,7 @@ begin
   file.Globals.Add(new CGFieldDefinition("LibraryUID",
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
-                  Initializer := ('{'+library.EntityID.ToString.ToUpper+'}').AsLiteralExpression).AsGlobal());
+                  Initializer := ('{'+library.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
   if library.CustomAttributes_lower.ContainsKey('wsdl') then
     file.Globals.Add(new CGFieldDefinition("WSDLLocation",
                     Constant := true,
@@ -2436,7 +2436,7 @@ begin
   aName.Modifier := CGParameterModifierKind.Const;
   aValue.Modifier := CGParameterModifierKind.Var;
   var k: CGMethodCallExpression;
-  case aElementType.ToLower of
+  case aElementType.ToLowerInvariant of
     'integer':    k := new CGMethodCallExpression(aSerializer, 'ReadInteger',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'ReadDateTime',[aName, aValue].ToList);
     'double':     k := new CGMethodCallExpression(aSerializer, 'ReadDouble',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
@@ -2474,7 +2474,7 @@ begin
   aName.Modifier := CGParameterModifierKind.Const;
   aValue.Modifier := CGParameterModifierKind.Var; //c++ builder should pass it by reference
   var k: CGMethodCallExpression;
-  case aElementType.ToLower of
+  case aElementType.ToLowerInvariant of
     'integer':    k := new CGMethodCallExpression(aSerializer, 'WriteInteger',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'WriteDateTime',[aName, aValue].ToList);
     'double':     k := new CGMethodCallExpression(aSerializer, 'WriteDouble',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
@@ -2557,7 +2557,7 @@ method DelphiRodlCodeGen.ResolveDataTypeToTypeRefFullQualified(&library: RodlLib
 begin
 
   var ltype := iif(String.IsNullOrEmpty(aOrigDataType), dataType, aOrigDataType);
-  var lLower := ltype.ToLower();
+  var lLower := ltype.ToLowerInvariant();
   if  CodeGenTypes.ContainsKey(lLower) then
     exit CodeGenTypes[lLower]
   else begin
@@ -2984,19 +2984,19 @@ begin
   var lsa := new Dictionary<String,String>;
   var lsa_lower := new Dictionary<String,String>;
   for li in operation.CustomAttributes.Keys do
-    if not lsa_lower.ContainsKey(li.ToLower) then begin
+    if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
       lsa.Add(li, operation.CustomAttributes[li]);
-      lsa_lower.Add(li.ToLower, operation.CustomAttributes[li]);
+      lsa_lower.Add(li.ToLowerInvariant, operation.CustomAttributes[li]);
     end;
   for li in service.CustomAttributes.Keys do
-    if not lsa_lower.ContainsKey(li.ToLower) then begin
+    if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
       lsa.Add(li, service.CustomAttributes[li]);
-      lsa_lower.Add(li.ToLower, service.CustomAttributes[li]);
+      lsa_lower.Add(li.ToLowerInvariant, service.CustomAttributes[li]);
     end;
   for li in library.CustomAttributes.Keys do
-    if not lsa_lower.ContainsKey(li.ToLower) then begin
+    if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
       lsa.Add(li, library.CustomAttributes[li]);
-      lsa_lower.Add(li.ToLower, library.CustomAttributes[li]);
+      lsa_lower.Add(li.ToLowerInvariant, library.CustomAttributes[li]);
     end;
 
   var lsa1 := new Dictionary<String,String>;
@@ -3619,7 +3619,7 @@ begin
   file.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]), 'TGUID'.AsTypeReference,
                               Constant := true,
                               Visibility := CGMemberVisibilityKind.Public,
-                              Initializer := ('{'+entity.DefaultInterface.EntityID.ToString.ToUpper+'}').AsLiteralExpression).AsGlobal);
+                              Initializer := ('{'+entity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression).AsGlobal);
 end;
 
 {$REGION cpp support}
@@ -3917,7 +3917,7 @@ begin
   {$REGION initialization}
   if (library.Services.Count > 0) or (library.EventSinks.Count > 0) then begin
     for latr in library.CustomAttributes.Keys do begin
-      var latr1 := latr.ToLower;
+      var latr1 := latr.ToLowerInvariant;
       lUnit.Initialization.Add(new CGMethodCallExpression(nil, 'RegisterServiceAttribute',
                                                                [''.AsLiteralExpression.AsCallParameter,
                                                                 latr.AsLiteralExpression.AsCallParameter,

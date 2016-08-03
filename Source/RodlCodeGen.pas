@@ -80,8 +80,8 @@ begin
                   if (x1 = nil) and (y1 = nil) then exit 0;
                   if (x1 = nil) then exit -1;
                   if (y1 = nil) then exit 1;
-                  x1 := x1.ToUpper;
-                  y1 := y1.ToUpper;
+                  x1 := x1.ToUpperInvariant;
+                  y1 := y1.ToUpperInvariant;
                   var min_length := iif(x1.Length > y1.Length, y1.Length, x1.Length);
                   for i: Integer :=0 to min_length-1 do begin
                     if x1[i] > y1[i] then exit 1;
@@ -127,9 +127,9 @@ method RodlCodeGen.PascalCase(name: String): String;
 begin
   case name:Length of
     0: Result := '';
-    1: Result := name.ToUpper;
+    1: Result := name.ToUpperInvariant;
   else
-    Result := name.Substring(0,1).ToUpper + name.Substring(1);
+    Result := name.Substring(0,1).ToUpperInvariant + name.Substring(1);
   end;
 end;
 
@@ -148,7 +148,7 @@ end;
 method RodlCodeGen.isArray(&library: RodlLibrary; dataType: String): Boolean;
 begin
   var lEntity: RodlEntity := library.FindEntity(dataType);
-  exit (assigned(lEntity) and (lEntity is RodlArray)) or dataType.ToLower.EndsWith("array");
+  exit (assigned(lEntity) and (lEntity is RodlArray)) or dataType.ToLowerInvariant.EndsWith("array");
 end;
 
 method RodlCodeGen.isException(&library: RodlLibrary; dataType: String): Boolean;
@@ -194,7 +194,7 @@ end;
 
 method RodlCodeGen.ResolveDataTypeToTypeRef(&library: RodlLibrary; dataType: String): CGTypeReference;
 begin
-  var lLower := dataType.ToLower();
+  var lLower := dataType.ToLowerInvariant();
   if  CodeGenTypes.ContainsKey(lLower) then
     exit CodeGenTypes[lLower]
   else

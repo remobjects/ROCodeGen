@@ -341,7 +341,7 @@ end;
 
 method RodlEntity.FixLegacyTypes(aName: String):String;
 begin
-  exit iif(aName.ToLower() = "string", "AnsiString", aName);
+  exit iif(aName.ToLowerInvariant() = "string", "AnsiString", aName);
 end;
 
 method RodlEntity.LoadFromXmlNode(node: XmlElement);
@@ -362,8 +362,8 @@ begin
       var lValue: XmlAttribute := childNode.Attributes["Value"];
       if (lValue <> nil) then begin
         CustomAttributes[childNode.LocalName] := lValue.Value;
-        CustomAttributes_lower[childNode.LocalName.ToLower] := lValue.Value;
-        if childNode.LocalName.ToLower = "soapname" then fOriginalName := lValue.Value;
+        CustomAttributes_lower[childNode.LocalName.ToLowerInvariant] := lValue.Value;
+        if childNode.LocalName.ToLowerInvariant = "soapname" then fOriginalName := lValue.Value;
       end;
     end;
   end;
@@ -591,7 +591,7 @@ end;
 
 method RodlLibrary.LoadFromFile(aFilename: String);
 begin
-  if Path.GetExtension(aFilename):ToLower = ".remoterodl" then begin
+  if Path.GetExtension(aFilename):ToLowerInvariant = ".remoterodl" then begin
 
     var lRemoteRodl := LoadXML(aFilename);
     if not assigned(lRemoteRodl)then
@@ -861,7 +861,7 @@ begin
   if (not usedRodlFileName.FileExists) then usedRodlFileName := AbsoluteRodl;
   if (not usedRodlFileName.FileExists) then begin
     usedRodlFileName := usedRodlFileName.Replace("/", l_Separator).Replace("\", l_Separator);
-    var lFilename := Path.GetFileName(usedRodlFileName).ToLower;
+    var lFilename := Path.GetFileName(usedRodlFileName).ToLowerInvariant;
     //writeLn("checking for "+lFilename);
     if RodlCodeGen.KnownRODLPaths.ContainsKey(lFilename) then
       usedRodlFileName := RodlCodeGen.KnownRODLPaths[lFilename];
@@ -966,7 +966,7 @@ end;
 method RodlParameter.LoadFromXmlNode(node: XmlElement);
 begin
   inherited LoadFromXmlNode(node);
-  var ln := node.Attributes["Flag"].Value.ToLower;
+  var ln := node.Attributes["Flag"].Value.ToLowerInvariant;
   case ln of
     'in': ParamFlag:= ParamFlags.In;
     'out': ParamFlag:= ParamFlags.Out;

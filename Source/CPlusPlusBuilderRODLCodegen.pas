@@ -245,7 +245,7 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.ResolveInterfaceTypeRef(library: RodlLibrary; dataType: String; aDefaultUnitName: String; aOrigDataType: String; aCapitalize: Boolean): CGNamedTypeReference;
 begin
-  var lLower := dataType.ToLower();
+  var lLower := dataType.ToLowerInvariant();
   if CodeGenTypes.ContainsKey(lLower) then
     exit CGNamedTypeReference(CodeGenTypes[lLower]) // hack, only possibly type is IXMLNode
   else begin
@@ -357,7 +357,7 @@ begin
                                           Initializer := new CGMethodCallExpression(
                                                               'Sysutils'.AsNamedIdentifierExpression,
                                                               'StringToGUID',
-                                                              [('{'+entity.DefaultInterface.EntityID.ToString.ToUpper+'}').AsLiteralExpression.AsCallParameter],
+                                                              [('{'+entity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
                                                               CallSiteKind := CGCallSiteKind.Static)
                                        ).AsGlobal);
 end;
@@ -623,7 +623,7 @@ begin
   if String.IsNullOrEmpty(aValue) then
     exit aValue
   else
-    exit aValue.Substring(0,1).ToUpper+aValue.Substring(1).ToLower
+    exit aValue.Substring(0,1).ToUpperInvariant+aValue.Substring(1).ToLowerInvariant
 end;
 
 method CPlusPlusBuilderRodlCodeGen.cpp_GenerateArrayDestructor(anArray: CGTypeDefinition);
