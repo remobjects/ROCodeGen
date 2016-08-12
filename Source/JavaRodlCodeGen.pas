@@ -1265,7 +1265,7 @@ begin
   result := new Dictionary<String,String>;
   var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);  
   var lunit := DoGenerateInterfaceFile(library, lnamespace);
-  var lgn := GetGlobalName(library);
+  //var lgn := GetGlobalName(library);
   for k in lunit.Types do begin
 {    if (k is CGInterfaceTypeDefinition) and (CGInterfaceTypeDefinition(k).Name = lgn) then 
       result.Add(Path.ChangeExtension('Defines', Generator.defaultFileExtension), (Generator.GenerateUnitForSingleType(k) &unit(lunit)))

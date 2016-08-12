@@ -19,11 +19,9 @@ func writeSyntax() {
 	writeLn()
 	writeLn("  - intf")
 	writeLn("  - invk")
-	#if ECHOES
-	writeLn("  - events (.NET only)")
-	#endif
 	writeLn("  - impl (same as --services)")
 	writeLn("  - res")
+	writeLn("  - serveraccess")
 	writeLn()
 	writeLn("Valid <platform> values:")
 	writeLn()
@@ -145,12 +143,9 @@ if options["namespace"] == nil {
 switch options["type"]?.ToLower() {
 	case "intf": break
 	case "invk": break
-	#if ECHOES
-	case "events": break
-	#endif
-	case "async": break
 	case "impl": break
 	case "res": break
+	case "serveraccess": break
 	default:
 		writeSyntax()
 		writeLn("Unsupported type: "+options["type"])
@@ -167,6 +162,7 @@ if options["type"]?.ToLower() == "res" {
 
 var serverSupport = false
 var activeRodlCodeGen: RodlCodeGen?
+var activeServerAccessCodeGen: ServerAccessCodeGen?
 switch options["platform"]?.ToLower() {
 	case "cooper", "java":
 		options["platform"] = "java"
@@ -174,18 +170,21 @@ switch options["platform"]?.ToLower() {
 			options["language"] = "silver" // force our Swift
 		}
 		activeRodlCodeGen = JavaRodlCodeGen()
+		activeServerAccessCodeGen = JavaServerAccessCodeGen()
 	case "toffee", "nougat", "cocoa", "xcode": // keep Nougat, undocumdented, for backwards comopatibility 
 		options["platform"] = "cocoa"
 		if options["language"]?.ToLower() == "swift" && (options["platform"]?.ToLower() == "toffee" || options["platform"]?.ToLower() == "nougat") {
 				options["language"] = "silver" // force our Swift
 		}
 		activeRodlCodeGen = CocoaRodlCodeGen()
+		activeServerAccessCodeGen = CocoaServerAccessCodeGen()
 	case "echoes", "net", ".net":
 		options["platform"] = ".net"
 		serverSupport = true
 		#if ECHOES
 		activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
 		#else
+		activeServerAccessCodeGen = NetServerAccessCodeGen()
 		//activeRodlCodeGen = DotNetRodlCodeGen()
 		writeLn(".NET codegen is not supported in the Mac version of rodl2code, sorry. Use 'mono rodl2code.exe', instead.")
 		return 2
@@ -195,14 +194,17 @@ switch options["platform"]?.ToLower() {
 		options["language"] = "delphi" // force language to Delphi
 		serverSupport = true
 		activeRodlCodeGen = DelphiRodlCodeGen()
+		activeServerAccessCodeGen = DelphiServerAccessCodeGen()
 	case "bcb", "c++builder":
 		options["platform"] = "bcb"
 		options["language"] = "bcb" // force language to C++(Builder)
 		serverSupport = true
 		activeRodlCodeGen = CPlusPlusBuilderRodlCodeGen()
+		activeServerAccessCodeGen = CPlusPlusBuilderServerAccessCodeGen()
 	case "javascript", "js":
 		options["platform"] = "javascript"
 		//activeRodlCodeGen = JavaScriptRodlCodeGen()
+		//activeServerAccessCodeGen = JavaScriptServerAccessCodeGen()
 		writeLn("javaScript RODL codegen is not supported in rodl2code yet, sorry.")
 		return 2
 	default:
@@ -346,7 +348,42 @@ if let type = options["type"] {
 						writeLn("Wrote file \(targetFileNameWithSuffix("Intf"))")
 					}
 				}
-			
+
+			case "serveraccess":		
+
+				if let activeServerAccessCodeGen = activeServerAccessCodeGen, codegen = codegen {
+				
+					if codegen is CGJavaCodeGenerator {
+						if let sourceFiles = (activeServerAccessCodeGen as? JavaServerAccessCodeGen)?.generateFiles(codegen/*options["namespace"]*/) {
+							for name in sourceFiles.Keys {
+								var fileName = Path.Combine(Path.GetParentDirectory(rodlFileName), name)
+								FileUtils.WriteText(fileName, sourceFiles[name]);
+								writeLn("Wrote file \(fileName)")
+							}
+						}
+					} else {
+						let unit = activeServerAccessCodeGen.generateCodeUnit(/*options["namespace"]*/)
+						unit.FileName = Path.GetFileName(targetFileNameWithSuffix("ServerAccess"));
+						let source = codegen?.GenerateUnit(unit)
+						FileUtils.WriteText(targetFileNameWithSuffix("ServerAccess"), source);
+						writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
+
+						if options["language"] == "objc" {
+							let codegenH = CGObjectiveCHCodeGenerator()
+							let sourceH = codegenH?.GenerateUnit(unit)
+							fileExtension = "h";
+							FileUtils.WriteText(targetFileNameWithSuffix("ServerAccess"), sourceH);
+							writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
+						} else if options["language"] == "cpp" {
+							let codegenH = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
+							let sourceH = codegenH?.GenerateUnit(unit)
+							fileExtension = "h";
+							FileUtils.WriteText(targetFileNameWithSuffix("ServerAccess"), sourceH);
+							writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
+						}
+					}
+				}
+						 
 			case "invk":
 				if !serverSupport {
 					writeLn("Generating server code is not supported for this platform.")
@@ -355,16 +392,6 @@ if let type = options["type"] {
 				FileUtils.WriteText(targetFileNameWithSuffix("Invk"), source);
 				writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
 
-			#if ECHOES
-			case "events":
-				if options["platform"] != ".net" {
-					writeLn("Generating _Events files is not supported for this platform.")
-				}
-				let source = (activeRodlCodeGen as? EchoesCodeDomRodlCodeGen)?.GenerateLegacyEventsFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
-				FileUtils.WriteText(targetFileNameWithSuffix("Events"), source);
-					writeLn("Wrote file \(targetFileNameWithSuffix("Events"))")
-			#endif
-			
 			case "impl":
 				
 				let processServices = {

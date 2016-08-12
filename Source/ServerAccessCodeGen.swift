@@ -1,5 +1,6 @@
 ﻿import Sugar
 import Sugar.Collections
+import Sugar.IO
 import Sugar.Linq
 import RemObjects.CodeGen4
 import RemObjects.SDK.CodeGen4
@@ -344,6 +345,16 @@ public class JavaServerAccessCodeGen : ServerAccessCodeGen {
 	override func generateService(_ serverAccess: CGClassTypeDefinition, service: RodlService) {
 	}
 	override func generateLoginPattern(_ serverAccess: CGClassTypeDefinition) {
+	}
+
+	func generateFiles(_ generator: CGCodeGenerator) -> Dictionary<String,String> {
+		let result = Dictionary<String,String>()
+		//var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);  
+		let unit = generateCodeUnit()
+		for k in unit.Types {
+			result.Add(Path.ChangeExtension(k.Name, generator.defaultFileExtension), generator.GenerateUnitForSingleType(k, unit: unit))
+		}
+		return result
 	}
 }
 
