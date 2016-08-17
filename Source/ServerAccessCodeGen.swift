@@ -240,6 +240,10 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 
 	override func generateStandardImports(_ unit: CGCodeUnit) {
 		unit.Imports.Add(CGImport("RemObjects.SDK"))
+		// if let won't help here because namespace and RODL namespace can be non-NULL empty strings
+		if (length(self.namespace) > 0) && (length(self.rodl.Namespace) > 0) && (self.namespace != self.rodl.Namespace) {
+			unit.Imports.Add(CGImport(self.rodl.Namespace))
+		}
 	}
 
 	override func getPlatformSpecificNamespace(_ reference: RodlUse) -> String! {
