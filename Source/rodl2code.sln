@@ -1,6 +1,8 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # RemObjects Fire
+Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Cooper", "rodl2code.Cooper.elements", "{A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E}"
+EndProject
 Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Echoes", "rodl2code.Echoes.elements", "{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}"
 EndProject
 Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Nougat", "rodl2code.Nougat.elements", "{EAE7DA8A-6033-4785-AF39-D67681B97B95}"
@@ -13,6 +15,10 @@ Global
 		Release|AnyCPU = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E}.Release|AnyCPU.Build.0 = Release|AnyCPU
 		{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
 		{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
 		{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
