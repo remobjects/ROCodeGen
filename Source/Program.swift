@@ -74,7 +74,7 @@ func parseParameters(_ cmdlineParams: [String]) {
 	}
 }
 
-writeLn("RemObjects SDK Service Interface Code Generator, based on CodeGen4 (https://github.com/remobjects/codegen4)")
+writeLn("Remoting SDK Service Interface Code Generator, based on CodeGen4 (https://github.com/remobjects/codegen4)")
 writeLn()
 
 let params = C_ARGV
