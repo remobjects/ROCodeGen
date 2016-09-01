@@ -74,7 +74,7 @@ func parseParameters(_ cmdlineParams: [String]) {
 	}
 }
 
-writeLn("RemObjects SDK Service Interface Code Generator, based on CodeGen4 (https://github.com/remobjects/codegen4)")
+writeLn("Remoting SDK Service Interface Code Generator, based on CodeGen4 (https://github.com/remobjects/codegen4)")
 writeLn()
 
 let params = C_ARGV
@@ -170,14 +170,14 @@ switch options["platform"]?.ToLower() {
 			options["language"] = "silver" // force our Swift
 		}
 		activeRodlCodeGen = JavaRodlCodeGen()
-		activeServerAccessCodeGen = JavaServerAccessCodeGen()
+		activeServerAccessCodeGen = JavaServerAccessCodeGen(rodl: rodlLibrary)
 	case "toffee", "nougat", "cocoa", "xcode": // keep Nougat, undocumdented, for backwards comopatibility 
 		options["platform"] = "cocoa"
 		if options["language"]?.ToLower() == "swift" && (options["platform"]?.ToLower() == "toffee" || options["platform"]?.ToLower() == "nougat") {
 				options["language"] = "silver" // force our Swift
 		}
 		activeRodlCodeGen = CocoaRodlCodeGen()
-		activeServerAccessCodeGen = CocoaServerAccessCodeGen()
+		activeServerAccessCodeGen = CocoaServerAccessCodeGen(rodl: rodlLibrary, swiftDialect: iif(options["language"] == "silver", CGSwiftCodeGeneratorDialect.Silver, CGSwiftCodeGeneratorDialect.Standard))
 	case "echoes", "net", ".net":
 		options["platform"] = ".net"
 		serverSupport = true
@@ -194,13 +194,13 @@ switch options["platform"]?.ToLower() {
 		options["language"] = "delphi" // force language to Delphi
 		serverSupport = true
 		activeRodlCodeGen = DelphiRodlCodeGen()
-		activeServerAccessCodeGen = DelphiServerAccessCodeGen()
+		activeServerAccessCodeGen = DelphiServerAccessCodeGen(rodl:rodlLibrary)
 	case "bcb", "c++builder":
 		options["platform"] = "bcb"
 		options["language"] = "bcb" // force language to C++(Builder)
 		serverSupport = true
 		activeRodlCodeGen = CPlusPlusBuilderRodlCodeGen()
-		activeServerAccessCodeGen = CPlusPlusBuilderServerAccessCodeGen()
+		activeServerAccessCodeGen = CPlusPlusBuilderServerAccessCodeGen(rodl:rodlLibrary)
 	case "javascript", "js":
 		options["platform"] = "javascript"
 		//activeRodlCodeGen = JavaScriptRodlCodeGen()
@@ -368,6 +368,12 @@ if let type = options["type"] {
 						FileUtils.WriteText(targetFileNameWithSuffix("ServerAccess"), source);
 						writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
 
+						if (options["platform"] == "delphi")||(options["platform"] == "bcb") {
+							let dfm = (activeServerAccessCodeGen as? DelphiServerAccessCodeGen)?.generateDFM()
+							fileExtension = "dfm";
+							FileUtils.WriteText(targetFileNameWithSuffix("ServerAccess"), dfm);
+							writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
+						}
 						if options["language"] == "objc" {
 							let codegenH = CGObjectiveCHCodeGenerator()
 							let sourceH = codegenH?.GenerateUnit(unit)

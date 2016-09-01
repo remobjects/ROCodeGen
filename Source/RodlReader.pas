@@ -489,6 +489,9 @@ end;
 method EntityCollection<T>.FindEntity(name: String): T;
 begin
   for lRodlEntity: T in fItems do
+    if not lRodlEntity.IsFromUsedRodl and lRodlEntity.Name.EqualsIgnoringCaseInvariant(name) then exit lRodlEntity;
+
+  for lRodlEntity: T in fItems do
     if lRodlEntity.Name.EqualsIgnoringCaseInvariant(name) then exit lRodlEntity;
   exit nil;
 end;
