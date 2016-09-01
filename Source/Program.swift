@@ -351,7 +351,7 @@ if let type = options["type"] {
 
 			case "serveraccess":		
 
-				if let activeServerAccessCodeGen = activeServerAccessCodeGen, codegen = codegen {
+				if let activeServerAccessCodeGen = activeServerAccessCodeGen, let codegen = codegen {
 				
 					if codegen is CGJavaCodeGenerator {
 						if let sourceFiles = (activeServerAccessCodeGen as? JavaServerAccessCodeGen)?.generateFiles(codegen/*options["namespace"]*/) {

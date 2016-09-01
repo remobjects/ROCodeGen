@@ -416,7 +416,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		unit.FileName = rodl.Name+"_ServerAccess";
 		if unit.Namespace == nil {
 			var ns = rodl.Name;
-			if let ls = rodl.Namespace where ls != nil {
+			if let ls = rodl.Namespace {
 				ns = ls;
 			}
 			unit.Namespace = CGNamespaceReference(ns);
