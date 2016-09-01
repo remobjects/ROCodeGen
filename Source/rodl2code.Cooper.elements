@@ -3,11 +3,12 @@
     <PropertyGroup>
         <ProductVersion>3.5</ProductVersion>
         <ProjectGuid>A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E</ProjectGuid>
-        <OutputType>exe</OutputType>
+        <OutputType>Exe</OutputType>
         <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
         <AllowLegacyCreate>False</AllowLegacyCreate>
         <AllowLegacyOutParams>False</AllowLegacyOutParams>
         <MinFrameworkVersionRequired>4.0</MinFrameworkVersionRequired>
+        <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
         <Optimize>false</Optimize>
