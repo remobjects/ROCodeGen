@@ -204,8 +204,7 @@ begin
   var lstruct := new CGClassTypeDefinition(SafeIdentifier(entity.Name), lancestorName.AsTypeReference,
                                            Visibility := CGTypeVisibilityKind.Public,
                                            Comment := GenerateDocumentation(entity));
-  if IsSwift then
-    lstruct.Attributes.Add(new CGAttribute("objc".AsTypeReference, SafeIdentifier(entity.Name).AsNamedIdentifierExpression.AsCallParameter));
+  lstruct.Attributes.Add(new CGAttribute("objc".AsTypeReference, SafeIdentifier(entity.Name).AsNamedIdentifierExpression.AsCallParameter));
   file.Types.Add(lstruct);
   {$REGION private class class __attributes: NSDictionary;}
   if (entity.CustomAttributes.Count > 0) then

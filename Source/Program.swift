@@ -184,7 +184,7 @@ switch options["platform"]?.ToLower() {
 		#if ECHOES
 		activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
 		#else
-		activeServerAccessCodeGen = NetServerAccessCodeGen()
+		activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
 		//activeRodlCodeGen = DotNetRodlCodeGen()
 		writeLn(".NET codegen is not supported in the Mac version of rodl2code, sorry. Use 'mono rodl2code.exe', instead.")
 		return 2
