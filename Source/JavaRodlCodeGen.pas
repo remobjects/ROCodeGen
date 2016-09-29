@@ -1329,7 +1329,7 @@ begin
                                   Constant := true,
                                   &Static := true,
                                   Visibility := CGMemberVisibilityKind.Public,
-                                  Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression));
+                                  Initializer := ('{'+String(lentity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression));
   end;
 
   for lentity: RodlEntity in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin

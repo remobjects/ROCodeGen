@@ -186,7 +186,7 @@ begin
       lname+"ToString",
       [new CGMethodCallExpression(new CGMethodCallExpression(lenum.Name.AsTypeReferenceExpression,"instance"),
                                                "stringFromValue",
-                                               [new CGTypeCastExpression("aValue".AsNamedIdentifierExpression, NSUIntegerType).AsCallParameter].ToList
+                                               [new CGTypeCastExpression("aValue".AsNamedIdentifierExpression, NSUIntegerType, true).AsCallParameter].ToList
                                               ).AsReturnStatement],
       Parameters := [new CGParameterDefinition("aValue",lname.AsTypeReference)].ToList,
       ReturnType := CGPredefinedTypeReference.String.NotNullable,
@@ -224,7 +224,7 @@ begin
   {$REGION method assignFrom(aValue: ROComplexType); override;}
   lstruct.Members.Add(
     new CGMethodDefinition("assignFrom",
-      Parameters := [new CGParameterDefinition("aValue", "ROComplexType".AsTypeReference(CGTypeNullabilityKind.NotNullable))].ToList,
+      Parameters := [new CGParameterDefinition("aValue", "ROComplexType".AsTypeReference().NotNullable)].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public    )
   );
@@ -322,7 +322,7 @@ begin
   larray.Members.Add(
     new CGMethodDefinition( "writeItem",
       Parameters := [new CGParameterDefinition("aItem", CGPredefinedTypeReference.Dynamic.NotNullable),
-                     new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference(CGTypeNullabilityKind.NotNullable), Externalname := "toMessage"),
+                     new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable, Externalname := "toMessage"),
                      new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := "withIndex")].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
@@ -361,7 +361,7 @@ begin
   
   larray.Members.Add(
     new CGMethodDefinition("readItemFromMessage",
-      Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference(CGTypeNullabilityKind.NotNullable)),
+      Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable),
                      new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := "withIndex")].ToList,
                      ReturnType := CGPredefinedTypeReference.Dynamic.NullableNotUnwrapped,
       Virtuality := CGMemberVirtualityKind.Override,
@@ -737,7 +737,7 @@ begin
     lEventInvoker.Members.Add(linvk_method);
     if IsAppleSwift then begin
       linvk_method.Statements.Add(new CGVariableDeclarationStatement("__selPattern",
-                                                                     "NSString".AsTypeReference(CGTypeNullabilityKind.NotNullable),
+                                                                     "NSString".AsTypeReference().NotNullable,
                                                                      new CGNewInstanceExpression("NSString".AsTypeReference,
                                                                                                 [SafeIdentifier(lop.Name).AsLiteralExpression.AsCallParameter("string")].ToList)));
     end
@@ -813,9 +813,9 @@ end;
 constructor CocoaRodlCodeGen;
 begin
   CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
-  CodeGenTypes.Add("datetime", "NSDate".AsTypeReference(CGTypeNullabilityKind.NullableUnwrapped));
+  CodeGenTypes.Add("datetime", "NSDate".AsTypeReference().NullableUnwrapped);
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
-  CodeGenTypes.Add("currency", "NSDecimalNumber".AsTypeReference(CGTypeNullabilityKind.NullableUnwrapped));
+  CodeGenTypes.Add("currency", "NSDecimalNumber".AsTypeReference().NullableUnwrapped);
   CodeGenTypes.Add("widestring", ResolveStdtypes(CGPredefinedTypeKind.String));
   CodeGenTypes.Add("ansistring", ResolveStdtypes(CGPredefinedTypeKind.String));
   CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
@@ -824,9 +824,9 @@ begin
   CodeGenTypes.Add("binary", "NSData".AsTypeReference);
   CodeGenTypes.Add("xml", "ROXml".AsTypeReference);
   CodeGenTypes.Add("guid", "ROGuid".AsTypeReference);
-  CodeGenTypes.Add("decimal", "NSDecimalNumber".AsTypeReference(CGTypeNullabilityKind.NullableUnwrapped));
+  CodeGenTypes.Add("decimal", "NSDecimalNumber".AsTypeReference().NullableUnwrapped);
   CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeKind.String));
-  CodeGenTypes.Add("xsdatetime", "NSDate".AsTypeReference(CGTypeNullabilityKind.NullableUnwrapped));
+  CodeGenTypes.Add("xsdatetime", "NSDate".AsTypeReference().NullableUnwrapped);
 
   ReaderFunctions.Add("integer", "Int32");
   ReaderFunctions.Add("datetime", "DateTime");
@@ -912,7 +912,7 @@ method CocoaRodlCodeGen.WriteToMessage_Method(&library: RodlLibrary; entity: Rod
 begin
   //method writeToMessage(aMessage: ROMessage) withName(aName: NSString); override;
   Result := new CGMethodDefinition("writeToMessage",
-                        Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference(CGTypeNullabilityKind.NotNullable)),
+                        Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable),
                                        new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String), ExternalName := "withName")].ToList,
                         Visibility := CGMemberVisibilityKind.Public);
   if not (entity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
@@ -957,7 +957,7 @@ method CocoaRodlCodeGen.ReadFromMessage_Method(&library: RodlLibrary; entity: Ro
 begin
   //method readFromMessage(aMessage: ROMessage) withName(aName: NSString); override;
   Result := new CGMethodDefinition("readFromMessage",
-                                  Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference(CGTypeNullabilityKind.NotNullable)),
+                                  Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable),
                                                  new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String),ExternalName :="withName")].ToList,
                                   Visibility := CGMemberVisibilityKind.Public);
   if not (entity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
@@ -1389,7 +1389,7 @@ begin
       file.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]), CGPredefinedTypeReference.String.NotNullable,
                                   Constant := true,
                                   Visibility := CGMemberVisibilityKind.Public,
-                                  Initializer := ('{'+lentity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression).AsGlobal);
+                                  Initializer := ('{'+String(lentity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal);
   end;
 
 
