@@ -207,6 +207,7 @@ type
     constructor();override;
     method LoadFromXmlNode(node: XmlElement); override;
     property PrefixEnumValues: Boolean;
+    property DefaultValueName: String read if Count > 0 then Item[0].Name;
   end;
 
   RodlArray= public class(RodlEntity)

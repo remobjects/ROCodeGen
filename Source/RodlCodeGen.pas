@@ -26,6 +26,9 @@ type
     method isException(library: RodlLibrary; dataType: String): Boolean;
     method isComplex(library: RodlLibrary; dataType: String): Boolean; virtual;
     method isBinary(dataType: String): Boolean;
+
+    method FindEnum(&library: RodlLibrary; dataType: String): nullable RodlEnum;
+
     method SafeIdentifier(aValue: String): String;
     method EscapeString(aString:String):String;
     method Operation_GetAttributes(library: RodlLibrary; operation: RodlOperation): Dictionary<String,String>;
@@ -143,6 +146,12 @@ method RodlCodeGen.isEnum(&library: RodlLibrary; dataType: String): Boolean;
 begin
   var lEntity: RodlEntity := library.FindEntity(dataType);
   exit assigned(lEntity) and (lEntity is RodlEnum);
+end;
+
+method RodlCodeGen.FindEnum(&library: RodlLibrary; dataType: String): nullable RodlEnum;
+begin
+  var lEntity: RodlEntity := library.FindEntity(dataType);
+  result := RodlEnum(lEntity);    
 end;
 
 method RodlCodeGen.isArray(&library: RodlLibrary; dataType: String): Boolean;

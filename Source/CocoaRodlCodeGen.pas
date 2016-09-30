@@ -215,11 +215,16 @@ begin
     lstruct.Members.Add(HandleAtributes_public(&library,entity));
   {$ENDREGION}
   {$REGION public property %fldname%: %fldtype%}
-  for lm :RodlTypedEntity in entity.Items do
-    lstruct.Members.Add(new CGPropertyDefinition(lm.Name,
-                                                 ResolveDataTypeToTypeRef(&library,lm.DataType),
-                                                 Visibility := CGMemberVisibilityKind.Public,
-                                                 Comment := GenerateDocumentation(lm)));
+  for lm: RodlTypedEntity in entity.Items do begin
+    var lType := ResolveDataTypeToTypeRef(&library, lm.DataType);
+    var p := new CGPropertyDefinition(lm.Name, lType,
+                                      Visibility := CGMemberVisibilityKind.Public,
+                                      Comment := GenerateDocumentation(lm));
+    var lEnumDefault := FindEnum(library, lm.DataType):DefaultValueName;
+    if assigned(lEnumDefault) then
+      p.Initializer := new CGEnumValueAccessExpression(lType, lEnumDefault);
+    lstruct.Members.Add(p);
+  end;
   {$ENDREGION}
   {$REGION method assignFrom(aValue: ROComplexType); override;}
   lstruct.Members.Add(
@@ -256,7 +261,7 @@ begin
     larray.Members.Add(HandleAtributes_public(&library,entity));
   {$ENDREGION}
 
-  var l_elementType:= ResolveDataTypeToTypeRef(&library,SafeIdentifier(entity.ElementType));
+  var l_elementType:= ResolveDataTypeToTypeRef(&library, SafeIdentifier(entity.ElementType));
   var lisEnum := isEnum(&library,entity.ElementType);
   var lisComplex := isComplex(&library, entity.ElementType);
   var lisArray := isArray(&library, entity.ElementType);
