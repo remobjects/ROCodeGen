@@ -357,7 +357,7 @@ begin
                                           Initializer := new CGMethodCallExpression(
                                                               'Sysutils'.AsNamedIdentifierExpression,
                                                               'StringToGUID',
-                                                              [('{'+entity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
+                                                              [('{'+String(entity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
                                                               CallSiteKind := CGCallSiteKind.Static)
                                        ).AsGlobal);
 end;

@@ -2311,7 +2311,7 @@ begin
   file.Globals.Add(new CGFieldDefinition("LibraryUID",
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
-                  Initializer := ('{'+library.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
+                  Initializer := ('{'+String(library.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
   if library.CustomAttributes_lower.ContainsKey('wsdl') then
     file.Globals.Add(new CGFieldDefinition("WSDLLocation",
                     Constant := true,
@@ -3619,7 +3619,7 @@ begin
   file.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]), 'TGUID'.AsTypeReference,
                               Constant := true,
                               Visibility := CGMemberVisibilityKind.Public,
-                              Initializer := ('{'+entity.DefaultInterface.EntityID.ToString.ToUpperInvariant+'}').AsLiteralExpression).AsGlobal);
+                              Initializer := ('{'+String(entity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal);
 end;
 
 {$REGION cpp support}

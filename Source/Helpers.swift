@@ -6,7 +6,7 @@ public class CGHelpers {
 	public static func CodeGeneratorForLanguage(_ language: String) -> CGCodeGenerator? {
 		switch language {
 			case "oxygene", "pas":
-				return CGOxygeneCodeGenerator()
+				return CGOxygeneCodeGenerator(style: .Standard, quoteStyle: .SmartDouble)
 			case "hydrogene", "cs", "c#", "csharp":
 				return CGCSharpCodeGenerator(dialect: CGCSharpCodeGeneratorDialect.Hydrogene)
 			case "standard-c#", "vc#":
