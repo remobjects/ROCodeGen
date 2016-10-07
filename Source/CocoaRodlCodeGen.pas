@@ -1259,10 +1259,12 @@ end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result:= new CGMethodDefinition("begin" + PascalCase(aEntity.Name),
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  ReturnType := "ROAsyncRequest".AsTypeReference);
-
+  result := new CGMethodDefinition("begin" + PascalCase(aEntity.Name),
+                                   Visibility := CGMemberVisibilityKind.Public,
+                                   ReturnType := "ROAsyncRequest".AsTypeReference);
+  if IsSwift then
+    result.Attributes.Add(new CGAttribute("discardableResult".AsTypeReference));
+    
   for p: RodlParameter in aEntity.Items do begin
     if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
       result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(&library, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag, true)));
