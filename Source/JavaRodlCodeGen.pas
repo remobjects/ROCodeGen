@@ -1321,17 +1321,6 @@ begin
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := if assigned(TargetNamespaceName) then TargetNamespaceName.AsLiteralExpression));
 
-  for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
-    if not EntityNeedsCodeGen(lentity) then Continue;
-    var lname := lentity.Name;
-    if lentity.Count > 0 then
-      ltype.Members.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]), ResolveStdtypes(CGPredefinedTypeKind.String),
-                                  Constant := true,
-                                  &Static := true,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  Initializer := ('{'+String(lentity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression));
-  end;
-
   for lentity: RodlEntity in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lName := lentity.Name;

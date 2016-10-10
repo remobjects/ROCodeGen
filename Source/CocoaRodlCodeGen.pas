@@ -1387,17 +1387,6 @@ begin
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer := if assigned(TargetNamespaceName) then TargetNamespaceName.AsLiteralExpression).AsGlobal());
 
-  for lentity : RodlService in &library.Services.Items.OrderBy(b->b.Name) do begin
-    if not EntityNeedsCodeGen(lentity) then Continue;
-    var lname := lentity.Name;
-    if lentity.Count > 0 then
-      file.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]), CGPredefinedTypeReference.String.NotNullable,
-                                  Constant := true,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  Initializer := ('{'+String(lentity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal);
-  end;
-
-
   for lentity: RodlEntity in &library.EventSinks.Items do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lName := lentity.Name;
