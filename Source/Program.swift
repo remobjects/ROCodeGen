@@ -110,7 +110,7 @@ if !isUrl && !FileUtils.Exists(params[0]) {
 let rodlLibrary = RodlLibrary(rodlFileName) // todo:handle remoteRodl files
 
 if isUrl {
-	rodlFileName = "./"+rodlLibrary.Name+".rodl" //used for relative output paths.
+	rodlFileName = "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" //used for relative output paths.
 }
 
 //
