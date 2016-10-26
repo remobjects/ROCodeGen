@@ -354,7 +354,9 @@ do {
 				case "serveraccess":		
 	
 					if let activeServerAccessCodeGen = activeServerAccessCodeGen, let codegen = codegen {
-					
+						if isUrl {
+							activeServerAccessCodeGen.serverAddress = url;
+						}
 						if codegen is CGJavaCodeGenerator {
 							if let sourceFiles = (activeServerAccessCodeGen as? JavaServerAccessCodeGen)?.generateFiles(codegen/*options["namespace"]*/) {
 								for name in sourceFiles.Keys {
