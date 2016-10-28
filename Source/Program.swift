@@ -367,7 +367,9 @@ do {
 							}
 						} else {
 							let unit = activeServerAccessCodeGen.generateCodeUnit(/*options["namespace"]*/)
-							unit.FileName = Path.GetFileName(targetFileNameWithSuffix("ServerAccess"));
+							if String.IsNullOrEmpty(unit.FileName) {
+								unit.FileName = Path.GetFileName(targetFileNameWithSuffix("ServerAccess"));
+							}
 							let source = codegen?.GenerateUnit(unit)
 							FileUtils.WriteText(targetFileNameWithSuffix("ServerAccess"), source);
 							writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
