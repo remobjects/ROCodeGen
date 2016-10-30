@@ -367,7 +367,7 @@ do {
 							}
 						} else {
 							let unit = activeServerAccessCodeGen.generateCodeUnit(/*options["namespace"]*/)
-							if String.IsNullOrEmpty(unit.FileName) {
+							if length(unit.FileName) = 0 {
 								unit.FileName = Path.GetFileName(targetFileNameWithSuffix("ServerAccess"));
 							}
 							let source = codegen?.GenerateUnit(unit)
