@@ -328,8 +328,8 @@ begin
     Codegen4Platform.Delphi: sa := new DelphiServerAccessCodeGen withrodl(rodl);
     Codegen4Platform.CppBuilder: sa := new CPlusPlusBuilderServerAccessCodeGen withrodl(rodl);
     Codegen4Platform.Java: sa:= new JavaServerAccessCodeGen withrodl(rodl);    
-    Codegen4Platform.Cocoa: sa := new CocoaServerAccessCodeGen rodl(rodl) swiftDialect(iif(codegen is CocoaRodlCodeGen, CocoaRodlCodeGen(codegen).SwiftDialect, CGSwiftCodeGeneratorDialect.Standard));
-    Codegen4Platform.Net: sa := new NetServerAccessCodeGen rodl(rodl) &namespace(TargetNameSpace);
+    Codegen4Platform.Cocoa: sa := new CocoaServerAccessCodeGen withrodl(rodl) swiftDialect(iif(codegen is CocoaRodlCodeGen, CocoaRodlCodeGen(codegen).SwiftDialect, CGSwiftCodeGeneratorDialect.Standard));
+    Codegen4Platform.Net: sa := new NetServerAccessCodeGen withrodl(rodl) &namespace(TargetNameSpace);
     // Codegen4Platform.JavaScript: codegen := new JavaScriptServerAccessCodeGen;
   else
     exit;
