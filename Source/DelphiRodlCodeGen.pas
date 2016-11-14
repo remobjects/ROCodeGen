@@ -619,6 +619,45 @@ begin
   ltype.Members.Add(lm);
   {$ENDREGION}
 
+  {$REGION protected IntResize(ElementCount: Integer; AllocItems: Boolean); override;}
+  var anElementCount: CGExpression := 'anElementCount'.AsNamedIdentifierExpression;
+  var anElementCount_sub_1 := new CGBinaryOperatorExpression(anElementCount,                        // anElementCount-1
+                                                             new CGIntegerLiteralExpression(1),
+                                                             CGBinaryOperatorKind.Subtraction);
+  lm := new CGMethodDefinition('IntResize',
+                            Parameters := [new CGParameterDefinition('anElementCount',ResolveStdtypes(CGPredefinedTypeKind.Int32)),
+                                           new CGParameterDefinition('AllocItems',ResolveStdtypes(CGPredefinedTypeKind.Boolean))].ToList,
+                            Virtuality := CGMemberVirtualityKind.Override,
+                            Visibility := CGMemberVisibilityKind.Public,
+                            CallingConvention := CGCallingConventionKind.Register);
+  ltype.Members.Add(lm);
+  if isComplex(library, lElementType) then begin
+    lm.LocalVariables := new List<CGVariableDeclarationStatement>;
+    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+  end;
+  lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(fCount, anElementCount, CGBinaryOperatorKind.Equals),  new CGReturnStatement()));
+  if isComplex(library, lElementType) then begin
+    lm.Statements.Add(new CGForToLoopStatement('i',
+                                               ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                               fCount_subtract_1,
+                                               anElementCount,
+                                               new CGDestroyInstanceExpression(fItems_i),
+                                               Direction := CGLoopDirectionKind.Backward));
+  end;
+  lm.Statements.Add(Array_SetLength(fItems, anElementCount));
+  //lm.Statements.Add(new CGMethodCallExpression(nil,'System.SetLength',[fItems.AsCallParameter, anElementCount.AsCallParameter].ToList));
+  if isComplex(library, lElementType) then begin
+    lm.Statements.Add(new CGIfThenElseStatement('AllocItems'.AsNamedIdentifierExpression, 
+                                                new CGForToLoopStatement('i',
+                                                                         ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                                                         fCount,
+                                                                         anElementCount_sub_1,
+                                                                         new CGAssignmentStatement(fItems_i,new CGNewInstanceExpression(el_typeref))
+                                               )));
+  end;
+  lm.Statements.Add(new CGAssignmentStatement(fCount,anElementCount));
+  {$ENDREGION}
+
   ProcessAttributes(entity,ltype);
 
   {$REGION public class function GetItemType: PTypeInfo; override;}
@@ -759,42 +798,6 @@ begin
   lm.Statements.Add(Array_SetLength(fItems, fCount_subtract_1));
   //lm.Statements.Add(new CGMethodCallExpression(nil,'System.SetLength',[fItems.AsCallParameter, fCount_subtract_1.AsCallParameter].ToList));
   lm.Statements.Add(new CGAssignmentStatement(fCount, fCount_subtract_1));
-  {$ENDREGION}
-
-  {$REGION public procedure Resize(anElementCount: Integer); override;}
-  var anElementCount: CGExpression := 'anElementCount'.AsNamedIdentifierExpression;
-  var anElementCount_sub_1 := new CGBinaryOperatorExpression(anElementCount,                        // anElementCount-1
-                                                             new CGIntegerLiteralExpression(1),
-                                                             CGBinaryOperatorKind.Subtraction);
-  lm := new CGMethodDefinition('Resize',
-                            Parameters := [new CGParameterDefinition('anElementCount',ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
-                            Virtuality := CGMemberVirtualityKind.Override,
-                            Visibility := CGMemberVisibilityKind.Public,
-                            CallingConvention := CGCallingConventionKind.Register);
-  ltype.Members.Add(lm);
-  if isComplex(library, lElementType) then begin
-    lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeKind.Int32)));
-  end;
-  lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(fCount, anElementCount, CGBinaryOperatorKind.Equals),  new CGReturnStatement()));
-  if isComplex(library, lElementType) then begin
-    lm.Statements.Add(new CGForToLoopStatement('i',
-                                               ResolveStdtypes(CGPredefinedTypeKind.Int32),
-                                               fCount_subtract_1,
-                                               anElementCount,
-                                               new CGDestroyInstanceExpression(fItems_i),
-                                               Direction := CGLoopDirectionKind.Backward));
-  end;
-  lm.Statements.Add(Array_SetLength(fItems, anElementCount));
-  //lm.Statements.Add(new CGMethodCallExpression(nil,'System.SetLength',[fItems.AsCallParameter, anElementCount.AsCallParameter].ToList));
-  if isComplex(library, lElementType) then begin
-    lm.Statements.Add(new CGForToLoopStatement('i',
-                                               ResolveStdtypes(CGPredefinedTypeKind.Int32),
-                                               fCount,
-                                               anElementCount_sub_1,
-                                               new CGAssignmentStatement(fItems_i,new CGNewInstanceExpression(el_typeref))));
-  end;
-  lm.Statements.Add(new CGAssignmentStatement(fCount,anElementCount));
   {$ENDREGION}
 
   {$REGION public procedure Assign(aSource: TPersistent); override;}
@@ -3749,7 +3752,7 @@ begin
   m.LocalVariables := new List<CGVariableDeclarationStatement>;
   m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeKind.String), new CGLocalVariableAccessExpression('DefaultNamespace')));
 
-  var lres := new CGLocalVariableAccessExpression('lres');
+  var lres := new CGLocalVariableAccessExpression('lres');  
   var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
   for k in list do begin
     m.Statements.Add(new CGAssignmentStatement(lres, 
@@ -3757,7 +3760,7 @@ begin
                                                                               new CGFieldAccessExpression(k.AsNamedIdentifierExpression,'DefaultNamespace',CallSiteKind := CGCallSiteKind.Static), 
                                                                               CGBinaryOperatorKind.Addition)
                                                 ));
-  end;
+  end;  
   m.Statements.Add(lres.AsReturnStatement);
   lUnit.Globals.Add(m.AsGlobal);
   {$ENDREGION}
