@@ -406,21 +406,23 @@ begin
   service.Members.Add(lmember_ct);
   {$ENDREGION}
 
-  {$REGION public class function Create(const aUri: TROUri): I%service%; overload;}
+  {$REGION public class function Create(const aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
   lmember_ct:= new CGConstructorDefinition(Overloaded := true,
                                            Visibility := CGMemberVisibilityKind.Public,
                                            Virtuality := CGMemberVirtualityKind.Virtual,
                                            CallingConvention := CGCallingConventionKind.Register);
   lmember_ct.Parameters.Add(new CGParameterDefinition('aUri', new CGConstantTypeReference('TROUri'.AsTypeReference)));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
   service.Members.Add(lmember_ct);
   {$ENDREGION}
 
-  {$REGION public class function Create(const aUrl: string): I%service%; overload;}
+  {$REGION public class function Create(const aUrl: string; aDefaultNamespaces: string = ''): I%service%; overload;}
   lmember_ct:= new CGConstructorDefinition(Overloaded := true,
                                            Visibility := CGMemberVisibilityKind.Public,
                                            Virtuality := CGMemberVirtualityKind.Virtual,
                                            CallingConvention := CGCallingConventionKind.Register);
   lmember_ct.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
   service.Members.Add(lmember_ct);
   {$ENDREGION}
 end;
