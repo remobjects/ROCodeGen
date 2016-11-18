@@ -628,7 +628,7 @@ begin
                             Parameters := [new CGParameterDefinition('anElementCount',ResolveStdtypes(CGPredefinedTypeKind.Int32)),
                                            new CGParameterDefinition('AllocItems',ResolveStdtypes(CGPredefinedTypeKind.Boolean))].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
-                            Visibility := CGMemberVisibilityKind.Public,
+                            Visibility := CGMemberVisibilityKind.Protected,
                             CallingConvention := CGCallingConventionKind.Register);
   ltype.Members.Add(lm);
   if isComplex(library, lElementType) then begin
