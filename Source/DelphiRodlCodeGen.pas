@@ -647,13 +647,14 @@ begin
   lm.Statements.Add(Array_SetLength(fItems, anElementCount));
   //lm.Statements.Add(new CGMethodCallExpression(nil,'System.SetLength',[fItems.AsCallParameter, anElementCount.AsCallParameter].ToList));
   if isComplex(library, lElementType) then begin
-    lm.Statements.Add(new CGIfThenElseStatement('AllocItems'.AsNamedIdentifierExpression, 
-                                                new CGForToLoopStatement('i',
-                                                                         ResolveStdtypes(CGPredefinedTypeKind.Int32),
-                                                                         fCount,
-                                                                         anElementCount_sub_1,
-                                                                         new CGAssignmentStatement(fItems_i,new CGNewInstanceExpression(el_typeref))
-                                               )));
+    lm.Statements.Add(new CGForToLoopStatement('i',
+                          ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                          fCount,
+                          anElementCount_sub_1,
+													new CGIfThenElseStatement('AllocItems'.AsNamedIdentifierExpression,
+                          		new CGAssignmentStatement(fItems_i,new CGNewInstanceExpression(el_typeref)),
+															new CGAssignmentStatement(fItems_i,CGNilExpression.Nil)
+                      		)));
   end;
   lm.Statements.Add(new CGAssignmentStatement(fCount,anElementCount));
   {$ENDREGION}
