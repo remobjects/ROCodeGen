@@ -863,6 +863,7 @@ begin
 
 
   if (not usedRodlFileName.FileExists) then usedRodlFileName := AbsoluteRodl;
+  if String.IsNullOrEmpty(usedRodlFileName) then Exit;
   if (not usedRodlFileName.FileExists) then begin
     usedRodlFileName := usedRodlFileName.Replace("/", l_Separator).Replace("\", l_Separator);
     var lFilename := Path.GetFileName(usedRodlFileName).ToLowerInvariant;
