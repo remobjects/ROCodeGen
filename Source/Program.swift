@@ -47,6 +47,7 @@ func writeSyntax() {
 	writeLn()
 	writeLn("  --full-type-names (Currently Delphi/BCB only)")
 	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
+	writeLn("  --legacy-strings (Delphi/BCB only)")
 	writeLn()
 	
 	#hint add --await
@@ -217,6 +218,9 @@ do {
 	}
 	if options["scoped-enums"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.ScopedEnums = true
+	}
+	if options["legacy-strings"] != nil {
+		(activeRodlCodeGen as? DelphiRodlCodeGen)?.LegacyStrings = true
 	}
 	
 	var codegen: CGCodeGenerator?

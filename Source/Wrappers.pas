@@ -75,6 +75,7 @@ type
     AsyncSupport = 'AsyncSupport';
     DelphiFullQualifiedNames = 'DelphiFullQualified';
     DelphiScopedEnums = 'DelphiScopedEnums';
+    DelphiLegacyStrings = 'DelphiLegacyStrings';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;    
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -113,9 +114,10 @@ begin
         DelphiRodlCodeGen(codegen).IncludeUnitNameForOwnTypes := true;
         DelphiRodlCodeGen(codegen).IncludeUnitNameForOtherTypes := true;        
       end;
-      if ParseAddParams(lparams,DelphiScopedEnums) = '1' then begin
+      if ParseAddParams(lparams,DelphiScopedEnums) = '1' then
         DelphiRodlCodeGen(codegen).ScopedEnums := true;
-      end;
+      if ParseAddParams(lparams,DelphiLegacyStrings) = '1' then 
+        DelphiRodlCodeGen(codegen).LegacyStrings := true;
     end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
     Codegen4Platform.Java: codegen := new JavaRodlCodeGen;

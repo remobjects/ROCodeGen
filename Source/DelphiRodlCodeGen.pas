@@ -24,10 +24,12 @@ type
                       '  Width = 300'#13#10+
                       'end';
   private
+    fLegacyStrings: Boolean;
     fIROTransportChannel_typeref: CGTypeReference;
     fIROTransport_typeref: CGTypeReference;
     fIROMessage_typeref: CGTypeReference;
     fCustomAncestor: String;
+    fParamAttributes_typeref: CGNamedTypeReference;
     {$REGION support methods}
     method isPresent_SerializeInitializedStructValues_Attribute(library: RodlLibrary): Boolean;
     method GetServiceAncestor(library: RodlLibrary;entity: RodlService): String;
@@ -38,6 +40,8 @@ type
     method get_IROTransportChannel_typeref: CGTypeReference;
     method get_IROMessage_typeref: CGTypeReference;
     method get_IROTransport_typeref: CGTypeReference;
+    method GenerateParamAttributes(aName: String):CGSetLiteralExpression;
+    method SetLegacyStrings(value: Boolean);
   protected
     property PureDelphi: Boolean;
     property Intf_name: String;
@@ -140,6 +144,7 @@ type
     method isDFMNeeded: Boolean;
     
     property GenerateDFMs: Boolean := true;
+    property LegacyStrings: Boolean read fLegacyStrings write SetLegacyStrings;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -155,13 +160,14 @@ implementation
 
 constructor DelphiRodlCodeGen;
 begin
-  PureDelphi := True;
+  fLegacyStrings := False;
+  PureDelphi := true;
   CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
   CodeGenTypes.Add("datetime", String("DateTime").AsTypeReference);
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
   CodeGenTypes.Add("currency", String("Currency").AsTypeReference);
   CodeGenTypes.Add("widestring", String("UnicodeString").AsTypeReference);
-  CodeGenTypes.Add("ansistring", String("AnsiString").AsTypeReference);
+  CodeGenTypes.Add("ansistring", String("string").AsTypeReference);
   CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
   CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean));
   CodeGenTypes.Add("variant", String("Variant").AsTypeReference);
@@ -169,7 +175,7 @@ begin
   CodeGenTypes.Add("xml", String("IXmlNode").AsTypeReference);
   CodeGenTypes.Add("guid", String("Guid").AsTypeReference);
   CodeGenTypes.Add("decimal", String("Decimal").AsTypeReference);
-  CodeGenTypes.Add("utf8string", String("UTF8String").AsTypeReference);
+  CodeGenTypes.Add("utf8string", String("string").AsTypeReference);
   CodeGenTypes.Add("xsdatetime", String("XsDateTime").AsTypeReference);
 
   // Delphi Seattle + FPC reserved list
@@ -187,6 +193,8 @@ begin
   "reintroduce", "repeat", "resourcestring", "result", "safecall", "saveregisters", "self", "set", "shl", "shr", "softfloat", 
   "specialize", "static", "stdcall", "stored", "strict", "string", "then", "threadvar", "to", "true", "try", "type", "unaligned", 
   "unimplemented", "unit", "until", "uses", "var", "varargs", "virtual", "while", "with", "write", "xor"]); 
+
+  fParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
 end;
 
 method DelphiRodlCodeGen.Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary);
@@ -1414,8 +1422,6 @@ begin
   var l_IName_Async_typeref := ResolveInterfaceTypeRef(library,l_IName_Async,Intf_name,l_EntityName); // I%service%_Async or _di_I%service%_Async
   var l_IName_AsyncEx_typeref := ResolveInterfaceTypeRef(library,l_IName_AsyncEx,Intf_name,l_EntityName); // I%service%_AsyncEx or _di_I%service%_AsyncEx
 
-  var TParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
-  
   var lancestorName := entity.AncestorName;
   var lancestor: CGTypeReference;
   var lmember: CGMethodDefinition;
@@ -1814,15 +1820,12 @@ begin
                                                     CallSiteKind:= CGCallSiteKind.Reference));
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Write',
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,litem.DataType,Intf_name)).AsCallParameter,
                                                         new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                        sa.AsCallParameter].ToList,
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind:= CGCallSiteKind.Reference));
 
       end;
@@ -1834,29 +1837,23 @@ begin
     {$REGION ! DataSnap}
     if not library.DataSnap then 
       if assigned(lmem.Result) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
                                                       new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                      sa.AsCallParameter].ToList,
+                                                      GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind:= CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Read',
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,litem.DataType,Intf_name)).AsCallParameter,
                                                         new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                        sa.AsCallParameter].ToList,
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind:= CGCallSiteKind.Reference));
 
       end;
@@ -1865,15 +1862,12 @@ begin
     {$REGION DataSnap}
     if library.DataSnap then 
       if assigned(lmem.Result) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
                                                       new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                      sa.AsCallParameter].ToList,
+                                                      GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind:= CGCallSiteKind.Reference));
       end;
   {$ENDREGION}
@@ -2059,7 +2053,7 @@ begin
                                             [lmemparam.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType,Intf_name)).AsCallParameter,                                            
                                             new CGCallParameter(('l_'+lmemparam.Name).AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                            new CGArrayLiteralExpression().AsCallParameter].ToList,
+                                            GenerateParamAttributes(lmemparam.DataType).AsCallParameter].ToList,
                                             CallSiteKind:= CGCallSiteKind.Reference));
       list.Add(lcall);
       list.Add(new CGEmptyStatement);
@@ -2370,6 +2364,7 @@ end;
 method DelphiRodlCodeGen.Intf_GenerateRead(file: CGCodeUnit; &library: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>;aSerializeInitializedStructValues:Boolean; aSerializer: CGExpression);
 begin
   for lmem in ItemList do begin
+    var lt0:= new CGFieldAccessExpression(CGSelfExpression.Self, 'f'+lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
     var lt1:= new CGFieldAccessExpression(CGSelfExpression.Self, lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
     var lt2:= new CGFieldAccessExpression(CGSelfExpression.Self, 'int_'+lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
     var lt3:= ('l_'+lmem.Name).AsNamedIdentifierExpression;
@@ -2408,9 +2403,9 @@ begin
     aStatements.Add(new CGTryFinallyCatchStatement(trys,CatchBlocks := lexcept));
     if isComplex(library,lmem.DataType)  and not isEnum(library,lmem.DataType) then begin
       if aSerializeInitializedStructValues then
-        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(lt1,lt3, CGBinaryOperatorKind.NotEquals), new CGDestroyInstanceExpression(lt1)))
+        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(lt1,lt3, CGBinaryOperatorKind.NotEquals), new CGMethodCallExpression(nil,'FreeAndNil',[lt0.AsCallParameter])))
       else
-        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(lt2,lt3, CGBinaryOperatorKind.NotEquals), new CGDestroyInstanceExpression(lt1)));
+        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(lt2,lt3, CGBinaryOperatorKind.NotEquals), new CGMethodCallExpression(nil,'FreeAndNil',[lt0.AsCallParameter])))
     end;
     aStatements.Add(new CGAssignmentStatement(lt1, lt3));
   end;
@@ -2445,8 +2440,14 @@ begin
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'ReadDateTime',[aName, aValue].ToList);
     'double':     k := new CGMethodCallExpression(aSerializer, 'ReadDouble',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
     'currency':   k := new CGMethodCallExpression(aSerializer, 'ReadDouble',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
-    'ansistring': k := new CGMethodCallExpression(aSerializer, 'ReadAnsiString',[aName, aValue].ToList);
-    'utf8string': k := new CGMethodCallExpression(aSerializer, 'ReadUTF8String',[aName, aValue].ToList);
+    'ansistring': if fLegacyStrings then 
+                    k := new CGMethodCallExpression(aSerializer, 'ReadAnsiString',[aName, aValue].ToList)
+                  else
+                    k := new CGMethodCallExpression(aSerializer, 'ReadLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
+    'utf8string': if fLegacyStrings then 
+                    k := new CGMethodCallExpression(aSerializer, 'ReadUTF8String',[aName, aValue].ToList)
+                  else
+                    k := new CGMethodCallExpression(aSerializer, 'ReadLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);                    
     'int64':      k := new CGMethodCallExpression(aSerializer, 'ReadInt64',[aName, aValue].ToList);
     'boolean':    k := new CGMethodCallExpression(aSerializer, 'ReadEnumerated',[aName,GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeKind.Boolean)).AsCallParameter,aValue].ToList);
     'variant':    k := new CGMethodCallExpression(aSerializer, 'ReadVariant',[aName, aValue].ToList);
@@ -2483,8 +2484,14 @@ begin
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'WriteDateTime',[aName, aValue].ToList);
     'double':     k := new CGMethodCallExpression(aSerializer, 'WriteDouble',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
     'currency':   k := new CGMethodCallExpression(aSerializer, 'WriteDouble',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
-    'ansistring': k := new CGMethodCallExpression(aSerializer, 'WriteAnsiString',[aName, aValue].ToList);
-    'utf8string': k := new CGMethodCallExpression(aSerializer, 'WriteUTF8String',[aName, aValue].ToList);
+    'ansistring': if fLegacyStrings then 
+                    k := new CGMethodCallExpression(aSerializer, 'WriteAnsiString',[aName, aValue].ToList)
+                  else
+                    k := new CGMethodCallExpression(aSerializer, 'WriteLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
+    'utf8string': if fLegacyStrings then 
+                    k := new CGMethodCallExpression(aSerializer, 'WriteUTF8String',[aName, aValue].ToList)
+                  else
+                    k := new CGMethodCallExpression(aSerializer, 'WriteLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'int64':      k := new CGMethodCallExpression(aSerializer, 'WriteInt64',[aName, aValue].ToList);
     'boolean':    k := new CGMethodCallExpression(aSerializer, 'WriteEnumerated',[aName, GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeKind.Boolean)).AsCallParameter,aValue].ToList);
     'variant':    k := new CGMethodCallExpression(aSerializer, 'WriteVariant',[aName, aValue].ToList);
@@ -2628,14 +2635,12 @@ begin
   {$REGION service methods}
   var plist := new List<CGParameterDefinition>;
   var TROResponseOptions_typeref := new CGNamedTypeReference('TROResponseOptions') isClasstype(False);
-  var TParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
 
   plist.Add(new CGParameterDefinition('__Instance',ResolveInterfaceTypeRef(nil, 'IInterface','System'), Modifier:= CGParameterModifierKind.Const));
   plist.Add(new CGParameterDefinition('__Message', IROMessage_typeref, Modifier:= CGParameterModifierKind.Const));
   plist.Add(new CGParameterDefinition('__Transport', IROTransport_typeref, Modifier:= CGParameterModifierKind.Const));
   plist.Add(new CGParameterDefinition('__oResponseOptions', TROResponseOptions_typeref, Modifier:= CGParameterModifierKind.Out));
   var lMessage := '__Message'.AsNamedIdentifierExpression;
-  var sa :CGSetLiteralExpression;
   for lmem in entity.DefaultInterface.Items do begin
 
     mem := new CGMethodDefinition('Invoke_'+lmem.Name,
@@ -2705,15 +2710,12 @@ begin
     ltry.Add(new CGEmptyStatement);
     for lmemparam in lmem.Items do begin
       if (lmemparam.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmemparam.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Read',
                                             [lmemparam.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType,Intf_name)).AsCallParameter,
                                             new CGCallParameter(('l_'+lmemparam.Name).AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                            sa.AsCallParameter].ToList,
+                                            GenerateParamAttributes(lmemparam.DataType).AsCallParameter].ToList,
                                             CallSiteKind:= CGCallSiteKind.Reference));
 
         if (lmemparam.ParamFlag = ParamFlags.InOut) and isComplex(library, lmemparam.DataType) then
@@ -2742,29 +2744,23 @@ begin
     {$REGION ! DataSnap}
     if not library.DataSnap then
       if assigned(lmem.Result) then begin
-        sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Write',
                                             [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
                                             new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                            sa.AsCallParameter].ToList,
+                                            GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                             CallSiteKind:= CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for lmemparam in lmem.Items do begin
       if (lmemparam.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmemparam.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Write',
                                             [lmemparam.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType,Intf_name)).AsCallParameter,
                                             new CGCallParameter(('l_'+lmemparam.Name).AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                            sa.AsCallParameter].ToList,
+                                            GenerateParamAttributes(lmemparam.DataType).AsCallParameter].ToList,
                                             CallSiteKind:= CGCallSiteKind.Reference));
 
       end;
@@ -2772,15 +2768,12 @@ begin
     {$REGION DataSnap}
     if library.DataSnap then
       if assigned(lmem.Result) then begin
-        sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Add(new CGMethodCallExpression(lMessage,
                                             'Write',
                                             [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType,Intf_name)).AsCallParameter,
                                             new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                            sa.AsCallParameter].ToList,
+                                            GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                             CallSiteKind:= CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
@@ -2909,7 +2902,7 @@ begin
                                           [lmemparam.Name.AsLiteralExpression.AsCallParameter,
                                           GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType,Intf_name)).AsCallParameter,
                                           new CGCallParameter(lmemparam.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                          new CGArrayLiteralExpression().AsCallParameter].ToList,
+                                          GenerateParamAttributes(lmemparam.DataType).AsCallParameter].ToList,
                                           CallSiteKind:= CGCallSiteKind.Reference));
     end;
     ltry.Add(new CGMethodCallExpression(lmessage,'Finalize',CallSiteKind:= CGCallSiteKind.Reference));
@@ -3019,8 +3012,6 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateAsyncInvoke(&library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
 begin
-  var TParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
-
   result := new CGMethodDefinition('Invoke_'+operation.Name,
                                     Visibility := CGMemberVisibilityKind.Protected,
                                     CallingConvention := CGCallingConventionKind.Register
@@ -3068,15 +3059,12 @@ begin
                                                     CallSiteKind:= CGCallSiteKind.Reference));
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Write',
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,litem.DataType,Intf_name)).AsCallParameter,
                                                         new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                        sa.AsCallParameter].ToList,
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind:= CGCallSiteKind.Reference));
 
       end;
@@ -3095,8 +3083,6 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateAsyncRetrieve(&library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
 begin
-  var TParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
-
   result := new CGMethodDefinition('Retrieve_'+operation.Name,
                                     Visibility := CGMemberVisibilityKind.Protected,
                                     CallingConvention := CGCallingConventionKind.Register
@@ -3155,28 +3141,23 @@ begin
     {$REGION ! DataSnap}
     if not library.DataSnap then 
       if assigned(operation.Result) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
                                                       new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                      sa.AsCallParameter].ToList,
+                                                      GenerateParamAttributes(operation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind:= CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Read',
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,litem.DataType,Intf_name)).AsCallParameter,
                                                         new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                        sa.AsCallParameter].ToList,
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind:= CGCallSiteKind.Reference));
 
       end;
@@ -3184,14 +3165,12 @@ begin
     {$REGION DataSnap}
     if library.DataSnap then 
       if assigned(operation.Result) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
                                                       new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                      sa.AsCallParameter].ToList,
+                                                      GenerateParamAttributes(operation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind:= CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
@@ -3221,8 +3200,6 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateAsyncExBegin(&library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody: Boolean): CGMethodDefinition;
 begin
-  var TParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
-
   result := new CGMethodDefinition('Begin'+operation.Name,
                                     Visibility := CGMemberVisibilityKind.Protected,
                                     CallingConvention := CGCallingConventionKind.Register
@@ -3272,15 +3249,12 @@ begin
                                                     CallSiteKind:= CGCallSiteKind.Reference));
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Write',
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,litem.DataType,Intf_name)).AsCallParameter,
                                                         new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                        sa.AsCallParameter].ToList,
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind:= CGCallSiteKind.Reference));
 
       end;
@@ -3300,8 +3274,6 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateAsyncExEnd(&library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody: Boolean): CGMethodDefinition;
 begin
-  var TParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
-
   result := new CGMethodDefinition('End'+operation.Name,
                                    Visibility := CGMemberVisibilityKind.Protected,
                                    CallingConvention := CGCallingConventionKind.Register
@@ -3335,28 +3307,23 @@ begin
     {$REGION ! DataSnap}
     if not library.DataSnap then 
       if assigned(operation.Result) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         result.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
                                                       new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                      sa.AsCallParameter].ToList,
+                                                      GenerateParamAttributes(operation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind:= CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in operation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if litem.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
-
         result.Statements.Add(new CGMethodCallExpression(lMessage,
                                                         'Read',
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,litem.DataType,Intf_name)).AsCallParameter,
                                                         new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                        sa.AsCallParameter].ToList,
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind:= CGCallSiteKind.Reference));
 
       end;
@@ -3364,14 +3331,12 @@ begin
     {$REGION DataSnap}
     if library.DataSnap then 
       if assigned(operation.Result) then begin
-        var sa := new CGSetLiteralExpression(ElementType := TParamAttributes_typeref);
-        if operation.Result.DataType.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
         result.Statements.Add(new CGMethodCallExpression(lMessage,
                                                       'Read',
                                                       [operation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,operation.Result.DataType,Intf_name)).AsCallParameter,
                                                       new CGCallParameter('lResult'.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
-                                                      sa.AsCallParameter].ToList,
+                                                      GenerateParamAttributes(operation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind:= CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
@@ -3436,6 +3401,8 @@ begin
                                       Virtuality := CGMemberVirtualityKind.Virtual,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
+    var lComment := new CGCommentStatement();
+    
     for lmemparam in lmem.Items do begin
       if lmemparam.ParamFlag <> ParamFlags.Result then begin
         var lparam := new CGParameterDefinition(lmemparam.Name,
@@ -3444,16 +3411,24 @@ begin
           lparam.Type := new CGConstantTypeReference(lparam.Type)
         else
           lparam.Modifier := RODLParamFlagToCodegenFlag(lmemparam.ParamFlag);
+        if not LegacyStrings then begin
+          if lmemparam.DataType.EqualsIgnoringCaseInvariant('AnsiString') then lComment.Lines.Add(lmemparam.Name +" is serialized as AnsiString");
+          if lmemparam.DataType.EqualsIgnoringCaseInvariant('UTF8String') then lComment.Lines.Add(lmemparam.Name +" is serialized as UTF8String");
+        end;
         mem.Parameters.Add(lparam);
       end;
     end;
     mem.Statements.Add(AddMessageDirective(lmem.Name+" is not implemented yet!"));
     if assigned(lmem.Result) then begin
+      if not LegacyStrings then begin
+        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('AnsiString') then lComment.Lines.Add("result is serialized as AnsiString");
+        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('UTF8String') then lComment.Lines.Add("result is serialized as UTF8String");
+      end;
       mem.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType, Intf_name);
       if isComplex(library, lmem.Result.DataType) then
         mem.Statements.Add(CGNilExpression.Nil.AsReturnStatement);
     end;
-
+    if not String.IsNullOrEmpty(lComment.ToString) then mem.Comment:= lComment;
     lservice.Members.Add(mem);
     {$ENDREGION}
   end;
@@ -4040,6 +4015,32 @@ begin
   if isDFMNeeded then
     result.Add(Path.ChangeExtension(file.FileName, 'dfm'),
                String.Format(iif(String.IsNullOrEmpty(service.AncestorName), DFM_template, DFM_template2),[aServiceName]));
+end;
+
+method DelphiRodlCodeGen.GenerateParamAttributes(aName: String): CGSetLiteralExpression;
+begin
+  var sa := new CGSetLiteralExpression(ElementType := fParamAttributes_typeref);
+  if aName.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
+  if not fLegacyStrings then begin
+    if aName.EqualsIgnoringCaseInvariant('AnsiString') then sa.Elements.Add('paAsAnsiString'.AsNamedIdentifierExpression);
+    if aName.EqualsIgnoringCaseInvariant('UTF8String') then sa.Elements.Add('paAsUTF8String'.AsNamedIdentifierExpression);
+  end;
+  exit sa;
+end;
+
+method DelphiRodlCodeGen.SetLegacyStrings(value: Boolean);
+begin
+  if fLegacyStrings <> value then begin
+    fLegacyStrings := value;
+    if fLegacyStrings then begin
+      CodeGenTypes.Item["ansistring"] := String("AnsiString").AsTypeReference;
+      CodeGenTypes.Item["utf8string"] := String("UTF8String").AsTypeReference;    
+    end
+    else begin
+      CodeGenTypes.Item["ansistring"] := String("string").AsTypeReference;
+      CodeGenTypes.Item["utf8string"] := String("string").AsTypeReference;    
+    end;
+  end;
 end;
 
 end.
