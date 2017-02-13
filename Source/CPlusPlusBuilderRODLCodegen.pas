@@ -8,6 +8,7 @@ uses
 type
   CPlusPlusBuilderRodlCodeGen = public class(DelphiRodlCodeGen)
   protected
+    method _SetLegacyStrings(value: Boolean); override;
     method Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary); empty;override;
     method cpp_GenerateAsyncAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); override;
     method cpp_GenerateAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition; aMode: ModeKind); override;
@@ -52,6 +53,7 @@ implementation
 
 constructor CPlusPlusBuilderRodlCodeGen;
 begin
+  fLegacyStrings := False;
   PureDelphi := False;
   IncludeUnitNameForOwnTypes := true;
   IncludeUnitNameForOtherTypes := true;
@@ -63,7 +65,7 @@ begin
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
   CodeGenTypes.Add("currency", new CGNamedTypeReference("Currency") isClasstype(False));
   CodeGenTypes.Add("widestring", new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
-  CodeGenTypes.Add("ansistring", new CGNamedTypeReference("AnsiString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
+  CodeGenTypes.Add("ansistring", new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False));
   CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
   CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean));
   CodeGenTypes.Add("variant", new CGNamedTypeReference("Variant") isClasstype(False));
@@ -71,7 +73,7 @@ begin
   CodeGenTypes.Add("xml", ResolveInterfaceTypeRef(nil,'IXMLNode','',''));
   CodeGenTypes.Add("guid", new CGNamedTypeReference("TGuidString") isClasstype(False));
   CodeGenTypes.Add("decimal", new CGNamedTypeReference("TDecimalVariant") isClasstype(False));
-  CodeGenTypes.Add("utf8string", new CGNamedTypeReference("UTF8String") isClasstype(False));
+  CodeGenTypes.Add("utf8string", new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False));
   CodeGenTypes.Add("xsdatetime", new CGNamedTypeReference("XsDateTime") isClasstype(True));
 
   // from
@@ -304,6 +306,7 @@ begin
       'TGuidString':      l_method := 'GetTypeInfo_TGuidString';
       'TDecimalVariant':  l_method := 'GetTypeInfo_TDecimalVariant';
       'UTF8String':       l_method := 'GetTypeInfo_UTF8String';
+      'String':           l_method := 'GetTypeInfo_String';
       '_di_IXMLNode':     l_method := 'GetTypeInfo_Xml';
     else
     end;
@@ -640,6 +643,21 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_smartInit(file: CGCodeUnit);
 begin
   file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma package(smart_init)'));
+end;
+
+method CPlusPlusBuilderRodlCodeGen._SetLegacyStrings(value: Boolean);
+begin
+  if fLegacyStrings <> value then begin
+    fLegacyStrings := value;
+    if fLegacyStrings then begin
+      CodeGenTypes.Item["ansistring"] := new CGNamedTypeReference("AnsiString") &namespace(new CGNamespaceReference("System")) isClasstype(False);
+      CodeGenTypes.Item["utf8string"] := new CGNamedTypeReference("UTF8String") isClasstype(False);    
+    end
+    else begin
+      CodeGenTypes.Item["ansistring"] := new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False);
+      CodeGenTypes.Item["utf8string"] := new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False);
+    end;
+  end;
 end;
 
 

@@ -23,8 +23,7 @@ type
                       '  Height = 300'#13#10+
                       '  Width = 300'#13#10+
                       'end';
-  private
-    fLegacyStrings: Boolean;
+  private    
     fIROTransportChannel_typeref: CGTypeReference;
     fIROTransport_typeref: CGTypeReference;
     fIROMessage_typeref: CGTypeReference;
@@ -41,8 +40,9 @@ type
     method get_IROMessage_typeref: CGTypeReference;
     method get_IROTransport_typeref: CGTypeReference;
     method GenerateParamAttributes(aName: String):CGSetLiteralExpression;
-    method SetLegacyStrings(value: Boolean);
   protected
+    fLegacyStrings: Boolean;
+    method _SetLegacyStrings(value: Boolean); virtual;
     property PureDelphi: Boolean;
     property Intf_name: String;
     property Invk_name: String;
@@ -144,7 +144,7 @@ type
     method isDFMNeeded: Boolean;
     
     property GenerateDFMs: Boolean := true;
-    property LegacyStrings: Boolean read fLegacyStrings write SetLegacyStrings;
+    property LegacyStrings: Boolean read fLegacyStrings write _SetLegacyStrings;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -4028,7 +4028,7 @@ begin
   exit sa;
 end;
 
-method DelphiRodlCodeGen.SetLegacyStrings(value: Boolean);
+method DelphiRodlCodeGen._SetLegacyStrings(value: Boolean);
 begin
   if fLegacyStrings <> value then begin
     fLegacyStrings := value;
