@@ -38,8 +38,8 @@ type
     method GlobalsConst_GenerateServerGuid(file: CGCodeUnit; library: RodlLibrary; entity: RodlService); override;
     method AddMessageDirective(aMessage: String): CGStatement; override;
     method Impl_GenerateDFMInclude(file: CGCodeUnit);override;
-    method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): CGStatement;override;
-    method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGExpression);override;
+    method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;override;
+    method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);override;
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
     method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'):CGImport; override;
     method Invk_GetDefaultServiceRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
@@ -451,8 +451,9 @@ begin
   file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma resource "*.dfm"'));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): CGStatement;
+method CPlusPlusBuilderRodlCodeGen.Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;
 begin
+  var r := new List<CGStatement>;
   var l_EntityName := entity.Name;
   var l_TInvoker := 'T'+l_EntityName+'_Invoker';
   var l_methodName := 'Create_'+l_EntityName;
@@ -461,16 +462,18 @@ begin
                                    [l_EntityName.AsLiteralExpression.AsCallParameter,
                                     l_methodName.AsNamedIdentifierExpression.AsCallParameter,
                                     cpp_ClassId(l_TInvoker.AsNamedIdentifierExpression).AsCallParameter]);
-  exit new CGMethodCallExpression(l_creator,'GetInterface',
-                                 [lvar.AsCallParameter],
-                                  CallSiteKind := CGCallSiteKind.Reference);
-
+  r.Add(new CGVariableDeclarationStatement('lfactory','TROClassFactory'.AsTypeReference,l_creator));
+  r.Add(new CGMethodCallExpression('lfactory'.AsNamedIdentifierExpression,'GetInterface',
+                                    [lvar.AsCallParameter],
+                                    CallSiteKind := CGCallSiteKind.Reference));
+  exit r;
   //new TROClassFactory("NewService", Create_NewService, __classid(TNewService_Invoker));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.Impl_GenerateCreateService(aMethod: CGMethodDefinition; aCreator: CGExpression);
+method CPlusPlusBuilderRodlCodeGen.Impl_GenerateCreateService(aMethod: CGMethodDefinition; aCreator: CGNewInstanceExpression);
 begin
-  aMethod.Statements.Add(new CGMethodCallExpression(aCreator,'GetInterface',
+  aMethod.Statements.Add(new CGVariableDeclarationStatement('lservice', CGTypeReferenceExpression(aCreator.Type).Type, aCreator));
+  aMethod.Statements.Add(new CGMethodCallExpression('lservice'.AsNamedIdentifierExpression,'GetInterface',
                         ['anInstance'.AsNamedIdentifierExpression.AsCallParameter],
                           CallSiteKind := CGCallSiteKind.Reference));
 
