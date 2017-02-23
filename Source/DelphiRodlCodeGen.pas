@@ -19,7 +19,7 @@ type
                       '  Height = 300'#13#10+
                       '  Width = 300'#13#10+
                       'end';
-  private    
+  private
     fIROTransportChannel_typeref: CGTypeReference;
     fIROTransport_typeref: CGTypeReference;
     fIROMessage_typeref: CGTypeReference;
@@ -3376,7 +3376,7 @@ begin
   file.Globals.Add(lcreator.AsGlobal);
   file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);
   file.Initialization := new List<CGStatement>;
-  file.Initialization.AddRange(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
+  file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
   file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
   file.Finalization := new List<CGStatement>;
   file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
