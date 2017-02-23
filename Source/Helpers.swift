@@ -1,5 +1,4 @@
 ﻿import RemObjects.SDK.CodeGen4
-import Sugar
 
 public class CGHelpers {
 

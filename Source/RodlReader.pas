@@ -2,10 +2,6 @@
 
 interface
 
-uses
-  RemObjects.CodeGen4,
-  Sugar.*;
-
 type
   ParamFlags = public enum (
     &In,
@@ -184,7 +180,7 @@ type
     property &Namespace: String;
     property Includes: RodlInclude;
     property UsedRodlId: Guid;
-    property IsMerged: Boolean read not UsedRodlId.Equals(Guid.Empty);
+    property IsMerged: Boolean read not UsedRodlId.Equals(Guid.EmptyGuid);
     property DontApplyCodeGen: Boolean;
     property Loaded: Boolean;
     property AbsoluteFileName: String;
@@ -347,20 +343,20 @@ end;
 
 method RodlEntity.LoadFromXmlNode(node: XmlElement);
 begin
-  Name := node.Attributes["Name"]:Value;
-  if (node.Attributes["UID"] <> nil) then EntityID := Guid.Parse(node.Attributes["UID"].Value);
-  if (node.Attributes["FromUsedRodlUID"] <> nil) then FromUsedRodlId := Guid.Parse(node.Attributes["FromUsedRodlUID"].Value);
-  &Abstract := node.Attributes["Abstract"]:Value = "1";
-  DontCodegen :=  node.Attributes["DontCodeGen"]:Value = "1";
-  var ldoc := node.GetFirstElementWithName("Documentation");
-  if (ldoc <> nil) and (ldoc.FirstChild <> nil) then
+  Name := node.Attribute["Name"]:Value;
+  if (node.Attribute["UID"] <> nil) then EntityID := Guid.TryParse(node.Attribute["UID"].Value);
+  if (node.Attribute["FromUsedRodlUID"] <> nil) then FromUsedRodlId := Guid.TryParse(node.Attribute["FromUsedRodlUID"].Value);
+  &Abstract := node.Attribute["Abstract"]:Value = "1";
+  DontCodegen :=  node.Attribute["DontCodeGen"]:Value = "1";
+  var ldoc := node.FirstElementWithName("Documentation");
+  if (ldoc ≠ nil) and (ldoc.Elements.FirstOrDefault ≠ nil) then
       // FirstChild because data should be enclosed within CDATA
-      Documentation := ldoc.FirstChild.Value;
+      Documentation := ldoc.Elements.FirstOrDefault.Value;
 
-  var lSubNode: XmlElement := node.GetFirstElementWithName("CustomAttributes");
+  var lSubNode: XmlElement := node.FirstElementWithName("CustomAttributes");
   if (lSubNode <> nil) then begin
-    for each childNode: XmlElement in lSubNode.ChildNodes do begin
-      var lValue: XmlAttribute := childNode.Attributes["Value"];
+    for each childNode: XmlElement in lSubNode.Elements do begin
+      var lValue: XmlAttribute := childNode.Attribute["Value"];
       if (lValue <> nil) then begin
         CustomAttributes[childNode.LocalName] := lValue.Value;
         CustomAttributes_lower[childNode.LocalName.ToLowerInvariant] := lValue.Value;
@@ -373,7 +369,7 @@ end;
 constructor RodlEntity();
 begin
   EntityID := Guid.NewGuid();
-  FromUsedRodlId := Guid.Empty;
+  FromUsedRodlId := Guid.EmptyGuid;
 end;
 
 constructor RodlEntity(node: XmlElement);
@@ -390,13 +386,13 @@ end;
 method RodlTypedEntity.LoadFromXmlNode(node: XmlElement);
 begin
   inherited LoadFromXmlNode(node);
-  DataType := FixLegacyTypes(node.Attributes["DataType"].Value);
+  DataType := FixLegacyTypes(node.Attribute["DataType"].Value);
 end;
 
 method RodlEntityWithAncestor.LoadFromXmlNode(node: XmlElement);
 begin
   inherited LoadFromXmlNode(node);
-  if (node.Attributes["Ancestor"] <> nil) then AncestorName := node.Attributes["Ancestor"].Value;
+  if (node.Attribute["Ancestor"] <> nil) then AncestorName := node.Attribute["Ancestor"].Value;
 end;
 
 method RodlEntityWithAncestor.getAncestorEntity: RodlEntity;
@@ -416,7 +412,7 @@ end;
 method RodlComplexEntity<T>.LoadFromXmlNode(node: XmlElement; aActivator: method : T);
 begin
   inherited LoadFromXmlNode(node);
-  fItems.LoadFromXmlNode(node.GetFirstElementWithName(fItemsNodeName), nil, aActivator);
+  fItems.LoadFromXmlNode(node.FirstElementWithName(fItemsNodeName), nil, aActivator);
 end;
 
 constructor RodlComplexEntity<T>(nodeName: String);
@@ -431,7 +427,7 @@ begin
   var lancestor := AncestorEntity;
   if assigned(lancestor) and (lancestor is RodlComplexEntity<T>) then begin
     result := RodlComplexEntity<T>(lancestor).GetInheritedItems;
-    result.AddRange(RodlComplexEntity<T>(lancestor).fItems.Items);
+    result.Add(RodlComplexEntity<T>(lancestor).fItems.Items);
   end
   else begin
     result := new List<T>;
@@ -441,7 +437,7 @@ end;
 method RodlComplexEntity<T>.GetAllItems: List<T>;
 begin
   result := GetInheritedItems;
-  result.AddRange(Self.fItems.Items);
+  result.Add(Self.fItems.Items);
 end;
 
 constructor RodlStructEntity;
@@ -452,8 +448,8 @@ end;
 method RodlStructEntity.LoadFromXmlNode(node: XmlElement);
 begin
   LoadFromXmlNode(node,-> new RodlField);
-  if (node.Attributes["AutoCreateParams"] <> nil) then
-    AutoCreateProperties := (node.Attributes["AutoCreateParams"].Value = "1");
+  if (node.Attribute["AutoCreateParams"] <> nil) then
+    AutoCreateProperties := (node.Attribute["AutoCreateParams"].Value = "1");
 end;
 
 constructor RodlServiceEntity;
@@ -501,7 +497,7 @@ method EntityCollection<T>.LoadFromXmlNode(node: XmlElement; usedRodl: RodlUse; 
 begin
   if (node = nil) then exit;
 
-  for lNode: XmlNode in node.ChildNodes do begin
+  for lNode: XmlNode in node.Elements do begin
     var lr := (lNode.NodeType = XmlNodeType.Element) and (XmlElement(lNode).LocalName = fEntityNodeName);
     if lr then begin
       var lEntity := aActivator();
@@ -531,7 +527,7 @@ begin
   var lAncestors := new List<T>;
 
   {if typeOf(T).Equals(typeOf(RodlEntityWithAncestor) then begin
-    lResult.AddRange(fItems);
+    lResult.Add(fItems);
     exit;
   end;}
 
@@ -600,7 +596,7 @@ begin
     var lRemoteRodl := LoadXML(aFilename);
     if not assigned(lRemoteRodl)then
       raise new Exception("Could not read "+aFilename);
-    LoadRemoteRodlFromXmlNode(lRemoteRodl.DocumentElement);
+    LoadRemoteRodlFromXmlNode(lRemoteRodl.Root);
 
   end
   else begin
@@ -608,14 +604,14 @@ begin
     var lDocument := LoadXML(aFilename);
       if not assigned(lDocument)then
         raise new Exception("Could not read "+aFilename);
-    LoadFromXmlNode(lDocument.DocumentElement);
+    LoadFromXmlNode(lDocument.Root);
   end;
 end;
 
 method RodlLibrary.SaveToFile(aFilename: String);
 begin
   if assigned(fXmlNode) then
-    fXmlNode.OwnerDocument.Save(aFilename);
+    fXmlNode.Document.SaveToFile(aFilename);
 end;
 
 
@@ -637,13 +633,13 @@ begin
   {$ELSE}
   var lDocument := XmlDocument.FromString(aString);
   {$ENDIF}
-  LoadFromXmlNode(lDocument.DocumentElement);
+  LoadFromXmlNode(lDocument.Root);
 end;
 
 method RodlLibrary.LoadRemoteRodlFromXmlNode(node: XmlElement);
 begin
   {$MESSAGE optimize code}
-  var lServers := node.GetElementsByTagName("Server");
+  var lServers := node.ElementsWithName("Server");
 
   if lServers.Count ≠ 1 then
     raise new Exception("Server element not found in remoteRODL.");
@@ -652,12 +648,12 @@ begin
   var lServerUris := (lServers.Item(0)as XmlElement):GetElementsByTagName("ServerUri");
   if lServerUris.Count ≠ 1 then
     raise new Exception("lServerUris element not found in remoteRODL.");
-  LoadFromUrl(lServerUris.Item(0).Value);  
+  LoadFromUrl(lServerUris.Item(0).Value);
   {$ELSE}
-  var lServerUris := lServers[0].GetElementsByTagName("ServerUri");
-  if length(lServerUris) ≠ 1 then
+  var lServerUris := lServers.FirstOrDefault.ElementsWithName("ServerUri");
+  if lServerUris.Count ≠ 1 then
     raise new Exception("lServerUris element not found in remoteRODL.");
-  LoadFromUrl(lServerUris[0].Value);  
+  LoadFromUrl(lServerUris.FirstOrDefault.Value);
   {$ENDIF}
 end;
 
@@ -676,23 +672,23 @@ begin
     end;
     var lXml := new XmlDocument;
     lXml.Load(allData);
-    LoadFromXmlNode(lXml.DocumentElement);
+    LoadFromXmlNode(lXml.Root);
   end
   else if lUrl.Scheme = "file" then begin
     var lXml := LoadXML(lUrl.AbsolutePath);
-    LoadFromXmlNode(lXml.DocumentElement);
+    LoadFromXmlNode(lXml.Root);
   end else begin
     raise new Exception("Unspoorted URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
   end;
   {$ELSE}
-  var lUrl := new Url(aUrl);
+  var lUrl := Url.UrlWithString(aUrl);
   if lUrl.Scheme in ["http", "https"] then begin
     var lXml := Http.GetXml(new HttpRequest(lUrl));// why is this cast needed, we have operator Implicit from Url to HttpRequest
-    LoadFromXmlNode(lXml.DocumentElement);
+    LoadFromXmlNode(lXml.Root);
   end
   else if lUrl.Scheme = "file" then begin
     var lXml := LoadXML(lUrl.Path);
-    LoadFromXmlNode(lXml.DocumentElement);
+    LoadFromXmlNode(lXml.Root);
   end else begin
     raise new Exception("Unspoorted URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
   end;
@@ -710,16 +706,16 @@ begin
   if use = nil then begin
     fXmlNode := node;
     inherited LoadFromXmlNode(node);
-    if (node.Attributes["Namespace"] <> nil) then
-      &Namespace := node.Attributes["Namespace"].Value;
-    if (node.Attributes["DataSnap"] <> nil) then
-      DataSnap := node.Attributes["DataSnap"].Value = "1";
-    if (node.Attributes["ScopedEnums"] <> nil) then
-      ScopedEnums := node.Attributes["ScopedEnums"].Value = "1";
-    DontApplyCodeGen := ((node.Attributes["SkipCodeGen"] <> nil) and (node.Attributes["SkipCodeGen"].Value = "1")) or
-                        ((node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1"));
+    if (node.Attribute["Namespace"] <> nil) then
+      &Namespace := node.Attribute["Namespace"].Value;
+    if (node.Attribute["DataSnap"] <> nil) then
+      DataSnap := node.Attribute["DataSnap"].Value = "1";
+    if (node.Attribute["ScopedEnums"] <> nil) then
+      ScopedEnums := node.Attribute["ScopedEnums"].Value = "1";
+    DontApplyCodeGen := ((node.Attribute["SkipCodeGen"] <> nil) and (node.Attribute["SkipCodeGen"].Value = "1")) or
+                        ((node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1"));
 
-    var lInclude := node.GetFirstElementWithName("Includes");
+    var lInclude := node.FirstElementWithName("Includes");
     if (lInclude <> nil) then begin
       Includes := new RodlInclude();
       Includes.LoadFromXmlNode(lInclude);
@@ -729,35 +725,35 @@ begin
     end;
   end
   else begin
-    use.Name := node.Attributes["Name"]:Value;
-    use.UsedRodlId := Guid.Parse(node.Attributes["UID"].Value);
+    use.Name := node.Attribute["Name"]:Value;
+    use.UsedRodlId := Guid.TryParse(node.Attribute["UID"].Value);
     use.DontApplyCodeGen := use.DontApplyCodeGen or
-                  (((node.Attributes["SkipCodeGen"] <> nil) and (node.Attributes["SkipCodeGen"].Value = "1")) or
-                   ((node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1")));
-    if (node.Attributes["Namespace"] <> nil) then use.Namespace := node.Attributes["Namespace"].Value;
+                  (((node.Attribute["SkipCodeGen"] <> nil) and (node.Attribute["SkipCodeGen"].Value = "1")) or
+                   ((node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1")));
+    if (node.Attribute["Namespace"] <> nil) then use.Namespace := node.Attribute["Namespace"].Value;
 
-    var lInclude := node.GetFirstElementWithName("Includes");
+    var lInclude := node.FirstElementWithName("Includes");
     if (lInclude <> nil) then begin
       use.Includes := new RodlInclude();
       use.Includes.LoadFromXmlNode(lInclude);
     end;
-    if isUsedRODLLoaded(use) then exit; 
+    if isUsedRODLLoaded(use) then exit;
   end;
 
-  fUses.LoadFromXmlNode(node.GetFirstElementWithName("Uses"), use, -> new RodlUse);
-  fStructs.LoadFromXmlNode(node.GetFirstElementWithName("Structs"), use, -> new RodlStruct);
-  fArrays.LoadFromXmlNode(node.GetFirstElementWithName("Arrays"), use, -> new RodlArray);
-  fEnums.LoadFromXmlNode(node.GetFirstElementWithName("Enums"), use, -> new RodlEnum);
-  fExceptions.LoadFromXmlNode(node.GetFirstElementWithName("Exceptions"), use, -> new RodlException);
-  fGroups.LoadFromXmlNode(node.GetFirstElementWithName("Groups"), use, -> new RodlGroup);
-  fServices.LoadFromXmlNode(node.GetFirstElementWithName("Services"), use, -> new RodlService);
-  fEventSinks.LoadFromXmlNode(node.GetFirstElementWithName("EventSinks"), use, -> new RodlEventSink);
+  fUses.LoadFromXmlNode(node.FirstElementWithName("Uses"), use, -> new RodlUse);
+  fStructs.LoadFromXmlNode(node.FirstElementWithName("Structs"), use, -> new RodlStruct);
+  fArrays.LoadFromXmlNode(node.FirstElementWithName("Arrays"), use, -> new RodlArray);
+  fEnums.LoadFromXmlNode(node.FirstElementWithName("Enums"), use, -> new RodlEnum);
+  fExceptions.LoadFromXmlNode(node.FirstElementWithName("Exceptions"), use, -> new RodlException);
+  fGroups.LoadFromXmlNode(node.FirstElementWithName("Groups"), use, -> new RodlGroup);
+  fServices.LoadFromXmlNode(node.FirstElementWithName("Services"), use, -> new RodlService);
+  fEventSinks.LoadFromXmlNode(node.FirstElementWithName("EventSinks"), use, -> new RodlEventSink);
 end;
 
 method RodlLibrary.LoadUsedFibraryFromFile(aFilename: String; use: RodlUse);
 begin
   var lDocument := LoadXML(aFilename);
-  LoadFromXmlNode(lDocument.DocumentElement, use);
+  LoadFromXmlNode(lDocument.Root, use);
 end;
 
 method RodlLibrary.FindEntity(aName: String): RodlEntity;
@@ -787,7 +783,7 @@ begin
 end;
 
 method RodlLibrary.isUsedRODLLoaded(anUse: RodlUse): Boolean;
-begin  
+begin
   if EntityID.Equals(anUse.UsedRodlId) then exit true;
   for m in &Uses.Items do begin
     if m = anUse then continue;
@@ -798,7 +794,7 @@ end;
 
 method RodlInclude.LoadAttribute(node: XmlElement; aName: String): String;
 begin
-  exit iif(node.Attributes[aName] <> nil, node.Attributes[aName].Value, "");
+  exit iif(node.Attribute[aName] <> nil, node.Attribute[aName].Value, "");
 end;
 
 method RodlInclude.LoadFromXmlNode(node: XmlElement);
@@ -812,7 +808,7 @@ begin
   JavaScriptModule := LoadAttribute(node, "JavaScript");
   CocoaModule := LoadAttribute(node, "Cocoa");
   //backward compatibility
-  if String.IsNullOrEmpty(CocoaModule) then 
+  if String.IsNullOrEmpty(CocoaModule) then
     CocoaModule := LoadAttribute(node, "Nougat");
 end;
 
@@ -820,7 +816,7 @@ constructor RodlUse;
 begin
   inherited constructor;
   Includes := nil;
-  UsedRodlId := Guid.Empty;
+  UsedRodlId := Guid.EmptyGuid;
 end;
 
 method RodlUse.LoadFromXmlNode(node: XmlElement);
@@ -830,7 +826,7 @@ begin
 
   inherited LoadFromXmlNode(node);
 
-  var linclude: XmlElement := node.GetFirstElementWithName("Includes");
+  var linclude: XmlElement := node.FirstElementWithName("Includes");
   if (linclude <> nil) then begin
     Includes := new RodlInclude();
     Includes.LoadFromXmlNode(linclude);
@@ -839,16 +835,16 @@ begin
     Includes := nil;
   end;
 
-  if (node.Attributes["Rodl"] <> nil) then
-    FileName := node.Attributes["Rodl"].Value;
+  if (node.Attribute["Rodl"] <> nil) then
+    FileName := node.Attribute["Rodl"].Value;
 
-  if (node.Attributes["AbsoluteRodl"] <> nil) then
-    AbsoluteRodl := node.Attributes["AbsoluteRodl"].Value;
+  if (node.Attribute["AbsoluteRodl"] <> nil) then
+    AbsoluteRodl := node.Attribute["AbsoluteRodl"].Value;
 
-  if (node.Attributes["UsedRodlID"] <> nil) then
-    UsedRodlId := Guid.Parse(node.Attributes["UsedRodlID"].Value);
+  if (node.Attribute["UsedRodlID"] <> nil) then
+    UsedRodlId := Guid.TryParse(node.Attribute["UsedRodlID"].Value);
 
-  DontApplyCodeGen := (node.Attributes["DontCodeGen"] <> nil) and (node.Attributes["DontCodeGen"].Value = "1");
+  DontApplyCodeGen := (node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1");
 
   var usedRodlFileName: String := Path.GetFullPath(FileName);
   if (not usedRodlFileName.FileExists and not FileName.PathIsRooted) then begin
@@ -890,16 +886,16 @@ end;
 method RodlEnum.LoadFromXmlNode(node: XmlElement);
 begin
   LoadFromXmlNode(node, -> new RodlEnumValue);
-  PrefixEnumValues := node.Attributes["Prefix"]:Value <> '0';
+  PrefixEnumValues := node.Attribute["Prefix"]:Value <> '0';
 end;
 
 method RodlArray.LoadFromXmlNode(node: XmlElement);
 begin
   inherited LoadFromXmlNode(node);
-  for lElementType: XmlNode in node.ChildNodes do begin
+  for lElementType in node.Elements do begin
     if (lElementType.LocalName = "ElementType") then begin
-      if (XmlElement(lElementType).Attributes["DataType"] <> nil) then
-        ElementType := FixLegacyTypes(XmlElement(lElementType).Attributes["DataType"].Value);
+      if (XmlElement(lElementType).Attribute["DataType"] <> nil) then
+        ElementType := FixLegacyTypes(XmlElement(lElementType).Attribute["DataType"].Value);
       break;
     end;
   end;
@@ -910,9 +906,9 @@ begin
   inherited LoadFromXmlNode(node);
   fRoles.Clear;
   fRoles.LoadFromXmlNode(node);
-  &Private := node.Attributes["Private"]:Value = "1";
-  ImplClass := node.Attributes["ImplClass"]:Value;
-  ImplUnit := node.Attributes["ImplUnit"]:Value;
+  &Private := node.Attribute["Private"]:Value = "1";
+  ImplClass := node.Attribute["ImplClass"]:Value;
+  ImplUnit := node.Attribute["ImplUnit"]:Value;
 end;
 
 constructor RodlInterface;
@@ -941,7 +937,7 @@ begin
   LoadFromXmlNode(node,->new RodlParameter);
   fRoles.Clear;
   fRoles.LoadFromXmlNode(node);
-  if (node.Attributes["ForceAsyncResponse"] <> nil) then ForceAsyncResponse := node.Attributes["ForceAsyncResponse"].Value = "1";
+  if (node.Attribute["ForceAsyncResponse"] <> nil) then ForceAsyncResponse := node.Attribute["ForceAsyncResponse"].Value = "1";
 
   for parameter: RodlParameter in Items do
     if parameter.ParamFlag = ParamFlags.Result then self.Result := parameter;
@@ -950,28 +946,25 @@ end;
 
 method RodlRoles.LoadFromXmlNode(node: XmlElement);
 begin
-  var el := node.GetFirstElementWithName("Roles") as XmlElement;
+  var el := node.FirstElementWithName("Roles") as XmlElement;
 
-  if (el = nil) or (el.ChildCount = 0) then exit;
+  if (el = nil) or (el.Elements.Count = 0) then exit;
 
-  for i:Int32 := 0 to el.ChildCount-1 do begin
-    var lItem:XmlElement := el.ChildNodes[i] as XmlElement;
-    if (lItem = nil) then continue;
-
-    if (lItem.Name = "DenyRole") then fRoles.Add(new RodlRole(lItem.ValueOrText, true))
-    else if (lItem.Name = "AllowRole") then fRoles.Add(new RodlRole(lItem.ValueOrText, false));
+  for each lItem in el.Elements do begin
+    if (lItem.LocalName = "DenyRole") then fRoles.Add(new RodlRole(lItem.ValueOrText, true))
+    else if (lItem.LocalName = "AllowRole") then fRoles.Add(new RodlRole(lItem.ValueOrText, false));
   end;
 end;
 
 method RodlRoles.Clear;
 begin
-  fRoles.Clear;
+  fRoles.RemoveAll;
 end;
 
 method RodlParameter.LoadFromXmlNode(node: XmlElement);
 begin
   inherited LoadFromXmlNode(node);
-  var ln := node.Attributes["Flag"].Value.ToLowerInvariant;
+  var ln := node.Attribute["Flag"].Value.ToLowerInvariant;
   case ln of
     'in': ParamFlag:= ParamFlags.In;
     'out': ParamFlag:= ParamFlags.Out;
@@ -983,4 +976,3 @@ begin
 end;
 
 end.
-

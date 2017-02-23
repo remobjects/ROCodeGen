@@ -1,8 +1,5 @@
 ﻿namespace RemObjects.SDK.CodeGen4;
 
-uses
-  Sugar.*;
-
 type
   ResGenerator = public static class
   private
@@ -25,9 +22,9 @@ type
     class method GenerateResBufferFromBuffer(Content: array of Byte; aName: String): array of Byte;
     begin
       var len_name := length(aName)*2+2; // aName + #0#0
-      if len_name mod 4 <> 0 then inc(len_name,2); // extra 0 for dword alignment      
+      if len_name mod 4 <> 0 then inc(len_name,2); // extra 0 for dword alignment
 
-      var len := length(FirstEmptyResource) + 
+      var len := length(FirstEmptyResource) +
                  7*4 {sizeOf(Int32)}+
                  len_name+
                  length(Content);
@@ -47,7 +44,7 @@ type
         inc(pos,2);
       end;
       inc(pos,2); // Null terminater
-      if length(aName)*2+2 <> len_name then 
+      if length(aName)*2+2 <> len_name then
         inc(pos,2); // extra 0 for dword alignment
       WriteLong(result, var pos, 0); // Data Version
       WriteLong(result, var pos, 0); // Flags + Language
@@ -56,15 +53,15 @@ type
       for i: Int32 := 0 to length(Content)-1 do
         result[pos+i]:= Content[i];
     end;
-    
+
     class method GenerateResBufferFromFile(RODLFileName: String): array of Byte;
-    begin      
+    begin
       {$IFDEF FAKESUGAR}
       if not File.Exists(RODLFileName) then raise new Exception('file is not found: '+RODLFileName);
-      var rodl := File.OpenRead(RODLFileName);      
+      var rodl := File.OpenRead(RODLFileName);
       {$ELSE}
       if not FileUtils.Exists(RODLFileName) then raise new Exception('file is not found: '+RODLFileName);
-      var rodl := new FileHandle(RODLFileName, FileOpenMode.ReadOnly);            
+      var rodl := new FileHandle(RODLFileName, FileOpenMode.ReadOnly);
       {$ENDIF}
       var cont := new array of Byte(rodl.Length);
       rodl.Read(cont,0, rodl.Length);
@@ -74,9 +71,9 @@ type
     class method SaveBufferToFile(Content: array of Byte; ResFileName: String);
     begin
       {$IFDEF FAKESUGAR}
-      var res := File.Create(ResFileName);      
+      var res := File.Create(ResFileName);
       {$ELSE}
-      var res := new FileHandle(ResFileName,FileOpenMode.Create);      
+      var res := new FileHandle(ResFileName,FileOpenMode.Create);
       {$ENDIF}
       res.Write(Content, 0, length(Content));
       res.Flush;
@@ -84,13 +81,13 @@ type
     end;
 
   public
-  
+
     class method GenerateResFile(aBytes: array of Byte; aResFileName: String);
     begin
       var lBuffer := GenerateResBufferFromBuffer(aBytes, NAME_RODLFile);
       SaveBufferToFile(lBuffer, aResFileName)
     end;
-    
+
     class method GenerateResFile(aRODLFileName: String; aResFileName: String);
     begin
       var lBuffer := GenerateResBufferFromFile(aRODLFileName);
@@ -103,7 +100,7 @@ type
       var lBuffer := GenerateResBufferFromBuffer(lContent, NAME_RODLFile);
       SaveBufferToFile(lBuffer, aResFileName)
     end;
-    
+
   end;
 
 end.

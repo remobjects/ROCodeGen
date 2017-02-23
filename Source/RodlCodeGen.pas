@@ -2,25 +2,21 @@
 
 interface
 
-uses
-  Sugar.*,
-  RemObjects.CodeGen4;
-
 type
   RodlCodeGen = public abstract class
   protected
     CodeGenTypes: Dictionary<String, CGTypeReference>:= new Dictionary<String, CGTypeReference>;
     ReaderFunctions: Dictionary<String, String>:= new Dictionary<String, String>;
-    ReservedWords: List<String> := new List<String>;    
+    ReservedWords: List<String> := new List<String>;
     PredefinedTypes: Dictionary<CGPredefinedTypeKind, CGTypeReference>:= new Dictionary<CGPredefinedTypeKind, CGTypeReference>;
     property targetNamespace: String;
 
-    {$REGION support methods}    
+    {$REGION support methods}
     method ResolveDataTypeToTypeRef(library: RodlLibrary; dataType: String): CGTypeReference;
     method ResolveStdtypes(&type: CGPredefinedTypeKind; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
     method EntityNeedsCodeGen(entity: RodlEntity): Boolean;
     method PascalCase(name:String):String;
-    method isStruct(library: RodlLibrary; dataType: String): Boolean;    
+    method isStruct(library: RodlLibrary; dataType: String): Boolean;
     method isEnum(library: RodlLibrary; dataType: String): Boolean;
     method isArray(library: RodlLibrary; dataType: String): Boolean;
     method isException(library: RodlLibrary; dataType: String): Boolean;
@@ -46,20 +42,20 @@ type
     method GenerateException(file: CGCodeUnit; library: RodlLibrary; entity: RodlException);virtual; empty;
     method GenerateService(file: CGCodeUnit; library: RodlLibrary; entity: RodlService);virtual; empty;
     method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; entity: RodlEventSink);virtual; empty;
-    method GenerateUnitComment: CGCommentStatement; virtual;    
+    method GenerateUnitComment: CGCommentStatement; virtual;
     method GetNamespace(library: RodlLibrary): String;virtual;
     method GetGlobalName(library: RodlLibrary): String; abstract;
   public
-    class property KnownRODLPaths: Dictionary<String,String> := new Dictionary<String,String>;    
+    class property KnownRODLPaths: Dictionary<String,String> := new Dictionary<String,String>;
     property Generator: CGCodeGenerator; virtual;
     property DontPrefixEnumValues: Boolean := false;
     property CodeUnitSupport: Boolean := True; virtual;
-    
+
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;
     method GenerateImplementationCodeUnit(library: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit; virtual;
-    
-    
+
+
     method GenerateInterfaceFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; virtual;
     method GenerateInterfaceFiles(library: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; virtual;
     method GenerateInvokerFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; virtual;
@@ -74,9 +70,9 @@ extension method List<T>.Sort_OrdinalIgnoreCase(cond: CompareFunc<T,String>): Li
 implementation
 
 extension method List<T>.Sort_OrdinalIgnoreCase(cond: CompareFunc<T,String>): List<T>;
-begin  
+begin
   var r:= new List<T>;
-  r.AddRange(Self);
+  r.Add(Self);
   r.Sort((x,y)-> begin
                   var x1 := cond(x);
                   var y1 := cond(y);
@@ -90,7 +86,7 @@ begin
                     if x1[i] > y1[i] then exit 1;
                     if x1[i] < y1[i] then exit -1;
                   end;
-                  exit x1.Length - y1.Length;                   
+                  exit x1.Length - y1.Length;
                  end);
   exit r;
 end;
@@ -151,7 +147,7 @@ end;
 method RodlCodeGen.FindEnum(&library: RodlLibrary; dataType: String): nullable RodlEnum;
 begin
   var lEntity: RodlEntity := library.FindEntity(dataType);
-  result := RodlEnum(lEntity);    
+  result := RodlEnum(lEntity);
 end;
 
 method RodlCodeGen.isArray(&library: RodlLibrary; dataType: String): Boolean;
@@ -193,9 +189,9 @@ method RodlCodeGen.ResolveStdtypes(&type: CGPredefinedTypeKind; isNullable: Bool
 begin
   if PredefinedTypes.ContainsKey(&type) then
     exit PredefinedTypes[&type]
-  else if isNullable then 
+  else if isNullable then
     exit new CGPredefinedTypeReference(&type).NullableNotUnwrapped
-  else if isNotNullable then 
+  else if isNotNullable then
     exit new CGPredefinedTypeReference(&type).NotNullable
   else
     exit new CGPredefinedTypeReference(&type)
@@ -237,7 +233,7 @@ end;
 
 method RodlCodeGen.GenerateEnum(file: CGCodeUnit; &library: RodlLibrary; entity: RodlEnum);
 begin
-  var lenum := new CGEnumTypeDefinition(SafeIdentifier(entity.Name), 
+  var lenum := new CGEnumTypeDefinition(SafeIdentifier(entity.Name),
                                        Visibility := CGTypeVisibilityKind.Public,
                                        BaseType := ResolveStdtypes(CGPredefinedTypeKind.Int32));
   lenum.Comment := GenerateDocumentation(entity);
@@ -277,9 +273,9 @@ end;
 
 method RodlCodeGen.GenerateEnumMemberName(&library: RodlLibrary; entity: RodlEnum; member: RodlEnumValue): String;
 begin
-  if DontPrefixEnumValues then 
+  if DontPrefixEnumValues then
     exit SafeIdentifier(member.Name)
-  else    
+  else
     exit SafeIdentifier(iif(entity.PrefixEnumValues,entity.Name+'_','')+ member.Name);
 end;
 
@@ -353,8 +349,8 @@ end;
 
 method RodlCodeGen.GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
 begin
-  var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);  
-  exit DoGenerateInterfaceFile(library, lnamespace, aUnitName);  
+  var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);
+  exit DoGenerateInterfaceFile(library, lnamespace, aUnitName);
 end;
 
 method RodlCodeGen.GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
@@ -369,17 +365,17 @@ end;
 
 method RodlCodeGen.GenerateImplementationFiles(file: CGCodeUnit; library: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;
 begin
-  raise new Exception("not supported");  
+  raise new Exception("not supported");
 end;
 
 method RodlCodeGen.GenerateDocumentation(entity: RodlEntity; aGenerateOperationMembersDoc: Boolean := false): CGCommentStatement;
 begin
   var lDoc := entity.Documentation;
   if aGenerateOperationMembersDoc and (entity is RodlOperation) then begin
-    var lDoc1:= Environment.NewLine+'Parameters:';
+    var lDoc1:= Environment.LineBreak+'Parameters:';
     var ldocPresent: Boolean := false;
     for op in RodlOperation(entity).Items do begin
-      lDoc1 := lDoc1 + Environment.NewLine + op.Name+':';
+      lDoc1 := lDoc1 + Environment.LineBreak + op.Name+':';
       if not String.IsNullOrEmpty(op.Documentation) then begin
         ldocPresent := true;
         lDoc1 := lDoc1 + ' '+op.Documentation;
@@ -388,7 +384,7 @@ begin
     if ldocPresent then lDoc := lDoc + lDoc1;
   end;
   if not String.IsNullOrEmpty(lDoc) then
-    exit new CGCommentStatement( 'Description:'+Environment.NewLine + lDoc)
+    exit new CGCommentStatement( 'Description:'+Environment.LineBreak + lDoc)
   else
     exit nil;
 end;

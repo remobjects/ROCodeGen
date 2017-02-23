@@ -1,9 +1,6 @@
 ﻿namespace RemObjects.SDK.CodeGen4;
 {$HIDE W46}
 interface
-uses
-  Sugar.*,
-  RemObjects.CodeGen4;
 
 type
   CPlusPlusBuilderRodlCodeGen = public class(DelphiRodlCodeGen)
@@ -57,7 +54,7 @@ begin
   IncludeUnitNameForOtherTypes := true;
   PredefinedTypes.Add(CGPredefinedTypeKind.String,new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
 
-  CodeGenTypes.Clear;
+  CodeGenTypes.RemoveAll;
   CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
   CodeGenTypes.Add("datetime", new CGNamedTypeReference("TDateTime") isClasstype(False));
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
@@ -77,8 +74,8 @@ begin
   // from
   // http://docwiki.embarcadero.com/RADStudio/XE8/en/Keywords,_Alphabetical_Listing_Index
   // http://en.cppreference.com/w/cpp/keyword
-  ReservedWords.Clear;
-  ReservedWords.AddRange([
+  ReservedWords.RemoveAll;
+  ReservedWords.Add([
     "__asm", "__automated", "__cdecl", "__classid", "__classmethod", "__closure", "__declspec", "__delphirtti", "__dispid",
     "__except", "__export", "__fastcall", "__finally", "__import", "__inline", "__int16", "__int32", "__int64", "__int8",
     "__msfastcall", "__msreturn", "__pascal", "__property", "__published", "__rtti", "__stdcall", "__thread", "__try",
@@ -201,13 +198,13 @@ begin
 
   var lm := new CGMethodDefinition('QueryInterface',
                                    [new CGMethodCallExpression(CGInheritedExpression.Inherited,
-  	  	  	  	  	  	  	  	  	  	  	                   'cppQueryInterface',
-  	  	  	  	  	  	  	  	  	  	  	                   ['IID'.AsNamedIdentifierExpression.AsCallParameter,
+                                                               'cppQueryInterface',
+                                                               ['IID'.AsNamedIdentifierExpression.AsCallParameter,
                                                                 new CGTypeCastExpression('Obj'.AsNamedIdentifierExpression, CGPointerTypeReference.VoidPointer).AsCallParameter].ToList,
                                                                 CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-  	  	  	  	  	  	  	  	   Parameters := [new CGParameterDefinition('IID', new CGPointerTypeReference(new CGNamedTypeReference('GUID') isClasstype(False)) reference(true),Modifier := CGParameterModifierKind.Const),
+                                   Parameters := [new CGParameterDefinition('IID', new CGPointerTypeReference(new CGNamedTypeReference('GUID') isClasstype(False)) reference(true),Modifier := CGParameterModifierKind.Const),
                                                   new CGParameterDefinition('Obj', new CGPointerTypeReference(new CGPointerTypeReference(new CGPredefinedTypeReference(CGPredefinedTypeKind.Void))))].ToList(),
-  	  	  	  	  	  	  	  	   Virtuality := CGMemberVirtualityKind.Override,
+                                   Virtuality := CGMemberVirtualityKind.Override,
                                    Visibility := CGMemberVisibilityKind.Protected,
                                    ReturnType := new CGNamedTypeReference('HRESULT') isClasstype(False),
                                    CallingConvention := CGCallingConventionKind.StdCall);
@@ -215,9 +212,9 @@ begin
 
   lm := new CGMethodDefinition('AddRef',
                                 [new CGMethodCallExpression(CGInheritedExpression.Inherited,
-  	  	  	  	  	  	  	  	  	            	  	      '_AddRef',
-                                              	  	        CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-  	  	  	  	  	  	  	  	Virtuality := CGMemberVirtualityKind.Override,
+                                                            '_AddRef',
+                                                            CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
+                                Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Protected,
                                 ReturnType := new CGNamedTypeReference('ULONG') isClasstype(False),
                                 CallingConvention := CGCallingConventionKind.StdCall);
@@ -225,9 +222,9 @@ begin
 
   lm := new CGMethodDefinition('Release',
                               [new CGMethodCallExpression(CGInheritedExpression.Inherited,
-  	  	  	  	  	  	  	  	  	            	  	    '_Release',
-                                              	  	      CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-  	  	  	  	  	  	  	  Virtuality := CGMemberVirtualityKind.Override,
+                                                          '_Release',
+                                                          CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
+                              Virtuality := CGMemberVirtualityKind.Override,
                               Visibility := CGMemberVisibilityKind.Protected,
                               ReturnType := new CGNamedTypeReference('ULONG') isClasstype(False),
                               CallingConvention := CGCallingConventionKind.StdCall);
@@ -493,9 +490,9 @@ method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : S
 begin
   var lns := aName+'.'+aExt;
   if aExt = 'hpp' then begin
-    if String.IsNullOrEmpty(aNamespace) then 
+    if String.IsNullOrEmpty(aNamespace) then
       exit new CGImport(CapitalizeString(lns))
-    else 
+    else
       exit new CGImport(new CGNamedTypeReference(aNamespace+'.'+lns))
   end
   else
@@ -595,7 +592,7 @@ begin
                                                   Virtuality := CGMemberVirtualityKind.Override,
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
-      //	void __fastcall SetMessageID(System::UnicodeString aMessageID);
+      //  void __fastcall SetMessageID(System::UnicodeString aMessageID);
       service.Members.Add(new CGMethodDefinition('SetMessageID',
                                                   [new CGMethodCallExpression(CGInheritedExpression.Inherited, 'SetMessageID',
                                                                               ['aMessageID'.AsNamedIdentifierExpression.AsCallParameter],
@@ -604,7 +601,7 @@ begin
                                                   Virtuality := CGMemberVirtualityKind.Override,
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
-      //	System::Syncobjs::TEvent* __fastcall GetAnswerReceivedEvent(void);
+      //  System::Syncobjs::TEvent* __fastcall GetAnswerReceivedEvent(void);
       service.Members.Add(new CGMethodDefinition('GetAnswerReceivedEvent',
                                                   [new CGMethodCallExpression(CGInheritedExpression.Inherited, 'GetAnswerReceivedEvent',CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
                                                   ReturnType := new CGNamedTypeReference('TEvent') &namespace(new CGNamespaceReference('System::Syncobjs')) isClasstype(true),

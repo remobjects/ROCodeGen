@@ -2,15 +2,6 @@
 {$HIDE W46}
 interface
 
-uses
-  {$IFDEF FAKESUGAR}
-  System.Collections.Generic,
-  System.Linq,
-  {$ELSE}
-  Sugar.*,
-  {$ENDIF}
-  RemObjects.CodeGen4;
-
 type
   JavaRodlCodeGen = public class (RodlCodeGen)
   private
@@ -90,7 +81,7 @@ begin
   ReaderFunctions.Add("utf8string", "Utf8String");
   ReaderFunctions.Add("xsdatetime", "DateTime");
 
-  ReservedWords.AddRange([
+  ReservedWords.Add([
     "abstract", "and", "add", "async", "as", "begin", "break", "case", "class", "const", "constructor", "continue",
     "delegate", "default", "div", "do", "downto", "each", "else", "empty", "end", "enum", "ensure", "event", "except",
     "exit", "external", "false", "final", "finalizer", "finally", "flags", "for", "forward", "function", "global", "has",
@@ -172,7 +163,7 @@ begin
   file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.TypeManager")));
   file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncRequest")));
   file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncProxy")));
-}  
+}
 end;
 
 method JavaRodlCodeGen.GenerateStruct(file: CGCodeUnit; library: RodlLibrary; entity: RodlStruct);
@@ -224,15 +215,15 @@ begin
     {$REGION private %f_fldname%: %fldtype% + public getter/setter}
     for lm :RodlTypedEntity in entity.Items do begin
       var ltype := ResolveDataTypeToTypeRef(&library,lm.DataType);
-      var f_name :='f_'+lm.Name; 
-      var s_name :='s_'+lm.Name; 
+      var f_name :='f_'+lm.Name;
+      var s_name :='s_'+lm.Name;
       lstruct.Members.Add(new CGFieldDefinition(f_name,
                                                   ltype,
                                                   Visibility := CGMemberVisibilityKind.Private));
       if not isCooperMode then begin
         lstruct.Members.Add(new CGMethodDefinition('set'+lm.Name,
                                                     [new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,'aValue'.AsNamedIdentifierExpression)],
-                                                    Parameters := [new CGParameterDefinition('aValue',ltype)].ToList,                                                   
+                                                    Parameters := [new CGParameterDefinition('aValue',ltype)].ToList,
                                                     Visibility := CGMemberVisibilityKind.Public,
                                                     Comment:= GenerateDocumentation(lm)));
         lstruct.Members.Add(new CGMethodDefinition('get'+lm.Name,
@@ -254,8 +245,8 @@ begin
     {$REGION public property %fldname%: %fldtype%}
     if isCooperMode then begin
       for lm :RodlTypedEntity in entity.Items do begin
-        var f_name :='f_'+lm.Name; 
-        var s_name :='s_'+lm.Name; 
+        var f_name :='f_'+lm.Name;
+        var s_name :='s_'+lm.Name;
         var st1: CGStatement :=new CGIfThenElseStatement(new CGBinaryOperatorExpression(f_name.AsNamedIdentifierExpression, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
                                                           f_name.AsNamedIdentifierExpression.AsReturnStatement,
                                                           s_name.AsNamedIdentifierExpression.AsReturnStatement);
@@ -265,7 +256,7 @@ begin
                             [st1].ToList,
                             SetExpression := f_name.AsNamedIdentifierExpression,
                             Visibility := CGMemberVisibilityKind.Public,
-                            Comment := GenerateDocumentation(lm))); 
+                            Comment := GenerateDocumentation(lm)));
       end;
     end;
     {$ENDREGION}
@@ -303,7 +294,7 @@ begin
     new CGConstructorDefinition(
             Parameters := [new CGParameterDefinition("aCapacity", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
             Visibility := CGMemberVisibilityKind.Public,
-            Statements:= 
+            Statements:=
                [CGStatement(
                   new CGConstructorCallStatement(CGInheritedExpression.Inherited,["aCapacity".AsNamedIdentifierExpression.AsCallParameter].ToList))
                ].ToList
@@ -342,7 +333,7 @@ begin
       new CGMethodDefinition("add",
         Visibility := CGMemberVisibilityKind.Public,
         ReturnType := l_elementType,
-        Statements:= 
+        Statements:=
           [new CGVariableDeclarationStatement('lresult',l_elementType,new CGNewInstanceExpression(l_elementType)),
            new CGMethodCallExpression(CGInheritedExpression.Inherited, "addItem", ["lresult".AsNamedIdentifierExpression.AsCallParameter].ToList),
            "lresult".AsNamedIdentifierExpression.AsReturnStatement
@@ -360,7 +351,7 @@ begin
   {$REGION method addItem(anItem: %ARRAY_TYPE%)}
   larray.Members.Add(
     new CGMethodDefinition("addItem",
-                           [new CGMethodCallExpression(CGInheritedExpression.Inherited, "addItem", ["anItem".AsNamedIdentifierExpression.AsCallParameter].ToList)], 
+                           [new CGMethodCallExpression(CGInheritedExpression.Inherited, "addItem", ["anItem".AsNamedIdentifierExpression.AsCallParameter].ToList)],
                            Visibility := CGMemberVisibilityKind.Public,
                            Parameters := [new CGParameterDefinition("anItem", l_elementType)].ToList));
   {$ENDREGION}
@@ -368,7 +359,7 @@ begin
   {$REGION method insertItem(anItem: %ARRAY_TYPE%; anIndex: Integer);}
   larray.Members.Add(
     new CGMethodDefinition("insertItem",
-                           [new CGMethodCallExpression(CGInheritedExpression.Inherited,"insertItem",   
+                           [new CGMethodCallExpression(CGInheritedExpression.Inherited,"insertItem",
                                                       ["anItem".AsNamedIdentifierExpression.AsCallParameter,
                                                       "anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList)],
                             Parameters := [new CGParameterDefinition("anItem", l_elementType),
@@ -447,7 +438,7 @@ begin
     l_methodName := "Enum";
     l_isEnum := True;
   end;
-  
+
   var l_arg0 := new CGNilExpression().AsCallParameter;
   var l_arg1_exp: CGExpression := new CGMethodCallExpression(CGSelfExpression.Self,"getItemAtIndex",["anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList);
   if l_isEnum then l_arg1_exp := new CGMethodCallExpression(l_arg1_exp,"ordinal");
@@ -478,7 +469,7 @@ begin
                            [new CGMethodCallExpression(CGSelfExpression.Self,
                                                        "addItem",
                                                        [new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression,
-                                                                                   "read" +  l_methodName,  
+                                                                                   "read" +  l_methodName,
                                                                                    l_arg_array.ToList).AsCallParameter].ToList)
                            ],
       Parameters := [new CGParameterDefinition("aMessage", "Message".AsTypeReference),
@@ -517,14 +508,14 @@ begin
   {$REGION private property %f_fldname%: %fldtype% + public getter/setter}
     for lm :RodlTypedEntity in entity.Items do begin
       var ltype := ResolveDataTypeToTypeRef(&library,lm.DataType);
-      var f_name :='f_'+lm.Name; 
+      var f_name :='f_'+lm.Name;
       lexception.Members.Add(new CGFieldDefinition(f_name,
                                                    ltype,
                                                    Visibility := CGMemberVisibilityKind.Private));
       if not isCooperMode then begin
         lexception.Members.Add(new CGMethodDefinition('set'+lm.Name,
                                       [new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,'aValue'.AsNamedIdentifierExpression)],
-                                      Parameters := [new CGParameterDefinition('aValue',ltype)].ToList,                                                   
+                                      Parameters := [new CGParameterDefinition('aValue',ltype)].ToList,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       Comment:= GenerateDocumentation(lm)));
         lexception.Members.Add(new CGMethodDefinition('get'+lm.Name,
@@ -661,13 +652,13 @@ begin
     if not isCooperMode then begin
       for lm :RodlParameter in lop.Items do begin
         var ltype := ResolveDataTypeToTypeRef(&library,lm.DataType);
-        var f_name :='f_'+lm.Name; 
+        var f_name :='f_'+lm.Name;
         lOperation.Members.Add(new CGFieldDefinition(f_name,
                                                      ltype,
                                                      Visibility := CGMemberVisibilityKind.Private));
         lOperation.Members.Add(new CGMethodDefinition('set'+lm.Name,
                                                       [new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,'aValue'.AsNamedIdentifierExpression)],
-                                                      Parameters := [new CGParameterDefinition('aValue',ltype)].ToList,                                                   
+                                                      Parameters := [new CGParameterDefinition('aValue',ltype)].ToList,
                                                       Visibility := CGMemberVisibilityKind.Public,
                                                       Comment:= GenerateDocumentation(lm)));
         lOperation.Members.Add(new CGMethodDefinition('get'+lm.Name,
@@ -762,8 +753,8 @@ begin
     exit new CGIfThenElseStatement(
       l_if_conditional,
       new CGMethodCallExpression(l_varname,
-                                 l_write, 
-                                 [l_arg0, 
+                                 l_write,
+                                 [l_arg0,
                                  new CGMethodCallExpression(entityname_ID,"ordinal").AsCallParameter].ToList),
       new CGBeginEndBlockStatement([CGStatement(
           new CGMethodCallExpression(l_varname,l_write, [l_arg0,new CGIntegerLiteralExpression(0).AsCallParameter].ToList)
@@ -945,11 +936,11 @@ begin
 //  var l_reader := new CGIdentifierExpression("read" +  l_methodName, variableName);
   var l_arg0 : CGCallParameter := entity.Name.AsLiteralExpression.AsCallParameter;
   var l_type := ResolveDataTypeToTypeRef(&library,entity.DataType);
-  
+
 
   if l_isStandard then begin
     var temp := new CGMethodCallExpression(varname_ID,reader_name,[l_arg0].ToList);
-    if isPrimitive(entity.DataType) then 
+    if isPrimitive(entity.DataType) then
       exit temp
     else
       exit new CGTypeCastExpression(temp,
@@ -989,7 +980,7 @@ begin
   var llocalmessage := "_localMessage".AsNamedIdentifierExpression;
   Result.Statements.Add(new CGVariableDeclarationStatement(
                                                   "_localMessage",
-                                                  "Message".AsTypeReference, 
+                                                  "Message".AsTypeReference,
                                                   new CGTypeCastExpression(
                                                                     new CGMethodCallExpression(
                                                                               GenerateGetProperty(CGSelfExpression.Self, "ProxyMessage"),
@@ -1006,27 +997,27 @@ begin
   var ltry := new List<CGStatement>;
   var lfinally := new List<CGStatement>;
 
-  
+
   for lp: RodlParameter in l_in do
     ltry.Add(GetWriterStatement(&library,lp,false, llocalmessage.Name));
   ltry.Add(new CGMethodCallExpression(llocalmessage, "finalizeMessage"));
   ltry.Add(new CGMethodCallExpression(GenerateGetProperty(CGSelfExpression.Self, "ProxyClientChannel"),
-                                      "dispatch", 
+                                      "dispatch",
                                       [llocalmessage.AsCallParameter].ToList));
 
   if assigned(entity.Result) then begin
     ltry.Add(new CGVariableDeclarationStatement("lResult",Result.ReturnType,GetReaderExpression(&library,entity.Result,llocalmessage.Name)));
   end;
   for lp: RodlParameter in l_out do
-    ltry.Add(GenerateSetProperty(("_"+lp.Name).AsNamedIdentifierExpression, 
+    ltry.Add(GenerateSetProperty(("_"+lp.Name).AsNamedIdentifierExpression,
                                  "Value",
-                                 GetReaderExpression(&library,lp,llocalmessage.Name)                            ));  
+                                 GetReaderExpression(&library,lp,llocalmessage.Name)                            ));
   if assigned(entity.Result) then
     ltry.Add("lResult".AsNamedIdentifierExpression.AsReturnStatement);
   lfinally.Add(GenerateSetProperty(GenerateGetProperty(CGSelfExpression.Self,"ProxyMessage"),
                                    "ClientID",
                                    GenerateGetProperty(llocalmessage,"ClientID")));
-  lfinally.Add(new CGMethodCallExpression(llocalmessage, "clear"));  
+  lfinally.Add(new CGMethodCallExpression(llocalmessage, "clear"));
   Result.Statements.Add(new CGTryFinallyCatchStatement(ltry, &FinallyStatements:= lfinally as not nullable));
 end;
 
@@ -1047,7 +1038,7 @@ end;
 
 method JavaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(&library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
 begin
-  Result:= new CGMethodDefinition("begin" + PascalCase(entity.Name), 
+  Result:= new CGMethodDefinition("begin" + PascalCase(entity.Name),
                                   ReturnType := GenerateROSDKType("AsyncRequest").AsTypeReference,
                                   Visibility := CGMemberVisibilityKind.Public);
   for lp: RodlParameter in entity.Items do begin
@@ -1068,8 +1059,8 @@ begin
   end;
   if assigned(entity.Result) then
     result.ReturnType := ResolveDataTypeToTypeRef(library, entity.Result.DataType);
- 
-  result.Parameters.Add(new CGParameterDefinition("aAsyncRequest", GenerateROSDKType("AsyncRequest").AsTypeReference)); 
+
+  result.Parameters.Add(new CGParameterDefinition("aAsyncRequest", GenerateROSDKType("AsyncRequest").AsTypeReference));
   result.Locked := &locked;
 end;
 
@@ -1136,7 +1127,7 @@ begin
     Result.Statements.Add(new CGVariableDeclarationStatement("lResult",Result.ReturnType,GetReaderExpression(&library,entity.Result,llocalmessage.Name)));
   end;
   for lp: RodlParameter in l_out do
-    Result.Statements.Add(GenerateSetProperty(lp.Name.AsNamedIdentifierExpression, 
+    Result.Statements.Add(GenerateSetProperty(lp.Name.AsNamedIdentifierExpression,
                                               "Value",
                                               GetReaderExpression(&library,lp,llocalmessage.Name)));
   var mess := GenerateGetProperty(new CGSelfExpression,"ProxyMessage");
@@ -1167,7 +1158,7 @@ begin
                      new CGParameterDefinition("aClientChannel", "ClientChannel".AsTypeReference)].ToList,
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [
-            new CGConstructorCallStatement(CGInheritedExpression.Inherited, 
+            new CGConstructorCallStatement(CGInheritedExpression.Inherited,
                                         ["aMessage".AsNamedIdentifierExpression.AsCallParameter,
                                          "aClientChannel".AsNamedIdentifierExpression.AsCallParameter].ToList),
          l_Setpackage
@@ -1204,14 +1195,14 @@ begin
       )
   );
   {$ENDREGION}
-  
+
   {$REGION .ctor(aSchema: URI; aOverrideInterfaceName: String)}
   service.Members.Add(
     new CGConstructorDefinition(
      Parameters:=[new CGParameterDefinition("aSchema", "URI".AsTypeReference),
                   new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
       Visibility := CGMemberVisibilityKind.Public,
-      Statements:= [new CGConstructorCallStatement(CGInheritedExpression.Inherited, 
+      Statements:= [new CGConstructorCallStatement(CGInheritedExpression.Inherited,
                                                   ["aSchema".AsNamedIdentifierExpression.AsCallParameter,
                                                     "aOverrideInterfaceName".AsNamedIdentifierExpression.AsCallParameter].ToList),
                     l_Setpackage
@@ -1261,13 +1252,13 @@ end;
 
 method JavaRodlCodeGen.GenerateInterfaceFiles(library: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
 begin
-  isCooperMode := False; 
+  isCooperMode := False;
   result := new Dictionary<String,String>;
-  var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);  
+  var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);
   var lunit := DoGenerateInterfaceFile(library, lnamespace);
   //var lgn := GetGlobalName(library);
   for k in lunit.Types do begin
-{    if (k is CGInterfaceTypeDefinition) and (CGInterfaceTypeDefinition(k).Name = lgn) then 
+{    if (k is CGInterfaceTypeDefinition) and (CGInterfaceTypeDefinition(k).Name = lgn) then
       result.Add(Path.ChangeExtension('Defines', Generator.defaultFileExtension), (Generator.GenerateUnitForSingleType(k) &unit(lunit)))
     else
 }      result.Add(Path.ChangeExtension(k.Name, Generator.defaultFileExtension), (Generator.GenerateUnitForSingleType(k) &unit(lunit)));
@@ -1290,7 +1281,7 @@ end;
 
 method JavaRodlCodeGen.GenerateEnum(file: CGCodeUnit; library: RodlLibrary; entity: RodlEnum);
 begin
-  var lenum := new CGEnumTypeDefinition(SafeIdentifier(entity.Name), 
+  var lenum := new CGEnumTypeDefinition(SafeIdentifier(entity.Name),
                                         Visibility := CGTypeVisibilityKind.Public);
   lenum.Comment := GenerateDocumentation(entity);
   file.Types.Add(lenum);
@@ -1308,7 +1299,7 @@ begin
 
   var ltype : CGTypeDefinition;
 
-  if isCooperMode then 
+  if isCooperMode then
     ltype := new CGClassTypeDefinition(GetGlobalName(library), visibility:= CGTypeVisibilityKind.Public)
   else
     ltype := new CGInterfaceTypeDefinition(GetGlobalName(library), visibility:= CGTypeVisibilityKind.Public);
@@ -1334,9 +1325,9 @@ end;
 
 method JavaRodlCodeGen.GenerateROSDKType(aName: String): String;
 begin
-  if addROSDKPrefix then 
+  if addROSDKPrefix then
     exit "com.remobjects.sdk."+aName
-  else 
+  else
     exit aName;
 end;
 
@@ -1345,7 +1336,7 @@ begin
   result := not CodeGenTypes.ContainsKey(&type.ToLowerInvariant);
   if result then begin
     var k := CodeGenTypes[&type.ToLowerInvariant];
-    result := (k is CGPredefinedTypeReference) and 
+    result := (k is CGPredefinedTypeReference) and
               (CodeGenTypes[&type.ToLowerInvariant].Nullability <> CGTypeNullabilityKind.NullableNotUnwrapped);
   end;
 end;

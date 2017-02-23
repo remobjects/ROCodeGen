@@ -1,6 +1,4 @@
-﻿import Sugar
-import Sugar.IO
-import RemObjects.SDK.CodeGen4
+﻿import RemObjects.SDK.CodeGen4
 
 func writeSyntax() {
 	writeLn("Syntax:")
@@ -49,7 +47,7 @@ func writeSyntax() {
 	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
 	writeLn("  --legacy-strings (Delphi/BCB only)")
 	writeLn()
-	
+
 	#hint add --await
 }
 
@@ -57,7 +55,7 @@ let options = [String:String]()
 
 func parseParameters(_ cmdlineParams: [String]) {
 	for s in cmdlineParams {
-		var param: Sugar.String = s
+		var param: String = s
 		if param.StartsWith("--") {
 			param = param.Substring(2)
 			var p = param.IndexOf(":")
@@ -71,7 +69,7 @@ func parseParameters(_ cmdlineParams: [String]) {
 			else {
 				options[param] = ""
 			}
-		} 
+		}
 	}
 }
 
@@ -100,26 +98,26 @@ var rodlFileName = params[0];
 writeLn("Processing RODL file "+rodlFileName)
 
 do {
-	
+
 	var isUrl = rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
 	var url = isUrl ? rodlFileName : nil
-	
+
 	if !isUrl && !FileUtils.Exists(params[0]) {
 		writeLn("File \(params[0]) not found")
 		writeLn()
 		return 2
 	}
-	
-	let rodlLibrary = RodlLibrary(rodlFileName) 
-	
+
+	let rodlLibrary = RodlLibrary(rodlFileName)
+
 	if isUrl {
 		rodlFileName = "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" //used for relative output paths.
 	}
-	
+
 	//
 	// Check options
 	//
-	
+
 	if options["platform"] == nil {
 		writeSyntax()
 		return 1
@@ -130,19 +128,19 @@ do {
 	}
 	if options["platform"]?.ToLower() == "delphi" && options["language"] == nil {
 		options["language"] = "delphi"
-	}  
+	}
 	if options["platform"]?.ToLower() == "bcb" && options["language"] == nil {
 		options["language"] = "cpp"
-	}  
+	}
 	if options["language"] == nil {
 		writeSyntax()
 		return 1
 	}
-	
+
 	if options["namespace"] == nil {
 		options["namespace"] = "YourNamespace"
 	}
-	
+
 	switch options["type"]?.ToLower() {
 		case "intf": break
 		case "invk": break
@@ -154,15 +152,15 @@ do {
 			writeLn("Unsupported type: "+options["type"])
 			return 2
 	}
-	
+
 	if options["type"]?.ToLower() == "res" {
-		
+
 		let resFileName = Path.ChangeExtension(rodlFileName, ".res")
 		ResGenerator.GenerateResFile(rodlLibrary, resFileName);
 		writeLn("Wrote file \(resFileName)")
 		return
 	}
-	
+
 	var serverSupport = false
 	var activeRodlCodeGen: RodlCodeGen?
 	var activeServerAccessCodeGen: ServerAccessCodeGen?
@@ -174,7 +172,7 @@ do {
 			}
 			activeRodlCodeGen = JavaRodlCodeGen()
 			activeServerAccessCodeGen = JavaServerAccessCodeGen(rodl: rodlLibrary)
-		case "toffee", "nougat", "cocoa", "xcode": // keep Nougat, undocumdented, for backwards comopatibility 
+		case "toffee", "nougat", "cocoa", "xcode": // keep Nougat, undocumdented, for backwards comopatibility
 			options["platform"] = "cocoa"
 			if options["language"]?.ToLower() == "swift" && (options["platform"]?.ToLower() == "toffee" || options["platform"]?.ToLower() == "nougat") {
 					options["language"] = "silver" // force our Swift
@@ -212,7 +210,7 @@ do {
 			return 2
 		default:
 	}
-	
+
 	if options["full-type-names"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.IncludeUnitNameForOwnTypes = true
 	}
@@ -222,9 +220,9 @@ do {
 	if options["legacy-strings"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.LegacyStrings = true
 	}
-	
+
 	var codegen: CGCodeGenerator?
-	
+
 	var fileExtension = "txt"
 	switch options["language"]?.ToLower() {
 		case "oxygene", "pas":
@@ -280,15 +278,15 @@ do {
 			return 2
 		default:
 	}
-	
+
 	func targetFileNameWithSuffix(_ suffix: String) -> String {
 		return Path.Combine(Path.GetParentDirectory(rodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(rodlFileName))+"_"+suffix+"."+fileExtension)
 	}
-	
+
 	func targetFileName(_ name: String) -> String {
 		return Path.Combine(Path.GetParentDirectory(rodlFileName), name)
 	}
-	
+
 	if activeRodlCodeGen == nil {
 		writeLn("Unsupported platform: "+options["platform"])
 		return 2
@@ -308,38 +306,38 @@ do {
 		writeLn("Unsupported language: "+options["language"])
 		return 2
 	}
-	
+
 	if options["service"] != nil {
 		options["type"] = "impl"
 	} else if options["services"] != nil {
 		options["type"] = "impl"
 	}
-	
+
 	if let type = options["type"] {
 		writeLn("Generating "+options["type"])
-	
+
 		if let activeRodlCodeGen = activeRodlCodeGen {
 			activeRodlCodeGen.Generator = codegen
-	
+
 			switch type.ToLower() {
-				case "intf":		
-	
+				case "intf":
+
 					if let codegen = codegen {
 						codegen.splitLinesLongerThan = 200
 					}
-					
+
 					if codegen is CGJavaCodeGenerator {
 						let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
 						for name in sourceFiles.Keys {
 							var fileName = Path.Combine(Path.GetParentDirectory(rodlFileName), name)
 							FileUtils.WriteText(fileName, sourceFiles[name]);
 							writeLn("Wrote file \(fileName)")
-						}  
+						}
 					} else {
 						let source = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
 						FileUtils.WriteText(targetFileNameWithSuffix("Intf"), source);
 						writeLn("Wrote file \(targetFileNameWithSuffix("Intf"))")
-	
+
 						if options["language"] == "objc" {
 							activeRodlCodeGen?.Generator = CGObjectiveCHCodeGenerator()
 							let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
@@ -354,9 +352,9 @@ do {
 							writeLn("Wrote file \(targetFileNameWithSuffix("Intf"))")
 						}
 					}
-	
-				case "serveraccess":		
-	
+
+				case "serveraccess":
+
 					if let activeServerAccessCodeGen = activeServerAccessCodeGen, let codegen = codegen {
 						if isUrl {
 							activeServerAccessCodeGen.serverAddress = url;
@@ -377,7 +375,7 @@ do {
 							let source = codegen?.GenerateUnit(unit)
 							FileUtils.WriteText(targetFileNameWithSuffix("ServerAccess"), source);
 							writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
-	
+
 							if (options["platform"] == "delphi")||(options["platform"] == "bcb") {
 								let dfm = (activeServerAccessCodeGen as? DelphiServerAccessCodeGen)?.generateDFM()
 								fileExtension = "dfm";
@@ -399,7 +397,7 @@ do {
 							}
 						}
 					}
-							 
+
 				case "invk":
 					if !serverSupport {
 						writeLn("Generating server code is not supported for this platform.")
@@ -407,15 +405,15 @@ do {
 					let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Invk"))
 					FileUtils.WriteText(targetFileNameWithSuffix("Invk"), source);
 					writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
-	
+
 				case "impl":
-					
+
 					let processServices = {
 						for i in 0 ..< rodlLibrary.Services.Count {
 							let s = rodlLibrary.Services[i]
-						
+
 							if options["service"] == nil || s.Name == options["service"] {
-	
+
 								if let sourceFiles = activeRodlCodeGen?.GenerateImplementationFiles(rodlLibrary, options["namespace"], s.Name) {
 									//for (n,c) in sourceFiles {
 									for n in sourceFiles.Keys {
@@ -426,7 +424,7 @@ do {
 							}
 						}
 					}
-					
+
 					processServices()
 					if options["language"] == "cpp" {
 						activeRodlCodeGen?.Generator = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
@@ -434,10 +432,10 @@ do {
 						fileExtension = "h";
 						processServices()
 					}
-	
+
 					break
 				default:
-			}	// todo: generate services
+			}    // todo: generate services
 		}
 	}
 } catch {

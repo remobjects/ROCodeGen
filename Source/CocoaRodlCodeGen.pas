@@ -2,22 +2,18 @@
 {$HIDE W46}
 interface
 
-uses
-  Sugar.*,
-  RemObjects.CodeGen4;
-
 type
   CocoaRodlCodeGen = public class (RodlCodeGen)
   private
     fCachedNumberFN: Dictionary<String, String> := new Dictionary<String, String>;
-    
+
     property IsSwift: Boolean read Generator is CGSwiftCodeGenerator;
     property IsObjC:  Boolean read Generator is CGObjectiveCCodeGenerator;
     property IsAppleSwift: Boolean read IsSwift and (SwiftDialect = SwiftDialect.Standard);
     property IsSilver: Boolean read IsSwift and (SwiftDialect = SwiftDialect.Silver);
     property NSUIntegerType: CGTypeReference read (if IsAppleSwift then "UInt"     else "NSUInteger").AsTypeReference(false);
     property SELType:        CGTypeReference read (if IsAppleSwift then "Selector" else "SEL").AsTypeReference(false);
-    
+
     method GetNumberFN(dataType: String):String;
     method GetReaderStatement(library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGStatement;
     method GetReaderExpression(library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGExpression;
@@ -43,7 +39,7 @@ type
     method ApplyParamDirection(paramFlag: ParamFlags; aInOnly: Boolean := false): CGParameterModifierKind;
     method ApplyParamDirectionExpression(aExpr: CGExpression; paramFlag: ParamFlags; aInOnly: Boolean := false): CGExpression;
   protected
-    method isClassType(library: RodlLibrary; dataType: String): Boolean; 
+    method isClassType(library: RodlLibrary; dataType: String): Boolean;
     method AddUsedNamespaces(file: CGCodeUnit; library: RodlLibrary); override;
     method AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary);override;
     method GenerateEnum(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlEnum); override;
@@ -170,11 +166,24 @@ begin
                       {2}new CGIfThenElseStatement(
                             new CGAssignedExpression("lResult".AsNamedIdentifierExpression),
                             new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"intValue").AsReturnStatement,
-                            new CGThrowStatement(new CGNewInstanceExpression("NSException".AsTypeReference,
-                                                                             ["ROException".AsLiteralExpression.AsCallParameter,
-                                                                              new CGMethodCallExpression(CGPredefinedTypeReference.String.AsExpression, "stringWithFormat", [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason"),
-                                                                              CGNilExpression.Nil.AsCallParameter("userInfo")
-                                                                              ].ToList, ConstructorName := "withName"))
+                            if IsAppleSwift then
+                              new CGThrowStatement(new CGNewInstanceExpression("NSError".AsTypeReference,
+                                                                               [0.AsLiteralExpression.AsCallParameter("domain"),
+                                                                                0.AsLiteralExpression.AsCallParameter("code"),
+                                                                                CGNilExpression.Nil.AsCallParameter("userInfo")
+                                                                                ].ToList))
+                            else
+                              new CGThrowStatement(new CGNewInstanceExpression("NSException".AsTypeReference,
+                                                                               [if IsAppleSwift then
+                                                                                  new CGNewInstanceExpression("NSExceptionName".AsTypeReference, "ROException".AsLiteralExpression.AsCallParameter).AsCallParameter
+                                                                                else
+                                                                                 "ROException".AsLiteralExpression.AsCallParameter,
+                                                                                if IsAppleSwift then
+                                                                                  new CGNewInstanceExpression("String".AsTypeReference, [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason")
+                                                                                else
+                                                                                  new CGMethodCallExpression(CGPredefinedTypeReference.String.AsExpression, "stringWithFormat", [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason"),
+                                                                                CGNilExpression.Nil.AsCallParameter("userInfo")
+                                                                                ].ToList, ConstructorName := "withName"))
                       )
                     ].ToList
         ));
@@ -266,7 +275,7 @@ begin
   var lIsComplex := isComplex(&library, aEntity.ElementType);
   var lIsArray := isArray(&library, aEntity.ElementType);
   var lIsSimple := not (lIsEnum or lIsComplex);
-  
+
   {$REGION method itemClass: &Class; override;}
   if lIsComplex then begin
     var l_elementType2 := ResolveDataTypeToTypeRef(&library,SafeIdentifier(aEntity.ElementType)).NotNullable;
@@ -336,7 +345,7 @@ begin
 
   {$REGION - (id)readItemFromMessage:(ROMessage *)aMessage withIndex:(NSUInteger)index; }
   lList := new List<CGStatement>;
-  
+
   lArguments:= new List<CGCallParameter>;
   lArguments.Add(new CGNilExpression().AsCallParameter);
   if lIsEnum then
@@ -361,9 +370,9 @@ begin
   end else if lIsEnum then begin
     lItem := new CGTypeCastExpression(lItem, "NSInteger".AsTypeReference, ThrowsException := true);
     lItem := new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithInteger", [lItem.AsCallParameter]);
-  end;  
+  end;
   lList.Add(lItem.AsReturnStatement);
-  
+
   lArray.Members.Add(
     new CGMethodDefinition("readItemFromMessage",
       Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable),
@@ -641,7 +650,7 @@ begin
   linitWithMessage.Parameters.Insert(0,new CGParameterDefinition("anExceptionMessage", CGPredefinedTypeReference.String.NotNullable));
   llist.Insert(0,"anExceptionMessage".AsNamedIdentifierExpression.AsCallParameter);
   linitWithMessage.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, llist, ConstructorName := "withMessage"));
-  linitWithMessage.Statements.AddRange(st.Statements);
+  linitWithMessage.Statements.Add(st.Statements);
 
   {$ENDREGION}
 
@@ -785,7 +794,7 @@ begin
                                                                                             ["__selector".AsNamedIdentifierExpression.AsCallParameter("selector"),
                                                                                              "aHandler".AsNamedIdentifierExpression.AsCallParameter("object")].ToList),
                                                                 &ReadOnly := true))
-    else                                                                                                  
+    else
       if_true.Statements.Add(new CGVariableDeclarationStatement("__invocation",
                                                                 "ROInvocation".AsTypeReference,
                                                                 new CGMethodCallExpression("ROInvocation".AsTypeReferenceExpression,
@@ -854,7 +863,7 @@ begin
   fCachedNumberFN.Add("int64", "LongLong");
   fCachedNumberFN.Add("boolean", "Bool");
 
-  {ReservedWords.AddRange([
+  {ReservedWords.Add([
     "abstract", "and", "add", "async", "as", "begin", "break", "case", "class", "const", "constructor", "continue",
     "delegate", "default", "div", "do", "downto", "each", "else", "empty", "end", "enum", "ensure", "event", "except",
     "exit", "external", "false", "final", "finalizer", "finally", "flags", "for", "forward", "function", "global", "has",
@@ -1187,7 +1196,7 @@ begin
     result.Statements.Add(new CGTryFinallyCatchStatement(lTryStatements, FinallyStatements:= lFinallyStatements as not nullable));
   end
   else begin
-    result.Statements.AddRange(lTryStatements);
+    result.Statements.Add(lTryStatements);
   end;
 
   if assigned(aEntity.Result) then
@@ -1264,7 +1273,7 @@ begin
                                    ReturnType := "ROAsyncRequest".AsTypeReference);
   if IsSwift then
     result.Attributes.Add(new CGAttribute("discardableResult".AsTypeReference));
-    
+
   for p: RodlParameter in aEntity.Items do begin
     if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
       result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(&library, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag, true)));

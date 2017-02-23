@@ -1,9 +1,4 @@
-﻿import Sugar
-import Sugar.Collections
-import Sugar.IO
-import Sugar.Linq
-import RemObjects.CodeGen4
-import RemObjects.SDK.CodeGen4
+﻿import RemObjects.SDK.CodeGen4
 
 public __abstract class ServerAccessCodeGen {
 
@@ -69,7 +64,7 @@ public __abstract class ServerAccessCodeGen {
 			unit.Namespace = CGNamespaceReference(namespace)
 		}
 	}
-	
+
 	/*fileprivate*/internal func generateStandardImports(_ unit: CGCodeUnit) {
 		// no-op, but platforms will override
 	}
@@ -212,7 +207,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		}
 
 		//property.GetExpression = CGNewInstanceExpression(proxyType, [CGCallParameter(CGFieldAccessExpression(CGSelfExpression.`Self`, "_message"), "message"),
-		//															 CGCallParameter(CGFieldAccessExpression(CGSelfExpression.`Self`, "_channel"), "channel")])
+		//                                                             CGCallParameter(CGFieldAccessExpression(CGSelfExpression.`Self`, "_channel"), "channel")])
 
 		let remoteService = "RORemoteService".AsTypeReference()
 		let service = CGNewInstanceExpression(remoteService, [CGPropertyAccessExpression(CGSelfExpression.`Self`, "serverURL").AsCallParameter("targetURL"),
@@ -353,7 +348,7 @@ public class JavaServerAccessCodeGen : ServerAccessCodeGen {
 
 	func generateFiles(_ generator: CGCodeGenerator) -> Dictionary<String,String> {
 		let result = Dictionary<String,String>()
-		//var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);  
+		//var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);
 		let unit = generateCodeUnit()
 		for k in unit.Types {
 			result.Add(Path.ChangeExtension(k.Name, generator.defaultFileExtension), generator.GenerateUnitForSingleType(k, unit: unit))
@@ -542,8 +537,8 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		lmes.Visibility = .Published;
 		serverAccess.Members.Add(lmes);
 		dfm.AppendLine("  object Message: " + mes_name)
-		dfm.AppendLine("	Envelopes = <>")
-		dfm.Append	("	DefaultNamespaces = '")
+		dfm.AppendLine("    Envelopes = <>")
+		dfm.Append    ("    DefaultNamespaces = '")
 		if let ns = lunit.Namespace {
 			dfm.Append(ns.Name)
 		}
@@ -557,8 +552,8 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 			}
 		}
 		dfm.AppendLine("'")
-		dfm.AppendLine("	Left = 40")
-		dfm.AppendLine("	Top = 24")
+		dfm.AppendLine("    Left = 40")
+		dfm.AppendLine("    Top = 24")
 		dfm.AppendLine("  end")
 		#endregion
 
@@ -567,14 +562,14 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		ch.Visibility = .Published;
 		serverAccess.Members.Add(ch);
 		dfm.AppendLine("  object Channel: " + ch_name)
-		dfm.AppendLine("	DispatchOptions = []")
+		dfm.AppendLine("    DispatchOptions = []")
 		if hasLoginService() {
-			dfm.AppendLine("	OnLoginNeeded = ChannelLoginNeeded")
+			dfm.AppendLine("    OnLoginNeeded = ChannelLoginNeeded")
 		}
-		dfm.AppendLine("	ServerLocators = <>")
-		dfm.AppendLine("	TargetUrl = '" + server_Address + "'")
-		dfm.AppendLine("	Left = 40")
-		dfm.AppendLine("	Top = 80")
+		dfm.AppendLine("    ServerLocators = <>")
+		dfm.AppendLine("    TargetUrl = '" + server_Address + "'")
+		dfm.AppendLine("    Left = 40")
+		dfm.AppendLine("    Top = 80")
 		dfm.AppendLine("  end")
 		#endregion
 		dfm.AppendLine("end")
@@ -664,7 +659,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		property.GetStatements = propertyGetter
 	}
 
-	public func generateDFM() -> String	{
+	public func generateDFM() -> String    {
 		return dfm.ToString();
 	}
 }
