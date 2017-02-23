@@ -252,6 +252,7 @@ do {
 			codegen = CGSwiftCodeGenerator(dialect: CGSwiftCodeGeneratorDialect.Standard)
 			if let cocoaRodlCodeGen = activeRodlCodeGen as? CocoaRodlCodeGen {
 				cocoaRodlCodeGen.SwiftDialect = .Standard
+				cocoaRodlCodeGen.FixUpForAppeSwift()
 			}
 			fileExtension = "swift"
 		case "objc", "objectivec", "objective-c":

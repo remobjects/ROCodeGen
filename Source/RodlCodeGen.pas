@@ -45,10 +45,12 @@ type
     method GenerateUnitComment: CGCommentStatement; virtual;
     method GetNamespace(library: RodlLibrary): String;virtual;
     method GetGlobalName(library: RodlLibrary): String; abstract;
+
+    property EnumBaseType: CGTypeReference read ResolveStdtypes(CGPredefinedTypeKind.UInt32); virtual;
   public
     class property KnownRODLPaths: Dictionary<String,String> := new Dictionary<String,String>;
     property Generator: CGCodeGenerator; virtual;
-    property DontPrefixEnumValues: Boolean := false;
+    property DontPrefixEnumValues: Boolean := false; virtual;
     property CodeUnitSupport: Boolean := True; virtual;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;
@@ -235,7 +237,7 @@ method RodlCodeGen.GenerateEnum(file: CGCodeUnit; &library: RodlLibrary; entity:
 begin
   var lenum := new CGEnumTypeDefinition(SafeIdentifier(entity.Name),
                                        Visibility := CGTypeVisibilityKind.Public,
-                                       BaseType := ResolveStdtypes(CGPredefinedTypeKind.Int32));
+                                       BaseType := EnumBaseType);
   lenum.Comment := GenerateDocumentation(entity);
   file.Types.Add(lenum);
   for enummember: RodlEnumValue in entity.Items index i do begin

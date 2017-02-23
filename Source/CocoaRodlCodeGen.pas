@@ -51,10 +51,14 @@ type
     method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlEventSink); override;
     method GetNamespace(library: RodlLibrary): String;override;
     method GetGlobalName(library: RodlLibrary): String;override;
+
+    property EnumBaseType: CGTypeReference read NSUIntegerType; override;
   public
     property SwiftDialect: CGSwiftCodeGeneratorDialect := CGSwiftCodeGeneratorDialect.Silver;
+    property DontPrefixEnumValues: Boolean := not IsObjC; override;
     constructor;
     constructor withSwiftDialect(aSwiftDialect: CGSwiftCodeGeneratorDialect);
+    method FixUpForAppeSwift;
   end;
 
 implementation
@@ -75,16 +79,12 @@ end;
 
 method CocoaRodlCodeGen.GenerateEnum(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlEnum);
 begin
-  inherited GenerateEnum(file,&library, aEntity);
+  inherited GenerateEnum(file, &library, aEntity);
   var lname := SafeIdentifier(aEntity.Name);
   var lenum := new CGClassTypeDefinition(lname+"__EnumMetaData", "ROEnumMetaData".AsTypeReference,
                                          Visibility := CGTypeVisibilityKind.Public);
   file.Types.Add(lenum);
-  lenum.Members.Add(new CGFieldDefinition("stringToValueLookup",
-                                          "NSDictionary".AsTypeReference,
-                                          Visibility := CGMemberVisibilityKind.Private
-          )
-  );
+
   var linst :=  lname+"__EnumMetaDataInstance";
   lenum.Members.Add(new CGFieldDefinition(linst,
                                           lenum.Name.AsTypeReference,
@@ -94,7 +94,6 @@ begin
           )
   );
   {$REGION class method instance: %ENUM_NAME%__EnumMetaData;}
-
   lenum.Members.Add(new CGMethodDefinition("instance",
                                            [new CGIfThenElseStatement(new CGAssignedExpression(linst.AsNamedIdentifierExpression, Inverted := true),
                                                 new CGAssignmentStatement(
@@ -119,91 +118,105 @@ begin
   );
   {$ENDREGION}
 
-  {$REGION method stringFromValue(aValue: Integer): NSString;}
-  var lcases := new List<CGSwitchStatementCase>;
-  for enummember: RodlEnumValue in aEntity.Items index i do begin
-    var lmName := GenerateEnumMemberName(library, aEntity, enummember);
-    lcases.Add(new CGSwitchStatementCase(i.AsLiteralExpression, [CGStatement(lmName.AsLiteralExpression.AsReturnStatement)].ToList));
-  end;
-  var sw: CGStatement := new CGSwitchStatement("aValue".AsNamedIdentifierExpression,
-                                            lcases,
-                                            DefaultCase := [CGStatement("<Invalid Enum Value>".AsLiteralExpression.AsReturnStatement)].ToList);
-  lenum.Members.Add(new CGMethodDefinition(if IsSwift then "string" else "stringFromValue",
-                                          [sw].ToList,
-                                          Parameters := [new CGParameterDefinition("aValue", NSUIntegerType, ExternalName := if IsSwift then "fromValue")].ToList,
-                                          ReturnType:= CGPredefinedTypeReference.String.NotNullable,
-                                          Virtuality := CGMemberVirtualityKind.Override,
-                                          Visibility := CGMemberVisibilityKind.Public));
-  {$ENDREGION}
+  if not IsAppleSwift then begin
+    lenum.Members.Add(new CGFieldDefinition("stringToValueLookup",
+                                            "NSDictionary".AsTypeReference,
+                                            Visibility := CGMemberVisibilityKind.Private
+            )
+    );
 
-  {$REGION method valueFromString(aValue: NSString): Integer; override;}
-  var largs := new List<CGCallParameter>;
-  for enummember: RodlEnumValue in aEntity.Items do begin
-    var lmName := GenerateEnumMemberName(library, aEntity, enummember);
-    largs.Add(new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression,
-                                          "numberWithInt",
-                                        [new CGTypeCastExpression(new CGEnumValueAccessExpression(lname.AsTypeReference,lmName), NSUIntegerType, ThrowsException := true).AsCallParameter].ToList
-    ).AsEllipsisCallParameter);
-    largs.Add(lmName.AsLiteralExpression.AsEllipsisCallParameter);
-  end;
-  largs.Add(new CGNilExpression().AsEllipsisCallParameter);
-  lenum.Members.Add(new CGMethodDefinition(
-        if IsSwift then "value" else "valueFromString",
-        Parameters := [new CGParameterDefinition("aValue", CGPredefinedTypeReference.String.NotNullable, ExternalName := if IsSwift then "from")].ToList,
-        ReturnType:= NSUIntegerType,
-        Virtuality := CGMemberVirtualityKind.Override,
-        Visibility := CGMemberVisibilityKind.Public,
-        Statements:= [{0}new CGIfThenElseStatement(
-                            new CGAssignedExpression("stringToValueLookup".AsNamedIdentifierExpression, Inverted := true),
-                            new CGAssignmentStatement("stringToValueLookup".AsNamedIdentifierExpression,
-                                                      new CGNewInstanceExpression("NSDictionary".AsTypeReference, largs, ConstructorName := "withObjectsAndKeys"))),
-                      {1}new CGVariableDeclarationStatement("lResult",
-                                                            "NSNumber".AsTypeReference,
-                                                            new CGTypeCastExpression(new CGMethodCallExpression("stringToValueLookup".AsNamedIdentifierExpression,
-                                                                                                                if IsSwift then "value" else "valueForKey",
-                                                                                                                ["aValue".AsNamedIdentifierExpression.AsCallParameter(if IsSwift then "forKey")].ToList),
-                                                                                     "NSNumber".AsTypeReference, true)
-                              ),
-                      {2}new CGIfThenElseStatement(
-                            new CGAssignedExpression("lResult".AsNamedIdentifierExpression),
-                            new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"uintValue").AsReturnStatement,
-                            if IsAppleSwift then
-                              new CGThrowStatement(new CGNewInstanceExpression("NSError".AsTypeReference,
-                                                                               ["ROException".AsLiteralExpression.AsCallParameter("domain"),
-                                                                                0.AsLiteralExpression.AsCallParameter("code"),
-                                                                                CGNilExpression.Nil.AsCallParameter("userInfo")
-                                                                                ].ToList))
-                            else
-                              new CGThrowStatement(new CGNewInstanceExpression("NSException".AsTypeReference,
-                                                                               [if IsAppleSwift then
-                                                                                  new CGNewInstanceExpression("NSExceptionName".AsTypeReference, "ROException".AsLiteralExpression.AsCallParameter).AsCallParameter
-                                                                                else
-                                                                                 "ROException".AsLiteralExpression.AsCallParameter,
-                                                                                if IsAppleSwift then
-                                                                                  new CGNewInstanceExpression("String".AsTypeReference, [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason")
-                                                                                else
-                                                                                  new CGMethodCallExpression(CGPredefinedTypeReference.String.AsExpression, "stringWithFormat", [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason"),
-                                                                                CGNilExpression.Nil.AsCallParameter("userInfo")
-                                                                                ].ToList, ConstructorName := "withName"))
-                      )
-                    ].ToList
-        ));
-  {$ENDREGION}
+      {$REGION method stringFromValue(aValue: Integer): NSString;}
+      var lcases := new List<CGSwitchStatementCase>;
+      for enummember: RodlEnumValue in aEntity.Items index i do begin
+        var lmName := GenerateEnumMemberName(library, aEntity, enummember);
+        lcases.Add(new CGSwitchStatementCase(i.AsLiteralExpression, [CGStatement(lmName.AsLiteralExpression.AsReturnStatement)].ToList));
+      end;
+      var sw: CGStatement := new CGSwitchStatement("aValue".AsNamedIdentifierExpression,
+                                                lcases,
+                                                DefaultCase := [CGStatement("<Invalid Enum Value>".AsLiteralExpression.AsReturnStatement)].ToList);
+      lenum.Members.Add(new CGMethodDefinition(if IsSwift then "string" else "stringFromValue",
+                                              [sw].ToList,
+                                              Parameters := [new CGParameterDefinition("aValue", NSUIntegerType, ExternalName := if IsSwift then "fromValue")].ToList,
+                                              ReturnType:= CGPredefinedTypeReference.String.NotNullable,
+                                              Virtuality := CGMemberVirtualityKind.Override,
+                                              Visibility := CGMemberVisibilityKind.Public));
+      {$ENDREGION}
 
-  {$REGION method typeName: NSString; override;}
-  lenum.Members.Add(
-    new CGMethodDefinition(
-      lname+"ToString",
-      [new CGMethodCallExpression(new CGMethodCallExpression(lenum.Name.AsTypeReferenceExpression,"instance"),
-                                               if IsSwift then "string" else "stringFromValue",
-                                               [new CGTypeCastExpression("aValue".AsNamedIdentifierExpression, NSUIntegerType, true).AsCallParameter(if IsSwift then "fromValue")].ToList
-                                              ).AsReturnStatement],
-      Parameters := [new CGParameterDefinition("aValue",lname.AsTypeReference)].ToList,
-      ReturnType := CGPredefinedTypeReference.String.NotNullable,
-      Visibility := CGMemberVisibilityKind.Public
-      )
-  );
-  {$ENDREGION}
+      {$REGION method valueFromString(aValue: NSString): Integer; override;}
+    var lArgs := new List<CGCallParameter>;
+    for enummember: RodlEnumValue in aEntity.Items do begin
+      var lmName := GenerateEnumMemberName(library, aEntity, enummember);
+      var lParameter := new CGTypeCastExpression(new CGEnumValueAccessExpression(lname.AsTypeReference,lmName), NSUIntegerType, ThrowsException := true);
+      lArgs.Add(if IsSwift then new CGNewInstanceExpression("NSNumber".AsTypeReferenceExpression, [lParameter.AsCallParameter("value")]).AsCallParameter
+                else new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithInt", [lParameter.AsCallParameter].ToList).AsEllipsisCallParameter);
+      lArgs.Add(lmName.AsLiteralExpression.AsEllipsisCallParameter);
+    end;
+    lArgs.Add(new CGNilExpression().AsEllipsisCallParameter);
+
+    var lNewDictionary := if IsSwift then
+                            new CGNewInstanceExpression("NSDictionary".AsTypeReference, lArgs, ConstructorName := "dictionaryLiteral")
+                          else
+                            new CGNewInstanceExpression("NSDictionary".AsTypeReference, lArgs, ConstructorName := "withObjectsAndKeys");
+
+    lenum.Members.Add(new CGMethodDefinition(
+          if IsSwift then "value" else "valueFromString",
+          Parameters := [new CGParameterDefinition("aValue", CGPredefinedTypeReference.String.NotNullable, ExternalName := if IsSwift then "from")].ToList,
+          ReturnType:= NSUIntegerType,
+          Virtuality := CGMemberVirtualityKind.Override,
+          Visibility := CGMemberVisibilityKind.Public,
+          Statements:= [{0}new CGIfThenElseStatement(
+                              new CGAssignedExpression("stringToValueLookup".AsNamedIdentifierExpression, Inverted := true),
+                              new CGAssignmentStatement("stringToValueLookup".AsNamedIdentifierExpression,
+                                                        lNewDictionary)),
+                        {1}new CGVariableDeclarationStatement("lResult",
+                                                              "NSNumber".AsTypeReference,
+                                                              new CGTypeCastExpression(new CGMethodCallExpression("stringToValueLookup".AsNamedIdentifierExpression,
+                                                                                                                  if IsSwift then "value" else "valueForKey",
+                                                                                                                  ["aValue".AsNamedIdentifierExpression.AsCallParameter(if IsSwift then "forKey")].ToList),
+                                                                                       "NSNumber".AsTypeReference, true)
+                                ),
+                        {2}new CGIfThenElseStatement(
+                              new CGAssignedExpression("lResult".AsNamedIdentifierExpression),
+                              new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"uintValue").AsReturnStatement,
+                              if IsAppleSwift then
+                                new CGThrowStatement(new CGNewInstanceExpression("NSError".AsTypeReference,
+                                                                                 ["ROException".AsLiteralExpression.AsCallParameter("domain"),
+                                                                                  0.AsLiteralExpression.AsCallParameter("code"),
+                                                                                  CGNilExpression.Nil.AsCallParameter("userInfo")
+                                                                                  ].ToList))
+                              else
+                                new CGThrowStatement(new CGNewInstanceExpression("NSException".AsTypeReference,
+                                                                                 [if IsAppleSwift then
+                                                                                    new CGNewInstanceExpression("NSExceptionName".AsTypeReference, "ROException".AsLiteralExpression.AsCallParameter).AsCallParameter
+                                                                                  else
+                                                                                   "ROException".AsLiteralExpression.AsCallParameter,
+                                                                                  if IsAppleSwift then
+                                                                                    new CGNewInstanceExpression("String".AsTypeReference, [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason")
+                                                                                  else
+                                                                                    new CGMethodCallExpression(CGPredefinedTypeReference.String.AsExpression, "stringWithFormat", [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason"),
+                                                                                  CGNilExpression.Nil.AsCallParameter("userInfo")
+                                                                                  ].ToList, ConstructorName := "withName"))
+                        )
+                      ].ToList
+          ));
+    {$ENDREGION}
+
+    {$REGION method typeName: NSString; override;}
+    lenum.Members.Add(
+      new CGMethodDefinition(
+        lname+"ToString",
+        [new CGMethodCallExpression(new CGMethodCallExpression(lenum.Name.AsTypeReferenceExpression,"instance"),
+                                                 if IsSwift then "string" else "stringFromValue",
+                                                 [new CGTypeCastExpression("aValue".AsNamedIdentifierExpression, NSUIntegerType, true).AsCallParameter(if IsSwift then "fromValue")].ToList
+                                                ).AsReturnStatement],
+        Parameters := [new CGParameterDefinition("aValue",lname.AsTypeReference)].ToList,
+        ReturnType := CGPredefinedTypeReference.String.NotNullable,
+        Visibility := CGMemberVisibilityKind.Public
+        )
+    );
+    {$ENDREGION}
+  end;
+
 end;
 
 method CocoaRodlCodeGen.GenerateStruct(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlStruct);
@@ -337,8 +350,8 @@ begin
   lArray.Members.Add(
     new CGMethodDefinition( "writeItem",
       Parameters := [new CGParameterDefinition("aItem", CGPredefinedTypeReference.Dynamic.NotNullable),
-                     new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable, Externalname := "toMessage"),
-                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := "withIndex")].ToList,
+                     new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable, Externalname := if IsAppleSwift then "to" else "toMessage"),
+                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := if IsAppleSwift then "with" else "withIndex")].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
       Statements := lList as not nullable));
@@ -375,9 +388,9 @@ begin
   lList.Add(lItem.AsReturnStatement);
 
   lArray.Members.Add(
-    new CGMethodDefinition("readItemFromMessage",
-      Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable),
-                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := "withIndex")].ToList,
+    new CGMethodDefinition(if IsAppleSwift then "readItem" else "readItemFromMessage",
+      Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable, ExternalName := if IsAppleSwift then "from"),
+                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := if IsAppleSwift then "with" else "withIndex")].ToList,
                      ReturnType := CGPredefinedTypeReference.Dynamic.NullableNotUnwrapped,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
@@ -584,8 +597,8 @@ begin
   lList.Add(new CGCommentStatement("for efficiency, assumes this is called in ascending order"));
   lList.Add(new CGMethodCallExpression(new CGSelfExpression, "addItem",["__item".AsNamedIdentifierExpression.AsCallParameter].ToList));
   lArray.Members.Add(
-    new CGMethodDefinition("readItemFromMessage",
-      Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference),
+    new CGMethodDefinition(if IsSwift then "readItem" else "readItemFromMessage",
+      Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference, ExternalName := if IsSwift then "from"),
                      new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := "toIndex")].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
@@ -882,6 +895,13 @@ begin
   SwiftDialect := aSwiftDialect;
 end;
 
+method CocoaRodlCodeGen.FixUpForAppeSwift;
+begin
+  // nasty hack, but so fuck it!
+  CodeGenTypes.Remove("binary");
+  CodeGenTypes.Add("binary", "Data".AsTypeReference);
+end;
+
 method CocoaRodlCodeGen.HandleAtributes_private(&library: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
 begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
@@ -926,8 +946,8 @@ end;
 method CocoaRodlCodeGen.WriteToMessage_Method(&library: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
 begin
   //method writeToMessage(aMessage: ROMessage) withName(aName: NSString); override;
-  result := new CGMethodDefinition("writeToMessage",
-                        Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable),
+  result := new CGMethodDefinition(if IsSwift then "write" else "writeToMessage",
+                        Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable, ExternalName := if IsSwift then "to"),
                                        new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String), ExternalName := "withName")].ToList,
                         Visibility := CGMemberVisibilityKind.Public);
   if not (aEntity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
@@ -942,8 +962,8 @@ begin
 
   if assigned(aEntity.AncestorEntity) then begin
     lIfRecordStrictOrder_True.Statements.Add(
-                      new CGMethodCallExpression(CGInheritedExpression.Inherited, "writeToMessage",
-                                                ["aMessage".AsNamedIdentifierExpression.AsCallParameter,
+                      new CGMethodCallExpression(CGInheritedExpression.Inherited, if IsSwift then "write" else "writeToMessage",
+                                                ["aMessage".AsNamedIdentifierExpression.AsCallParameter(if IsSwift then "to"),
                                                  new CGCallParameter("aName".AsNamedIdentifierExpression, "withName")].ToList)
     );
   end;
@@ -971,9 +991,9 @@ end;
 method CocoaRodlCodeGen.ReadFromMessage_Method(&library: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
 begin
   //method readFromMessage(aMessage: ROMessage) withName(aName: NSString); override;
-  result := new CGMethodDefinition("readFromMessage",
-                                  Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable),
-                                                 new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String),ExternalName :="withName")].ToList,
+  result := new CGMethodDefinition(if IsSwift then "read" else "readFromMessage",
+                                  Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable, ExternalName := if IsSwift then "from"),
+                                                 new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String), ExternalName :="withName")].ToList,
                                   Visibility := CGMemberVisibilityKind.Public);
   if not (aEntity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
   var lIfRecordStrictOrder_True := new CGBeginEndBlockStatement;
@@ -987,8 +1007,8 @@ begin
 
   if assigned(aEntity.AncestorEntity) then begin
     lIfRecordStrictOrder_True.Statements.Add(
-      new CGMethodCallExpression(CGInheritedExpression.Inherited, "readFromMessage",
-                                 ["aMessage".AsNamedIdentifierExpression.AsCallParameter,
+      new CGMethodCallExpression(CGInheritedExpression.Inherited, if IsSwift then "read" else "readFromMessage",
+                                 ["aMessage".AsNamedIdentifierExpression.AsCallParameter(if IsSwift then "from"),
                                  new CGCallParameter("aName".AsNamedIdentifierExpression, "withName")].ToList)
     );
   end;
@@ -1044,7 +1064,8 @@ begin
     //aMessage.write%FIELD_READER_WRITER%(Integer(%FIELD_NAME%)) withName("%FIELD_NAME_UNSAFE%") asEnum(%FIELD_TYPE_RAW%__EnumMetaData.instance);
     exit new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
                                     "write" +  lMethodName,
-                                    [new CGTypeCastExpression(lIdentifier, NSUIntegerType, ThrowsException := true).AsCallParameter,
+                                    [if IsAppleSwift then new CGPropertyAccessExpression(lIdentifier, "rawValue").AsCallParameter
+                                                     else new CGTypeCastExpression(lIdentifier, NSUIntegerType, ThrowsException := true).AsCallParameter,
                                      new CGCallParameter(CleanedWsdlName(aEntity.Name).AsLiteralExpression, "withName"),
                                      new CGCallParameter(new CGMethodCallExpression((aEntity.DataType+"__EnumMetaData").AsTypeReferenceExpression, "instance"), "asEnum")].ToList);
   end
@@ -1074,21 +1095,21 @@ begin
   else if ReaderFunctions.ContainsKey(lLower) then lMethodName := ReaderFunctions[lLower]
   else lMethodName := "UnknownType";
 
-  var lNameString := CleanedWsdlName(aEntity.Name).AsLiteralExpression.AsCallParameter;
+  var lNameString := CleanedWsdlName(aEntity.Name).AsLiteralExpression.AsCallParameter(if IsSwift then "withName");
   if isClassType(library, aEntity.DataType) then begin
     // %FIELD_NAME% := aMessage.read%FIELD_READER_WRITER%WithName("%FIELD_NAME_UNSAFE%") asClass(%FIELD_TYPE_NAME%.class) as %FIELD_TYPE_NAME%;
     var lType := ResolveDataTypeToTypeRef(&library, aEntity.DataType);//.NotNullabeCopy;
     if lIsComplex or lIsArray then begin
       //var l_type1:= ResolveDataTypeToTypeRef(&library, aEntity.DataType).NotNullable;
-      var lArgument1 := new CGCallParameter(new CGTypeOfExpression(lType.AsExpression), "asClass");
+      var lArgument1 := new CGCallParameter(new CGTypeOfExpression(lType.AsExpression), if IsSwift then "as" else "asClass");
       var l_methodCall := new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
-                                     "read" +  lMethodName+"WithName",
+                                     if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
                                      [lNameString, lArgument1].ToList);
       exit new CGTypeCastExpression(l_methodCall, lType, ThrowsException := true)
     end
     else begin
       var l_methodCall := new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
-                                     "read" +  lMethodName+"WithName",
+                                     if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
                                      [lNameString].ToList);
       exit l_methodCall;
     end;
@@ -1097,16 +1118,17 @@ begin
     // %FIELD_NAME% := %FIELD_TYPE_RAW%(aMessage.read%FIELD_READER_WRITER%WithName("%FIELD_NAME_UNSAFE%") asEnum(%FIELD_TYPE_RAW%__EnumMetaData.instance));
     var lType := ResolveDataTypeToTypeRef(&library, aEntity.DataType);
     var lArgument1 := new CGCallParameter(new CGMethodCallExpression((SafeIdentifier(aEntity.DataType)+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum");
-    exit new CGTypeCastExpression(
-        new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
-                                   "read" +  lMethodName+"WithName",
-                                   [lNameString, lArgument1].ToList),
-        lType,
-        ThrowsException := true);
+    var lMethodCall :=         new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
+                                   if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
+                                   [lNameString, lArgument1].ToList);
+    if IsAppleSwift then
+      exit new CGUnaryOperatorExpression(new CGNewInstanceExpression(lType, lMethodCall.AsCallParameter("rawValue")), CGUnaryOperatorKind.ForceUnwrapNullable)
+    else
+      exit new CGTypeCastExpression(lMethodCall, lType, ThrowsException := true);
   end
   else if lIsSimple then begin
     exit new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
-                                   "read" +  lMethodName+"WithName",
+                                   if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
                                    [lNameString].ToList);
   end
   else begin
@@ -1160,8 +1182,8 @@ begin
 
   GenerateOperationAttribute(&library,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression,
-                                                   "initializeAsRequestMessage",
-                                                   [new CGPropertyAccessExpression(new CGSelfExpression, "__clientChannel").AsCallParameter,
+                                                   if IsAppleSwift then "initialize" else "initializeAsRequestMessage",
+                                                   [new CGPropertyAccessExpression(new CGSelfExpression, "__clientChannel").AsCallParameter(if IsAppleSwift then "asRequest"),
                                                    new CGCallParameter(library.Name.AsLiteralExpression, "libraryName"),
                                                    new CGCallParameter(new CGMethodCallExpression(new CGSelfExpression(), "__getActiveInterfaceName"), "interfaceName"),
                                                    new CGCallParameter(SafeIdentifier(aEntity.Name).AsLiteralExpression, "messageName")].ToList
@@ -1366,8 +1388,8 @@ begin
   GenerateOperationAttribute(&library,aEntity,Statements);
   Statements.Add(
     new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression,
-                               "initializeAsRequestMessage",
-                               [new CGCallParameter(new CGPropertyAccessExpression(new CGSelfExpression,"__clientChannel")),
+                               if IsAppleSwift then "initialize" else "initializeAsRequestMessage",
+                               [new CGCallParameter(new CGPropertyAccessExpression(new CGSelfExpression,"__clientChannel"), Name := if IsAppleSwift then "asRequest"),
                                 new CGCallParameter(library.Name.AsLiteralExpression, "libraryName"),
                                 new CGCallParameter(new CGMethodCallExpression(new CGSelfExpression(), "__getActiveInterfaceName"), "interfaceName"),
                                 new CGCallParameter(SafeIdentifier(aEntity.Name).AsLiteralExpression, "messageName")].ToList));
