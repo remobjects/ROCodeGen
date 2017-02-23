@@ -128,9 +128,9 @@ begin
   var sw: CGStatement := new CGSwitchStatement("aValue".AsNamedIdentifierExpression,
                                             lcases,
                                             DefaultCase := [CGStatement("<Invalid Enum Value>".AsLiteralExpression.AsReturnStatement)].ToList);
-  lenum.Members.Add(new CGMethodDefinition("stringFromValue",
+  lenum.Members.Add(new CGMethodDefinition(if IsSwift then "string" else "stringFromValue",
                                           [sw].ToList,
-                                          Parameters := [new CGParameterDefinition("aValue", NSUIntegerType)].ToList,
+                                          Parameters := [new CGParameterDefinition("aValue", NSUIntegerType, ExternalName := if IsSwift then "fromValue")].ToList,
                                           ReturnType:= CGPredefinedTypeReference.String.NotNullable,
                                           Virtuality := CGMemberVirtualityKind.Override,
                                           Visibility := CGMemberVisibilityKind.Public));
@@ -148,8 +148,8 @@ begin
   end;
   largs.Add(new CGNilExpression().AsEllipsisCallParameter);
   lenum.Members.Add(new CGMethodDefinition(
-        "valueFromString",
-        Parameters := [new CGParameterDefinition("aValue", CGPredefinedTypeReference.String.NotNullable)].ToList,
+        if IsSwift then "value" else "valueFromString",
+        Parameters := [new CGParameterDefinition("aValue", CGPredefinedTypeReference.String.NotNullable, ExternalName := if IsSwift then "from")].ToList,
         ReturnType:= NSUIntegerType,
         Virtuality := CGMemberVirtualityKind.Override,
         Visibility := CGMemberVisibilityKind.Public,
@@ -159,16 +159,17 @@ begin
                                                       new CGNewInstanceExpression("NSDictionary".AsTypeReference, largs, ConstructorName := "withObjectsAndKeys"))),
                       {1}new CGVariableDeclarationStatement("lResult",
                                                             "NSNumber".AsTypeReference,
-                                                            new CGMethodCallExpression("stringToValueLookup".AsNamedIdentifierExpression,
-                                                                                             "valueForKey",
-                                                                                             ["aValue".AsNamedIdentifierExpression.AsCallParameter].ToList)
+                                                            new CGTypeCastExpression(new CGMethodCallExpression("stringToValueLookup".AsNamedIdentifierExpression,
+                                                                                                                if IsSwift then "value" else "valueForKey",
+                                                                                                                ["aValue".AsNamedIdentifierExpression.AsCallParameter(if IsSwift then "forKey")].ToList),
+                                                                                     "NSNumber".AsTypeReference, true)
                               ),
                       {2}new CGIfThenElseStatement(
                             new CGAssignedExpression("lResult".AsNamedIdentifierExpression),
-                            new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"intValue").AsReturnStatement,
+                            new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"uintValue").AsReturnStatement,
                             if IsAppleSwift then
                               new CGThrowStatement(new CGNewInstanceExpression("NSError".AsTypeReference,
-                                                                               [0.AsLiteralExpression.AsCallParameter("domain"),
+                                                                               ["ROException".AsLiteralExpression.AsCallParameter("domain"),
                                                                                 0.AsLiteralExpression.AsCallParameter("code"),
                                                                                 CGNilExpression.Nil.AsCallParameter("userInfo")
                                                                                 ].ToList))
@@ -194,8 +195,8 @@ begin
     new CGMethodDefinition(
       lname+"ToString",
       [new CGMethodCallExpression(new CGMethodCallExpression(lenum.Name.AsTypeReferenceExpression,"instance"),
-                                               "stringFromValue",
-                                               [new CGTypeCastExpression("aValue".AsNamedIdentifierExpression, NSUIntegerType, true).AsCallParameter].ToList
+                                               if IsSwift then "string" else "stringFromValue",
+                                               [new CGTypeCastExpression("aValue".AsNamedIdentifierExpression, NSUIntegerType, true).AsCallParameter(if IsSwift then "fromValue")].ToList
                                               ).AsReturnStatement],
       Parameters := [new CGParameterDefinition("aValue",lname.AsTypeReference)].ToList,
       ReturnType := CGPredefinedTypeReference.String.NotNullable,
@@ -237,8 +238,8 @@ begin
   {$ENDREGION}
   {$REGION method assignFrom(aValue: ROComplexType); override;}
   lStruct.Members.Add(
-    new CGMethodDefinition("assignFrom",
-      Parameters := [new CGParameterDefinition("aValue", "ROComplexType".AsTypeReference().NotNullable)].ToList,
+    new CGMethodDefinition(if IsSwift then "assign" else "assignFrom",
+      Parameters := [new CGParameterDefinition("aValue", "ROComplexType".AsTypeReference().NotNullable, ExternalName := if IsSwift then "from")].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public    )
   );
