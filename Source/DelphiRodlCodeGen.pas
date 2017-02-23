@@ -19,8 +19,7 @@ type
                       '  Height = 300'#13#10+
                       '  Width = 300'#13#10+
                       'end';
-  private
-    fLegacyStrings: Boolean;
+  private    
     fIROTransportChannel_typeref: CGTypeReference;
     fIROTransport_typeref: CGTypeReference;
     fIROMessage_typeref: CGTypeReference;
@@ -37,8 +36,9 @@ type
     method get_IROMessage_typeref: CGTypeReference;
     method get_IROTransport_typeref: CGTypeReference;
     method GenerateParamAttributes(aName: String):CGSetLiteralExpression;
-    method SetLegacyStrings(value: Boolean);
   protected
+    fLegacyStrings: Boolean;
+    method _SetLegacyStrings(value: Boolean); virtual;
     property PureDelphi: Boolean;
     property Intf_name: String;
     property Invk_name: String;
@@ -85,8 +85,8 @@ type
     {$REGION generate _Impl}
     method Impl_GenerateService(file: CGCodeUnit; library: RodlLibrary; entity: RodlService);
     method Impl_GenerateDFMInclude(file: CGCodeUnit);virtual;
-    method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): CGStatement;virtual;
-    method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGExpression);virtual;
+    method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;virtual;
+    method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);virtual;
     method cpp_Impl_constructor(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); virtual; empty;
     {$ENDREGION}
     {$REGION cpp support}
@@ -140,7 +140,7 @@ type
     method isDFMNeeded: Boolean;
 
     property GenerateDFMs: Boolean := true;
-    property LegacyStrings: Boolean read fLegacyStrings write SetLegacyStrings;
+    property LegacyStrings: Boolean read fLegacyStrings write _SetLegacyStrings;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -3376,7 +3376,7 @@ begin
   file.Globals.Add(lcreator.AsGlobal);
   file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);
   file.Initialization := new List<CGStatement>;
-  file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
+  file.Initialization.AddRange(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
   file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
   file.Finalization := new List<CGStatement>;
   file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
@@ -3437,20 +3437,22 @@ begin
   file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.lfm}",new CGConditionalDefine("FPC")));
 end;
 
-method DelphiRodlCodeGen.Impl_CreateClassFactory(library: RodlLibrary; entity: RodlService; lvar: CGExpression): CGStatement;
+method DelphiRodlCodeGen.Impl_CreateClassFactory(library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;
 begin
+  var r:= new List<CGStatement>;
   var l_EntityName := entity.Name;
   var l_TInvoker := 'T'+l_EntityName+'_Invoker';
   var l_methodName := 'Create_'+l_EntityName;
 
-  exit new CGAssignmentStatement(lvar,
+  r.Add(new CGAssignmentStatement(lvar,
                                  new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
                                            [l_EntityName.AsLiteralExpression.AsCallParameter,
                                             ('{$IFDEF FPC}@{$ENDIF}'+l_methodName).AsNamedIdentifierExpression.AsCallParameter,
-                                            l_TInvoker.AsNamedIdentifierExpression.AsCallParameter]));
+                                            l_TInvoker.AsNamedIdentifierExpression.AsCallParameter])));
+  exit r;
 end;
 
-method DelphiRodlCodeGen.Impl_GenerateCreateService(aMethod: CGMethodDefinition; aCreator: CGExpression);
+method DelphiRodlCodeGen.Impl_GenerateCreateService(aMethod: CGMethodDefinition; aCreator: CGNewInstanceExpression);
 begin
   aMethod.Statements.Add(new CGAssignmentStatement( 'anInstance'.AsNamedIdentifierExpression, aCreator));
 end;
@@ -4024,7 +4026,7 @@ begin
   exit sa;
 end;
 
-method DelphiRodlCodeGen.SetLegacyStrings(value: Boolean);
+method DelphiRodlCodeGen._SetLegacyStrings(value: Boolean);
 begin
   if fLegacyStrings <> value then begin
     fLegacyStrings := value;

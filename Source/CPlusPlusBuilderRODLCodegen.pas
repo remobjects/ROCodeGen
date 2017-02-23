@@ -5,6 +5,7 @@ interface
 type
   CPlusPlusBuilderRodlCodeGen = public class(DelphiRodlCodeGen)
   protected
+    method _SetLegacyStrings(value: Boolean); override;
     method Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary); empty;override;
     method cpp_GenerateAsyncAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); override;
     method cpp_GenerateAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition; aMode: ModeKind); override;
@@ -34,8 +35,8 @@ type
     method GlobalsConst_GenerateServerGuid(file: CGCodeUnit; library: RodlLibrary; entity: RodlService); override;
     method AddMessageDirective(aMessage: String): CGStatement; override;
     method Impl_GenerateDFMInclude(file: CGCodeUnit);override;
-    method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): CGStatement;override;
-    method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGExpression);override;
+    method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;override;
+    method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);override;
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
     method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'):CGImport; override;
     method Invk_GetDefaultServiceRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
@@ -49,6 +50,7 @@ implementation
 
 constructor CPlusPlusBuilderRodlCodeGen;
 begin
+  fLegacyStrings := False;
   PureDelphi := False;
   IncludeUnitNameForOwnTypes := true;
   IncludeUnitNameForOtherTypes := true;
@@ -60,7 +62,7 @@ begin
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
   CodeGenTypes.Add("currency", new CGNamedTypeReference("Currency") isClasstype(False));
   CodeGenTypes.Add("widestring", new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
-  CodeGenTypes.Add("ansistring", new CGNamedTypeReference("AnsiString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
+  CodeGenTypes.Add("ansistring", new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False));
   CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
   CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean));
   CodeGenTypes.Add("variant", new CGNamedTypeReference("Variant") isClasstype(False));
@@ -68,7 +70,7 @@ begin
   CodeGenTypes.Add("xml", ResolveInterfaceTypeRef(nil,'IXMLNode','',''));
   CodeGenTypes.Add("guid", new CGNamedTypeReference("TGuidString") isClasstype(False));
   CodeGenTypes.Add("decimal", new CGNamedTypeReference("TDecimalVariant") isClasstype(False));
-  CodeGenTypes.Add("utf8string", new CGNamedTypeReference("UTF8String") isClasstype(False));
+  CodeGenTypes.Add("utf8string", new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False));
   CodeGenTypes.Add("xsdatetime", new CGNamedTypeReference("XsDateTime") isClasstype(True));
 
   // from
@@ -301,6 +303,7 @@ begin
       'TGuidString':      l_method := 'GetTypeInfo_TGuidString';
       'TDecimalVariant':  l_method := 'GetTypeInfo_TDecimalVariant';
       'UTF8String':       l_method := 'GetTypeInfo_UTF8String';
+      'String':           l_method := 'GetTypeInfo_String';
       '_di_IXMLNode':     l_method := 'GetTypeInfo_Xml';
     else
     end;
@@ -445,8 +448,9 @@ begin
   file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma resource "*.dfm"'));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): CGStatement;
+method CPlusPlusBuilderRodlCodeGen.Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;
 begin
+  var r := new List<CGStatement>;
   var l_EntityName := entity.Name;
   var l_TInvoker := 'T'+l_EntityName+'_Invoker';
   var l_methodName := 'Create_'+l_EntityName;
@@ -455,16 +459,18 @@ begin
                                    [l_EntityName.AsLiteralExpression.AsCallParameter,
                                     l_methodName.AsNamedIdentifierExpression.AsCallParameter,
                                     cpp_ClassId(l_TInvoker.AsNamedIdentifierExpression).AsCallParameter]);
-  exit new CGMethodCallExpression(l_creator,'GetInterface',
-                                 [lvar.AsCallParameter],
-                                  CallSiteKind := CGCallSiteKind.Reference);
-
+  r.Add(new CGVariableDeclarationStatement('lfactory','TROClassFactory'.AsTypeReference,l_creator));
+  r.Add(new CGMethodCallExpression('lfactory'.AsNamedIdentifierExpression,'GetInterface',
+                                    [lvar.AsCallParameter],
+                                    CallSiteKind := CGCallSiteKind.Reference));
+  exit r;
   //new TROClassFactory("NewService", Create_NewService, __classid(TNewService_Invoker));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.Impl_GenerateCreateService(aMethod: CGMethodDefinition; aCreator: CGExpression);
+method CPlusPlusBuilderRodlCodeGen.Impl_GenerateCreateService(aMethod: CGMethodDefinition; aCreator: CGNewInstanceExpression);
 begin
-  aMethod.Statements.Add(new CGMethodCallExpression(aCreator,'GetInterface',
+  aMethod.Statements.Add(new CGVariableDeclarationStatement('lservice', CGTypeReferenceExpression(aCreator.Type).Type, aCreator));
+  aMethod.Statements.Add(new CGMethodCallExpression('lservice'.AsNamedIdentifierExpression,'GetInterface',
                         ['anInstance'.AsNamedIdentifierExpression.AsCallParameter],
                           CallSiteKind := CGCallSiteKind.Reference));
 
@@ -637,6 +643,21 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_smartInit(file: CGCodeUnit);
 begin
   file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma package(smart_init)'));
+end;
+
+method CPlusPlusBuilderRodlCodeGen._SetLegacyStrings(value: Boolean);
+begin
+  if fLegacyStrings <> value then begin
+    fLegacyStrings := value;
+    if fLegacyStrings then begin
+      CodeGenTypes.Item["ansistring"] := new CGNamedTypeReference("AnsiString") &namespace(new CGNamespaceReference("System")) isClasstype(False);
+      CodeGenTypes.Item["utf8string"] := new CGNamedTypeReference("UTF8String") isClasstype(False);    
+    end
+    else begin
+      CodeGenTypes.Item["ansistring"] := new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False);
+      CodeGenTypes.Item["utf8string"] := new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False);
+    end;
+  end;
 end;
 
 
