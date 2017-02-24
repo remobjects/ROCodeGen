@@ -161,6 +161,58 @@ do {
 		return
 	}
 
+	var codegen: CGCodeGenerator?
+
+	var fileExtension = "txt"
+	switch options["language"]?.ToLower() {
+		case "oxygene", "pas":
+			options["language"] = "oxygene"
+			codegen = CGOxygeneCodeGenerator()
+			fileExtension = "pas"
+		case "hydrogene", "csharp", "c#", "cs":
+			options["language"] = "c#"
+			codegen = CGCSharpCodeGenerator(dialect: CGCSharpCodeGeneratorDialect.Hydrogene)
+			fileExtension = "cs"
+		case "visual-c#", "visualcsharp", "vc#", "standard-csharp":
+			options["language"] = "standard-c#"
+			codegen = CGCSharpCodeGenerator(dialect: CGCSharpCodeGeneratorDialect.Standard)
+			fileExtension = "cs"
+		case "visual-basic", "visualbasic", "visualbasic.net", "vb", "vb.ndet":
+			options["language"] = "vb"
+			fileExtension = "vb"
+		case "silver":
+			options["language"] = "swift"
+			codegen = CGSwiftCodeGenerator(dialect: CGSwiftCodeGeneratorDialect.Silver)
+			fileExtension = "swift"
+		case "swift", "apple-swift", "standard-swift":
+			options["language"] = "standard-swift"
+			codegen = CGSwiftCodeGenerator(dialect: CGSwiftCodeGeneratorDialect.Standard)
+			fileExtension = "swift"
+		case "objc", "objectivec", "objective-c":
+			options["language"] = "objc"
+			codegen = CGObjectiveCMCodeGenerator()
+			fileExtension = "m"
+		case "delphi":
+			options["language"] = "delphi"
+			codegen = CGDelphiCodeGenerator()
+			fileExtension = "pas"
+		case "bcb", "cpp", "c++", "c++builder":
+			options["language"] = "cpp"
+			codegen = CGCPlusPlusCPPCodeGenerator(dialect: .CPlusPlusBuilder)
+			fileExtension = "cpp"
+		case "java":
+			options["language"] = "java"
+			codegen = CGJavaCodeGenerator()
+			fileExtension = "java"
+		case "javascript", "js":
+			options["language"] = "javascript"
+			codegen = CGJavaScriptCodeGenerator()
+			writeLn("JavaScript language codegen is not supported in rodl2code yet, sorry.")
+			fileExtension = "js"
+			return 2
+		default:
+	}
+
 	var serverSupport = false
 	var activeRodlCodeGen: RodlCodeGen?
 	var activeServerAccessCodeGen: ServerAccessCodeGen?
@@ -178,7 +230,17 @@ do {
 					options["language"] = "silver" // force our Swift
 			}
 			activeRodlCodeGen = CocoaRodlCodeGen()
-			activeServerAccessCodeGen = CocoaServerAccessCodeGen(rodl: rodlLibrary, swiftDialect: iif(options["language"] == "silver", CGSwiftCodeGeneratorDialect.Silver, CGSwiftCodeGeneratorDialect.Standard))
+			activeServerAccessCodeGen = CocoaServerAccessCodeGen(rodl: rodlLibrary, generator: codegen!)
+
+			if let cocoaRodlCodeGen = activeRodlCodeGen as? CocoaRodlCodeGen {
+				if options["language"] == "standard-swift" {
+					cocoaRodlCodeGen.SwiftDialect = .Standard
+					cocoaRodlCodeGen.FixUpForAppeSwift()
+				} else {
+					cocoaRodlCodeGen.SwiftDialect = .Silver
+				}
+			}
+
 		case "echoes", "net", ".net":
 			options["platform"] = ".net"
 			serverSupport = true
@@ -219,65 +281,6 @@ do {
 	}
 	if options["legacy-strings"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.LegacyStrings = true
-	}
-
-	var codegen: CGCodeGenerator?
-
-	var fileExtension = "txt"
-	switch options["language"]?.ToLower() {
-		case "oxygene", "pas":
-			options["language"] = "oxygene"
-			codegen = CGOxygeneCodeGenerator()
-			fileExtension = "pas"
-		case "hydrogene", "csharp", "c#", "cs":
-			options["language"] = "c#"
-			codegen = CGCSharpCodeGenerator(dialect: CGCSharpCodeGeneratorDialect.Hydrogene)
-			fileExtension = "cs"
-		case "visual-c#", "visualcsharp", "vc#", "standard-csharp":
-			options["language"] = "standard-c#"
-			codegen = CGCSharpCodeGenerator(dialect: CGCSharpCodeGeneratorDialect.Standard)
-			fileExtension = "cs"
-		case "visual-basic", "visualbasic", "visualbasic.net", "vb", "vb.ndet":
-			options["language"] = "vb"
-			fileExtension = "vb"
-		case "silver":
-			options["language"] = "swift"
-			codegen = CGSwiftCodeGenerator(dialect: CGSwiftCodeGeneratorDialect.Silver)
-			fileExtension = "swift"
-			if let cocoaRodlCodeGen = activeRodlCodeGen as? CocoaRodlCodeGen {
-				cocoaRodlCodeGen.SwiftDialect = .Silver
-			}
-		case  "swift", "apple-swift", "standard-swift":
-			options["language"] = "standard-swift"
-			codegen = CGSwiftCodeGenerator(dialect: CGSwiftCodeGeneratorDialect.Standard)
-			if let cocoaRodlCodeGen = activeRodlCodeGen as? CocoaRodlCodeGen {
-				cocoaRodlCodeGen.SwiftDialect = .Standard
-				cocoaRodlCodeGen.FixUpForAppeSwift()
-			}
-			fileExtension = "swift"
-		case "objc", "objectivec", "objective-c":
-			options["language"] = "objc"
-			codegen = CGObjectiveCMCodeGenerator()
-			fileExtension = "m"
-		case "delphi":
-			options["language"] = "delphi"
-			codegen = CGDelphiCodeGenerator()
-			fileExtension = "pas"
-		case "bcb", "cpp", "c++", "c++builder":
-			options["language"] = "cpp"
-			codegen = CGCPlusPlusCPPCodeGenerator(dialect: .CPlusPlusBuilder)
-			fileExtension = "cpp"
-		case "java":
-			options["language"] = "java"
-			codegen = CGJavaCodeGenerator()
-			fileExtension = "java"
-		case "javascript", "js":
-			options["language"] = "javascript"
-			codegen = CGJavaScriptCodeGenerator()
-			writeLn("JavaScript language codegen is not supported in rodl2code yet, sorry.")
-			fileExtension = "js"
-			return 2
-		default:
 	}
 
 	func targetFileNameWithSuffix(_ suffix: String) -> String {

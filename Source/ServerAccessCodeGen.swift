@@ -92,11 +92,15 @@ public __abstract class ServerAccessCodeGen {
 
 public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 
-	public init(rodl: RodlLibrary, swiftDialect swiftDialect: CGSwiftCodeGeneratorDialect) {
+	public init(rodl: RodlLibrary, generator: CGCodeGenerator) {
 		super.init(rodl: rodl)
-		self.swiftDialect = swiftDialect
+		self.generator = generator
 	}
-	let swiftDialect: CGSwiftCodeGeneratorDialect
+	let generator: CGCodeGenerator
+
+	var isSwift: Boolean { return generator is CGSwiftCodeGenerator }
+	var isAppleSwift: Boolean { return isSwift && (generator as! CGSwiftCodeGenerator).Dialect == CGSwiftCodeGeneratorDialect.Standard }
+	var isElements: Boolean { return !(generator is CGObjectiveCCodeGenerator) && !isAppleSwift }
 
 	override func generateStandardImports(_ unit: CGCodeUnit) {
 		unit.Imports.Add(CGImport("Foundation"))
@@ -134,7 +138,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 
 	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
 
-		if swiftDialect == .Silver {
+		if isElements {
 			serverAccess.ImplementedInterfaces.Add("IROClientChannelDelegate".AsTypeReference())
 		} else {
 			serverAccess.ImplementedInterfaces.Add("ROClientChannelDelegate".AsTypeReference())
@@ -143,7 +147,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 		//serverAccess.Members.Add(CGFieldDefinition("_message", "ROMessage".AsTypeReference().NotNullable))
 		//serverAccess.Members.Add(CGFieldDefinition("_channel", "ROClientChannel".AsTypeReference().NotNullable))
 
-		let addressProperty = CGPropertyDefinition("serverURL", "NSURL".AsTypeReference().NotNullable)
+		let addressProperty = CGPropertyDefinition("serverURL", (isSwift ? "URL" : "NSURL").AsTypeReference().NotNullable)
 		serverAccess.Members.Add(addressProperty)
 		addressProperty.Visibility = .Public
 		addressProperty.ReadOnly = true
@@ -155,8 +159,8 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 			addressLiteral = "http://yourserver.example.com:8099/bin".AsLiteralExpression()
 		}
 
-		if swiftDialect == .Standard {
-			let url = CGNewInstanceExpression("NSURL".AsTypeReference(), [addressLiteral.AsCallParameter("string")].ToList())
+		if isAppleSwift {
+			let url = CGNewInstanceExpression("URL".AsTypeReference(), [addressLiteral.AsCallParameter("string")].ToList())
 			addressProperty.Initializer = CGUnaryOperatorExpression(url, .ForceUnwrapNullable)
 		} else {
 			let url = CGMethodCallExpression("NSURL".AsTypeReferenceExpression(), "URLWithString", [addressLiteral.AsCallParameter()])
@@ -178,9 +182,13 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 
 	override func generateLoginPattern(_ serverAccess: CGClassTypeDefinition) {
 
-		let needsLoginMethod = CGMethodDefinition("clientChannelNeedsLoginOnMainThread")
+		let needsLoginMethod = CGMethodDefinition(isAppleSwift ? "clientChannelNeedsLogin" : "clientChannelNeedsLoginOnMainThread")
 		serverAccess.Members.Add(needsLoginMethod);
-		needsLoginMethod.Parameters.Add(CGParameterDefinition("channel", "ROClientChannel".AsTypeReference()))
+		let param = CGParameterDefinition("channel", "ROClientChannel".AsTypeReference())
+		if isAppleSwift {
+			param.ExternalName = "onMainThread"
+		}
+		needsLoginMethod.Parameters.Add(param)
 		needsLoginMethod.Visibility = .Public
 		needsLoginMethod.ReturnType = CGPredefinedTypeReference.Boolean
 		needsLoginMethod.Statements.Add(CGCommentStatement("Implement authentication here by calling loginService.Login()"))

@@ -307,7 +307,10 @@ begin
   var lList := new List<CGStatement>;
 
   //var __item: %ARRAY_TYPE% := self.itemAtIndex(aIndex);
-  var getItemAtIndex: CGExpression := new CGArrayElementAccessExpression(new CGSelfExpression, ["aIndex".AsNamedIdentifierExpression]);
+  var getItemAtIndex: CGExpression := if IsAppleSwift then
+                                        new CGMethodCallExpression(new CGSelfExpression, "object", "aIndex".AsNamedIdentifierExpression.AsCallParameter("at"))
+                                      else
+                                        new CGArrayElementAccessExpression(new CGSelfExpression, ["aIndex".AsNamedIdentifierExpression]);
   if lIsSimple then begin
     var getItemAtIndexAsNSNumber := new CGTypeCastExpression(getItemAtIndex, "NSNumber".AsTypeReference, ThrowsException := true);
     case aEntity.ElementType.ToLowerInvariant of
@@ -315,12 +318,15 @@ begin
       "int64": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "longLongValue");
       "double": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "doubleValue");
       "boolean": getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndexAsNSNumber, "boolValue");
+      else if IsAppleSwift then getItemAtIndex := new CGTypeCastExpression(getItemAtIndex, lElementType, ThrowsException := true);
     end;
-  end else if lIsEnum then begin
+  end
+  else if lIsEnum then begin
     getItemAtIndex := new CGTypeCastExpression(getItemAtIndex, "NSNumber".AsTypeReference, ThrowsException := true);
     getItemAtIndex := new CGPropertyAccessExpression(getItemAtIndex, "integerValue");
     getItemAtIndex := new CGTypeCastExpression(getItemAtIndex, lElementType, ThrowsException := true);
-  end else begin
+  end
+  else begin
     getItemAtIndex := new CGTypeCastExpression(getItemAtIndex, lElementType, ThrowsException := true);
   end;
   lList.Add(new CGVariableDeclarationStatement("__item", lElementType, getItemAtIndex, &ReadOnly := true));
@@ -344,7 +350,7 @@ begin
   lArguments.Add("__item".AsNamedIdentifierExpression.AsCallParameter);
   lArguments.Add(new CGCallParameter(new CGNilExpression(), "withName"));
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum"));
+    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
 
   lList.Add(new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression, "write" +  lMethodName, lArguments));
   lArray.Members.Add(
@@ -361,13 +367,13 @@ begin
   lList := new List<CGStatement>;
 
   lArguments:= new List<CGCallParameter>;
-  lArguments.Add(new CGNilExpression().AsCallParameter);
+  lArguments.Add(new CGNilExpression().AsCallParameter(if IsSwift then "withName"));
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum"));
+    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
   if lIsComplex or lIsArray then
-    lArguments.Add(new CGCallParameter(new CGPropertyAccessExpression(nil, "itemClass"), "asClass"));
+    lArguments.Add(new CGCallParameter(new CGPropertyAccessExpression(nil, "itemClass"), if IsSwift then "as" else "asClass"));
 
-  var lExpression: CGExpression := new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression, "read" +  lMethodName+"WithName",  lArguments);
+  var lExpression: CGExpression := new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression, if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName", lArguments);
 
   if lIsComplex or lIsEnum or lIsArray then
     lExpression := new CGTypeCastExpression(lExpression, lElementType, ThrowsException := true);
@@ -563,7 +569,7 @@ begin
   lArguments.Add("__item".AsNamedIdentifierExpression.AsCallParameter);
   lArguments.Add(new CGCallParameter(new CGNilExpression(), "withName"));
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum"));
+    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
 
   lList.Add(new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression, "write" +  lMethodName, lArguments));
   lArray.Members.Add(
@@ -582,7 +588,7 @@ begin
   lArguments:= new List<CGCallParameter>;
   lArguments.Add(new CGNilExpression().AsCallParameter);
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum"));
+    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
   if lIsComplex then
     lArguments.Add(new CGCallParameter(new CGPropertyAccessExpression(new CGSelfExpression, "itemClass"), "asClass"));
 
@@ -1067,7 +1073,7 @@ begin
                                     [if IsAppleSwift then new CGPropertyAccessExpression(lIdentifier, "rawValue").AsCallParameter
                                                      else new CGTypeCastExpression(lIdentifier, NSUIntegerType, ThrowsException := true).AsCallParameter,
                                      new CGCallParameter(CleanedWsdlName(aEntity.Name).AsLiteralExpression, "withName"),
-                                     new CGCallParameter(new CGMethodCallExpression((aEntity.DataType+"__EnumMetaData").AsTypeReferenceExpression, "instance"), "asEnum")].ToList);
+                                     new CGCallParameter(new CGMethodCallExpression((aEntity.DataType+"__EnumMetaData").AsTypeReferenceExpression, "instance"), if IsAppleSwift then "as" else "asEnum")].ToList);
   end
   else begin
     raise new Exception(String.Format("unknown type: {0}",[aEntity.DataType]));
@@ -1246,7 +1252,7 @@ begin
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression,"__clientChannel"),
                                                     "asyncDispatch",
                                                     ["__localMessage".AsNamedIdentifierExpression.AsCallParameter,
-                                                     new CGCallParameter(new CGSelfExpression(), "withProxy"),
+                                                     new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
                                                      new CGCallParameter(new CGBooleanLiteralExpression(True), "start")].ToList
                           ).AsReturnStatement);
 end;
@@ -1344,7 +1350,7 @@ begin
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"__clientChannel"),
                                                    "asyncDispatch",
                                                   ["__localMessage".AsNamedIdentifierExpression.AsCallParameter,
-                                                   new CGCallParameter(new CGSelfExpression(), "withProxy"),
+                                                   new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
                                                    new CGCallParameter("___start".AsNamedIdentifierExpression, "start")].ToList
                                                   ).AsReturnStatement);
 end;
@@ -1354,14 +1360,14 @@ begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__startWithBlock";
-  var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("arg", "ROAsyncRequest".AsTypeReference)].ToList));
-  result.Parameters.Add(new CGParameterDefinition("___block", bl, Externalname := if result.Parameters.Count > 0 then "startWithBlock"));
+  var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("arg", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
+  result.Parameters.Add(new CGParameterDefinition("___block", bl, Externalname := if result.Parameters.Count > 0 then (if IsSwift then "startWith" else "startWithBlock")));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"__clientChannel"),
                                                    "asyncDispatch",
                                                   ["__localMessage".AsNamedIdentifierExpression.AsCallParameter,
-                                                   new CGCallParameter(new CGSelfExpression(), "withProxy"),
-                                                   new CGCallParameter("___block".AsNamedIdentifierExpression, "startWithBlock")].ToList
+                                                   new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
+                                                   new CGCallParameter("___block".AsNamedIdentifierExpression, (if IsSwift then "startWith" else "startWithBlock"))].ToList
                           ).AsReturnStatement);
 end;
 
