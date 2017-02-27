@@ -147,15 +147,15 @@ begin
     for enummember: RodlEnumValue in aEntity.Items do begin
       var lmName := GenerateEnumMemberName(library, aEntity, enummember);
       var lParameter := new CGTypeCastExpression(new CGEnumValueAccessExpression(lname.AsTypeReference,lmName), NSUIntegerType, ThrowsException := true);
-      lArgs.Add(if IsSwift then new CGNewInstanceExpression("NSNumber".AsTypeReferenceExpression, [lParameter.AsCallParameter("value")]).AsCallParameter
+      lArgs.Add(if IsSwift then new CGNewInstanceExpression("NSNumber".AsTypeReferenceExpression, [lParameter.AsCallParameter("unsignedInt")]).AsCallParameter
                 else new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithInt", [lParameter.AsCallParameter].ToList).AsEllipsisCallParameter);
       lArgs.Add(lmName.AsLiteralExpression.AsEllipsisCallParameter);
     end;
     lArgs.Add(new CGNilExpression().AsEllipsisCallParameter);
 
-    var lNewDictionary := if IsSwift then
+    var lNewDictionary := /*if IsAppleSwift then
                             new CGNewInstanceExpression("NSDictionary".AsTypeReference, lArgs, ConstructorName := "dictionaryLiteral")
-                          else
+                          else*/
                             new CGNewInstanceExpression("NSDictionary".AsTypeReference, lArgs, ConstructorName := "withObjectsAndKeys");
 
     lenum.Members.Add(new CGMethodDefinition(
@@ -177,7 +177,7 @@ begin
                                 ),
                         {2}new CGIfThenElseStatement(
                               new CGAssignedExpression("lResult".AsNamedIdentifierExpression),
-                              new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"uintValue").AsReturnStatement,
+                              new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"unsignedIntValue").AsReturnStatement,
                               if IsAppleSwift then
                                 new CGThrowStatement(new CGNewInstanceExpression("NSError".AsTypeReference,
                                                                                  ["ROException".AsLiteralExpression.AsCallParameter("domain"),
@@ -1361,13 +1361,13 @@ begin
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__startWithBlock";
   var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("arg", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
-  result.Parameters.Add(new CGParameterDefinition("___block", bl, Externalname := if result.Parameters.Count > 0 then (if IsSwift then "startWith" else "startWithBlock")));
+  result.Parameters.Add(new CGParameterDefinition("___block", bl, Externalname := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"__clientChannel"),
                                                    "asyncDispatch",
                                                   ["__localMessage".AsNamedIdentifierExpression.AsCallParameter,
                                                    new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
-                                                   new CGCallParameter("___block".AsNamedIdentifierExpression, (if IsSwift then "startWith" else "startWithBlock"))].ToList
+                                                   new CGCallParameter("___block".AsNamedIdentifierExpression, (if IsAppleSwift then "startWith" else "startWithBlock"))].ToList
                           ).AsReturnStatement);
 end;
 
