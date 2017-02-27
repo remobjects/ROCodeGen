@@ -95,11 +95,17 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 	public init(rodl: RodlLibrary, generator: CGCodeGenerator) {
 		super.init(rodl: rodl)
 		self.generator = generator
+		isAppleSwift = isSwift && (generator as! CGSwiftCodeGenerator).Dialect == CGSwiftCodeGeneratorDialect.Standard
 	}
 	let generator: CGCodeGenerator
 
-	var isSwift: Boolean { return generator is CGSwiftCodeGenerator }
-	var isAppleSwift: Boolean { return isSwift && (generator as! CGSwiftCodeGenerator).Dialect == CGSwiftCodeGeneratorDialect.Standard }
+	/*public init(rodl: RodlLibrary, isAppleSwift: Boolean = false) {
+		super.init(rodl: rodl)
+		self.isAppleSwift = isAppleSwift
+	}*/
+
+	var isSwift: Boolean { return isAppleSwift || generator is CGSwiftCodeGenerator }
+	var isAppleSwift: Boolean
 	var isElements: Boolean { return !(generator is CGObjectiveCCodeGenerator) && !isAppleSwift }
 
 	override func generateStandardImports(_ unit: CGCodeUnit) {

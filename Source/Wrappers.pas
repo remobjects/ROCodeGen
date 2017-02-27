@@ -43,8 +43,8 @@ type
   Codegen4Records = public class//(ICodegen4Records)
   private
     fList: List<Codegen4Record> := new List<Codegen4Record>;
-  assembly 
-    method Add(anItem: Codegen4Record); 
+  assembly
+    method Add(anItem: Codegen4Record);
 
   public
     function Item(anIndex:Integer):Codegen4Record;
@@ -65,7 +65,7 @@ type
         ClassInterface(ClassInterfaceType.AutoDual){,
         ComSourceInterfaces(typeOf(ICodegen4Wrapper))}]
   Codegen4Wrapper = public class //(ICodegen4Wrapper)
-  public const 
+  public const
     TargetNameSpace = 'Namespace';
     ServiceName = 'ServiceName';
     CustomAncestor = 'CustomAncestor';
@@ -77,7 +77,7 @@ type
     DelphiScopedEnums = 'DelphiScopedEnums';
     DelphiLegacyStrings = 'DelphiLegacyStrings';
   private
-    method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;    
+    method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
     method GenerateAsyncFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
     method GenerateInvokerFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -98,25 +98,25 @@ begin
   var rodl := new RodlLibrary;
   rodl.LoadFromXmlString(aRODLXML);
 
-  var lparams := new Dictionary<String,String>();  
+  var lparams := new Dictionary<String,String>();
   for each p in AdditionalParameters.Split(';') do begin
-    var l := p.Split(['='],2);
-    if l.Count=2 then lparams[l[0]] := l[1];
+    var l := p.SplitAtFirstOccurrenceOf('=');
+    if l.Count = 2 then lparams[l[0]] := l[1];
   end;
 
   var llang := Language.ToString;
   var lfileext:= '';
-  var codegen :RodlCodeGen; 
+  var codegen :RodlCodeGen;
   case &Platform of
     Codegen4Platform.Delphi: begin
       codegen := new DelphiRodlCodeGen;
       if ParseAddParams(lparams,DelphiFullQualifiedNames) = '1' then begin
         DelphiRodlCodeGen(codegen).IncludeUnitNameForOwnTypes := true;
-        DelphiRodlCodeGen(codegen).IncludeUnitNameForOtherTypes := true;        
+        DelphiRodlCodeGen(codegen).IncludeUnitNameForOtherTypes := true;
       end;
       if ParseAddParams(lparams,DelphiScopedEnums) = '1' then
         DelphiRodlCodeGen(codegen).ScopedEnums := true;
-      if ParseAddParams(lparams,DelphiLegacyStrings) = '1' then 
+      if ParseAddParams(lparams,DelphiLegacyStrings) = '1' then
         DelphiRodlCodeGen(codegen).LegacyStrings := true;
     end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
@@ -153,14 +153,14 @@ begin
       codegen.Generator := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Silver);
       llang := 'swift';
       lfileext := 'swift';
-      if codegen is CocoaRodlCodeGen then 
+      if codegen is CocoaRodlCodeGen then
         CocoaRodlCodeGen(codegen).SwiftDialect := CGSwiftCodeGeneratorDialect.Silver;
     end;
     Codegen4Language.Standard_Swift: begin
       codegen.Generator := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Standard);
       llang := 'standard-swift';
       lfileext := 'swift';
-      if codegen is CocoaRodlCodeGen then 
+      if codegen is CocoaRodlCodeGen then
         CocoaRodlCodeGen(codegen).SwiftDialect := CGSwiftCodeGeneratorDialect.Standard;
     end;
     Codegen4Language.ObjC: begin
@@ -185,25 +185,25 @@ begin
     end;
   end;
 
-  if codegen = nil then 
+  if codegen = nil then
      raise new Exception("Unsupported platform: "+Language.ToString);
 
   if codegen is EchoesCodeDomRodlCodeGen then begin
     EchoesCodeDomRodlCodeGen(codegen).Language := llang;
-    if EchoesCodeDomRodlCodeGen(codegen).GetCodeDomProviderForLanguage = nil then 
+    if EchoesCodeDomRodlCodeGen(codegen).GetCodeDomProviderForLanguage = nil then
       raise new Exception("No CodeDom provider is registered for language: "+llang);
   end
-  else if codegen.Generator = nil then 
+  else if codegen.Generator = nil then
     raise new Exception("Unsupported language: "+llang);
 
-  if not (Platform in [Codegen4Platform.Delphi,Codegen4Platform.CppBuilder, Codegen4Platform.Net]) then 
-    if Mode in [Codegen4Mode.Invk, Codegen4Mode.Impl,Codegen4Mode.All_Impl] then 
+  if not (Platform in [Codegen4Platform.Delphi,Codegen4Platform.CppBuilder, Codegen4Platform.Net]) then
+    if Mode in [Codegen4Mode.Invk, Codegen4Mode.Impl,Codegen4Mode.All_Impl] then
       raise new Exception("Generating server code is not supported for this platform.");
 
   var ltargetnamespace := ParseAddParams(lparams,TargetNameSpace);
   if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Namespace;
   if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Name;
-  
+
   case Mode of
     Codegen4Mode.Intf: GenerateInterfaceFiles(result, codegen, rodl, ltargetnamespace, lfileext);
     Codegen4Mode.Invk: GenerateInvokerFiles(result, codegen, rodl, ltargetnamespace, lfileext);
@@ -219,7 +219,7 @@ begin
         GenerateAllImplFiles(result, codegen, rodl, ltargetnamespace, lparams);
       end;
     end;
-  end;  
+  end;
 end;
 
 method Codegen4Wrapper.ParseAddParams(aParams: Dictionary<String,String>; aParamName: String): String;
@@ -239,7 +239,7 @@ begin
     else begin
       var lunit := codegen.GenerateInterfaceCodeUnit(rodl,&namespace,lunitname);
       Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
-      
+
       if codegen.Generator is CGObjectiveCMCodeGenerator then begin
         var gen := new CGObjectiveCHCodeGenerator;
         gen.splitLinesLongerThan := codegen.Generator.splitLinesLongerThan;
@@ -271,7 +271,7 @@ begin
       Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
     end;
   end
-  else begin    
+  else begin
     Res.Add(new Codegen4Record(lunitname, codegen.GenerateInvokerFile(rodl,&namespace,lunitname), Codegen4FileType.Unit));
   end;
 end;
@@ -292,21 +292,21 @@ begin
 
     var lunit := codegen.GenerateImplementationCodeUnit(rodl,&namespace,lServiceName);
     var r := codegen.GenerateImplementationFiles(lunit, rodl, lServiceName);
-    Res.Add(new Codegen4Record(r.ElementAt(0).Key, r.ElementAt(0).Value, Codegen4FileType.Unit));
-    if r.Count>1 then 
-      Res.Add(new Codegen4Record(r.ElementAt(1).Key, r.ElementAt(1).Value, Codegen4FileType.Form));
+    for each k in r.Keys do
+      Res.Add(new Codegen4Record(k, r[k], if Path.GetExtension(k) = ".dfm" then Codegen4FileType.Form else Codegen4FileType.Unit));
     if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
-      var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);        
-      var lunitname := Path.ChangeExtension(r.ElementAt(0).Key,gen.defaultFileExtension);
+      var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
+      var rKeys := r.Keys; // 77314: Compiler gets confused about parameter to `Keys[]` indexer, also GTD shows lots of styff as dynamic.
+      var lunitname := Path.ChangeExtension(rKeys[0], gen.defaultFileExtension);
+      //var lunitname := Path.ChangeExtension(r.Keys.FirstOrDefault, gen.defaultFileExtension);
       Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
     end;
   end
-  else begin    
+  else begin
     //.NET based codegen doesn't use ServiceName
     var r := codegen.GenerateImplementationFiles(rodl,&namespace,lServiceName);
-    Res.Add(new Codegen4Record(r.ElementAt(0).Key, r.ElementAt(0).Value, Codegen4FileType.Unit));
-    if r.Count>1 then 
-      Res.Add(new Codegen4Record(r.ElementAt(1).Key, r.ElementAt(1).Value, Codegen4FileType.Form));
+    for each k in r.Keys do
+      Res.Add(new Codegen4Record(k, r[k], if Path.GetExtension(k) = ".dfm" then Codegen4FileType.Form else Codegen4FileType.Unit));
   end;
 end;
 
@@ -315,12 +315,12 @@ begin
   if codegen is EchoesCodeDomRodlCodeGen then begin
     GenerateImplFiles(Res, codegen,rodl,&namespace, &params, ServiceName); //EchoesCodeDomRodlCodeGen generates all services in one file
   end
-  else begin  
+  else begin
     for serv in rodl.Services.Items do begin
       if serv.DontCodegen or serv.IsFromUsedRodl then continue;
       GenerateImplFiles(Res, codegen,rodl,&namespace, &params, serv.Name);
     end;
-  end;  
+  end;
 end;
 
 method Codegen4Wrapper.GenerateServerAccess(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String; &params: Dictionary<String,String>;&Platform: Codegen4Platform);
@@ -329,13 +329,13 @@ begin
   case &Platform of
     Codegen4Platform.Delphi: sa := new DelphiServerAccessCodeGen withRodl(rodl);
     Codegen4Platform.CppBuilder: sa := new CPlusPlusBuilderServerAccessCodeGen withRodl(rodl);
-    Codegen4Platform.Java: sa:= new JavaServerAccessCodeGen withRodl(rodl);    
-    Codegen4Platform.Cocoa: sa := new CocoaServerAccessCodeGen withRodl(rodl) swiftDialect(iif(codegen is CocoaRodlCodeGen, CocoaRodlCodeGen(codegen).SwiftDialect, CGSwiftCodeGeneratorDialect.Standard));
+    Codegen4Platform.Java: sa:= new JavaServerAccessCodeGen withRodl(rodl);
+    Codegen4Platform.Cocoa: sa := new CocoaServerAccessCodeGen withRodl(rodl) generator(codegen.Generator);
     Codegen4Platform.Net: sa := new NetServerAccessCodeGen withRodl(rodl) &namespace(TargetNameSpace);
     // Codegen4Platform.JavaScript: codegen := new JavaScriptServerAccessCodeGen;
   else
     exit;
-  end;     
+  end;
   if not assigned(codegen.Generator) then exit; //workaround for VB
   var lServerAddress := ParseAddParams(&params,ServerAddress);
   // ignore "file" server address
@@ -346,7 +346,7 @@ begin
   Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
   if sa is DelphiServerAccessCodeGen then begin
     lunitname := Path.ChangeExtension(lunitname,'dfm');
-    Res.Add(new Codegen4Record(lunitname, DelphiServerAccessCodeGen(sa).generateDFM, Codegen4FileType.Form));    
+    Res.Add(new Codegen4Record(lunitname, DelphiServerAccessCodeGen(sa).generateDFM, Codegen4FileType.Form));
   end;
   if codegen.Generator is CGObjectiveCMCodeGenerator then begin
     var gen := new CGObjectiveCHCodeGenerator;

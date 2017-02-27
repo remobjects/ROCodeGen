@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
   <PropertyGroup>
     <ProductVersion>3.5</ProductVersion>
-    <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
+    <RootNamespace>RemObjects.CodeGen4</RootNamespace>
     <ProjectGuid>{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AssemblyName>RemObjects.SDK.CodeGen4</AssemblyName>
@@ -14,12 +14,14 @@
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <Name>RemObjects.SDK.CodeGen4</Name>
-    <DefaultUses>System.Linq;System.Collections.Generic;System.Xml;System.Text;System.IO;</DefaultUses>
+    <DefaultUses>;RemObjects.Elements.RTL;RemObjects.CodeGen4</DefaultUses>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <KnownConditionalDefines>DEBUG;TRACE</KnownConditionalDefines>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;FAKESUGAR</DefineConstants>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
     <GeneratePDB>True</GeneratePDB>
     <GenerateMDB>True</GenerateMDB>
     <CaptureConsoleOutput>False</CaptureConsoleOutput>
@@ -31,7 +33,7 @@
     <EnableUnmanagedDebugging>False</EnableUnmanagedDebugging>
     <WarnOnCaseMismatch>True</WarnOnCaseMismatch>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <Optimize>true</Optimize>
     <OutputPath>.\bin\Release</OutputPath>
     <GeneratePDB>False</GeneratePDB>
@@ -47,9 +49,8 @@
     <XmlDocWarningLevel>WarningOnPublicMembers</XmlDocWarningLevel>
     <EnableUnmanagedDebugging>False</EnableUnmanagedDebugging>
     <WarnOnCaseMismatch>True</WarnOnCaseMismatch>
-    <DefineConstants>FAKESUGAR</DefineConstants>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)' == 'Licensed' ">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Licensed|AnyCPU'">
     <Optimize>true</Optimize>
     <OutputPath>.\bin\Release</OutputPath>
     <GeneratePDB>False</GeneratePDB>
@@ -65,7 +66,6 @@
     <XmlDocWarningLevel>WarningOnPublicMembers</XmlDocWarningLevel>
     <EnableUnmanagedDebugging>False</EnableUnmanagedDebugging>
     <WarnOnCaseMismatch>True</WarnOnCaseMismatch>
-    <DefineConstants>FAKESUGAR</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
@@ -77,105 +77,13 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="Elements">
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\..\..\CodeGen4\Base.swift">
-      <Link>Base.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGCodeGenerator.swift">
-      <Link>CGCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGCPlusPlusCodeGenerator.swift">
-      <Link>CGCPlusPlusCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGCPlusPlusCPPCodeGenerator.swift">
-      <Link>CGCPlusPlusCPPCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGCPlusPlusHCodeGenerator.swift">
-      <Link>CGCPlusPlusHCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGCSharpCodeGenerator.swift">
-      <Link>CGCSharpCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGCStyleCodeGenerator.swift">
-      <Link>CGCStyleCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGDelphiCodeGenerator.swift">
-      <Link>CGDelphiCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGJavaCodeGenerator.swift">
-      <Link>CGJavaCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGJavaScriptCodeGenerator.swift">
-      <Link>CGJavaScriptCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGObjectiveCCodeGenerator.swift">
-      <Link>CGObjectiveCCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGObjectiveCHCodeGenerator.swift">
-      <Link>CGObjectiveCHCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGObjectiveCMCodeGenerator.swift">
-      <Link>CGObjectiveCMCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGOxygeneCodeGenerator.swift">
-      <Link>CGOxygeneCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGPascalCodeGenerator.swift">
-      <Link>CGPascalCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGSkeletonCodeGenerator.swift">
-      <Link>CGSkeletonCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGSwiftCodeGenerator.swift">
-      <Link>CGSwiftCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\CGVisualBasicNetCodeGenerator.swift">
-      <Link>CGVisualBasicNetCodeGenerator.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\Expressions.swift">
-      <Link>Expressions.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\Extensions.swift">
-      <Link>Extensions.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\Statements.swift">
-      <Link>Statements.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\TypeDefinitions.swift">
-      <Link>TypeDefinitions.swift</Link>
-    </Compile>
-    <Compile Include="..\..\..\..\CodeGen4\TypeReferences.swift">
-      <Link>TypeReferences.swift</Link>
-    </Compile>
-    <Compile Include="CocoaRodlCodeGen.pas">
-      <Link>CocoaRodlCodeGen.pas</Link>
-    </Compile>
-    <Compile Include="CPlusPlusBuilderRODLCodegen.pas">
-      <Link>CPlusPlusBuilderRODLCodegen.pas</Link>
-    </Compile>
-    <Compile Include="DelphiRODLCodeGen.pas">
-      <Link>DelphiRODLCodeGen.pas</Link>
-    </Compile>
     <Compile Include="EchoesCodeDomRodlCodeGen.pas">
       <Link>EchoesCodeDomRodlCodeGen.pas</Link>
-    </Compile>
-    <Compile Include="Helpers.swift" />
-    <Compile Include="JavaRODLCodeGen.pas">
-      <Link>JavaRODLCodeGen.pas</Link>
-    </Compile>
-    <Compile Include="JavaScriptRodlCodeGen.pas">
-      <Link>JavaScriptRodlCodeGen.pas</Link>
-    </Compile>
-    <Compile Include="RodlCodeGen.pas">
-      <Link>RodlCodeGen.pas</Link>
-    </Compile>
-    <Compile Include="ResGenerator.pas" />
-    <Compile Include="RodlReader.pas">
-      <Link>RodlReader.pas</Link>
-    </Compile>
-    <Compile Include="ServerAccessCodeGen.swift">
-      <Link>ServerAccessCodeGen.swift</Link>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.pas" />
     <Compile Include="Wrappers.pas" />
@@ -187,7 +95,6 @@
       <Generator>SettingsSingleFileGenerator</Generator>
     </None>
     <Compile Include="Properties\Settings.Designer.pas" />
-    <Compile Include="..\..\..\..\CodeGen4\Properties\FakeSugar.pas" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
@@ -196,4 +103,5 @@
   <PropertyGroup>
     <PreBuildEvent />
   </PropertyGroup>
+  <Import Project="rodl2code.Shared.projitems" Label="Shared" />
 </Project>
