@@ -47,6 +47,8 @@ func writeSyntax() {
 	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
 	writeLn("  --legacy-strings (Delphi/BCB only)")
 	writeLn()
+	writeLn("  --outpath:<path> (optional target folder for generated files)")
+	writeLn()
 
 	#hint add --await
 }
@@ -110,8 +112,10 @@ do {
 
 	let rodlLibrary = RodlLibrary(rodlFileName)
 
-	if isUrl {
-		rodlFileName = "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" //used for relative output paths.
+	var targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName;
+	if let outPath = options["outpath"] {
+		targetRodlFileName = Path.Combine(outPath, Path.GetFileName(targetRodlFileName))
+		Folder.Create(Path.GetParentDirectory(targetRodlFileName))
 	}
 
 	//
@@ -155,7 +159,7 @@ do {
 
 	if options["type"]?.ToLower() == "res" {
 
-		let resFileName = Path.ChangeExtension(rodlFileName, ".res")
+		let resFileName = Path.ChangeExtension(targetRodlFileName, ".res")
 		ResGenerator.GenerateResFile(rodlLibrary, resFileName);
 		writeLn("Wrote file \(resFileName)")
 		return
@@ -284,11 +288,11 @@ do {
 	}
 
 	func targetFileNameWithSuffix(_ suffix: String) -> String {
-		return Path.Combine(Path.GetParentDirectory(rodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(rodlFileName))+"_"+suffix+"."+fileExtension)
+		return Path.Combine(Path.GetParentDirectory(targetRodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(targetRodlFileName))+"_"+suffix+"."+fileExtension)
 	}
 
 	func targetFileName(_ name: String) -> String {
-		return Path.Combine(Path.GetParentDirectory(rodlFileName), name)
+		return Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
 	}
 
 	if activeRodlCodeGen == nil {
@@ -333,7 +337,7 @@ do {
 					if codegen is CGJavaCodeGenerator {
 						let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
 						for name in sourceFiles.Keys {
-							var fileName = Path.Combine(Path.GetParentDirectory(rodlFileName), name)
+							var fileName = Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
 							FileUtils.WriteText(fileName, sourceFiles[name]);
 							writeLn("Wrote file \(fileName)")
 						}
@@ -366,7 +370,7 @@ do {
 						if codegen is CGJavaCodeGenerator {
 							if let sourceFiles = (activeServerAccessCodeGen as? JavaServerAccessCodeGen)?.generateFiles(codegen/*options["namespace"]*/) {
 								for name in sourceFiles.Keys {
-									var fileName = Path.Combine(Path.GetParentDirectory(rodlFileName), name)
+									var fileName = Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
 									FileUtils.WriteText(fileName, sourceFiles[name]);
 									writeLn("Wrote file \(fileName)")
 								}
