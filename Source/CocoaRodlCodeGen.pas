@@ -193,7 +193,7 @@ begin
                                                                                   if IsAppleSwift then
                                                                                     new CGNewInstanceExpression("String".AsTypeReference, [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason")
                                                                                   else
-                                                                                    new CGMethodCallExpression(CGPredefinedTypeReference.String.AsExpression, "stringWithFormat", [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason"),
+                                                                                    new CGMethodCallExpression("NSString".AsTypeReference.AsExpression, "stringWithFormat", [("Invalid value %@ for enum "+lname).AsLiteralExpression.AsCallParameter, "aValue".AsNamedIdentifierExpression.AsEllipsisCallParameter].ToList).AsCallParameter("reason"),
                                                                                   CGNilExpression.Nil.AsCallParameter("userInfo")
                                                                                   ].ToList, ConstructorName := "withName"))
                         )
