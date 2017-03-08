@@ -277,8 +277,6 @@ type
   end;
 
 extension method XmlElement.ValueOrText: String; assembly;
-extension method String.FileExists: Boolean; assembly;
-extension method String.PathIsRooted: Boolean; assembly;
 extension method String.GetParentDirectory: String;
 
 implementation
@@ -299,28 +297,6 @@ begin
   {$ELSE}
   exit self.Value;
   {$ENDIF}
-end;
-
-extension method String.FileExists: Boolean;
-begin
-  {$IFDEF FAKESUGAR}
-  exit File.Exists(self);
-  {$ELSE}
-  exit FileUtils.Exists(self);
-  {$ENDIF}
-end;
-
-extension method String.PathIsRooted: Boolean;
-begin
-  if not(Self.Length >0) then exit false;
-  {$IFDEF FAKESUGAR}
-  if Self[0] = Path.DirectorySeparatorChar then exit true;
-  {$ELSE}
-  if Self[0] = Folder.Separator then exit true;
-  {$ENDIF}
-  if Self.Length >1 then
-    if (Self[0] in ['A'..'Z','a'..'z']) and (Self[1] = ":") then exit true;
-  exit false;
 end;
 
 method RodlEntity.HasCustomAttributes: Boolean;
@@ -821,9 +797,6 @@ end;
 
 method RodlUse.LoadFromXmlNode(node: XmlElement);
 begin
-  var l_Separator := {$IFDEF FAKESUGAR}Path.DirectorySeparatorChar{$ELSE}Folder.Separator{$ENDIF};
-
-
   inherited LoadFromXmlNode(node);
 
   var linclude: XmlElement := node.FirstElementWithName("Includes");
@@ -847,12 +820,12 @@ begin
   DontApplyCodeGen := (node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1");
 
   var usedRodlFileName: String := Path.GetFullPath(FileName);
-  if (not usedRodlFileName.FileExists and not FileName.PathIsRooted) then begin
+  if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
     if (OwnerLibrary.Filename <> nil) then
       usedRodlFileName := Path.GetFullPath(Path.Combine(Path.GetFullPath(OwnerLibrary.Filename).GetParentDirectory, FileName));
   end;
 
-  if (not usedRodlFileName.FileExists and not FileName.PathIsRooted) then begin
+  if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
     if (FromUsedRodl:AbsoluteFileName <> nil) then
       usedRodlFileName := Path.GetFullPath(Path.Combine(FromUsedRodl:AbsoluteFileName:GetParentDirectory, FileName));
   end;
@@ -861,7 +834,7 @@ begin
   if (not usedRodlFileName.FileExists) then usedRodlFileName := AbsoluteRodl;
   if String.IsNullOrEmpty(usedRodlFileName) then Exit;
   if (not usedRodlFileName.FileExists) then begin
-    usedRodlFileName := usedRodlFileName.Replace("/", l_Separator).Replace("\", l_Separator);
+    usedRodlFileName := usedRodlFileName.Replace("/", Path.DirectorySeparatorChar).Replace("\", Path.DirectorySeparatorChar);
     var lFilename := Path.GetFileName(usedRodlFileName).ToLowerInvariant;
     //writeLn("checking for "+lFilename);
     if RodlCodeGen.KnownRODLPaths.ContainsKey(lFilename) then
