@@ -60,7 +60,7 @@ type
       if not File.Exists(RODLFileName) then raise new Exception('file is not found: '+RODLFileName);
       var rodl := File.OpenRead(RODLFileName);
       {$ELSE}
-      if not FileUtils.Exists(RODLFileName) then raise new Exception('file is not found: '+RODLFileName);
+      if not File.Exists(RODLFileName) then raise new Exception('file is not found: '+RODLFileName);
       var rodl := new FileHandle(RODLFileName, FileOpenMode.ReadOnly);
       {$ENDIF}
       var cont := new array of Byte(rodl.Length);
