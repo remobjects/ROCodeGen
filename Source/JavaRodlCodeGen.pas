@@ -1241,7 +1241,7 @@ end;
 
 method JavaRodlCodeGen.GetGlobalName(library: RodlLibrary): String;
 begin
-  exit 'Defines_'+GetNamespace(library);
+  exit 'Defines_'+GetNamespace(library).Replace('.','_');
 end;
 
 method JavaRodlCodeGen.GetNamespace(library: RodlLibrary): String;
