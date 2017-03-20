@@ -749,6 +749,7 @@ begin
   var lEventInvoker := new CGClassTypeDefinition(aEntity.Name+"_EventInvoker", "ROEventInvoker".AsTypeReference,
                             Visibility := CGTypeVisibilityKind.Public
                             );
+  lEventInvoker.Attributes.Add(new CGAttribute("objc".AsTypeReference, SafeIdentifier(aEntity.Name+"_EventInvoker").AsNamedIdentifierExpression.AsCallParameter));
   file.Types.Add(lEventInvoker);
 
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
