@@ -1201,7 +1201,7 @@ begin
   var lFinallyStatements := if SwiftDialect = CGSwiftCodeGeneratorDialect.Silver then new List<CGStatement> else lTryStatements;
 
   for p: RodlParameter in lInParameters do
-    lTryStatements.Add(GetWriterStatement(&library, p, " __localMessage", true));
+    lTryStatements.Add(GetWriterStatement(&library, p, "__localMessage", true));
   lTryStatements.Add(new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
   lTryStatements.Add(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression, "__clientChannel"),
                                                  "dispatch",
