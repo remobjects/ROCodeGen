@@ -3953,6 +3953,24 @@ begin
   if service.AncestorEntity <> nil then begin
     var anc_unit := RodlService(service.AncestorEntity).ImplUnit;
     if String.IsNullOrEmpty(anc_unit) then anc_unit := service.AncestorName+'_Impl';
+    
+    {$REGION generate uses for DA service }
+    var da_Service := new Guid("{709489E3-3AFE-4449-84C3-305C2862B348}");
+    var isDAFound:= False;
+    var ls: RodlEntityWithAncestor := service;
+    while ls.AncestorEntity <> nil do begin
+      isDAFound := ls.AncestorEntity.EntityID.Equals(da_Service);
+      if isDAFound then Break;
+      ls := ls.AncestorEntity as RodlEntityWithAncestor;
+    end;
+    if isDAFound then begin
+      lUnit.Imports.Add(GenerateCGImport('uDAInterfaces'));
+      lUnit.Imports.Add(GenerateCGImport('uDAServerInterfaces'));
+      lUnit.Imports.Add(GenerateCGImport('uDADelta'));
+      lUnit.Imports.Add(GenerateCGImport('uDABusinessProcessor'));
+      lUnit.Imports.Add(GenerateCGImport('uDASchema'));
+    end;
+    {$ENDREGION}
     lUnit.Imports.Add(GenerateCGImport(anc_unit));
     cpp_pragmalink(lUnit,CapitalizeString(anc_unit));
   end;
