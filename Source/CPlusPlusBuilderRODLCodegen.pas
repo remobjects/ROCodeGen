@@ -22,6 +22,7 @@ type
     method CapitalizeString(aValue: String):String;override;
     method cpp_GenerateArrayDestructor(anArray: CGTypeDefinition); override;
     method cpp_smartInit(file: CGCodeUnit); override;
+    method cpp_DefaultNamespace:CGExpression; override;
   protected
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
@@ -660,5 +661,9 @@ begin
   end;
 end;
 
+method CPlusPlusBuilderRodlCodeGen.cpp_DefaultNamespace:CGExpression;
+begin
+  exit new CGFieldAccessExpression(targetNamespace.AsNamedIdentifierExpression, 'DefaultNamespace', CallSiteKind := CGCallSiteKind.Static);
+end;
 
 end.

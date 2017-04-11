@@ -102,6 +102,7 @@ type
     method cpp_Pointer(value: CGExpression): CGExpression;virtual;
     method cpp_AddressOf(value: CGExpression): CGExpression;virtual;
     method cpp_GenerateArrayDestructor(anArray: CGTypeDefinition); virtual; empty;
+    method cpp_DefaultNamespace:CGExpression;virtual;
     {$ENDREGION}
   protected
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); virtual;
@@ -218,20 +219,20 @@ begin
   file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROEnum',
                                                     [entity.Name.AsLiteralExpression.AsCallParameter,
                                                      param2.AsCallParameter,
-                                                     'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                     cpp_DefaultNamespace.AsCallParameter].ToList));
   for enumvalue: RodlEnumValue in entity.Items do begin
     file.Initialization:Add(new CGMethodCallExpression(nil,'RegisterEnumMapping',
                                                  [entity.Name.AsLiteralExpression.AsCallParameter,
                                                   enumvalue.Name.AsLiteralExpression.AsCallParameter,
                                                   enumvalue.OriginalName.AsLiteralExpression.AsCallParameter,
-                                                  'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                  cpp_DefaultNamespace.AsCallParameter].ToList));
   end;
   file.Finalization:Add(new CGMethodCallExpression(nil, 'UnRegisterEnumMappings',
                                                    [entity.Name.AsLiteralExpression.AsCallParameter,
-                                                    'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                    cpp_DefaultNamespace.AsCallParameter].ToList));
   file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROEnum',
                                                     [entity.Name.AsLiteralExpression.AsCallParameter,
-                                                     'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                     cpp_DefaultNamespace.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -484,8 +485,8 @@ begin
   {$ENDREGION}
 
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',  [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass', [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',  [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, cpp_DefaultNamespace.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass', [cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, cpp_DefaultNamespace.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -1082,8 +1083,8 @@ begin
   cpp_GenerateArrayDestructor(ltype);
 
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, cpp_DefaultNamespace.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterROClass',[cpp_ClassId(larrayname.AsNamedIdentifierExpression).AsCallParameter, cpp_DefaultNamespace.AsCallParameter].ToList));
   {$ENDREGION}
 
   {$REGION %arrayname%Enumerator}
@@ -1390,8 +1391,8 @@ begin
   end;
   {$ENDREGION}
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, 'DefaultNamespace'.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, cpp_DefaultNamespace.AsCallParameter].ToList));
+  file.Finalization:Add(new CGMethodCallExpression(nil, 'UnregisterExceptionClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter, cpp_DefaultNamespace.AsCallParameter].ToList));
   {$ENDREGION}
 end;
 
@@ -2360,17 +2361,16 @@ end;
 method DelphiRodlCodeGen.Intf_GenerateRead(file: CGCodeUnit; &library: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>;aSerializeInitializedStructValues:Boolean; aSerializer: CGExpression);
 begin
   for lmem in ItemList do begin
-    var lt0:= new CGFieldAccessExpression(CGSelfExpression.Self, 'f'+lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
-    var lt1:= new CGFieldAccessExpression(CGSelfExpression.Self, lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
-    var lt2:= new CGFieldAccessExpression(CGSelfExpression.Self, 'int_'+lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
-    var lt3:= ('l_'+lmem.Name).AsNamedIdentifierExpression;
+    var local_name:= new CGFieldAccessExpression(CGSelfExpression.Self, lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
+    var local_int_name:= new CGFieldAccessExpression(CGSelfExpression.Self, 'int_'+lmem.Name,CallSiteKind:= CGCallSiteKind.Reference);
+    var local_l_name:= ('l_'+lmem.Name).AsNamedIdentifierExpression;
     if isComplex(library, lmem.DataType) and not aSerializeInitializedStructValues then
-      aStatements.Add(new CGAssignmentStatement(lt3,lt2))
+      aStatements.Add(new CGAssignmentStatement(local_l_name,local_int_name))
     else
-      aStatements.Add(new CGAssignmentStatement(lt3,lt1));
+      aStatements.Add(new CGAssignmentStatement(local_l_name,local_name));
 
     var lName := lmem.OriginalName.AsLiteralExpression.AsCallParameter;
-    var lValue := ('l_'+ lmem.Name).AsNamedIdentifierExpression.AsCallParameter;
+    var lValue := local_l_name.AsCallParameter;
     var lDataType := ResolveDataTypeToTypeRefFullQualified(library, lmem.DataType,Intf_name);
     var trys := new List<CGStatement>;
     trys.Add(Intf_generateReadStatement(library,lmem.DataType,aSerializer,lName,lValue,lDataType,nil));
@@ -2399,11 +2399,11 @@ begin
     aStatements.Add(new CGTryFinallyCatchStatement(trys,CatchBlocks := lexcept));
     if isComplex(library,lmem.DataType)  and not isEnum(library,lmem.DataType) then begin
       if aSerializeInitializedStructValues then
-        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(lt1,lt3, CGBinaryOperatorKind.NotEquals), new CGMethodCallExpression(nil,'FreeAndNil',[lt0.AsCallParameter])))
+        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(local_name,local_l_name, CGBinaryOperatorKind.NotEquals), new CGDestroyInstanceExpression(local_int_name)))
       else
-        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(lt2,lt3, CGBinaryOperatorKind.NotEquals), new CGMethodCallExpression(nil,'FreeAndNil',[lt0.AsCallParameter])))
+        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(local_int_name,local_l_name, CGBinaryOperatorKind.NotEquals), new CGDestroyInstanceExpression(local_int_name)))
     end;
-    aStatements.Add(new CGAssignmentStatement(lt1, lt3));
+    aStatements.Add(new CGAssignmentStatement(local_name, local_l_name));
   end;
 end;
 
@@ -3956,7 +3956,7 @@ begin
   if service.AncestorEntity <> nil then begin
     var anc_unit := RodlService(service.AncestorEntity).ImplUnit;
     if String.IsNullOrEmpty(anc_unit) then anc_unit := service.AncestorName+'_Impl';
-    
+
     {$REGION generate uses for DA service }
     var da_Service := new Guid("{709489E3-3AFE-4449-84C3-305C2862B348}");
     var isDAFound:= False;
@@ -4060,6 +4060,11 @@ begin
       CodeGenTypes.Item["utf8string"] := String("string").AsTypeReference;
     end;
   end;
+end;
+
+method DelphiRodlCodeGen.cpp_DefaultNamespace:CGExpression;
+begin
+  exit 'DefaultNamespace'.AsNamedIdentifierExpression;
 end;
 
 end.
