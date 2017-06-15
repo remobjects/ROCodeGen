@@ -22,6 +22,8 @@ type
     method isException(library: RodlLibrary; dataType: String): Boolean;
     method isComplex(library: RodlLibrary; dataType: String): Boolean; virtual;
     method isBinary(dataType: String): Boolean;
+    method IsAnsiString(dataType: String): Boolean;
+    method IsUTF8String(dataType: String): Boolean;
 
     method FindEnum(&library: RodlLibrary; dataType: String): nullable RodlEnum;
 
@@ -224,6 +226,16 @@ end;
 method RodlCodeGen.isBinary(dataType: String): Boolean;
 begin
   exit dataType.EqualsIgnoringCaseInvariant('binary');
+end;
+
+method RodlCodeGen.IsAnsiString(dataType: String): Boolean;
+begin
+  exit dataType.EqualsIgnoringCaseInvariant('AnsiString');
+end;
+
+method RodlCodeGen.IsUTF8String(dataType: String): Boolean;
+begin
+  exit dataType.EqualsIgnoringCaseInvariant('UTF8String');
 end;
 
 method RodlCodeGen.CleanedWsdlName(aName: String): String;

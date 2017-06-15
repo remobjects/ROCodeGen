@@ -46,6 +46,7 @@ func writeSyntax() {
 	writeLn("  --full-type-names (Currently Delphi/BCB only)")
 	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
 	writeLn("  --legacy-strings (Delphi/BCB only)")
+	writeLn("  --codefirst-compatible (Delphi only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn()
@@ -287,6 +288,10 @@ do {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.LegacyStrings = true
 	}
 
+	if options["codefirst-compatible"] != nil {
+		(activeRodlCodeGen as? DelphiRodlCodeGen)?.CodeFirstCompatible = true
+	}
+  
 	func targetFileNameWithSuffix(_ suffix: String) -> String {
 		return Path.Combine(Path.GetParentDirectory(targetRodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(targetRodlFileName))+"_"+suffix+"."+fileExtension)
 	}

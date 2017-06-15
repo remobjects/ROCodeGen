@@ -325,9 +325,11 @@ begin
   &Abstract := node.Attribute["Abstract"]:Value = "1";
   DontCodegen :=  node.Attribute["DontCodeGen"]:Value = "1";
   var ldoc := node.FirstElementWithName("Documentation");
-  if (ldoc ≠ nil) and (ldoc.Elements.FirstOrDefault ≠ nil) then
+
+  if (ldoc ≠ nil) and (ldoc.Nodes.Count>0) and (ldoc.Nodes[0] is XmlCData) then begin
       // FirstChild because data should be enclosed within CDATA
-      Documentation := ldoc.Elements.FirstOrDefault.Value;
+    Documentation := (ldoc.Nodes[0] as XmlCData).Value;
+  end;
 
   var lSubNode: XmlElement := node.FirstElementWithName("CustomAttributes");
   if (lSubNode <> nil) then begin

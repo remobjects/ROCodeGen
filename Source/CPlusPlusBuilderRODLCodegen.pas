@@ -39,11 +39,12 @@ type
     method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;override;
     method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);override;
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
-    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'):CGImport; override;
+    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'; aCondition: CGConditionalDefine := nil):CGImport; override;
     method Invk_GetDefaultServiceRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
     method Invk_CheckRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
 
   public
+    property CodeFirstCompatible: Boolean read False; override;
     constructor;
   end;
 
@@ -53,6 +54,7 @@ constructor CPlusPlusBuilderRodlCodeGen;
 begin
   fLegacyStrings := False;
   PureDelphi := False;
+  CodeFirstCompatible := False;
   IncludeUnitNameForOwnTypes := true;
   IncludeUnitNameForOtherTypes := true;
   PredefinedTypes.Add(CGPredefinedTypeKind.String,new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
@@ -457,7 +459,7 @@ begin
   var l_methodName := 'Create_'+l_EntityName;
 
   var l_creator:= new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
-                                   [l_EntityName.AsLiteralExpression.AsCallParameter,
+                                   ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
                                     l_methodName.AsNamedIdentifierExpression.AsCallParameter,
                                     cpp_ClassId(l_TInvoker.AsNamedIdentifierExpression).AsCallParameter]);
   r.Add(new CGVariableDeclarationStatement('lfactory','TROClassFactory'.AsTypeReference,l_creator));
@@ -493,7 +495,7 @@ begin
   exit inherited ResolveDataTypeToTypeRefFullQualified(library, dataType, aDefaultUnitName, aOrigDataType, aCapitalize and (aDefaultUnitName <> targetNamespace));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
+method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String; aCondition: CGConditionalDefine): CGImport;
 begin
   var lns := aName+'.'+aExt;
   if aExt = 'hpp' then begin

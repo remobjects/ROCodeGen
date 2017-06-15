@@ -25,6 +25,19 @@ type
     fIROMessage_typeref: CGTypeReference;
     fCustomAncestor: String;
     fParamAttributes_typeref: CGNamedTypeReference;
+    {$REGION CodeFirst attributes}
+    property CF_condition: CGConditionalDefine;
+    property CF_condition_inverted: CGConditionalDefine;
+    property attr_ROSerializeResultAsAnsiString: CGAttribute;
+    property attr_ROSerializeResultAsUTF8String: CGAttribute;
+    property attr_ROSerializeAsAnsiString: CGAttribute;
+    property attr_ROSerializeAsUTF8String: CGAttribute;
+    property attr_ROServiceMethod: CGAttribute;
+    property attr_ROEventSink: CGAttribute;
+    method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
+    method GenerateCodeFirstDocumentation(file: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
+    method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
+    {$ENDREGION}
     {$REGION support methods}
     method isPresent_SerializeInitializedStructValues_Attribute(library: RodlLibrary): Boolean;
     method GetServiceAncestor(library: RodlLibrary;entity: RodlService): String;
@@ -37,9 +50,9 @@ type
     method get_IROTransport_typeref: CGTypeReference;
     method GenerateParamAttributes(aName: String):CGSetLiteralExpression;
   protected
-    fLegacyStrings: Boolean;
+    fLegacyStrings: Boolean := False;
     method _SetLegacyStrings(value: Boolean); virtual;
-    property PureDelphi: Boolean;
+    property PureDelphi: Boolean := True;
     property Intf_name: String;
     property Invk_name: String;
     property Impl_name: String;
@@ -52,6 +65,7 @@ type
     method ResolveNamespace(library: RodlLibrary; dataType: String; aDefaultUnitName: String; aOrigDataType: String := '';aCapitalize: Boolean := False): String;
     method CapitalizeString(aValue: String):String;virtual;
     method DuplicateType(aTypeRef: CGTypeReference; isClass: Boolean): CGTypeReference;
+    method CreateCodeFirstAttributes;
     {$ENDREGION}
 
     {$REGION generate _Intf}
@@ -65,7 +79,6 @@ type
     method Intf_GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; entity: RodlEventSink);
     method Intf_GenerateRead(file: CGCodeUnit; library: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>;aSerializeInitializedStructValues:Boolean; aSerializer: CGExpression);
     method Intf_GenerateWrite(file: CGCodeUnit; library: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>;aSerializeInitializedStructValues:Boolean; aSerializer: CGExpression);
-
 
     method Intf_GenerateAsyncInvoke(library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
     method Intf_GenerateAsyncRetrieve(library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
@@ -124,7 +137,7 @@ type
 
     method cpp_pragmalink(file: CGCodeUnit; aUnitName: String); virtual; empty;
     method cpp_ClassId(anExpression: CGExpression): CGExpression; virtual;
-    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'): CGImport;virtual;
+    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'; aCondition: CGConditionalDefine := nil): CGImport;virtual;
     method GenerateIsClause(aSource: CGExpression; aType: CGTypeReference):CGExpression;
   public
     constructor;
@@ -142,6 +155,7 @@ type
 
     property GenerateDFMs: Boolean := true;
     property LegacyStrings: Boolean read fLegacyStrings write _SetLegacyStrings;
+    property CodeFirstCompatible: Boolean := False;virtual;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -157,8 +171,6 @@ implementation
 
 constructor DelphiRodlCodeGen;
 begin
-  fLegacyStrings := False;
-  PureDelphi := true;
   CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
   CodeGenTypes.Add("datetime", String("DateTime").AsTypeReference);
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
@@ -192,11 +204,12 @@ begin
   "unimplemented", "unit", "until", "uses", "var", "varargs", "virtual", "while", "with", "write", "xor"]);
 
   fParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
+  CreateCodeFirstAttributes;
 end;
 
 method DelphiRodlCodeGen.Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary);
 begin
-  file.Directives.Add('{$I RemObjects.inc}'.AsCompilerDirective);
+  file.Directives.Add('{$I RemObjects.inc}'.AsCompilerDirective);  
 end;
 
 method DelphiRodlCodeGen.Intf_GenerateEnum(file: CGCodeUnit; &library: RodlLibrary; entity: RodlEnum);
@@ -204,16 +217,28 @@ begin
   var lenum := new CGEnumTypeDefinition(entity.Name,
                             Visibility := CGTypeVisibilityKind.Public
                             );
- file.Types.Add(lenum);
- lenum.Comment := GenerateDocumentation(entity);
- for enummember: RodlEnumValue in entity.Items do begin
-   var lenummember := new CGEnumValueDefinition(iif(entity.PrefixEnumValues,lenum.Name+'_','') + enummember.Name);
-   lenummember.Comment :=  GenerateDocumentation(enummember);
-   lenum.Members.Add(lenummember);
- end;
+  file.Types.Add(lenum);
+  lenum.Comment := GenerateDocumentation(entity, true);
+  GenerateCodeFirstDocumentation(file,'docs_'+entity.Name, lenum, entity.Documentation);
+  GenerateCodeFirstCustomAttributes(lenum,entity);
+  
+  for rodl_member: RodlEnumValue in entity.Items do begin
+    var cg4_member := new CGEnumValueDefinition(iif(entity.PrefixEnumValues,lenum.Name+'_','') + rodl_member.Name);
+    cg4_member.Comment :=  GenerateDocumentation(rodl_member, true);
+    GenerateCodeFirstDocumentation(file, 'docs_'+entity.Name+'_'+rodl_member.Name, cg4_member, rodl_member.Documentation);
+    GenerateCodeFirstCustomAttributes(cg4_member,rodl_member);
+    if CodeFirstCompatible then begin
+      if rodl_member.OriginalName <> rodl_member.Name then 
+        AddCGAttribute(lenum,new CGAttribute('ROEnumSoapName'.AsTypeReference,
+                                            [rodl_member.Name.AsLiteralExpression.AsCallParameter,
+                                             rodl_member.OriginalName.AsLiteralExpression.AsCallParameter], 
+                                             Condition := CF_condition));
+    end;
+    lenum.Members.Add(cg4_member);
+  end;
 
 
- cppGenerateEnumTypeInfo(file, library,entity);
+  cppGenerateEnumTypeInfo(file, library,entity);
   {$REGION initialization/finalization}
   var param2 := GenerateTypeInfoCall(library,ResolveDataTypeToTypeRefFullQualified(library,entity.Name,Intf_name));
   file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterROEnum',
@@ -248,7 +273,9 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public
                                          );
   file.Types.Add(ltype);
-  ltype.Comment := GenerateDocumentation(entity);
+  ltype.Comment := GenerateDocumentation(entity, true);
+  GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
+  GenerateCodeFirstCustomAttributes(ltype,entity);
   var lclasscnt:= 0;
   var lNeedInitSimpleTypeWithDefaultValues := False;
 
@@ -472,15 +499,21 @@ begin
   end;
 
   {$REGION published property %fldname%: %fldtype% read [f|Get]%fldname% write f%fldname%;}
-  for l_entityItem :RodlTypedEntity in entity.Items do begin
-    var lp := iif(isComplex(library,l_entityItem.DataType), 'Get','f');
-    var lprop := new CGPropertyDefinition(l_entityItem.Name,
-                                          ResolveDataTypeToTypeRefFullQualified(&library,l_entityItem.DataType,Intf_name),
-                                          (lp+l_entityItem.Name).AsNamedIdentifierExpression,
-                                          ('f'+l_entityItem.Name).AsNamedIdentifierExpression,
+  for rodl_member :RodlTypedEntity in entity.Items do begin
+    var lp := iif(isComplex(library,rodl_member.DataType), 'Get','f');
+    var cg4_member := new CGPropertyDefinition(rodl_member.Name,
+                                          ResolveDataTypeToTypeRefFullQualified(&library,rodl_member.DataType,Intf_name),
+                                          (lp+rodl_member.Name).AsNamedIdentifierExpression,
+                                          ('f'+rodl_member.Name).AsNamedIdentifierExpression,
                                           Visibility := CGMemberVisibilityKind.Published);
-    lprop.Comment := GenerateDocumentation(l_entityItem);
-    ltype.Members.Add(lprop);
+    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
+    GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
+    if CodeFirstCompatible then begin
+      if IsAnsiString(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else 
+      if IsUTF8String(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
+    end;
+    ltype.Members.Add(cg4_member);
   end;
   {$ENDREGION}
 
@@ -514,7 +547,14 @@ begin
   var ltype := new CGClassTypeDefinition(larrayname,'TROArray'.AsTypeReference,
                               Visibility := CGTypeVisibilityKind.Public
                               );
-  ltype.Comment := GenerateDocumentation(entity);
+  ltype.Comment := GenerateDocumentation(entity, true);
+  GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
+  GenerateCodeFirstCustomAttributes(ltype, entity);
+  if CodeFirstCompatible then begin
+    if IsAnsiString(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsAnsiString) else
+    if IsUTF8String(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsUTF8String);
+  end;
+
   file.Types.Add(ltype);
 
   var aIndex: CGExpression := 'aIndex'.AsNamedIdentifierExpression;             //aIndex
@@ -1169,7 +1209,9 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public
                                          );
   file.Types.Add(ltype);
-  ltype.Comment := GenerateDocumentation(entity);
+  ltype.Comment := GenerateDocumentation(entity, true);
+  GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
+  GenerateCodeFirstCustomAttributes(ltype, entity);
   var lclasscnt:= 0;
   var lNeedInitSimpleTypeWithDefaultValues := False;
 
@@ -1379,15 +1421,22 @@ begin
   end;
 
   {$REGION published property %fldname%: %fldtype% read [f|Get]%fldname% write f%fldname%;}
-  for lentityItem :RodlTypedEntity in entity.Items do begin
-    var lp := iif(isComplex(library,lentityItem.DataType), 'Get','f');
-    var lprop := new CGPropertyDefinition(lentityItem.Name,
-                                          ResolveDataTypeToTypeRefFullQualified(&library,lentityItem.DataType, Intf_name),
-                                          (lp+lentityItem.Name).AsNamedIdentifierExpression,
-                                          ('f'+lentityItem.Name).AsNamedIdentifierExpression,
+  for rodl_member :RodlTypedEntity in entity.Items do begin
+    var lp := iif(isComplex(library,rodl_member.DataType), 'Get','f');
+    var cg4_member := new CGPropertyDefinition(rodl_member.Name,
+                                          ResolveDataTypeToTypeRefFullQualified(&library,rodl_member.DataType, Intf_name),
+                                          (lp+rodl_member.Name).AsNamedIdentifierExpression,
+                                          ('f'+rodl_member.Name).AsNamedIdentifierExpression,
                                           Visibility := CGMemberVisibilityKind.Published);
-    lprop.Comment := GenerateDocumentation(lentityItem);
-    ltype.Members.Add(lprop);
+    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
+    GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
+    if CodeFirstCompatible then begin
+      if IsAnsiString(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
+      if IsUTF8String(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
+    end;
+
+    ltype.Members.Add(cg4_member);
   end;
   {$ENDREGION}
   {$REGION initialization/finalization}
@@ -1433,29 +1482,39 @@ begin
     ltype.Ancestors.Add("IROService".AsTypeReference);
 
 
-  ltype.Comment := GenerateDocumentation(entity);
+  ltype.Comment := GenerateDocumentation(entity, true);
+  GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
+  GenerateCodeFirstCustomAttributes(ltype, entity);
   ltype.InterfaceGuid := entity.DefaultInterface.EntityID;
   file.Types.Add(ltype);
 
-  for lmem in entity.DefaultInterface.Items do begin
+  for rodl_member in entity.DefaultInterface.Items do begin
     {$REGION service methods}
-    var mem := new CGMethodDefinition(lmem.Name,
+    var cg4_member := new CGMethodDefinition(rodl_member.Name,
                                       //Virtuality := CGMemberVirtualityKind.Virtual,
                                       CallingConvention := CGCallingConventionKind.Register);
-    for lmemparam in lmem.Items do begin
-      if lmemparam.ParamFlag <> ParamFlags.Result then begin
-        var lparam := new CGParameterDefinition(lmemparam.Name,
-                                                ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name));
-        if isComplex(library, lmemparam.DataType) and (lmemparam.ParamFlag = ParamFlags.In) then
-          lparam.Type := new CGConstantTypeReference(lparam.Type)
+    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
+    GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
+    for rodl_param in rodl_member.Items do begin
+      if rodl_param.ParamFlag <> ParamFlags.Result then begin
+        var cg4_param := new CGParameterDefinition(rodl_param.Name,
+                                                ResolveDataTypeToTypeRefFullQualified(library,rodl_param.DataType, Intf_name));
+        if CodeFirstCompatible then begin
+          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
+          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
+        end;
+        if isComplex(library, rodl_param.DataType) and (rodl_param.ParamFlag = ParamFlags.In) then
+          cg4_param.Type := new CGConstantTypeReference(cg4_param.Type)
         else
-          lparam.Modifier := RODLParamFlagToCodegenFlag(lmemparam.ParamFlag);
-        mem.Parameters.Add(lparam);
+          cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
+        GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
+        GenerateCodeFirstCustomAttributes(cg4_param, rodl_param);
+        cg4_member.Parameters.Add(cg4_param);
       end;
     end;
-    if assigned(lmem.Result) then mem.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType, Intf_name);
-    mem.Comment := GenerateDocumentation(lmem, true);
-    ltype.Members.Add(mem);
+    if assigned(rodl_member.Result) then cg4_member.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,rodl_member.Result.DataType, Intf_name);
+    ltype.Members.Add(cg4_member);
     {$ENDREGION}
   end;
   {$ENDREGION}
@@ -1968,27 +2027,47 @@ begin
 
   {$REGION I%eventsink%}
   var ltype := new CGInterfaceTypeDefinition(l_IName);
+  if CodeFirstCompatible then AddCGAttribute(ltype,attr_ROEventSink);
   if not String.IsNullOrEmpty(lancestorName) then
     ltype.Ancestors.Add(ResolveDataTypeToTypeRefFullQualified(library, 'I'+lancestorName,Intf_name,lancestorName))
   else
     ltype.Ancestors.Add("IROEventSink".AsTypeReference);
 
 
-  ltype.Comment := GenerateDocumentation(entity);
+  ltype.Comment := GenerateDocumentation(entity, true);
+  GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
+  GenerateCodeFirstCustomAttributes(ltype, entity);
   ltype.InterfaceGuid := entity.DefaultInterface.EntityID;
   file.Types.Add(ltype);
 
-  for lmem in entity.DefaultInterface.Items do begin
+  for rodl_member in entity.DefaultInterface.Items do begin
     {$REGION eventsink methods}
-    var mem := new CGMethodDefinition(lmem.Name,
+    var cg4_member := new CGMethodDefinition(rodl_member.Name,
                                       CallingConvention := CGCallingConventionKind.Register);
-    for lmemparam in lmem.Items do begin
-      if lmemparam.ParamFlag <> ParamFlags.Result then
-        mem.Parameters.Add(new CGParameterDefinition(lmemparam.Name, ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name),Modifier := RODLParamFlagToCodegenFlag(lmemparam.ParamFlag)));
+    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
+    GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
+    for rodl_param in rodl_member.Items do begin
+      if rodl_param.ParamFlag <> ParamFlags.Result then begin
+
+        var cg4_param := new CGParameterDefinition(rodl_param.Name, ResolveDataTypeToTypeRefFullQualified(library,rodl_param.DataType, Intf_name),Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag));
+        if CodeFirstCompatible then begin
+          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
+          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
+        end;
+        GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name, cg4_param, rodl_param.Documentation);
+        GenerateCodeFirstCustomAttributes(cg4_param, rodl_param);
+        cg4_member.Parameters.Add(cg4_param);
+      end;
     end;
-    if assigned(lmem.Result) then mem.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType, Intf_name);
-    mem.Comment := GenerateDocumentation(lmem, true);
-    ltype.Members.Add(mem);
+    if assigned(rodl_member.Result) then begin
+      if CodeFirstCompatible then begin
+        if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsAnsiString) else
+        if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsUTF8String);
+      end;
+      cg4_member.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,rodl_member.Result.DataType, Intf_name);
+    end;
+    ltype.Members.Add(cg4_member);
     {$ENDREGION}
   end;
   {$ENDREGION}
@@ -3084,11 +3163,12 @@ begin
                                     CallingConvention := CGCallingConventionKind.Register
                                     {Virtuality := CGMemberVirtualityKind.Virtual});
   for mem in operation.Items do begin
-    if mem.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then
-      result.Parameters.Add(new CGParameterDefinition(mem.Name,
-                                                      ResolveDataTypeToTypeRefFullQualified(library, mem.DataType,Intf_name),
-                                                      Modifier := CGParameterModifierKind.Out));
-
+    if mem.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
+      var lparam := new CGParameterDefinition(mem.Name,
+                                              ResolveDataTypeToTypeRefFullQualified(library, mem.DataType,Intf_name),
+                                              Modifier := CGParameterModifierKind.Out);
+      result.Parameters.Add(lparam);
+    end;
   end;
   if assigned(operation.Result) then
     result.ReturnType := ResolveDataTypeToTypeRefFullQualified(library, operation.Result.DataType,Intf_name);
@@ -3275,11 +3355,13 @@ begin
                                    CallingConvention := CGCallingConventionKind.Register
                                     {Virtuality := CGMemberVirtualityKind.Virtual});
   for mem in operation.Items do begin
-    if mem.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then
-      result.Parameters.Add(new CGParameterDefinition(mem.Name,
-                                                      ResolveDataTypeToTypeRefFullQualified(library, mem.DataType,Intf_name),
-                                                      Modifier := CGParameterModifierKind.Out));
-
+    if mem.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
+      var lparam := new CGParameterDefinition(mem.Name,
+                                              ResolveDataTypeToTypeRefFullQualified(library, mem.DataType,Intf_name),
+                                              Modifier := CGParameterModifierKind.Out);
+      result.Parameters.Add(lparam);  
+    end;
+    
   end;
   result.Parameters.Add(new CGParameterDefinition('aRequest', ResolveInterfaceTypeRef(nil, 'IROAsyncRequest','uROAsync', '', true), Modifier :=CGParameterModifierKind.Const));
   if assigned(operation.Result) then
@@ -3368,13 +3450,12 @@ begin
   var l_fClassFactory := 'fClassFactory_'+l_EntityName;
   var l_fClassFactoryExpr := l_fClassFactory.AsNamedIdentifierExpression;
   var lcreator := new CGMethodDefinition(l_methodName,
-
                                          Parameters := [new CGParameterDefinition('anInstance', ResolveInterfaceTypeRef(nil,'IInterface',''),Modifier:= CGParameterModifierKind.Out)].ToList,
                                          Visibility := CGMemberVisibilityKind.Private,
                                          CallingConvention := CGCallingConventionKind.Register);
   Impl_GenerateCreateService(lcreator, new CGNewInstanceExpression(l_TName.AsTypeReference,[CGNilExpression.Nil.AsCallParameter].ToList));
   file.Globals.Add(lcreator.AsGlobal);
-  file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);
+  file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);  
   file.Initialization := new List<CGStatement>;
   file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
   file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
@@ -3385,47 +3466,75 @@ begin
 
 
   var lancestorName := GetServiceAncestor(library, entity);
+  file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeKind.String),
+                  Constant := true,
+                  Visibility := CGMemberVisibilityKind.Public,
+                  Initializer := l_EntityName.AsLiteralExpression).AsGlobal());
+
   var lservice := new CGClassTypeDefinition(l_TName,lancestorName.AsTypeReference,[l_IName.AsTypeReference].ToList,
                                              Visibility := CGTypeVisibilityKind.Public);
+  if not entity.Abstract and CodeFirstCompatible then 
+    AddCGAttribute(lservice,new CGAttribute('ROService'.AsTypeReference,['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter].ToList, Condition := CF_condition));
+
+  if CodeFirstCompatible and (entity.Roles.Roles.Count>0) then
+    for lr in entity.Roles.Roles do
+      AddCGAttribute(lservice,new CGAttribute('RORole'.AsTypeReference,[(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, Condition := CF_condition));
+
+  lservice.Comment := GenerateDocumentation(entity, true);
+  GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,lservice, entity.Documentation);
+  GenerateCodeFirstCustomAttributes(lservice, entity);
+
   file.Types.Add(lservice);
   cpp_IUnknownSupport(library, entity, lservice);
   cpp_GenerateAncestorMethodCalls(library, entity, lservice, ModeKind.Plain);
   cpp_Impl_constructor(library, entity, lservice);
-  for lmem in entity.DefaultInterface.Items do begin
+  for rodl_member in entity.DefaultInterface.Items do begin
     {$REGION service methods}
-    var mem := new CGMethodDefinition(lmem.Name,
+    var cg4_member := new CGMethodDefinition(rodl_member.Name,
                                       Virtuality := CGMemberVirtualityKind.Virtual,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
-    var lComment := new CGCommentStatement();
+    if CodeFirstCompatible then begin
+      AddCGAttribute(cg4_member,attr_ROServiceMethod);
+      if (rodl_member.Roles.Roles.Count>0) then begin
+        for lr in rodl_member.Roles.Roles do
+          AddCGAttribute(cg4_member,new CGAttribute('RORole'.AsTypeReference,[(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, Condition := CF_condition));
+      end;
+    end;
 
-    for lmemparam in lmem.Items do begin
-      if lmemparam.ParamFlag <> ParamFlags.Result then begin
-        var lparam := new CGParameterDefinition(lmemparam.Name,
-                                                ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name));
-        if isComplex(library, lmemparam.DataType) and (lmemparam.ParamFlag = ParamFlags.In) then
-          lparam.Type := new CGConstantTypeReference(lparam.Type)
+
+    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
+    GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
+
+    for rodl_param in rodl_member.Items do begin
+      if rodl_param.ParamFlag <> ParamFlags.Result then begin
+        var cg4_param := new CGParameterDefinition(rodl_param.Name,
+                                                ResolveDataTypeToTypeRefFullQualified(library,rodl_param.DataType, Intf_name));
+        if isComplex(library, rodl_param.DataType) and (rodl_param.ParamFlag = ParamFlags.In) then
+          cg4_param.Type := new CGConstantTypeReference(cg4_param.Type)
         else
-          lparam.Modifier := RODLParamFlagToCodegenFlag(lmemparam.ParamFlag);
-        if not LegacyStrings then begin
-          if lmemparam.DataType.EqualsIgnoringCaseInvariant('AnsiString') then lComment.Lines.Add(lmemparam.Name +" is serialized as AnsiString");
-          if lmemparam.DataType.EqualsIgnoringCaseInvariant('UTF8String') then lComment.Lines.Add(lmemparam.Name +" is serialized as UTF8String");
+          cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
+        if CodeFirstCompatible then begin
+          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
+          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
         end;
-        mem.Parameters.Add(lparam);
+        GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
+        GenerateCodeFirstCustomAttributes(cg4_param, rodl_param);
+        cg4_member.Parameters.Add(cg4_param);
       end;
     end;
-    mem.Statements.Add(AddMessageDirective(lmem.Name+" is not implemented yet!"));
-    if assigned(lmem.Result) then begin
-      if not LegacyStrings then begin
-        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('AnsiString') then lComment.Lines.Add("result is serialized as AnsiString");
-        if lmem.Result.DataType.EqualsIgnoringCaseInvariant('UTF8String') then lComment.Lines.Add("result is serialized as UTF8String");
+    cg4_member.Statements.Add(AddMessageDirective(rodl_member.Name+" is not implemented yet!"));
+    if assigned(rodl_member.Result) then begin
+      if CodeFirstCompatible then begin
+        if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsAnsiString) else
+        if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsUTF8String);
       end;
-      mem.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType, Intf_name);
-      if isComplex(library, lmem.Result.DataType) then
-        mem.Statements.Add(CGNilExpression.Nil.AsReturnStatement);
+      cg4_member.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,rodl_member.Result.DataType, Intf_name);
+      if isComplex(library, rodl_member.Result.DataType) then
+        cg4_member.Statements.Add(CGNilExpression.Nil.AsReturnStatement);
     end;
-    if not String.IsNullOrEmpty(lComment.ToString) then mem.Comment:= lComment;
-    lservice.Members.Add(mem);
+    lservice.Members.Add(cg4_member);
     {$ENDREGION}
   end;
 end;
@@ -3444,11 +3553,26 @@ begin
   var l_TInvoker := 'T'+l_EntityName+'_Invoker';
   var l_methodName := 'Create_'+l_EntityName;
 
-  r.Add(new CGAssignmentStatement(lvar,
+  var lRODLCreate := new CGAssignmentStatement(lvar,
                                  new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
-                                           [l_EntityName.AsLiteralExpression.AsCallParameter,
+                                           ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
                                             ('{$IFDEF FPC}@{$ENDIF}'+l_methodName).AsNamedIdentifierExpression.AsCallParameter,
-                                            l_TInvoker.AsNamedIdentifierExpression.AsCallParameter])));
+                                            l_TInvoker.AsNamedIdentifierExpression.AsCallParameter]));
+  if CodeFirstCompatible then begin
+    var lbl := new CGConditionalBlockStatement(CF_condition);
+    var lCFCreate := new CGAssignmentStatement(lvar,
+                                               new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
+                                               ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
+                                               (l_methodName).AsNamedIdentifierExpression.AsCallParameter,
+                                                'TRORTTIInvoker'.AsNamedIdentifierExpression.AsCallParameter]));
+    lbl.Statements.Add(lCFCreate);
+    lbl.ElseStatements := new List<CGStatement>;
+    lbl.ElseStatements.Add(lRODLCreate);
+    r.Add(lbl);
+  end
+  else begin
+    r.Add(lRODLCreate);
+  end;  
   exit r;
 end;
 
@@ -3634,10 +3758,10 @@ begin
   aMethod.Parameters.Add(aDynamicArrayParam.AsCallParameter);
 end;
 
-method DelphiRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
+method DelphiRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String; aCondition: CGConditionalDefine := nil): CGImport;
 begin
   if String.IsNullOrEmpty(aNamespace) then
-    exit new CGImport(new CGNamedTypeReference(aName))
+    exit new CGImport(new CGNamedTypeReference(aName), Condition := aCondition)
   else
     exit new CGImport(String.Format('{{$IFDEF DELPHIXE2UP}}{0}.{1}{{$ELSE}}{1}{{$ENDIF}}',[aNamespace, aName]));
 end;
@@ -3686,7 +3810,9 @@ begin
 
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
-  lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
+  lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));  
+  if CodeFirstCompatible then 
+    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := new CGConditionalDefine('RO_RTTI_Support')));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROUri'));
   lUnit.Imports.Add(GenerateCGImport('uROProxy'));
@@ -3939,6 +4065,8 @@ begin
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
+  if CodeFirstCompatible then 
+    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := CF_condition));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
   lUnit.Imports.Add(GenerateCGImport('uROClientIntf'));
@@ -4015,11 +4143,16 @@ begin
     end;
     s1 := s1+ '_Invk';
     if not list.Contains(s1) then begin
-      lUnit.ImplementationImports.Add(GenerateCGImport(s1,'',lext));
+      lUnit.ImplementationImports.Add(GenerateCGImport(s1,'',lext, iif(CodeFirstCompatible, CF_condition_inverted, nil)));
       list.Add(s1);
     end;
   end;
-  lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
+  if CodeFirstCompatible then begin
+    lUnit.ImplementationImports.Add(new CGImport(new CGNamedTypeReference('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}')));
+  end
+  else begin  
+    lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
+  end;
   {$ENDREGION}
   Impl_GenerateService(lUnit, &library, service);
   exit lUnit;
@@ -4041,8 +4174,8 @@ begin
   var sa := new CGSetLiteralExpression(ElementType := fParamAttributes_typeref);
   if aName.EqualsIgnoringCaseInvariant('DateTime') then sa.Elements.Add('paIsDateTime'.AsNamedIdentifierExpression);
   if not fLegacyStrings then begin
-    if aName.EqualsIgnoringCaseInvariant('AnsiString') then sa.Elements.Add('paAsAnsiString'.AsNamedIdentifierExpression);
-    if aName.EqualsIgnoringCaseInvariant('UTF8String') then sa.Elements.Add('paAsUTF8String'.AsNamedIdentifierExpression);
+    if IsAnsiString(aName) then sa.Elements.Add('paAsAnsiString'.AsNamedIdentifierExpression) else
+    if IsUTF8String(aName) then sa.Elements.Add('paAsUTF8String'.AsNamedIdentifierExpression);
   end;
   exit sa;
 end;
@@ -4066,5 +4199,67 @@ method DelphiRodlCodeGen.cpp_DefaultNamespace:CGExpression;
 begin
   exit 'DefaultNamespace'.AsNamedIdentifierExpression;
 end;
+
+method DelphiRodlCodeGen.CreateCodeFirstAttributes;
+begin  
+  CF_condition := new CGConditionalDefine('RO_RTTI_Support');
+  CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(True);
+
+  attr_ROSerializeResultAsAnsiString := new CGAttribute('ROSerializeResultAsAnsiString'.AsTypeReference, Condition := CF_condition);  
+  attr_ROSerializeResultAsUTF8String := new CGAttribute('ROSerializeResultAsUTF8String'.AsTypeReference, Condition := CF_condition);  
+  attr_ROSerializeAsAnsiString := new CGAttribute('ROSerializeAsAnsiString'.AsTypeReference, Condition := CF_condition);  
+  attr_ROSerializeAsUTF8String := new CGAttribute('ROSerializeAsUTF8String'.AsTypeReference, Condition := CF_condition);  
+  
+  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, Condition := CF_condition);  
+  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, Condition := CF_condition);  
+end;
+
+method DelphiRodlCodeGen.AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
+begin
+  if aType is CGTypeDefinition then begin
+    var ltype :=  CGTypeDefinition(aType);
+    ltype.Attributes.Add(anAttribute);
+    ltype.Comment := nil;
+  end
+  else if aType is CGMemberDefinition then begin
+    var ltype :=  CGMemberDefinition(aType);
+    ltype.Attributes.Add(anAttribute);
+    ltype.Comment := nil;         
+  end
+  else if aType is CGParameterDefinition then begin
+    var ltype :=  CGParameterDefinition(aType);
+    ltype.Attributes.Add(anAttribute);
+  end
+  else begin
+    raise new Exception('unknown type');
+  end; 
+end;
+
+method DelphiRodlCodeGen.GenerateCodeFirstDocumentation(file: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
+begin
+  if CodeFirstCompatible and not String.IsNullOrEmpty(aDoc) then begin    
+    file.Globals.Add(new CGFieldDefinition(aName,
+                    Constant := true,
+                    Visibility := CGMemberVisibilityKind.Public,
+                    Initializer := aDoc.AsLiteralExpression,
+                    Condition := CF_condition).AsGlobal());
+    var attr := new CGAttribute('RODocumentation'.AsTypeReference,[aName.AsNamedIdentifierExpression.AsCallParameter], Condition := CF_condition);
+    AddCGAttribute(aType, attr);
+  end;
+end;
+
+method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
+begin
+  if CodeFirstCompatible then begin    
+    for k in aEntity.CustomAttributes do begin
+      var attr := new CGAttribute('ROCustom'.AsTypeReference,
+                                  [k.Key.AsLiteralExpression.AsCallParameter,
+                                   k.Value.AsLiteralExpression.AsCallParameter], 
+                                  Condition := CF_condition);
+      AddCGAttribute(aType, attr);
+    end;
+  end;
+end;
+
 
 end.
