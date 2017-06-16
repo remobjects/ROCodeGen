@@ -200,6 +200,7 @@ do {
 		case "delphi":
 			options["language"] = "delphi"
 			codegen = CGDelphiCodeGenerator()
+			codegen!.splitLinesLongerThan = 200
 			fileExtension = "pas"
 		case "bcb", "cpp", "c++", "c++builder":
 			options["language"] = "cpp"
@@ -291,7 +292,7 @@ do {
 	if options["codefirst-compatible"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.CodeFirstCompatible = true
 	}
-  
+
 	func targetFileNameWithSuffix(_ suffix: String) -> String {
 		return Path.Combine(Path.GetParentDirectory(targetRodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(targetRodlFileName))+"_"+suffix+"."+fileExtension)
 	}
@@ -334,11 +335,6 @@ do {
 
 			switch type.ToLower() {
 				case "intf":
-
-					if let codegen = codegen {
-						codegen.splitLinesLongerThan = 200
-					}
-
 					if codegen is CGJavaCodeGenerator {
 						let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
 						for name in sourceFiles.Keys {
