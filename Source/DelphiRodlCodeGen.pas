@@ -34,6 +34,7 @@ type
     property attr_ROSerializeAsUTF8String: CGAttribute;
     property attr_ROServiceMethod: CGAttribute;
     property attr_ROEventSink: CGAttribute;
+    property attr_ROSkip: CGAttribute;
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
     method GenerateCodeFirstDocumentation(file: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
     method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
@@ -1500,10 +1501,6 @@ begin
       if rodl_param.ParamFlag <> ParamFlags.Result then begin
         var cg4_param := new CGParameterDefinition(rodl_param.Name,
                                                 ResolveDataTypeToTypeRefFullQualified(library,rodl_param.DataType, Intf_name));
-        if CodeFirstCompatible then begin
-          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
-          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
-        end;
         if isComplex(library, rodl_param.DataType) and (rodl_param.ParamFlag = ParamFlags.In) then
           cg4_param.Type := new CGConstantTypeReference(cg4_param.Type)
         else
@@ -3446,24 +3443,25 @@ begin
   var l_methodName := 'Create_'+l_EntityName;
   var l_zeroconf := '_'+l_EntityName+'_rosdk._tcp.';
 
+  if not entity.Abstract then begin
   {$REGION implementation method + initialization/finalization}
-  var l_fClassFactory := 'fClassFactory_'+l_EntityName;
-  var l_fClassFactoryExpr := l_fClassFactory.AsNamedIdentifierExpression;
-  var lcreator := new CGMethodDefinition(l_methodName,
-                                         Parameters := [new CGParameterDefinition('anInstance', ResolveInterfaceTypeRef(nil,'IInterface',''),Modifier:= CGParameterModifierKind.Out)].ToList,
-                                         Visibility := CGMemberVisibilityKind.Private,
-                                         CallingConvention := CGCallingConventionKind.Register);
-  Impl_GenerateCreateService(lcreator, new CGNewInstanceExpression(l_TName.AsTypeReference,[CGNilExpression.Nil.AsCallParameter].ToList));
-  file.Globals.Add(lcreator.AsGlobal);
-  file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);  
-  file.Initialization := new List<CGStatement>;
-  file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
-  file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
-  file.Finalization := new List<CGStatement>;
-  file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
-  file.Finalization.Add(new CGAssignmentStatement(l_fClassFactoryExpr, CGNilExpression.Nil));
+    var l_fClassFactory := 'fClassFactory_'+l_EntityName;
+    var l_fClassFactoryExpr := l_fClassFactory.AsNamedIdentifierExpression;
+    var lcreator := new CGMethodDefinition(l_methodName,
+                                           Parameters := [new CGParameterDefinition('anInstance', ResolveInterfaceTypeRef(nil,'IInterface',''),Modifier:= CGParameterModifierKind.Out)].ToList,
+                                           Visibility := CGMemberVisibilityKind.Private,
+                                           CallingConvention := CGCallingConventionKind.Register);
+    Impl_GenerateCreateService(lcreator, new CGNewInstanceExpression(l_TName.AsTypeReference,[CGNilExpression.Nil.AsCallParameter].ToList));
+    file.Globals.Add(lcreator.AsGlobal);
+    file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);  
+    file.Initialization := new List<CGStatement>;
+    file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
+    file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
+    file.Finalization := new List<CGStatement>;
+    file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
+    file.Finalization.Add(new CGAssignmentStatement(l_fClassFactoryExpr, CGNilExpression.Nil));
   {$ENDREGION}
-
+  end;
 
   var lancestorName := GetServiceAncestor(library, entity);
   file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeKind.String),
@@ -3473,12 +3471,16 @@ begin
 
   var lservice := new CGClassTypeDefinition(l_TName,lancestorName.AsTypeReference,[l_IName.AsTypeReference].ToList,
                                              Visibility := CGTypeVisibilityKind.Public);
-  if not entity.Abstract and CodeFirstCompatible then 
-    AddCGAttribute(lservice,new CGAttribute('ROService'.AsTypeReference,['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter].ToList, Condition := CF_condition));
+  if CodeFirstCompatible then begin
+    if not entity.Abstract then 
+      AddCGAttribute(lservice,new CGAttribute('ROService'.AsTypeReference,['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter].ToList, Condition := CF_condition));
 
-  if CodeFirstCompatible and (entity.Roles.Roles.Count>0) then
+    if entity.Private then 
+      AddCGAttribute(lservice, attr_ROSkip);
+
     for lr in entity.Roles.Roles do
       AddCGAttribute(lservice,new CGAttribute('RORole'.AsTypeReference,[(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, Condition := CF_condition));
+  end;
 
   lservice.Comment := GenerateDocumentation(entity, true);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,lservice, entity.Documentation);
@@ -4130,30 +4132,32 @@ begin
   cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
   if isDFMNeeded then Impl_GenerateDFMInclude(lUnit);
 
+  if not service.Abstract then begin
   {$REGION implementation uses}
-  list := new List<String>;
-  for lu: RodlUse in library.Uses.Items do begin
-    var s1 := lu.Includes:DelphiModule;
-    var lext := 'hpp';
-    if String.IsNullOrEmpty(s1) then begin
-      lext := 'h';
-      s1 := lu.Name;
-      if String.IsNullOrEmpty(s1) then
-        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
+    list := new List<String>;
+    for lu: RodlUse in library.Uses.Items do begin
+      var s1 := lu.Includes:DelphiModule;
+      var lext := 'hpp';
+      if String.IsNullOrEmpty(s1) then begin
+        lext := 'h';
+        s1 := lu.Name;
+        if String.IsNullOrEmpty(s1) then
+          s1 := Path.GetFileNameWithoutExtension(lu.FileName);
+      end;
+      s1 := s1+ '_Invk';
+      if not list.Contains(s1) then begin
+        lUnit.ImplementationImports.Add(GenerateCGImport(s1,'',lext, iif(CodeFirstCompatible, CF_condition_inverted, nil)));
+        list.Add(s1);
+      end;
     end;
-    s1 := s1+ '_Invk';
-    if not list.Contains(s1) then begin
-      lUnit.ImplementationImports.Add(GenerateCGImport(s1,'',lext, iif(CodeFirstCompatible, CF_condition_inverted, nil)));
-      list.Add(s1);
+    if CodeFirstCompatible then begin
+      lUnit.ImplementationImports.Add(new CGImport(new CGNamedTypeReference('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}')));
+    end
+    else begin  
+      lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
     end;
-  end;
-  if CodeFirstCompatible then begin
-    lUnit.ImplementationImports.Add(new CGImport(new CGNamedTypeReference('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}')));
-  end
-  else begin  
-    lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
-  end;
   {$ENDREGION}
+  end;
   Impl_GenerateService(lUnit, &library, service);
   exit lUnit;
 end;
@@ -4212,6 +4216,7 @@ begin
   
   attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, Condition := CF_condition);  
   attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, Condition := CF_condition);  
+  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference, Condition := CF_condition);  
 end;
 
 method DelphiRodlCodeGen.AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
