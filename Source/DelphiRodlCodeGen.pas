@@ -210,7 +210,7 @@ end;
 
 method DelphiRodlCodeGen.Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary);
 begin
-  file.Directives.Add('{$I RemObjects.inc}'.AsCompilerDirective);  
+  file.Directives.Add('{$I RemObjects.inc}'.AsCompilerDirective);
 end;
 
 method DelphiRodlCodeGen.Intf_GenerateEnum(file: CGCodeUnit; &library: RodlLibrary; entity: RodlEnum);
@@ -222,17 +222,17 @@ begin
   lenum.Comment := GenerateDocumentation(entity, true);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name, lenum, entity.Documentation);
   GenerateCodeFirstCustomAttributes(lenum,entity);
-  
+
   for rodl_member: RodlEnumValue in entity.Items do begin
     var cg4_member := new CGEnumValueDefinition(iif(entity.PrefixEnumValues,lenum.Name+'_','') + rodl_member.Name);
     cg4_member.Comment :=  GenerateDocumentation(rodl_member, true);
     GenerateCodeFirstDocumentation(file, 'docs_'+entity.Name+'_'+rodl_member.Name, cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member,rodl_member);
     if CodeFirstCompatible then begin
-      if rodl_member.OriginalName <> rodl_member.Name then 
+      if rodl_member.OriginalName <> rodl_member.Name then
         AddCGAttribute(lenum,new CGAttribute('ROEnumSoapName'.AsTypeReference,
                                             [rodl_member.Name.AsLiteralExpression.AsCallParameter,
-                                             rodl_member.OriginalName.AsLiteralExpression.AsCallParameter], 
+                                             rodl_member.OriginalName.AsLiteralExpression.AsCallParameter],
                                              Condition := CF_condition));
     end;
     lenum.Members.Add(cg4_member);
@@ -511,7 +511,7 @@ begin
     GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
     if CodeFirstCompatible then begin
-      if IsAnsiString(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else 
+      if IsAnsiString(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
       if IsUTF8String(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
     end;
     ltype.Members.Add(cg4_member);
@@ -1506,7 +1506,7 @@ begin
         else
           cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
         if CodeFirstCompatible then begin
-          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
+          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
           if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
         end;
         GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
@@ -2053,7 +2053,7 @@ begin
 
         var cg4_param := new CGParameterDefinition(rodl_param.Name, ResolveDataTypeToTypeRefFullQualified(library,rodl_param.DataType, Intf_name),Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag));
         if CodeFirstCompatible then begin
-          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
+          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
           if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
         end;
         GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name, cg4_param, rodl_param.Documentation);
@@ -3360,9 +3360,9 @@ begin
       var lparam := new CGParameterDefinition(mem.Name,
                                               ResolveDataTypeToTypeRefFullQualified(library, mem.DataType,Intf_name),
                                               Modifier := CGParameterModifierKind.Out);
-      result.Parameters.Add(lparam);  
+      result.Parameters.Add(lparam);
     end;
-    
+
   end;
   result.Parameters.Add(new CGParameterDefinition('aRequest', ResolveInterfaceTypeRef(nil, 'IROAsyncRequest','uROAsync', '', true), Modifier :=CGParameterModifierKind.Const));
   if assigned(operation.Result) then
@@ -3457,7 +3457,7 @@ begin
                                            CallingConvention := CGCallingConventionKind.Register);
     Impl_GenerateCreateService(lcreator, new CGNewInstanceExpression(l_TName.AsTypeReference,[CGNilExpression.Nil.AsCallParameter].ToList));
     file.Globals.Add(lcreator.AsGlobal);
-    file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);  
+    file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);
     file.Initialization := new List<CGStatement>;
     file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
     file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
@@ -3476,10 +3476,10 @@ begin
   var lservice := new CGClassTypeDefinition(l_TName,lancestorName.AsTypeReference,[l_IName.AsTypeReference].ToList,
                                              Visibility := CGTypeVisibilityKind.Public);
   if CodeFirstCompatible then begin
-    if not entity.Abstract then 
+    if not entity.Abstract then
       AddCGAttribute(lservice,new CGAttribute('ROService'.AsTypeReference,['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter].ToList, Condition := CF_condition));
 
-    if entity.Private then 
+    if entity.Private then
       AddCGAttribute(lservice, attr_ROSkip);
 
     for lr in entity.Roles.Roles do
@@ -3522,7 +3522,7 @@ begin
         else
           cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
         if CodeFirstCompatible then begin
-          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
+          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
           if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
         end;
         GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
@@ -3578,7 +3578,7 @@ begin
   end
   else begin
     r.Add(lRODLCreate);
-  end;  
+  end;
   exit r;
 end;
 
@@ -3816,8 +3816,8 @@ begin
 
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
-  lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));  
-  if CodeFirstCompatible then 
+  lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
+  if CodeFirstCompatible then
     lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := new CGConditionalDefine('RO_RTTI_Support')));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROUri'));
@@ -4071,7 +4071,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
-  if CodeFirstCompatible then 
+  if CodeFirstCompatible then
     lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := CF_condition));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
@@ -4157,7 +4157,7 @@ begin
     if CodeFirstCompatible then begin
       lUnit.ImplementationImports.Add(new CGImport(new CGNamedTypeReference('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}')));
     end
-    else begin  
+    else begin
       lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
     end;
   {$ENDREGION}
@@ -4209,18 +4209,18 @@ begin
 end;
 
 method DelphiRodlCodeGen.CreateCodeFirstAttributes;
-begin  
+begin
   CF_condition := new CGConditionalDefine('RO_RTTI_Support');
   CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(True);
 
-  attr_ROSerializeResultAsAnsiString := new CGAttribute('ROSerializeResultAsAnsiString'.AsTypeReference, Condition := CF_condition);  
-  attr_ROSerializeResultAsUTF8String := new CGAttribute('ROSerializeResultAsUTF8String'.AsTypeReference, Condition := CF_condition);  
-  attr_ROSerializeAsAnsiString := new CGAttribute('ROSerializeAsAnsiString'.AsTypeReference, Condition := CF_condition);  
-  attr_ROSerializeAsUTF8String := new CGAttribute('ROSerializeAsUTF8String'.AsTypeReference, Condition := CF_condition);  
-  
-  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, Condition := CF_condition);  
-  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, Condition := CF_condition);  
-  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference, Condition := CF_condition);  
+  attr_ROSerializeResultAsAnsiString := new CGAttribute('ROSerializeResultAsAnsiString'.AsTypeReference, Condition := CF_condition);
+  attr_ROSerializeResultAsUTF8String := new CGAttribute('ROSerializeResultAsUTF8String'.AsTypeReference, Condition := CF_condition);
+  attr_ROSerializeAsAnsiString := new CGAttribute('ROSerializeAsAnsiString'.AsTypeReference, Condition := CF_condition);
+  attr_ROSerializeAsUTF8String := new CGAttribute('ROSerializeAsUTF8String'.AsTypeReference, Condition := CF_condition);
+
+  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, Condition := CF_condition);
+  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, Condition := CF_condition);
+  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference, Condition := CF_condition);
 end;
 
 method DelphiRodlCodeGen.AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
@@ -4233,7 +4233,7 @@ begin
   else if aType is CGMemberDefinition then begin
     var ltype :=  CGMemberDefinition(aType);
     ltype.Attributes.Add(anAttribute);
-    ltype.Comment := nil;         
+    ltype.Comment := nil;
   end
   else if aType is CGParameterDefinition then begin
     var ltype :=  CGParameterDefinition(aType);
@@ -4241,12 +4241,12 @@ begin
   end
   else begin
     raise new Exception('unknown type');
-  end; 
+  end;
 end;
 
 method DelphiRodlCodeGen.GenerateCodeFirstDocumentation(file: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
 begin
-  if CodeFirstCompatible and not String.IsNullOrEmpty(aDoc) then begin    
+  if CodeFirstCompatible and not String.IsNullOrEmpty(aDoc) then begin
     file.Globals.Add(new CGFieldDefinition(aName,
                     Constant := true,
                     Visibility := CGMemberVisibilityKind.Public,
@@ -4259,11 +4259,11 @@ end;
 
 method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
 begin
-  if CodeFirstCompatible then begin    
-    for k in aEntity.CustomAttributes do begin
+  if CodeFirstCompatible then begin
+    for k in aEntity.CustomAttributes.Keys do begin
       var attr := new CGAttribute('ROCustom'.AsTypeReference,
-                                  [k.Key.AsLiteralExpression.AsCallParameter,
-                                   k.Value.AsLiteralExpression.AsCallParameter], 
+                                  [k.AsLiteralExpression.AsCallParameter,
+                                   aEntity.CustomAttributes[k].AsLiteralExpression.AsCallParameter],
                                   Condition := CF_condition);
       AddCGAttribute(aType, attr);
     end;
