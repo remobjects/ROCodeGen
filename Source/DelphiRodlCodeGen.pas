@@ -1505,6 +1505,10 @@ begin
           cg4_param.Type := new CGConstantTypeReference(cg4_param.Type)
         else
           cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
+        if CodeFirstCompatible then begin
+          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else 
+          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
+        end;
         GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
         GenerateCodeFirstCustomAttributes(cg4_param, rodl_param);
         cg4_member.Parameters.Add(cg4_param);
