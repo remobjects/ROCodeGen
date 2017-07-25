@@ -97,7 +97,7 @@ method  JavaRodlCodeGen.WriteToMessage_Method(&library: RodlLibrary; entity: Rod
 begin
   Result := new CGMethodDefinition("writeToMessage",
                         Parameters := [new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String)),
-                                       new CGParameterDefinition("aMessage","Message".AsTypeReference)].ToList,
+                                       new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference)].ToList,
                                         Virtuality := CGMemberVirtualityKind.Override,
                                         Visibility := CGMemberVisibilityKind.Public);
 
@@ -150,10 +150,8 @@ begin
      else if not String.IsNullOrEmpty(Rodl.Namespace) then
       file.Imports.Add(new CGImport(Rodl.Namespace));
   end;
-  file.Imports.Add(new CGImport("java.util"));
-  file.Imports.Add(new CGImport("java.net"));
-//  file.Imports.Add(new CGImport("java.math"));
-  file.Imports.Add(new CGImport("com.remobjects.sdk"));
+  if not addROSDKPrefix then 
+    file.Imports.Add(new CGImport("com.remobjects.sdk"));
 {
   file.Imports.Add(new CGImport(new CGNamedTypeReference("java.net.URI")));
   file.Imports.Add(new CGImport(new CGNamedTypeReference("java.util.Collection")));
@@ -306,7 +304,7 @@ begin
   larray.Members.Add(
     new CGConstructorDefinition(
       Visibility := CGMemberVisibilityKind.Public,
-      Parameters := [new CGParameterDefinition("aCollection", "Collection".AsTypeReference)].ToList,
+      Parameters := [new CGParameterDefinition("aCollection", "java.util.Collection".AsTypeReference)].ToList,
       Statements := [
         CGStatement(
             new CGConstructorCallStatement(CGInheritedExpression.Inherited,["aCollection".AsNamedIdentifierExpression.AsCallParameter].ToList))
@@ -447,7 +445,7 @@ begin
   larray.Members.Add(
     new CGMethodDefinition("writeItemToMessage",
                            [new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression,"write" +  l_methodName,  [l_arg0,l_arg1].ToList)],
-                            Parameters := [new CGParameterDefinition("aMessage", "Message".AsTypeReference),
+                            Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
                                            new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public
@@ -472,7 +470,7 @@ begin
                                                                                    "read" +  l_methodName,
                                                                                    l_arg_array.ToList).AsCallParameter].ToList)
                            ],
-      Parameters := [new CGParameterDefinition("aMessage", "Message".AsTypeReference),
+      Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
                    new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public
@@ -670,7 +668,7 @@ begin
     end;
 
     var lop_method := new CGConstructorDefinition(
-                              Parameters:=[new CGParameterDefinition("aBuffer", "Message".AsTypeReference)].ToList,
+                              Parameters:=[new CGParameterDefinition("aBuffer", GenerateROSDKType("Message").AsTypeReference)].ToList,
                               Visibility := CGMemberVisibilityKind.Public);
     lOperation.Members.Add(lop_method);
 
@@ -775,7 +773,7 @@ method JavaRodlCodeGen.ReadFromMessage_Method(&library: RodlLibrary; entity: Rod
 begin
   Result := new CGMethodDefinition("readFromMessage",
                         Parameters := [new CGParameterDefinition("aName",   ResolveStdtypes(CGPredefinedTypeKind.String)),
-                                       new CGParameterDefinition("aMessage","Message".AsTypeReference)].ToList,
+                                       new CGParameterDefinition("aMessage",GenerateROSDKType("Message").AsTypeReference)].ToList,
                         Virtuality := CGMemberVirtualityKind.Override,
                         Visibility := CGMemberVisibilityKind.Public);
   var lIfRecordStrictOrder_True := new CGBeginEndBlockStatement;
@@ -980,12 +978,12 @@ begin
   var llocalmessage := "_localMessage".AsNamedIdentifierExpression;
   Result.Statements.Add(new CGVariableDeclarationStatement(
                                                   "_localMessage",
-                                                  "Message".AsTypeReference,
+                                                  GenerateROSDKType("Message").AsTypeReference,
                                                   new CGTypeCastExpression(
                                                                     new CGMethodCallExpression(
                                                                               GenerateGetProperty(CGSelfExpression.Self, "ProxyMessage"),
                                                                               "clone"),
-                                                                    "Message".AsTypeReference,
+                                                                    GenerateROSDKType("Message").AsTypeReference,
                                                                     ThrowsException:=True)));
   GenerateOperationAttribute(&library,entity,Result.Statements);
   Result.Statements.Add(
@@ -1076,12 +1074,12 @@ begin
 
   var llocalmessage := "_localMessage".AsNamedIdentifierExpression;
   Result.Statements.Add(new CGVariableDeclarationStatement("_localMessage",
-                                                           "Message".AsTypeReference,
+                                                           GenerateROSDKType("Message").AsTypeReference,
                                                            new CGTypeCastExpression(
                                                                               new CGMethodCallExpression(
                                                                                                     GenerateGetProperty(CGSelfExpression.Self,"ProxyMessage"),
                                                                                                     "clone"),
-                                                                              "Message".AsTypeReference,
+                                                                              GenerateROSDKType("Message").AsTypeReference,
                                                                               ThrowsException:=True)
                                                 ));
 
@@ -1118,7 +1116,7 @@ begin
 
   var llocalmessage := "_localMessage".AsNamedIdentifierExpression;
   Result.Statements.Add(new CGVariableDeclarationStatement("_localMessage",
-                                                           "Message".AsTypeReference,
+                                                           GenerateROSDKType("Message").AsTypeReference,
                                                            GenerateGetProperty("aAsyncRequest".AsNamedIdentifierExpression,"ProcessMessage")));
 
   GenerateOperationAttribute(&library,entity,Result.Statements);
@@ -1140,7 +1138,7 @@ end;
 method JavaRodlCodeGen.GenerateServiceConstructors(&library: RodlLibrary; entity: RodlService; service: CGClassTypeDefinition);
 begin
   {$REGION .ctor}
-  var l_Setpackage := new CGMethodCallExpression("TypeManager".AsNamedIdentifierExpression,"setPackage",[targetNamespace.AsLiteralExpression.AsCallParameter].ToList);
+  var l_Setpackage := new CGMethodCallExpression(GenerateROSDKType("TypeManager").AsNamedIdentifierExpression,"setPackage",[targetNamespace.AsLiteralExpression.AsCallParameter].ToList);
   service.Members.Add(
     new CGConstructorDefinition(
       Visibility := CGMemberVisibilityKind.Public,
@@ -1154,8 +1152,8 @@ begin
   {$REGION .ctor(aMessage: Message; aClientChannel: ClientChannel)}
   service.Members.Add(
     new CGConstructorDefinition(
-      Parameters := [new CGParameterDefinition("aMessage", "Message".AsTypeReference),
-                     new CGParameterDefinition("aClientChannel", "ClientChannel".AsTypeReference)].ToList,
+      Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
+                     new CGParameterDefinition("aClientChannel", GenerateROSDKType("ClientChannel").AsTypeReference)].ToList,
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [
             new CGConstructorCallStatement(CGInheritedExpression.Inherited,
@@ -1170,8 +1168,8 @@ begin
   {$REGION .ctor(aMessage: Message; aClientChannel: ClientChannel; aOverrideInterfaceName: String)}
   service.Members.Add(
     new CGConstructorDefinition(
-     Parameters := [new CGParameterDefinition("aMessage", "Message".AsTypeReference),
-                    new CGParameterDefinition("aClientChannel", "ClientChannel".AsTypeReference),
+     Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
+                    new CGParameterDefinition("aClientChannel", GenerateROSDKType("ClientChannel").AsTypeReference),
                     new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [new CGConstructorCallStatement(CGInheritedExpression.Inherited,
@@ -1187,7 +1185,7 @@ begin
   {$REGION .ctor(aSchema: URI)}
   service.Members.Add(
     new CGConstructorDefinition(
-      Parameters := [new CGParameterDefinition("aSchema", "URI".AsTypeReference)].ToList,
+      Parameters := [new CGParameterDefinition("aSchema", "java.net.URI".AsTypeReference)].ToList,
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [new CGConstructorCallStatement(CGInheritedExpression.Inherited,
                                                   ["aSchema".AsNamedIdentifierExpression.AsCallParameter].ToList),
@@ -1199,7 +1197,7 @@ begin
   {$REGION .ctor(aSchema: URI; aOverrideInterfaceName: String)}
   service.Members.Add(
     new CGConstructorDefinition(
-     Parameters:=[new CGParameterDefinition("aSchema", "URI".AsTypeReference),
+     Parameters:=[new CGParameterDefinition("aSchema", "java.net.URI".AsTypeReference),
                   new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [new CGConstructorCallStatement(CGInheritedExpression.Inherited,
