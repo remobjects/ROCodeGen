@@ -906,7 +906,11 @@ method CocoaRodlCodeGen.FixUpForAppeSwift;
 begin
   // nasty hack, but so fuck it!
   CodeGenTypes.Remove("binary");
+  CodeGenTypes.Remove("datetime");
+  CodeGenTypes.Remove("xsdatetime");
   CodeGenTypes.Add("binary", "Data".AsTypeReference);
+  CodeGenTypes.Add("datetime", "Date".AsTypeReference);
+  CodeGenTypes.Add("xsdatetime", "Date".AsTypeReference);
 end;
 
 method CocoaRodlCodeGen.HandleAtributes_private(&library: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
@@ -938,7 +942,8 @@ begin
     list.Add(EscapeString(l_key.ToLowerInvariant).AsLiteralExpression.AsCallParameter);
     list.Add(EscapeString(aEntity.CustomAttributes[l_key]).AsLiteralExpression.AsCallParameter);
   end;
-  list.Add(new CGNilExpression().AsCallParameter);
+  if not IsAppleSwift then
+    list.Add(new CGNilExpression().AsCallParameter);
 
   result.Statements.Add(new CGIfThenElseStatement(
       new CGAssignedExpression(l_attributes, Inverted := true),
@@ -1320,7 +1325,8 @@ begin
       list.Add(EscapeString(l_key.ToLowerInvariant).AsLiteralExpression.AsCallParameter);
       list.Add(EscapeString(ld[l_key]).AsLiteralExpression.AsCallParameter);
     end;
-    list.Add(new CGNilExpression().AsCallParameter);
+    if not IsAppleSwift then
+      list.Add(new CGNilExpression().AsCallParameter);
     Statements.Add(new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression,
                                               "setupAttributes",
                                               [new CGMethodCallExpression(nil,"DictionaryFromNameValueList",list).AsCallParameter].ToList));
