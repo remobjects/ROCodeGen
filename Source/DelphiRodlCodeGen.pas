@@ -493,7 +493,7 @@ begin
                                                 lSorted));
 
     if entity.Count <> litemList.Count then lStrict.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'WriteComplex',['aSerializer'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Static));
-    lStrict.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
+    lStrict.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[cpp_ClassId(DuplicateType(l_FullEntityTypeRef, false).AsExpression).AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     Intf_GenerateWrite(file,library,entity.Items,lStrict.Statements, lSerializeInitializedStructValues,lSerializer);
     Intf_GenerateWrite(file,library,litemList_Sorted,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
     {$ENDREGION}
@@ -1415,7 +1415,7 @@ begin
                                                 lSorted));
 
     if entity.Count <> litemList.Count then lStrict.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'WriteException',['aSerializer'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Static));
-    lStrict.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[cpp_ClassId(l_EntityName.AsNamedIdentifierExpression).AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
+    lStrict.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[cpp_ClassId(DuplicateType(exception_typeref, false).AsExpression).AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     Intf_GenerateWrite(file,library,entity.Items,lStrict.Statements, lSerializeInitializedStructValues,lSerializer);
     Intf_GenerateWrite(file,library,litemList_Sorted,lSorted.Statements, lSerializeInitializedStructValues,lSerializer);
     {$ENDREGION}
@@ -2619,8 +2619,9 @@ begin
           exit entity.FromUsedRodl:Includes:DelphiModule + '_'+suffix;
         end;
       end
-      else
-        if IncludeUnitNameForOwnTypes then begin
+      else begin
+        if IncludeUnitNameForOwnTypes or
+            ((entity is RodlStructEntity) and (RodlStructEntity(entity).Items.Where(b->dataType.EqualsIgnoringCaseInvariant(b.Name)).ToList.Count>0)) then begin
           if CanUseNameSpace then
             exit targetNamespace
           else
@@ -2628,6 +2629,7 @@ begin
         end
         else
           exit '';
+      end;
     end
     else begin
       exit '';
