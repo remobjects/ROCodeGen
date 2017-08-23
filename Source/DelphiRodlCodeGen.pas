@@ -172,12 +172,13 @@ implementation
 
 constructor DelphiRodlCodeGen;
 begin
+  fLegacyStrings := False;
   CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
   CodeGenTypes.Add("datetime", String("DateTime").AsTypeReference);
   CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
   CodeGenTypes.Add("currency", String("Currency").AsTypeReference);
   CodeGenTypes.Add("widestring", String("UnicodeString").AsTypeReference);
-  CodeGenTypes.Add("ansistring", String("string").AsTypeReference);
+  CodeGenTypes.Add("ansistring", String("ROAnsiString").AsTypeReference);
   CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
   CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean));
   CodeGenTypes.Add("variant", String("Variant").AsTypeReference);
@@ -185,7 +186,7 @@ begin
   CodeGenTypes.Add("xml", String("IXmlNode").AsTypeReference);
   CodeGenTypes.Add("guid", String("Guid").AsTypeReference);
   CodeGenTypes.Add("decimal", String("Decimal").AsTypeReference);
-  CodeGenTypes.Add("utf8string", String("string").AsTypeReference);
+  CodeGenTypes.Add("utf8string", String("ROUTF8String").AsTypeReference);
   CodeGenTypes.Add("xsdatetime", String("XsDateTime").AsTypeReference);
 
   // Delphi Seattle + FPC reserved list
@@ -4199,8 +4200,8 @@ begin
       CodeGenTypes.Item["utf8string"] := String("UTF8String").AsTypeReference;
     end
     else begin
-      CodeGenTypes.Item["ansistring"] := String("string").AsTypeReference;
-      CodeGenTypes.Item["utf8string"] := String("string").AsTypeReference;
+      CodeGenTypes.Item["ansistring"] := String("ROAnsiString").AsTypeReference;
+      CodeGenTypes.Item["utf8string"] := String("ROUTF8String").AsTypeReference;
     end;
   end;
 end;
