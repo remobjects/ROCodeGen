@@ -136,7 +136,8 @@ type
     method LoadFromXmlString(aString: String);
     method LoadUsedFibraryFromFile(aFilename: String; use: RodlUse);
     method SaveToFile(aFilename: String);
-    method ToString: {$IF ECHOES}System.{$ENDIF}String; {$IF ECHOES}override;{$ENDIF}
+    [ToString]
+    method ToString: String;
     method FindEntity(aName: String):RodlEntity;
     property Structs: EntityCollection<RodlStruct> read fStructs;
     property Arrays: EntityCollection<RodlArray> read fArrays;
@@ -593,7 +594,7 @@ begin
 end;
 
 
-method RodlLibrary.ToString: {$IF ECHOES}System.{$ENDIF}String;
+method RodlLibrary.ToString: String;
 begin
   if assigned(fXmlNode) then
     {$IFDEF FAKESUGAR}
