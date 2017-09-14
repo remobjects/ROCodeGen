@@ -54,6 +54,17 @@ func writeSyntax() {
 	#hint add --await
 }
 
+func _WriteText(_ aFileName: String, _ Content: String) {
+  let b = Encoding.UTF8.GetBytes(Content);
+  if (Encoding.ASCII.GetString(b) != Content) {
+    let a : UInt8[3] = [0xEF,0xBB, 0xBF];
+    File.WriteBytes(aFileName, a.Concat(b).ToArray());
+  }
+  else {
+    File.WriteText(aFileName, Content);
+  }
+}
+
 let options = [String:String]()
 
 func parseParameters(_ cmdlineParams: [String]) {
@@ -339,25 +350,25 @@ do {
 						let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
 						for name in sourceFiles.Keys {
 							var fileName = Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
-							File.WriteText(fileName, sourceFiles[name]);
+							_WriteText(fileName, sourceFiles[name]);
 							writeLn("Wrote file \(fileName)")
 						}
 					} else {
 						let source = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
-						File.WriteText(targetFileNameWithSuffix("Intf"), source);
+						_WriteText(targetFileNameWithSuffix("Intf"), source);
 						writeLn("Wrote file \(targetFileNameWithSuffix("Intf"))")
 
 						if options["language"] == "objc" {
 							activeRodlCodeGen?.Generator = CGObjectiveCHCodeGenerator()
 							let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
 							fileExtension = "h";
-							File.WriteText(targetFileNameWithSuffix("Intf"), sourceH);
+							_WriteText(targetFileNameWithSuffix("Intf"), sourceH);
 							writeLn("Wrote file \(targetFileNameWithSuffix("Intf"))")
 						} else if options["language"] == "cpp" {
 							activeRodlCodeGen?.Generator = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
 							let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Intf"))
 							fileExtension = "h";
-							File.WriteText(targetFileNameWithSuffix("Intf"), sourceH);
+							_WriteText(targetFileNameWithSuffix("Intf"), sourceH);
 							writeLn("Wrote file \(targetFileNameWithSuffix("Intf"))")
 						}
 					}
@@ -372,7 +383,7 @@ do {
 							if let sourceFiles = (activeServerAccessCodeGen as? JavaServerAccessCodeGen)?.generateFiles(codegen/*options["namespace"]*/) {
 								for name in sourceFiles.Keys {
 									var fileName = Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
-									File.WriteText(fileName, sourceFiles[name]);
+									_WriteText(fileName, sourceFiles[name]);
 									writeLn("Wrote file \(fileName)")
 								}
 							}
@@ -382,26 +393,26 @@ do {
 								unit.FileName = Path.GetFileName(targetFileNameWithSuffix("ServerAccess"));
 							}
 							let source = codegen?.GenerateUnit(unit)
-							File.WriteText(targetFileNameWithSuffix("ServerAccess"), source);
+							_WriteText(targetFileNameWithSuffix("ServerAccess"), source);
 							writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
 
 							if (options["platform"] == "delphi")||(options["platform"] == "bcb") {
 								let dfm = (activeServerAccessCodeGen as? DelphiServerAccessCodeGen)?.generateDFM()
 								fileExtension = "dfm";
-								File.WriteText(targetFileNameWithSuffix("ServerAccess"), dfm);
+								_WriteText(targetFileNameWithSuffix("ServerAccess"), dfm);
 								writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
 							}
 							if options["language"] == "objc" {
 								let codegenH = CGObjectiveCHCodeGenerator()
 								let sourceH = codegenH?.GenerateUnit(unit)
 								fileExtension = "h";
-								File.WriteText(targetFileNameWithSuffix("ServerAccess"), sourceH);
+								_WriteText(targetFileNameWithSuffix("ServerAccess"), sourceH);
 								writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
 							} else if options["language"] == "cpp" {
 								let codegenH = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
 								let sourceH = codegenH?.GenerateUnit(unit)
 								fileExtension = "h";
-								File.WriteText(targetFileNameWithSuffix("ServerAccess"), sourceH);
+								_WriteText(targetFileNameWithSuffix("ServerAccess"), sourceH);
 								writeLn("Wrote file \(targetFileNameWithSuffix("ServerAccess"))")
 							}
 						}
@@ -412,7 +423,7 @@ do {
 						writeLn("Generating server code is not supported for this platform.")
 					}
 					let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Invk"))
-					File.WriteText(targetFileNameWithSuffix("Invk"), source);
+					_WriteText(targetFileNameWithSuffix("Invk"), source);
 					writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
 
 				case "impl":
@@ -426,7 +437,7 @@ do {
 								if let sourceFiles = activeRodlCodeGen?.GenerateImplementationFiles(rodlLibrary, options["namespace"], s.Name) {
 									//for (n,c) in sourceFiles {
 									for n in sourceFiles.Keys {
-										File.WriteText(targetFileName(n), sourceFiles[n]);
+										_WriteText(targetFileName(n), sourceFiles[n]);
 										writeLn("Wrote file \(targetFileName(n))")
 									}
 								}
