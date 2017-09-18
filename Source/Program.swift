@@ -57,11 +57,7 @@ func writeSyntax() {
 func _WriteText(_ aFileName: String, _ Content: String) {
 	let b = Encoding.UTF8.GetBytes(Content);
 	if (Encoding.ASCII.GetString(b) != Content) {
-		let a : Byte[] = [0xEF,0xBB, 0xBF];
-		let c = Binary();
-		c.Write(a);
-		c.Write(b);
-		File.WriteBinary(aFileName, c);
+		File.WriteBytes(aFileName, b);
 	}
 	else {
 		File.WriteText(aFileName, Content);
