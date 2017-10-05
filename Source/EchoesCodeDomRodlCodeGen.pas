@@ -83,7 +83,7 @@ begin
   result.Add(lunitname, GenerateCodeFromCompileUnit(lUnit));
 end;
 
-method EchoesCodeDomRodlCodeGen.GetCodeDomProviderForLanguage: nullable not nullable CodeDomProvider;
+method EchoesCodeDomRodlCodeGen.GetCodeDomProviderForLanguage: nullable CodeDomProvider;
 begin
   var lLookingForCodeDomName: String;
   try

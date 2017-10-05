@@ -207,7 +207,7 @@ begin
                                                                ['IID'.AsNamedIdentifierExpression.AsCallParameter,
                                                                 new CGTypeCastExpression('Obj'.AsNamedIdentifierExpression, CGPointerTypeReference.VoidPointer).AsCallParameter].ToList,
                                                                 CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-                                   Parameters := [new CGParameterDefinition('IID', new CGPointerTypeReference(new CGNamedTypeReference('GUID') isClasstype(False)) reference(true),Modifier := CGParameterModifierKind.Const),
+                                   Parameters := [new CGParameterDefinition('IID', new CGPointerTypeReference(new CGNamedTypeReference('GUID') isClasstype(False)) &reference(true), Modifier := CGParameterModifierKind.Const),
                                                   new CGParameterDefinition('Obj', new CGPointerTypeReference(new CGPointerTypeReference(new CGPredefinedTypeReference(CGPredefinedTypeKind.Void))))].ToList(),
                                    Virtuality := CGMemberVirtualityKind.Override,
                                    Visibility := CGMemberVisibilityKind.Protected,
@@ -654,7 +654,7 @@ begin
     fLegacyStrings := value;
     if fLegacyStrings then begin
       CodeGenTypes.Item["ansistring"] := new CGNamedTypeReference("AnsiString") &namespace(new CGNamespaceReference("System")) isClasstype(False);
-      CodeGenTypes.Item["utf8string"] := new CGNamedTypeReference("UTF8String") isClasstype(False);    
+      CodeGenTypes.Item["utf8string"] := new CGNamedTypeReference("UTF8String") isClasstype(False);
     end
     else begin
       CodeGenTypes.Item["ansistring"] := new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False);
