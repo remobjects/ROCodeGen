@@ -38,6 +38,7 @@ type
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
     method GenerateCodeFirstDocumentation(file: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
     method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
+    method GenerateCodeFirstNamespaceAttribute(aType: CGEntity; aEntity:RodlEntity);
     {$ENDREGION}
     {$REGION support methods}
     method isPresent_SerializeInitializedStructValues_Attribute(library: RodlLibrary): Boolean;
@@ -223,6 +224,7 @@ begin
   lenum.Comment := GenerateDocumentation(entity, true);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name, lenum, entity.Documentation);
   GenerateCodeFirstCustomAttributes(lenum,entity);
+  GenerateCodeFirstNamespaceAttribute(lenum,entity);
 
   for rodl_member: RodlEnumValue in entity.Items do begin
     var cg4_member := new CGEnumValueDefinition(iif(entity.PrefixEnumValues,lenum.Name+'_','') + rodl_member.Name);
@@ -278,6 +280,7 @@ begin
   ltype.Comment := GenerateDocumentation(entity, true);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype,entity);
+  GenerateCodeFirstNamespaceAttribute(ltype,entity);
   var lclasscnt:= 0;
   var lNeedInitSimpleTypeWithDefaultValues := False;
 
@@ -552,6 +555,7 @@ begin
   ltype.Comment := GenerateDocumentation(entity, true);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, entity);
+  GenerateCodeFirstNamespaceAttribute(ltype,entity);
   if CodeFirstCompatible then begin
     if IsAnsiString(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsAnsiString) else
     if IsUTF8String(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsUTF8String);
@@ -1214,6 +1218,7 @@ begin
   ltype.Comment := GenerateDocumentation(entity, true);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, entity);
+  GenerateCodeFirstNamespaceAttribute(ltype,entity);
   var lclasscnt:= 0;
   var lNeedInitSimpleTypeWithDefaultValues := False;
 
@@ -3492,6 +3497,7 @@ begin
   lservice.Comment := GenerateDocumentation(entity, true);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,lservice, entity.Documentation);
   GenerateCodeFirstCustomAttributes(lservice, entity);
+  GenerateCodeFirstNamespaceAttribute(lservice, entity);
 
   file.Types.Add(lservice);
   cpp_IUnknownSupport(library, entity, lservice);
@@ -4270,6 +4276,13 @@ begin
                                   Condition := CF_condition);
       AddCGAttribute(aType, attr);
     end;
+  end;
+end;
+
+method DelphiRodlCodeGen.GenerateCodeFirstNamespaceAttribute(aType: CGEntity; aEntity:RodlEntity);
+begin
+  if CodeFirstCompatible then begin
+    AddCGAttribute(aType,new CGAttribute('RONamespace'.AsTypeReference,[targetNamespace.AsLiteralExpression.AsCallParameter],Condition := CF_condition));
   end;
 end;
 
