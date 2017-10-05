@@ -457,7 +457,7 @@ begin
   fItems.Remove(entity);
 end;
 
-method EntityCollection<T>.RemoveEntity(&index: Integer);
+method EntityCollection<T>.RemoveEntity(&index: Int32);
 begin
   fItems.RemoveAt(index);
 end;
