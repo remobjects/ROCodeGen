@@ -55,13 +55,8 @@ func writeSyntax() {
 }
 
 func _WriteText(_ aFileName: String, _ Content: String) {
-	let b = Encoding.UTF8.GetBytes(Content);
-	if (Encoding.ASCII.GetString(b) != Content) {
-		File.WriteBytes(aFileName, b);
-	}
-	else {
-		File.WriteText(aFileName, Content);
-	}
+	let b = Encoding.UTF8.GetBytes(Content, true);
+	File.WriteBytes(aFileName, b);
 }
 
 let options = [String:String]()
