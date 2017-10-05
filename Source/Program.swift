@@ -55,7 +55,7 @@ func writeSyntax() {
 }
 
 func _WriteText(_ aFileName: String, _ Content: String) {
-	let b = Encoding.UTF8.GetBytes(Content, true);
+	let b = Encoding.UTF8.GetBytes(Content, includeBOM: true);
 	File.WriteBytes(aFileName, b);
 }
 
