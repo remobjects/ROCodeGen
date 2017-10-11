@@ -10,17 +10,38 @@ public __abstract class ServerAccessCodeGen {
 		self.rodl = rodl
 	}
 
-	func isLoginService(_ serviceName: String)-> Boolean{
+	func isCodeGenerationRequired(_ service: RodlService!) -> Boolean {
+		if service.DontCodegen {
+			return false;
+		}
+
+		if service.FromUsedRodl != nil {
+			return !service.FromUsedRodl.DontApplyCodeGen;
+		}
+
+		// If UsedRodl is null but its Id is set then special handling is required
+		if service.FromUsedRodlId == Guid.EmptyGuid {
+			return true;
+		}
+
+		for i in 0 ..< self.rodl.Uses.Count {
+			let rodlUse = rodl.Uses[i]
+			if rodlUse.UsedRodlId == service.FromUsedRodlId {
+				return !rodlUse.DontApplyCodeGen;
+			}
+		}
+
+		return true;
+	}
+
+	func isLoginService(_ serviceName: String) -> Boolean {
 		return  serviceName.EqualsIgnoringCaseInvariant("LoginService");
 	}
 
 	func hasLoginService() -> Boolean{
 		for i in 0 ..< rodl.Services.Count {
 			let service = rodl.Services[i]
-			if service.DontCodegen || service.FromUsedRodl?.DontApplyCodeGen {
-				continue
-			}
-			if isLoginService(service.Name) {
+			if isCodeGenerationRequired(service) && isLoginService(service.Name) {
 				return true
 			}
 		}
@@ -46,10 +67,9 @@ public __abstract class ServerAccessCodeGen {
 
 		for i in 0 ..< rodl.Services.Count {
 			let service = rodl.Services[i]
-			if service.DontCodegen || service.FromUsedRodl?.DontApplyCodeGen {
-				continue
+			if isCodeGenerationRequired(service) {
+				generateService(serverAccess, service: service)
 			}
-			generateService(serverAccess, service: service)
 		}
 
 		if hasLoginService() {

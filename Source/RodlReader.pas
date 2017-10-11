@@ -817,8 +817,8 @@ begin
   if (node.Attribute["AbsoluteRodl"] <> nil) then
     AbsoluteRodl := node.Attribute["AbsoluteRodl"].Value;
 
-  if (node.Attribute["UsedRodlID"] <> nil) then
-    UsedRodlId := Guid.TryParse(node.Attribute["UsedRodlID"].Value);
+  if (node.Attribute["UsedRodlUID"] <> nil) then
+    UsedRodlId := Guid.TryParse(node.Attribute["UsedRodlUID"].Value);
 
   DontApplyCodeGen := (node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1");
 
