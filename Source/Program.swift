@@ -49,13 +49,16 @@ func writeSyntax() {
 	writeLn("  --codefirst-compatible (Delphi only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
+	writeLn("  --no-utf8 (disable UTF-8 for IDEs from last century)")
 	writeLn()
 
 	#hint add --await
 }
 
+var fileEncoding = Encoding.UTF8
+
 func _WriteText(_ aFileName: String, _ Content: String) {
-	let b = Encoding.UTF8.GetBytes(Content, includeBOM: true);
+	let b = fileEncoding.GetBytes(Content, includeBOM: true);
 	File.WriteBytes(aFileName, b);
 }
 
@@ -296,6 +299,10 @@ do {
 
 	if options["codefirst-compatible"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.CodeFirstCompatible = true
+	}
+
+	if options["no-utf8"] != nil {
+		fileEncoding = Encoding.ASCII
 	}
 
 	func targetFileNameWithSuffix(_ suffix: String) -> String {
