@@ -208,7 +208,7 @@ begin
                                                                 new CGTypeCastExpression('Obj'.AsNamedIdentifierExpression, CGPointerTypeReference.VoidPointer).AsCallParameter].ToList,
                                                                 CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
                                    Parameters := [new CGParameterDefinition('IID', new CGPointerTypeReference(new CGNamedTypeReference('GUID') isClasstype(False)) &reference(true), Modifier := CGParameterModifierKind.Const),
-                                                  new CGParameterDefinition('Obj', new CGPointerTypeReference(new CGPointerTypeReference(new CGPredefinedTypeReference(CGPredefinedTypeKind.Void))))].ToList(),
+                                                  new CGParameterDefinition('Obj', new CGPointerTypeReference(new CGPointerTypeReference(CGPredefinedTypeReference.Void)))].ToList(),
                                    Virtuality := CGMemberVirtualityKind.Override,
                                    Visibility := CGMemberVisibilityKind.Protected,
                                    ReturnType := new CGNamedTypeReference('HRESULT') isClasstype(False),

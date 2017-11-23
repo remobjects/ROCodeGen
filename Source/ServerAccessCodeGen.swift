@@ -650,7 +650,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		needsLoginMethod.CallingConvention = .Register
 		needsLoginMethod.Parameters.Add(CGParameterDefinition("Sender", "TROTransportChannel".AsTypeReference()));
 		needsLoginMethod.Parameters.Add(CGParameterDefinition("anException", "Exception".AsTypeReference()));
-		var aParam = CGParameterDefinition("aRetry", CGPredefinedTypeReference(.Boolean));
+		var aParam = CGParameterDefinition("aRetry", CGPredefinedTypeReference.Boolean);
 		aParam.Modifier = .Var;
 		needsLoginMethod.Parameters.Add(aParam);
 		needsLoginMethod.Statements.Add(CGCommentStatement("Implement authentication here by calling LoginService.needsLoginMethod"))
