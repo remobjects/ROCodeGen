@@ -49,20 +49,20 @@ implementation
 
 constructor JavaRodlCodeGen;
 begin
-  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32,true));
+  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeReference.Int32,true));
   CodeGenTypes.Add("datetime", "java.util.Date".AsTypeReference);
-  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double,true));
+  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeReference.Double,true));
   CodeGenTypes.Add("currency", "java.math.BigDecimal".AsTypeReference);
-  CodeGenTypes.Add("widestring", ResolveStdtypes(CGPredefinedTypeKind.String));
-  CodeGenTypes.Add("ansistring", ResolveStdtypes(CGPredefinedTypeKind.String));
-  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64,true));
-  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean,true));
+  CodeGenTypes.Add("widestring", ResolveStdtypes(CGPredefinedTypeReference.String));
+  CodeGenTypes.Add("ansistring", ResolveStdtypes(CGPredefinedTypeReference.String));
+  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeReference.Int64,true));
+  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeReference.Boolean,true));
   CodeGenTypes.Add("variant", "com.remobjects.sdk.VariantType".AsTypeReference);
-  CodeGenTypes.Add("binary", new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeKind.Int8)));
+  CodeGenTypes.Add("binary", new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.Int8)));
   CodeGenTypes.Add("xml", "com.remobjects.sdk.XmlType".AsTypeReference);
   CodeGenTypes.Add("guid", "java.util.UUID".AsTypeReference);
   CodeGenTypes.Add("decimal", "java.math.BigDecimal".AsTypeReference);
-  CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeKind.String));
+  CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeReference.String));
   CodeGenTypes.Add("xsdatetime", "java.util.Date".AsTypeReference);
 
   ReaderFunctions.Add("integer", "Int32");
@@ -96,7 +96,7 @@ end;
 method  JavaRodlCodeGen.WriteToMessage_Method(&library: RodlLibrary; entity: RodlStructEntity;useDefaultValues:Boolean): CGMethodDefinition;
 begin
   Result := new CGMethodDefinition("writeToMessage",
-                        Parameters := [new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String)),
+                        Parameters := [new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeReference.String)),
                                        new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference)].ToList,
                                         Virtuality := CGMemberVirtualityKind.Override,
                                         Visibility := CGMemberVisibilityKind.Public);
@@ -290,7 +290,7 @@ begin
   {$REGION .ctor(aCapacity: Integer)}
   larray.Members.Add(
     new CGConstructorDefinition(
-            Parameters := [new CGParameterDefinition("aCapacity", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+            Parameters := [new CGParameterDefinition("aCapacity", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
             Visibility := CGMemberVisibilityKind.Public,
             Statements:=
                [CGStatement(
@@ -318,7 +318,7 @@ begin
   larray.Members.Add(
     new CGConstructorDefinition(
       Visibility := CGMemberVisibilityKind.Public,
-      Parameters := [new CGParameterDefinition("anArray", new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeKind.Object)))].ToList,
+      Parameters := [new CGParameterDefinition("anArray", new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.Object)))].ToList,
       Statements:= [
         CGStatement(
             new CGConstructorCallStatement(CGInheritedExpression.Inherited, ["anArray".AsNamedIdentifierExpression.AsCallParameter].ToList ))].ToList)
@@ -361,7 +361,7 @@ begin
                                                       ["anItem".AsNamedIdentifierExpression.AsCallParameter,
                                                       "anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList)],
                             Parameters := [new CGParameterDefinition("anItem", l_elementType),
-                                           new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                                           new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                             Visibility := CGMemberVisibilityKind.Public));
   {$ENDREGION}
 
@@ -372,7 +372,7 @@ begin
                                                   ["anItem".AsNamedIdentifierExpression.AsCallParameter,
                                                   "anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList)],
                           Parameters := [new CGParameterDefinition("anItem", l_elementType),
-                                         new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                                         new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                           Visibility := CGMemberVisibilityKind.Public
       )
   );
@@ -387,7 +387,7 @@ begin
                                                                                ["anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList),
                                                     l_elementType,
                                                     ThrowsException := true).AsReturnStatement],
-                            Parameters :=[new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                            Parameters :=[new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                             ReturnType := l_elementType,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public)
@@ -408,7 +408,7 @@ begin
   larray.Members.Add(
     new CGMethodDefinition("itemTypeName",
                            [SafeIdentifier(entity.ElementType).AsLiteralExpression.AsReturnStatement],
-                            ReturnType := ResolveStdtypes(CGPredefinedTypeKind.String),
+                            ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                             Visibility := CGMemberVisibilityKind.Public
       )
   );
@@ -446,7 +446,7 @@ begin
     new CGMethodDefinition("writeItemToMessage",
                            [new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression,"write" +  l_methodName,  [l_arg0,l_arg1].ToList)],
                             Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
-                                           new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                                           new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public
       )
@@ -471,7 +471,7 @@ begin
                                                                                    l_arg_array.ToList).AsCallParameter].ToList)
                            ],
       Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
-                   new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                   new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public
       )
@@ -529,7 +529,7 @@ begin
   {$REGION .ctor(aExceptionMessage: String)}
   lexception.Members.Add(
                         new CGConstructorDefinition(
-                                                    Parameters := [new CGParameterDefinition("anExceptionMessage", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
+                                                    Parameters := [new CGParameterDefinition("anExceptionMessage", ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
                                                     Visibility := CGMemberVisibilityKind.Public,
                                                     statements := [CGStatement(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
                                                                                                               ["anExceptionMessage".AsNamedIdentifierExpression.AsCallParameter].ToList))].ToList
@@ -539,8 +539,8 @@ begin
   {$REGION .ctor(aExceptionMessage: String; aFromServer: Boolean)}
   lexception.Members.Add(
                         new CGConstructorDefinition(
-                                                    Parameters :=[new CGParameterDefinition("anExceptionMessage", ResolveStdtypes(CGPredefinedTypeKind.String)),
-                                                                  new CGParameterDefinition("aFromServer", ResolveStdtypes(CGPredefinedTypeKind.Boolean))].ToList,
+                                                    Parameters :=[new CGParameterDefinition("anExceptionMessage", ResolveStdtypes(CGPredefinedTypeReference.String)),
+                                                                  new CGParameterDefinition("aFromServer", ResolveStdtypes(CGPredefinedTypeReference.Boolean))].ToList,
                                                     Visibility := CGMemberVisibilityKind.Public,
                                                     Statements:= [CGStatement(
                                                                         new CGConstructorCallStatement(CGInheritedExpression.Inherited,
@@ -772,7 +772,7 @@ end;
 method JavaRodlCodeGen.ReadFromMessage_Method(&library: RodlLibrary; entity: RodlStructEntity): CGMethodDefinition;
 begin
   Result := new CGMethodDefinition("readFromMessage",
-                        Parameters := [new CGParameterDefinition("aName",   ResolveStdtypes(CGPredefinedTypeKind.String)),
+                        Parameters := [new CGParameterDefinition("aName",   ResolveStdtypes(CGPredefinedTypeReference.String)),
                                        new CGParameterDefinition("aMessage",GenerateROSDKType("Message").AsTypeReference)].ToList,
                         Virtuality := CGMemberVirtualityKind.Override,
                         Visibility := CGMemberVisibilityKind.Public);
@@ -824,7 +824,7 @@ begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
   if (entity.CustomAttributes.Count = 0) then exit;
   exit new CGFieldDefinition("_attributes",
-                             new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeKind.String),ResolveStdtypes(CGPredefinedTypeKind.String)].ToList),
+                             new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList),
                             &Static := true,
                             Visibility := CGMemberVisibilityKind.Private);
 end;
@@ -834,8 +834,8 @@ begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
   if (entity.CustomAttributes.Count = 0) then exit;
   Result := new CGMethodDefinition("getAttributeValue",
-                                  Parameters:=[new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
-                                  ReturnType := ResolveStdtypes(CGPredefinedTypeKind.String),
+                                  Parameters:=[new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
+                                  ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                   &Static := True,
                                   Virtuality := CGMemberVirtualityKind.Override,
                                   Visibility := CGMemberVisibilityKind.Public);
@@ -849,7 +849,7 @@ begin
   l_if_true.Statements.Add(
           new CGAssignmentStatement(
                             l_attributes,
-                            new CGNewInstanceExpression(new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeKind.String),ResolveStdtypes(CGPredefinedTypeKind.String)].ToList)))
+                            new CGNewInstanceExpression(new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList)))
   );
 
   for l_key: String in entity.CustomAttributes.Keys do begin
@@ -1043,7 +1043,7 @@ begin
     if lp.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
       Result.Parameters.Add(new CGParameterDefinition(lp.Name, ResolveDataTypeToTypeRef(&library, lp.DataType)));
   end;
-  result.Parameters.Add(new CGParameterDefinition("start", ResolveStdtypes(CGPredefinedTypeKind.Boolean)));
+  result.Parameters.Add(new CGParameterDefinition("start", ResolveStdtypes(CGPredefinedTypeReference.Boolean)));
   result.Parameters.Add(new CGParameterDefinition("callback", GenerateROSDKType("AsyncRequest.IAsyncRequestCallback").AsTypeReference));
 end;
 
@@ -1170,7 +1170,7 @@ begin
     new CGConstructorDefinition(
      Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
                     new CGParameterDefinition("aClientChannel", GenerateROSDKType("ClientChannel").AsTypeReference),
-                    new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
+                    new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [new CGConstructorCallStatement(CGInheritedExpression.Inherited,
                                                   ["aMessage".AsNamedIdentifierExpression.AsCallParameter,
@@ -1198,7 +1198,7 @@ begin
   service.Members.Add(
     new CGConstructorDefinition(
      Parameters:=[new CGParameterDefinition("aSchema", "java.net.URI".AsTypeReference),
-                  new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
+                  new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [new CGConstructorCallStatement(CGInheritedExpression.Inherited,
                                                   ["aSchema".AsNamedIdentifierExpression.AsCallParameter,
@@ -1213,7 +1213,7 @@ begin
   service.Members.Add(
     new CGMethodDefinition("_getInterfaceName",
                           [SafeIdentifier(entity.Name).AsLiteralExpression.AsReturnStatement],
-                          ReturnType := ResolveStdtypes(CGPredefinedTypeKind.String),
+                          ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                           Virtuality := CGMemberVirtualityKind.Override,
                           Visibility := CGMemberVisibilityKind.Public)
   );
@@ -1224,7 +1224,7 @@ method JavaRodlCodeGen.GenerateOperationAttribute(&library: RodlLibrary; entity:
 begin
   var ld := Operation_GetAttributes(&library, entity);
   if ld.Count > 0 then begin
-    var lhashmaptype := new CGNamedTypeReference("HashMap",GenericArguments := [ResolveStdtypes(CGPredefinedTypeKind.String),ResolveStdtypes(CGPredefinedTypeKind.String)].ToList);
+    var lhashmaptype := new CGNamedTypeReference("HashMap",GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList);
     var l_attributes := "lAttributesMap".AsNamedIdentifierExpression;
     Statements.Add(new CGVariableDeclarationStatement("lAttributesMap",lhashmaptype,new CGNewInstanceExpression(lhashmaptype)));
     for l_key: String in ld.Keys do begin
@@ -1304,7 +1304,7 @@ begin
 
   file.Types.Add(ltype);
 
-  ltype.Members.Add(new CGFieldDefinition("TARGET_NAMESPACE", ResolveStdtypes(CGPredefinedTypeKind.String),
+  ltype.Members.Add(new CGFieldDefinition("TARGET_NAMESPACE", ResolveStdtypes(CGPredefinedTypeReference.String),
                     Constant := true,
                     &Static := true,
                     Visibility := CGMemberVisibilityKind.Public,
@@ -1313,7 +1313,7 @@ begin
   for lentity: RodlEntity in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lName := lentity.Name;
-    ltype.Members.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeKind.String),
+    ltype.Members.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeReference.String),
                                           Constant := true,
                                           &Static := true,
                                           Visibility := CGMemberVisibilityKind.Public,

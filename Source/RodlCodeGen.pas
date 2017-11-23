@@ -13,7 +13,7 @@ type
 
     {$REGION support methods}
     method ResolveDataTypeToTypeRef(library: RodlLibrary; dataType: String): CGTypeReference;
-    method ResolveStdtypes(&type: CGPredefinedTypeKind; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
+    method ResolveStdtypes(&type: CGPredefinedTypeReference; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
     method EntityNeedsCodeGen(entity: RodlEntity): Boolean;
     method PascalCase(name:String):String;
     method isStruct(library: RodlLibrary; dataType: String): Boolean;
@@ -48,7 +48,7 @@ type
     method GetNamespace(library: RodlLibrary): String;virtual;
     method GetGlobalName(library: RodlLibrary): String; abstract;
 
-    property EnumBaseType: CGTypeReference read ResolveStdtypes(CGPredefinedTypeKind.UInt32); virtual;
+    property EnumBaseType: CGTypeReference read ResolveStdtypes(CGPredefinedTypeReference.UInt32); virtual;
   public
     class property KnownRODLPaths: Dictionary<String,String> := new Dictionary<String,String>;
     property Generator: CGCodeGenerator; virtual;
@@ -189,16 +189,16 @@ begin
   exit aString.Replace('\','\\').Replace('"','\"');
 end;
 
-method RodlCodeGen.ResolveStdtypes(&type: CGPredefinedTypeKind; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
+method RodlCodeGen.ResolveStdtypes(&type: CGPredefinedTypeReference; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
 begin
-  if PredefinedTypes.ContainsKey(&type) then
-    exit PredefinedTypes[&type]
+  if PredefinedTypes.ContainsKey(&type.Kind) then
+    exit PredefinedTypes[&type.Kind]
   else if isNullable then
-    exit new CGPredefinedTypeReference(&type).NullableNotUnwrapped
+    exit &type.NullableNotUnwrapped
   else if isNotNullable then
-    exit new CGPredefinedTypeReference(&type).NotNullable
+    exit &type.NotNullable
   else
-    exit new CGPredefinedTypeReference(&type)
+    exit &type
 end;
 
 method RodlCodeGen.ResolveDataTypeToTypeRef(&library: RodlLibrary; dataType: String): CGTypeReference;

@@ -492,7 +492,7 @@ begin
     //  var __result: Integer;
     //  __result := (inherited itemAtIndex(aIndex) as NSNumber) as %ARRAY_TYPE%;
     //  exit __result;
-    lList.Add(new CGVariableDeclarationStatement("__result",ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+    lList.Add(new CGVariableDeclarationStatement("__result",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
     lList.Add(new CGAssignmentStatement(
                                      "__result".AsNamedIdentifierExpression,
                                      new CGTypeCastExpression(
@@ -766,8 +766,8 @@ begin
 
     var linvk_method := new CGMethodDefinition("Invoke_"+lop.Name,
                               Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference),
-                                             new CGParameterDefinition("aHandler", ResolveStdtypes(CGPredefinedTypeKind.Object), Externalname := "handler")].ToList,
-                              ReturnType:= ResolveStdtypes(CGPredefinedTypeKind.Boolean),
+                                             new CGParameterDefinition("aHandler", ResolveStdtypes(CGPredefinedTypeReference.Object), Externalname := "handler")].ToList,
+                              ReturnType:= ResolveStdtypes(CGPredefinedTypeReference.Boolean),
       Visibility := CGMemberVisibilityKind.Public);
     lEventInvoker.Members.Add(linvk_method);
     if IsAppleSwift then begin
@@ -786,7 +786,7 @@ begin
     if lInParam.Count>0 then
       linvk_method.Statements.Add(new CGForToLoopStatement(
                                             "i",
-                                            ResolveStdtypes(CGPredefinedTypeKind.Int),
+                                            ResolveStdtypes(CGPredefinedTypeReference.Int),
                                             new CGIntegerLiteralExpression(1),
                                             new CGIntegerLiteralExpression(lInParam.Count),
                                             new CGAssignmentStatement("__selPattern".AsNamedIdentifierExpression, new CGMethodCallExpression("__selPattern".AsNamedIdentifierExpression, "stringByAppendingString", [":".AsLiteralExpression.AsCallParameter].ToList))
@@ -847,20 +847,20 @@ end;
 
 constructor CocoaRodlCodeGen;
 begin
-  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
+  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   CodeGenTypes.Add("datetime", "NSDate".AsTypeReference().NullableUnwrapped);
-  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
+  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeReference.Double));
   CodeGenTypes.Add("currency", "NSDecimalNumber".AsTypeReference().NullableUnwrapped);
-  CodeGenTypes.Add("widestring", ResolveStdtypes(CGPredefinedTypeKind.String));
-  CodeGenTypes.Add("ansistring", ResolveStdtypes(CGPredefinedTypeKind.String));
-  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
-  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean));
+  CodeGenTypes.Add("widestring", ResolveStdtypes(CGPredefinedTypeReference.String));
+  CodeGenTypes.Add("ansistring", ResolveStdtypes(CGPredefinedTypeReference.String));
+  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeReference.Int64));
+  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeReference.Boolean));
   CodeGenTypes.Add("variant", "ROVariant".AsTypeReference);
   CodeGenTypes.Add("binary", "NSData".AsTypeReference);
   CodeGenTypes.Add("xml", "ROXml".AsTypeReference);
   CodeGenTypes.Add("guid", "ROGuid".AsTypeReference);
   CodeGenTypes.Add("decimal", "NSDecimalNumber".AsTypeReference().NullableUnwrapped);
-  CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeKind.String));
+  CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeReference.String));
   CodeGenTypes.Add("xsdatetime", "NSDate".AsTypeReference().NullableUnwrapped);
 
   ReaderFunctions.Add("integer", "Int32");
@@ -960,7 +960,7 @@ begin
   //method writeToMessage(aMessage: ROMessage) withName(aName: NSString); override;
   result := new CGMethodDefinition(if IsSwift then "write" else "writeToMessage",
                         Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable, ExternalName := if IsSwift then "to"),
-                                       new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String), ExternalName := "withName")].ToList,
+                                       new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeReference.String), ExternalName := "withName")].ToList,
                         Visibility := CGMemberVisibilityKind.Public);
   if not (aEntity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
   var lIfRecordStrictOrder_True := new CGBeginEndBlockStatement;
@@ -1005,7 +1005,7 @@ begin
   //method readFromMessage(aMessage: ROMessage) withName(aName: NSString); override;
   result := new CGMethodDefinition(if IsSwift then "read" else "readFromMessage",
                                   Parameters := [new CGParameterDefinition("aMessage","ROMessage".AsTypeReference().NotNullable, ExternalName := if IsSwift then "from"),
-                                                 new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeKind.String), ExternalName :="withName")].ToList,
+                                                 new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeReference.String), ExternalName :="withName")].ToList,
                                   Visibility := CGMemberVisibilityKind.Public);
   if not (aEntity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
   var lIfRecordStrictOrder_True := new CGBeginEndBlockStatement;
@@ -1352,7 +1352,7 @@ begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__start";
-  result.Parameters.Add(new CGParameterDefinition("___start", ResolveStdtypes(CGPredefinedTypeKind.Boolean), Externalname := if result.Parameters.Count > 0 then "start"));
+  result.Parameters.Add(new CGParameterDefinition("___start", ResolveStdtypes(CGPredefinedTypeReference.Boolean), Externalname := if result.Parameters.Count > 0 then "start"));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"__clientChannel"),
                                                    "asyncDispatch",

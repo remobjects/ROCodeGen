@@ -388,7 +388,7 @@ begin
   end;
 end;
 
-constructor Codegen4Record(aFileName: String; aContent: String; aType: Codegen4FileType);
+constructor Codegen4Record(const aFileName: String; const aContent: String; const aType: Codegen4FileType);
 begin
   Filename := aFileName;
   Content := aContent;

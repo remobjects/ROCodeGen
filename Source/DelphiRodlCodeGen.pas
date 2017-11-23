@@ -174,14 +174,14 @@ implementation
 constructor DelphiRodlCodeGen;
 begin
   fLegacyStrings := False;
-  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
+  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   CodeGenTypes.Add("datetime", String("DateTime").AsTypeReference);
-  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
+  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeReference.Double));
   CodeGenTypes.Add("currency", String("Currency").AsTypeReference);
   CodeGenTypes.Add("widestring", String("UnicodeString").AsTypeReference);
   CodeGenTypes.Add("ansistring", String("ROAnsiString").AsTypeReference);
-  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
-  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean));
+  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeReference.Int64));
+  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeReference.Boolean));
   CodeGenTypes.Add("variant", String("Variant").AsTypeReference);
   CodeGenTypes.Add("binary", String("Binary").AsTypeReference);
   CodeGenTypes.Add("xml", String("IXmlNode").AsTypeReference);
@@ -591,7 +591,7 @@ begin
 
   {$REGION private fCount: Integer}
   ltype.Members.Add(new CGFieldDefinition("fCount",
-                                          ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                          ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                           Visibility := CGMemberVisibilityKind.Private
                                           ));
   {$ENDREGION}
@@ -611,8 +611,8 @@ begin
                       );
   ltype.Members.Add(lm);
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-  lm.LocalVariables:Add(new CGVariableDeclarationStatement("lDelta",ResolveStdtypes(CGPredefinedTypeKind.Int32)));
-  lm.LocalVariables:Add(new CGVariableDeclarationStatement("lCapacity",ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+  lm.LocalVariables:Add(new CGVariableDeclarationStatement("lDelta",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
+  lm.LocalVariables:Add(new CGVariableDeclarationStatement("lCapacity",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
   var lDelta := "lDelta".AsNamedIdentifierExpression;
   var lCapacity := "lCapacity".AsNamedIdentifierExpression;
   lm.Statements.Add(new CGAssignmentStatement(lCapacity, Array_GetLength(fItems)));
@@ -630,7 +630,7 @@ begin
 
   {$REGION protected function GetItems(aIndex: Integer): %elementtype%}
   lm := new CGMethodDefinition('GetItems',
-                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                           Visibility := CGMemberVisibilityKind.Protected,
                           ReturnType := el_typeref,
                           CallingConvention := CGCallingConventionKind.Register);
@@ -641,7 +641,7 @@ begin
 
   {$REGION protected procedure SetItems(aIndex: Integer; const Value: %structtype%);}
   lm := new CGMethodDefinition('SetItems',
-                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeKind.Int32)),
+                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeReference.Int32)),
                                          new CGParameterDefinition('Value',el_typeref {,Modifier := CGParameterModifierKind.Const})].ToList,
                           Visibility := CGMemberVisibilityKind.Protected,
                           CallingConvention := CGCallingConventionKind.Register
@@ -662,7 +662,7 @@ begin
   lm := new CGMethodDefinition(
                     'GetCount',
                     [fCount.AsReturnStatement],
-                    ReturnType := ResolveStdtypes((CGPredefinedTypeKind.Int32)),
+                    ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                     Virtuality := CGMemberVirtualityKind.Override,
                     Visibility := CGMemberVisibilityKind.Protected,
                     CallingConvention := CGCallingConventionKind.Register
@@ -676,20 +676,20 @@ begin
                                                              new CGIntegerLiteralExpression(1),
                                                              CGBinaryOperatorKind.Subtraction);
   lm := new CGMethodDefinition('IntResize',
-                            Parameters := [new CGParameterDefinition('anElementCount',ResolveStdtypes(CGPredefinedTypeKind.Int32)),
-                                           new CGParameterDefinition('AllocItems',ResolveStdtypes(CGPredefinedTypeKind.Boolean))].ToList,
+                            Parameters := [new CGParameterDefinition('anElementCount',ResolveStdtypes(CGPredefinedTypeReference.Int32)),
+                                           new CGParameterDefinition('AllocItems',ResolveStdtypes(CGPredefinedTypeReference.Boolean))].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Protected,
                             CallingConvention := CGCallingConventionKind.Register);
   ltype.Members.Add(lm);
   if isComplex(library, lElementType) then begin
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeReference.Int32)));
   end;
   lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(fCount, anElementCount, CGBinaryOperatorKind.Equals),  new CGReturnStatement()));
   if isComplex(library, lElementType) then begin
     lm.Statements.Add(new CGForToLoopStatement('i',
-                                               ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                               ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                fCount_subtract_1,
                                                anElementCount,
                                                new CGDestroyInstanceExpression(fItems_i),
@@ -699,7 +699,7 @@ begin
   //lm.Statements.Add(new CGMethodCallExpression(nil,'System.SetLength',[fItems.AsCallParameter, anElementCount.AsCallParameter].ToList));
   if isComplex(library, lElementType) then begin
     lm.Statements.Add(new CGForToLoopStatement('i',
-                          ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                          ResolveStdtypes(CGPredefinedTypeReference.Int32),
                           fCount,
                           anElementCount_sub_1,
                           new CGIfThenElseStatement('AllocItems'.AsNamedIdentifierExpression,
@@ -739,7 +739,7 @@ begin
   {$REGION public class function GetItemSize: Integer; override;}
   lm := new CGMethodDefinition('GetItemSize',
                               [new CGSizeOfExpression(el_typeref.AsExpression).AsReturnStatement],
-                                ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                 Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Public,
                                 &Static := true,
@@ -749,7 +749,7 @@ begin
 
   {$REGION public function GetItemRef(aIndex: Integer): pointer; override;}
   lm := new CGMethodDefinition('GetItemRef',
-                                Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                                Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                                 Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Public,
                                 ReturnType := CGPointerTypeReference.VoidPointer,
@@ -766,7 +766,7 @@ begin
   if isComplex(library,lElementType) then begin
     {$REGION procedure SetItemRef(aIndex: Integer; Ref: pointer); override;}
     lm := new CGMethodDefinition('SetItemRef',
-                                  Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeKind.Int32)),
+                                  Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeReference.Int32)),
                                                  new CGParameterDefinition('Ref',CGPointerTypeReference.VoidPointer)].ToList,
                                   Virtuality := CGMemberVirtualityKind.Override,
                                   Visibility := CGMemberVisibilityKind.Public,
@@ -791,9 +791,9 @@ begin
   ltype.Members.Add(lm);
   if isComplex(library, lElementType) then begin
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-    lm.LocalVariables:Add(new CGVariableDeclarationStatement("i",ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+    lm.LocalVariables:Add(new CGVariableDeclarationStatement("i",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
     lm.Statements.Add(new CGForToLoopStatement('i',
-                                              ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                              ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                               new CGIntegerLiteralExpression(0),
                                               fCount_subtract_1,
                                               new CGDestroyInstanceExpression(fItems_i)
@@ -807,7 +807,7 @@ begin
 
   {$REGION public procedure Delete(aIndex: Integer); override;}
   lm := new CGMethodDefinition('Delete',
-                                Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                                Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                                 Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Public,
                                 CallingConvention := CGCallingConventionKind.Register);
@@ -825,7 +825,7 @@ begin
 
 
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-  lm.LocalVariables:Add(new CGVariableDeclarationStatement("i",ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+  lm.LocalVariables:Add(new CGVariableDeclarationStatement("i",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
   lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(aIndex,fCount,CGBinaryOperatorKind.GreatThanOrEqual),
                                               RaiseError('err_InvalidIndex'.AsNamedIdentifierExpression, [aIndex].ToList)
 //                                              new CGMethodCallExpression(nil, 'uROClasses.RaiseError',['err_InvalidIndex'.AsNamedIdentifierExpression.AsCallParameter,
@@ -843,7 +843,7 @@ begin
                                                                              fCount_subtract_1,
                                                                              CGBinaryOperatorKind.LessThan),
                                               new CGForToLoopStatement('i',
-                                                                      ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                                                      ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                                       aIndex,
                                                                       lSelfCount_subtract_2,
                                                                       new CGAssignmentStatement(fItems_i,fItems_i_add_1))));
@@ -861,7 +861,7 @@ begin
   ltype.Members.Add(lm);
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
   lm.LocalVariables:Add(new CGVariableDeclarationStatement("lSource",array_typeref));
-  lm.LocalVariables:Add(new CGVariableDeclarationStatement("i",ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+  lm.LocalVariables:Add(new CGVariableDeclarationStatement("i",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
   var lAsClass := isComplex(library,lElementType);
   if lAsClass then
     lm.LocalVariables:Add(new CGVariableDeclarationStatement("lItem",el_typeref));
@@ -906,7 +906,7 @@ begin
     end;
     if_true.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self,'Add',[litem.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference)); //self.Add(lItem);
     lct.Statements.Add(new CGForToLoopStatement('i', //for i := 0 to lSource.Count-1 do
-                                                ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                                ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                 new CGIntegerLiteralExpression(0),
                                                 new CGBinaryOperatorExpression(lSource_Count,
                                                                               new CGIntegerLiteralExpression(1),
@@ -920,7 +920,7 @@ begin
   else begin
     lct.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, 'Resize',[lSource_Count.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
     lct.Statements.Add(new CGForToLoopStatement('i', //for i := 0 to lSource.Count-1 do
-                                                ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                                ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                 new CGIntegerLiteralExpression(0),
                                                 new CGBinaryOperatorExpression(lSource_Count,
                                                                               new CGIntegerLiteralExpression(1),
@@ -949,7 +949,7 @@ begin
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
   lm.LocalVariables:Add(new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref,lSerializer_typeref));
   lm.LocalVariables:Add(new CGVariableDeclarationStatement('lval',el_typeref));
-  lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+  lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeReference.Int32)));
   var lforst := new List<CGStatement>;
   lforst.Add(Intf_generateReadStatement(library,
                                    entity.ElementType,
@@ -960,7 +960,7 @@ begin
                                    'i'.AsNamedIdentifierExpression.AsCallParameter));
   lforst.Add(new CGAssignmentStatement(Self_Items_i, 'lval'.AsNamedIdentifierExpression));
   lm.Statements.Add(new CGForToLoopStatement('i',
-                                            ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                            ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                             new CGIntegerLiteralExpression(0),
                                             fCount_subtract_1,
                                             new CGBeginEndBlockStatement(lforst)
@@ -977,7 +977,7 @@ begin
   ltype.Members.Add(lm);
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
   lm.LocalVariables:Add(new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref,lSerializer_typeref));
-  lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+  lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeReference.Int32)));
   lm.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[ cpp_ClassId(DuplicateType(array_typeref, false).AsExpression).AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
 
   var ws := Intf_generateWriteStatement(library,
@@ -988,7 +988,7 @@ begin
                                   el_typeref,
                                   'i'.AsNamedIdentifierExpression.AsCallParameter);
   lm.Statements.Add(new CGForToLoopStatement('i',
-                                            ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                            ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                             new CGIntegerLiteralExpression(0),
                                             fCount_subtract_1,
                                             new CGBeginEndBlockStatement(ws)
@@ -1000,7 +1000,7 @@ begin
                           Overloaded := isComplex(library,lElementType),
                           Parameters := [new CGParameterDefinition('Value',el_typeref{,Modifier := CGParameterModifierKind.Const})].ToList,
                           Visibility := CGMemberVisibilityKind.Public,
-                          ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                          ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                           CallingConvention := CGCallingConventionKind.Register);
   ltype.Members.Add(lm);
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
@@ -1020,10 +1020,10 @@ begin
     {$REGION public function GetIndex(const aValue: %structtype%;const aStartFrom: Integer = 0): Integer;overload;}
     lm := new CGMethodDefinition('GetIndex',
                             Parameters := [new CGParameterDefinition('aValue',el_typeref,Modifier := CGParameterModifierKind.Const),
-                                           new CGParameterDefinition('aStartFrom',ResolveStdtypes(CGPredefinedTypeKind.Int32),Modifier := CGParameterModifierKind.Const, DefaultValue := new CGIntegerLiteralExpression(0))].ToList,
+                                           new CGParameterDefinition('aStartFrom',ResolveStdtypes(CGPredefinedTypeReference.Int32),Modifier := CGParameterModifierKind.Const, DefaultValue := new CGIntegerLiteralExpression(0))].ToList,
                             Visibility := CGMemberVisibilityKind.Public,
                             Overloaded := true,
-                            ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                            ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                             CallingConvention := CGCallingConventionKind.Register);
     ltype.Members.Add(lm);
     lm.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self,
@@ -1035,13 +1035,13 @@ begin
 
     {$REGION public function GetIndex(const aPropertyName : string;const aPropertyValue : Variant;StartFrom : Integer = 0;Options : TROSearchOptions = [soIgnoreCase]): Integer;override;}
     lm := new CGMethodDefinition('GetIndex',
-                        Parameters := [new CGParameterDefinition('aPropertyName',ResolveStdtypes(CGPredefinedTypeKind.String),Modifier := CGParameterModifierKind.Const),
+                        Parameters := [new CGParameterDefinition('aPropertyName',ResolveStdtypes(CGPredefinedTypeReference.String),Modifier := CGParameterModifierKind.Const),
                                         new CGParameterDefinition('aPropertyValue','Variant'.AsTypeReference,Modifier := CGParameterModifierKind.Const),
-                                        new CGParameterDefinition('aStartFrom',ResolveStdtypes(CGPredefinedTypeKind.Int32), DefaultValue := new CGIntegerLiteralExpression(0)),
+                                        new CGParameterDefinition('aStartFrom',ResolveStdtypes(CGPredefinedTypeReference.Int32), DefaultValue := new CGIntegerLiteralExpression(0)),
                                         new CGParameterDefinition('Options',new CGNamedTypeReference('TROSearchOptions') isClasstype(false),DefaultValue := new CGSetLiteralExpression([CGExpression('soIgnoreCase'.AsNamedIdentifierExpression)].ToList, 'TROSearchOptions'.AsTypeReference))].ToList,
                         Virtuality := CGMemberVirtualityKind.Override,
                         Visibility := CGMemberVisibilityKind.Public,
-                        ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                         CallingConvention := CGCallingConventionKind.Register);
     ltype.Members.Add(lm);
     lm.Statements.Add(new CGIntegerLiteralExpression(-1).AsReturnStatement);
@@ -1050,15 +1050,15 @@ begin
     {$REGION public function IndexOf(const aValue: %structtype%;const aStartFrom: Integer = 0): Integer;}
     lm := new CGMethodDefinition('IndexOf',
                       Parameters := [new CGParameterDefinition('aValue',el_typeref,Modifier := CGParameterModifierKind.Const),
-                                     new CGParameterDefinition('aStartFrom',ResolveStdtypes(CGPredefinedTypeKind.Int32),Modifier := CGParameterModifierKind.Const, DefaultValue := new CGIntegerLiteralExpression(0))].ToList,
+                                     new CGParameterDefinition('aStartFrom',ResolveStdtypes(CGPredefinedTypeReference.Int32),Modifier := CGParameterModifierKind.Const, DefaultValue := new CGIntegerLiteralExpression(0))].ToList,
                       Visibility := CGMemberVisibilityKind.Public,
-                      ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                      ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                       CallingConvention := CGCallingConventionKind.Register);
     ltype.Members.Add(lm);
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
     lm.LocalVariables:&Add(new CGVariableDeclarationStatement('lResult', lm.ReturnType));
     lm.Statements.Add(new CGForToLoopStatement('lResult',
-                                              ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                              ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                               'aStartFrom'.AsNamedIdentifierExpression,
                                               fCount_subtract_1,
                                               new CGIfThenElseStatement(new CGBinaryOperatorExpression(fItems_Result, 'aValue'.AsNamedIdentifierExpression, CGBinaryOperatorKind.Equals),
@@ -1102,7 +1102,7 @@ begin
   {$REGION public property Count: Integer read GetCount;}
   ltype.Members.Add(
                   new CGPropertyDefinition("Count",
-                                           ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                           ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                            'GetCount'.AsNamedIdentifierExpression,
                                            Visibility := CGMemberVisibilityKind.Public
                                           ));
@@ -1114,7 +1114,7 @@ begin
                                     'GetItems'.AsNamedIdentifierExpression,
                                     'SetItems'.AsNamedIdentifierExpression,
                                     Visibility := CGMemberVisibilityKind.Public,
-                                    Parameters := [new CGParameterDefinition('Index', ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                                    Parameters := [new CGParameterDefinition('Index', ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                                     &Default := true
                       ));
   {$ENDREGION}
@@ -1147,7 +1147,7 @@ begin
   {$REGION private fCurrentIndex: Integer;}
   lenumtype.Members.Add(
                       new CGFieldDefinition("fCurrentIndex",
-                                  ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                  ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                   Visibility := CGMemberVisibilityKind.Private
                                   ));
   {$ENDREGION}
@@ -1178,7 +1178,7 @@ begin
   {$REGION public function MoveNext: Boolean;}
   lm := new CGMethodDefinition('MoveNext',
                                 Visibility := CGMemberVisibilityKind.Public,
-                                ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Boolean),
+                                ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Boolean),
                                 CallingConvention := CGCallingConventionKind.Register);
   lenumtype.Members.Add(lm);
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
@@ -1286,7 +1286,7 @@ begin
   if entity.Count > 0 then begin
   {$REGION public constructor Create(anExceptionMessage : string;%flds%);}
   var lmc := new CGConstructorDefinition(
-                          Parameters:=[new CGParameterDefinition('anExceptionMessage', ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
+                          Parameters:=[new CGParameterDefinition('anExceptionMessage', ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
                           Visibility := CGMemberVisibilityKind.Public,
                           CallingConvention := CGCallingConventionKind.Register
                           );
@@ -1589,7 +1589,7 @@ begin
                                           Visibility := CGMemberVisibilityKind.Public,
                                           CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
   lmember_ct.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
   lmember_ct.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
 
@@ -1611,9 +1611,9 @@ begin
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
   lmember_ct.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
-  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
   l_new := new CGNewInstanceExpression(l_Tname_Proxy_typeref);
   if library.DataSnap then
@@ -1633,9 +1633,9 @@ begin
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
-  lmember_ct.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
-  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+    lmember_ct.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
   l_new := new CGNewInstanceExpression(l_Tname_Proxy_typeref);
   if library.DataSnap then
@@ -1663,7 +1663,7 @@ begin
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
 
   lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
@@ -1687,9 +1687,9 @@ begin
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
   l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
   if library.DataSnap then
@@ -1709,9 +1709,9 @@ begin
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
   l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
   if library.DataSnap then
@@ -1739,7 +1739,7 @@ begin
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
 
@@ -1761,9 +1761,9 @@ begin
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
   lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
   l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
   if library.DataSnap then
@@ -1783,9 +1783,9 @@ begin
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
   if library.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
   l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
   if library.DataSnap then
@@ -1816,7 +1816,7 @@ begin
   lmember:= new CGMethodDefinition('__GetInterfaceName',
                                   [l_EntityName.AsLiteralExpression.AsReturnStatement],
                                   Virtuality:= CGMemberVirtualityKind.Override,
-                                  ReturnType:= ResolveStdtypes(CGPredefinedTypeKind.String),
+                                  ReturnType:= ResolveStdtypes(CGPredefinedTypeReference.String),
                                   Visibility := CGMemberVisibilityKind.Protected,
                                   CallingConvention := CGCallingConventionKind.Register);
   ltype1.Members.Add(lmember);
@@ -1958,7 +1958,7 @@ begin
   var lmember1:= new CGMethodDefinition('__GetInterfaceName',
                                   [l_EntityName.AsLiteralExpression.AsReturnStatement],
                                   Virtuality:= CGMemberVirtualityKind.Override,
-                                  ReturnType:= ResolveStdtypes(CGPredefinedTypeKind.String),
+                                  ReturnType:= ResolveStdtypes(CGPredefinedTypeReference.String),
                                   Visibility := CGMemberVisibilityKind.Protected,
                                   CallingConvention := CGCallingConventionKind.Register);
   ltype1.Members.Add(lmember1);
@@ -1993,7 +1993,7 @@ begin
   lmember1:= new CGMethodDefinition('__GetInterfaceName',
                                   [l_EntityName.AsLiteralExpression.AsReturnStatement],
                                   Virtuality:= CGMemberVirtualityKind.Override,
-                                  ReturnType:= ResolveStdtypes(CGPredefinedTypeKind.String),
+                                  ReturnType:= ResolveStdtypes(CGPredefinedTypeReference.String),
                                   Visibility := CGMemberVisibilityKind.Protected,
                                   CallingConvention := CGCallingConventionKind.Register);
   ltype1.Members.Add(lmember1);
@@ -2194,7 +2194,7 @@ begin
   {$REGION GetAttributeCount}
   &type.Members.Add(new CGMethodDefinition("GetAttributeCount",
                                            [new CGIntegerLiteralExpression(entity.CustomAttributes.Count).AsReturnStatement],
-                                            ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                            ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                             Virtuality := CGMemberVirtualityKind.Override,
                                             Visibility := CGMemberVisibilityKind.Public,
                                             &Static := true,
@@ -2208,8 +2208,8 @@ begin
 
   var lcase := new CGSwitchStatement('aIndex'.AsNamedIdentifierExpression, lcases);
   &type.Members.Add(new CGMethodDefinition("GetAttributeName",[lcase],
-                        ReturnType := ResolveStdtypes(CGPredefinedTypeKind.String),
-                        Parameters := [new CGParameterDefinition('aIndex', ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
+                        Parameters := [new CGParameterDefinition('aIndex', ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                         Virtuality := CGMemberVirtualityKind.Override,
                         Visibility := CGMemberVisibilityKind.Public,
                         &Static := true,
@@ -2223,8 +2223,8 @@ begin
 
   lcase := new CGSwitchStatement('aIndex'.AsNamedIdentifierExpression,lcases1);
   &type.Members.Add(new CGMethodDefinition("GetAttributeValue",[lcase],
-                                            Parameters := [new CGParameterDefinition('aIndex', ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
-                                            ReturnType := ResolveStdtypes(CGPredefinedTypeKind.String),
+                                            Parameters := [new CGParameterDefinition('aIndex', ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
+                                            ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                             Virtuality := CGMemberVirtualityKind.Override,
                                             Visibility := CGMemberVisibilityKind.Public,
                                             &Static := true,
@@ -2261,7 +2261,7 @@ begin
   var ltyperef := ResolveDataTypeToTypeRefFullQualified(library, entity.Name,Intf_name);
   {$REGION protected function GetItems(aIndex: Integer): %structtype%}
   lm := new CGMethodDefinition('GetItems',
-                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                           Visibility := CGMemberVisibilityKind.Protected,
                           ReturnType := ltyperef,
                           CallingConvention := CGCallingConventionKind.Register
@@ -2276,7 +2276,7 @@ begin
 
   {$REGION protected procedure SetItems(aIndex: Integer; const Value: %structtype%);}
   lm := new CGMethodDefinition('SetItems',
-                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeKind.Int32)),
+                          Parameters := [new CGParameterDefinition('aIndex',ResolveStdtypes(CGPredefinedTypeReference.Int32)),
                                          new CGParameterDefinition('Value', ltyperef,Modifier:= CGParameterModifierKind.Const)].ToList,
                           Visibility := CGMemberVisibilityKind.Protected,
                           CallingConvention := CGCallingConventionKind.Register);
@@ -2329,11 +2329,11 @@ begin
                             );
     ltype.Members.Add(lm);
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeReference.Int32)));
     lm.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, 'Clear',CallSiteKind:= CGCallSiteKind.Reference));
     var larritem := new CGPropertyAccessExpression(nil,'anArray',['i'.AsNamedIdentifierExpression.AsCallParameter].ToList);
     lm.Statements.Add(new CGForToLoopStatement('i',
-                                               ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                               ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                new CGIntegerLiteralExpression(0),
                                                new CGBinaryOperatorExpression(new CGFieldAccessExpression('anArray'.AsNamedIdentifierExpression,'Count',CallSiteKind:= CGCallSiteKind.Reference),
                                                                               new CGIntegerLiteralExpression(1),
@@ -2355,12 +2355,12 @@ begin
                             );
     ltype.Members.Add(lm);
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeKind.Int32)));
+    lm.LocalVariables:Add(new CGVariableDeclarationStatement('i',ResolveStdtypes(CGPredefinedTypeReference.Int32)));
     lm.Statements.Add(new CGMethodCallExpression('anArray'.AsNamedIdentifierExpression, 'Clear',CallSiteKind:= CGCallSiteKind.Reference));
     larritem := new CGPropertyAccessExpression(CGSelfExpression.Self,'Items',['i'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference);
 
     lm.Statements.Add(new CGForToLoopStatement('i',
-                                               ResolveStdtypes(CGPredefinedTypeKind.Int32),
+                                               ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                new CGIntegerLiteralExpression(0),
                                                new CGBinaryOperatorExpression(new CGFieldAccessExpression(CGSelfExpression.Self,'Count',CallSiteKind:= CGCallSiteKind.Reference),
                                                                               new CGIntegerLiteralExpression(1),
@@ -2380,7 +2380,7 @@ begin
                                     'GetItems'.AsNamedIdentifierExpression,
                                     'SetItems'.AsNamedIdentifierExpression,
                                     Visibility:= CGMemberVisibilityKind.Public,
-                                    Parameters := [new CGParameterDefinition('Index', ResolveStdtypes(CGPredefinedTypeKind.Int32))].ToList,
+                                    Parameters := [new CGParameterDefinition('Index', ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                                     &Default := true));
   {$ENDREGION}
 end;
@@ -2389,17 +2389,17 @@ method DelphiRodlCodeGen.AddGlobalConstants(file: CGCodeUnit; &library: RodlLibr
 begin
   //var lnamespace := GetNamespace(library);
 
-  file.Globals.Add(new CGFieldDefinition("LibraryUID", ResolveStdtypes(CGPredefinedTypeKind.String),
+  file.Globals.Add(new CGFieldDefinition("LibraryUID", ResolveStdtypes(CGPredefinedTypeReference.String),
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer := ('{'+String(library.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
   if library.CustomAttributes_lower.ContainsKey('wsdl') then
-    file.Globals.Add(new CGFieldDefinition("WSDLLocation",ResolveStdtypes(CGPredefinedTypeKind.String),
+    file.Globals.Add(new CGFieldDefinition("WSDLLocation",ResolveStdtypes(CGPredefinedTypeReference.String),
                     Constant := true,
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := ("'"+library.CustomAttributes_lower.Item['wsdl']+"'").AsLiteralExpression).AsGlobal());
 
-  file.Globals.Add(new CGFieldDefinition("DefaultNamespace",ResolveStdtypes(CGPredefinedTypeKind.String),
+  file.Globals.Add(new CGFieldDefinition("DefaultNamespace",ResolveStdtypes(CGPredefinedTypeReference.String),
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer := targetNamespace.AsLiteralExpression).AsGlobal());
@@ -2409,7 +2409,7 @@ begin
     ltargetnamespace := library.CustomAttributes_lower.Item['targetnamespace'];
   if String.IsNullOrEmpty(ltargetnamespace ) then ltargetnamespace := targetNamespace;
 
-  file.Globals.Add(new CGFieldDefinition("TargetNamespace",ResolveStdtypes(CGPredefinedTypeKind.String),
+  file.Globals.Add(new CGFieldDefinition("TargetNamespace",ResolveStdtypes(CGPredefinedTypeReference.String),
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
@@ -2423,7 +2423,7 @@ begin
   for lentity : RodlEventSink in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lname := lentity.Name;
-    file.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lname]), ResolveStdtypes(CGPredefinedTypeKind.String),
+    file.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lname]), ResolveStdtypes(CGPredefinedTypeReference.String),
                                 Constant := true,
                                 Visibility := CGMemberVisibilityKind.Public,
                                 Initializer := (lentity.Name).AsLiteralExpression).AsGlobal);
@@ -2436,7 +2436,7 @@ begin
        lentity.CustomAttributes_lower['type']:EqualsIgnoringCaseInvariant('SOAP') then begin
       var loc:='';
       if lentity.CustomAttributes_lower.ContainsKey('location') then loc := lentity.CustomAttributes_lower['location'];
-      file.Globals.Add(new CGFieldDefinition(String.Format("{0}_EndPointURI",[lname]),ResolveStdtypes(CGPredefinedTypeKind.String),
+      file.Globals.Add(new CGFieldDefinition(String.Format("{0}_EndPointURI",[lname]),ResolveStdtypes(CGPredefinedTypeReference.String),
                                               Constant := true,
                                               Visibility := CGMemberVisibilityKind.Public,
                                               Initializer := loc.AsLiteralExpression).AsGlobal);
@@ -2531,7 +2531,7 @@ begin
                   else
                     k := new CGMethodCallExpression(aSerializer, 'ReadLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'int64':      k := new CGMethodCallExpression(aSerializer, 'ReadInt64',[aName, aValue].ToList);
-    'boolean':    k := new CGMethodCallExpression(aSerializer, 'ReadEnumerated',[aName,GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeKind.Boolean)).AsCallParameter,aValue].ToList);
+    'boolean':    k := new CGMethodCallExpression(aSerializer, 'ReadEnumerated',[aName,GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList);
     'variant':    k := new CGMethodCallExpression(aSerializer, 'ReadVariant',[aName, aValue].ToList);
     'binary':     k := new CGMethodCallExpression(aSerializer, 'ReadBinary',[aName, aValue].ToList);
     'xml':        k := new CGMethodCallExpression(aSerializer, 'ReadXml',[aName, aValue].ToList);
@@ -2575,7 +2575,7 @@ begin
                   else
                     k := new CGMethodCallExpression(aSerializer, 'WriteLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'int64':      k := new CGMethodCallExpression(aSerializer, 'WriteInt64',[aName, aValue].ToList);
-    'boolean':    k := new CGMethodCallExpression(aSerializer, 'WriteEnumerated',[aName, GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeKind.Boolean)).AsCallParameter,aValue].ToList);
+    'boolean':    k := new CGMethodCallExpression(aSerializer, 'WriteEnumerated',[aName, GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList);
     'variant':    k := new CGMethodCallExpression(aSerializer, 'WriteVariant',[aName, aValue].ToList);
     'binary':     k := new CGMethodCallExpression(aSerializer, 'WriteBinary',[aName, aValue].ToList);
     'xml':        k := new CGMethodCallExpression(aSerializer, 'WriteXml',[aName, aValue].ToList);
@@ -2710,7 +2710,7 @@ begin
                                       Virtuality := CGMemberVirtualityKind.Override,
                                       CallingConvention := CGCallingConventionKind.Register);
     ltype.Members.Add(mem);
-    var ar := new CGArrayLiteralExpression(ElementType := ResolveStdtypes(CGPredefinedTypeKind.String));
+    var ar := new CGArrayLiteralExpression(ElementType := ResolveStdtypes(CGPredefinedTypeReference.String));
     for lr in entity.Roles.Roles do
       ar.Elements.Add((iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression);
     Invk_GetDefaultServiceRoles(CGMethodDefinition(mem), ar);
@@ -2752,7 +2752,7 @@ begin
     if lHasObjectDisposer then
       mem.LocalVariables:Add(new CGVariableDeclarationStatement('__lObjectDisposer','TROObjectDisposer'.AsTypeReference));
 
-    var ar := new CGArrayLiteralExpression(ElementType := ResolveStdtypes(CGPredefinedTypeKind.String));
+    var ar := new CGArrayLiteralExpression(ElementType := ResolveStdtypes(CGPredefinedTypeReference.String));
     if lmem.Roles.Roles.Count >0 then
       for lr in lmem.Roles.Roles do
         ar.Elements.Add((iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression);
@@ -3192,10 +3192,10 @@ begin
     result.LocalVariables := new List<CGVariableDeclarationStatement>;
     result.LocalVariables:Add(new CGVariableDeclarationStatement("__response",'TStream'.AsTypeReference));
     result.LocalVariables:Add(new CGVariableDeclarationStatement("tc",'TMyTransportChannel'.AsTypeReference));
-    result.LocalVariables:Add(new CGVariableDeclarationStatement("lRetry",ResolveStdtypes(CGPredefinedTypeKind.Boolean)));
+    result.LocalVariables:Add(new CGVariableDeclarationStatement("lRetry",ResolveStdtypes(CGPredefinedTypeReference.Boolean)));
     result.LocalVariables:Add(new CGVariableDeclarationStatement("lMessage",IROMessage_typeref));
     result.LocalVariables:Add(new CGVariableDeclarationStatement("lTransportChannel",IROTransportChannel_typeref));
-    result.LocalVariables:Add(new CGVariableDeclarationStatement("lFreeStream",ResolveStdtypes(CGPredefinedTypeKind.Boolean)));
+    result.LocalVariables:Add(new CGVariableDeclarationStatement("lFreeStream",ResolveStdtypes(CGPredefinedTypeReference.Boolean)));
     if assigned(operation.Result) then
       result.LocalVariables:Add(new CGVariableDeclarationStatement("lResult",result.ReturnType));
 
@@ -3476,7 +3476,7 @@ begin
   end;
 
   var lancestorName := GetServiceAncestor(library, entity);
-  file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeKind.String),
+  file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeReference.String),
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer := l_EntityName.AsLiteralExpression).AsGlobal());
@@ -3860,12 +3860,12 @@ begin
 
   {$REGION function DefaultNamespaces:string;}
   var m:= new CGMethodDefinition('DefaultNamespaces',
-                                  ReturnType :=ResolveStdtypes(CGPredefinedTypeKind.String),
+                                  ReturnType :=ResolveStdtypes(CGPredefinedTypeReference.String),
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
 
   m.LocalVariables := new List<CGVariableDeclarationStatement>;
-  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeKind.String), new CGLocalVariableAccessExpression('DefaultNamespace')));
+  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeReference.String), new CGLocalVariableAccessExpression('DefaultNamespace')));
 
   var lres := new CGLocalVariableAccessExpression('lres');
   var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);

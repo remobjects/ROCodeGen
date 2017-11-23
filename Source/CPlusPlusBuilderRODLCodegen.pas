@@ -60,14 +60,14 @@ begin
   PredefinedTypes.Add(CGPredefinedTypeKind.String,new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
 
   CodeGenTypes.RemoveAll;
-  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeKind.Int32));
+  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   CodeGenTypes.Add("datetime", new CGNamedTypeReference("TDateTime") isClasstype(False));
-  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeKind.Double));
+  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeReference.Double));
   CodeGenTypes.Add("currency", new CGNamedTypeReference("Currency") isClasstype(False));
   CodeGenTypes.Add("widestring", new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
   CodeGenTypes.Add("ansistring", new CGNamedTypeReference("String") &namespace(new CGNamespaceReference("System")) isClasstype(False));
-  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeKind.Int64));
-  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeKind.Boolean));
+  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeReference.Int64));
+  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeReference.Boolean));
   CodeGenTypes.Add("variant", new CGNamedTypeReference("Variant") isClasstype(False));
   CodeGenTypes.Add("binary", new CGNamedTypeReference("Binary") isClasstype(True));
   CodeGenTypes.Add("xml", ResolveInterfaceTypeRef(nil,'IXMLNode','',''));
@@ -415,7 +415,7 @@ begin
                                            Virtuality := CGMemberVirtualityKind.Virtual,
                                            CallingConvention := CGCallingConventionKind.Register);
   lmember_ct.Parameters.Add(new CGParameterDefinition('aUri', new CGConstantTypeReference('TROUri'.AsTypeReference)));
-  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
   service.Members.Add(lmember_ct);
   {$ENDREGION}
 
@@ -424,8 +424,8 @@ begin
                                            Visibility := CGMemberVisibilityKind.Public,
                                            Virtuality := CGMemberVirtualityKind.Virtual,
                                            CallingConvention := CGCallingConventionKind.Register);
-  lmember_ct.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeKind.String), Modifier := CGParameterModifierKind.Const));
-  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeKind.String), DefaultValue := ''.AsLiteralExpression));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+  lmember_ct.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
   service.Members.Add(lmember_ct);
   {$ENDREGION}
 end;
@@ -514,7 +514,7 @@ begin
   var ltemp := new CGLocalVariableAccessExpression('ltemp');
   if roles.Elements.Count > 0 then begin
     var ltemp_len := new CGFieldAccessExpression(ltemp,'Length', CallSiteKind := CGCallSiteKind.Instance);
-    &method.Statements.Add(new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeKind.Int), ltemp_len));
+    &method.Statements.Add(new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeReference.Int), ltemp_len));
     &method.Statements.Add(new CGAssignmentStatement(ltemp_len, new CGBinaryOperatorExpression(ltemp_len, new CGIntegerLiteralExpression(roles.Elements.Count), CGBinaryOperatorKind.Addition)));
     var llen :=new CGLocalVariableAccessExpression('llen');
     for i: Integer := 0 to roles.Elements.Count-1 do begin
@@ -533,7 +533,7 @@ begin
   var ltemp := new CGLocalVariableAccessExpression('ltemp');
   var ltemp_len := new CGFieldAccessExpression(ltemp,'Length', CallSiteKind := CGCallSiteKind.Instance);
   if roles.Elements.Count > 0 then begin
-    &method.Statements.Add(new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeKind.Int), ltemp_len));
+    &method.Statements.Add(new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeReference.Int), ltemp_len));
     &method.Statements.Add(new CGAssignmentStatement(ltemp_len, new CGBinaryOperatorExpression(ltemp_len, new CGIntegerLiteralExpression(roles.Elements.Count), CGBinaryOperatorKind.Addition)));
     var llen :=new CGLocalVariableAccessExpression('llen');
     for i: Integer := 0 to roles.Elements.Count-1 do begin
@@ -564,7 +564,7 @@ begin
                                               CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
                   Parameters := [new CGParameterDefinition('aMessage', IROMessage_typeref),
                                  new CGParameterDefinition('anException', new CGNamedTypeReference('Exception') &namespace(new CGNamespaceReference('System::Sysutils')) isclasstype(true)),
-                                 new CGParameterDefinition('aRetry', ResolveStdtypes(CGPredefinedTypeKind.Boolean), Modifier := CGParameterModifierKind.Var)].ToList,
+                                 new CGParameterDefinition('aRetry', ResolveStdtypes(CGPredefinedTypeReference.Boolean), Modifier := CGParameterModifierKind.Var)].ToList,
                   CallingConvention := CGCallingConventionKind.Register,
                   Visibility := CGMemberVisibilityKind.Public,
                   Virtuality := CGMemberVirtualityKind.Virtual));
@@ -590,14 +590,14 @@ begin
       //bool __fastcall GetBusy(void);
       service.Members.Add(new CGMethodDefinition('GetBusy',
                                                   [new CGMethodCallExpression(CGInheritedExpression.Inherited, 'GetBusy', CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-                                                  ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Boolean),
+                                                  ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Boolean),
                                                   Virtuality := CGMemberVirtualityKind.Override,
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
       //System::UnicodeString __fastcall GetMessageID(void);
       service.Members.Add(new CGMethodDefinition('GetMessageID',
                                                   [new CGMethodCallExpression(CGInheritedExpression.Inherited, 'GetMessageID',CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-                                                  ReturnType := ResolveStdtypes(CGPredefinedTypeKind.String),
+                                                  ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                   Virtuality := CGMemberVirtualityKind.Override,
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
@@ -606,7 +606,7 @@ begin
                                                   [new CGMethodCallExpression(CGInheritedExpression.Inherited, 'SetMessageID',
                                                                               ['aMessageID'.AsNamedIdentifierExpression.AsCallParameter],
                                                                               CallSiteKind := CGCallSiteKind.Static)],
-                                                  Parameters := [new CGParameterDefinition('aMessageID',ResolveStdtypes(CGPredefinedTypeKind.String))].ToList,
+                                                  Parameters := [new CGParameterDefinition('aMessageID',ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
                                                   Virtuality := CGMemberVirtualityKind.Override,
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
@@ -620,7 +620,7 @@ begin
       //bool __fastcall GetAnswerReceived(void);
       service.Members.Add(new CGMethodDefinition('GetAnswerReceived',
                                                   [new CGMethodCallExpression(CGInheritedExpression.Inherited, 'GetAnswerReceived', CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-                                                  ReturnType := ResolveStdtypes(CGPredefinedTypeKind.Boolean),
+                                                  ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Boolean),
                                                   Virtuality := CGMemberVirtualityKind.Override,
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
