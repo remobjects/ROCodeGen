@@ -460,7 +460,7 @@ begin
   var l_methodName := 'Create_'+l_EntityName;
 
   var l_creator:= new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
-                                   ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
+                                   [l_EntityName.AsLiteralExpression.AsCallParameter,
                                     l_methodName.AsNamedIdentifierExpression.AsCallParameter,
                                     cpp_ClassId(l_TInvoker.AsNamedIdentifierExpression).AsCallParameter]);
   r.Add(new CGVariableDeclarationStatement('lfactory','TROClassFactory'.AsTypeReference,l_creator));

@@ -3477,10 +3477,11 @@ begin
   end;
 
   var lancestorName := GetServiceAncestor(library, entity);
-  file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeReference.String),
-                  Constant := true,
-                  Visibility := CGMemberVisibilityKind.Public,
-                  Initializer := l_EntityName.AsLiteralExpression).AsGlobal());
+  if PureDelphi then
+    file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeReference.String),
+                    Constant := true,
+                    Visibility := CGMemberVisibilityKind.Public,
+                    Initializer := l_EntityName.AsLiteralExpression).AsGlobal());
 
   var lservice := new CGClassTypeDefinition(l_TName,lancestorName.AsTypeReference,[l_IName.AsTypeReference].ToList,
                                              Visibility := CGTypeVisibilityKind.Public);
