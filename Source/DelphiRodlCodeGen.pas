@@ -118,6 +118,7 @@ type
     method cpp_AddressOf(value: CGExpression): CGExpression;virtual;
     method cpp_GenerateArrayDestructor(anArray: CGTypeDefinition); virtual; empty;
     method cpp_DefaultNamespace:CGExpression;virtual;
+    method cpp_GetNamespaceForUses(aUse: RodlUse):String;virtual;
     {$ENDREGION}
   protected
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); virtual;
@@ -3840,6 +3841,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('uROEventReceiver'));
 
   var list := new List<String>;
+  var list_use := new List<RodlUse>;
   for lu: RodlUse in library.Uses.Items do begin
     var s1 := lu.Includes:DelphiModule;
     var lExt := 'hpp';
@@ -3853,6 +3855,7 @@ begin
     if not list.Contains(s1) then begin
       lUnit.Imports.Add(GenerateCGImport(s1,'',lExt));
       list.Add(s1);
+      list_use.Add(lu);
     end;
   end;
   {$ENDREGION}
@@ -3869,10 +3872,12 @@ begin
 
   var lres := new CGLocalVariableAccessExpression('lres');
   var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
-  for k in list do begin
+  for k in list_use do begin
     m.Statements.Add(new CGAssignmentStatement(lres,
                                                new CGBinaryOperatorExpression(lres1,
-                                                                              new CGFieldAccessExpression(CapitalizeString(k).AsNamedIdentifierExpression,'DefaultNamespace',CallSiteKind := CGCallSiteKind.Static),
+                                                                              new CGFieldAccessExpression(CapitalizeString(cpp_GetNamespaceForUses(k)).AsNamedIdentifierExpression,
+                                                                                  'DefaultNamespace',
+                                                                                  CallSiteKind := CGCallSiteKind.Static),
                                                                               CGBinaryOperatorKind.Addition)
                                                 ));
   end;
@@ -4286,5 +4291,9 @@ begin
   end;
 end;
 
+method DelphiRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse):String;
+begin
+  exit aUse.Name+'_Intf';
+end;
 
 end.

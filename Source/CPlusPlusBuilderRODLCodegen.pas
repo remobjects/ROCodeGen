@@ -23,6 +23,7 @@ type
     method cpp_GenerateArrayDestructor(anArray: CGTypeDefinition); override;
     method cpp_smartInit(file: CGCodeUnit); override;
     method cpp_DefaultNamespace:CGExpression; override;
+    method cpp_GetNamespaceForUses(aUse: RodlUse):String;override;
   protected
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
@@ -666,6 +667,16 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_DefaultNamespace:CGExpression;
 begin
   exit new CGFieldAccessExpression(targetNamespace.AsNamedIdentifierExpression, 'DefaultNamespace', CallSiteKind := CGCallSiteKind.Static);
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse): String;
+begin
+  if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then 
+    exit aUse.Name+'_Intf' // std RODL like DA, DA_simple => delphi mode
+  else if not String.IsNullOrEmpty(aUse.Namespace) then 
+    exit aUse.Namespace
+ else
+    exit aUse.Name;
 end;
 
 end.
