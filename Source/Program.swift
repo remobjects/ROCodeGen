@@ -317,14 +317,16 @@ do {
 		writeLn("Unsupported platform: "+options["platform"])
 		return 2
 	}
-	if defined("ECHOES"), let echoesRodlCodegen = activeRodlCodeGen as? EchoesCodeDomRodlCodeGen {
+	#if ECHOES
+	if let echoesRodlCodegen = activeRodlCodeGen as? EchoesCodeDomRodlCodeGen {
 		echoesRodlCodegen.Language = options["language"]
 		if echoesRodlCodegen.GetCodeDomProviderForLanguage() == nil {
 			writeLn("No CodeDom provider is registered for language: "+options["language"])
 			return 2
 		}
 	}
-	else if codegen == nil {
+	#endif
+	if codegen == nil {
 		writeSyntax()
 		writeLn("Unsupported language: "+options["language"])
 		return 2
