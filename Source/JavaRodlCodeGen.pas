@@ -150,7 +150,7 @@ begin
      else if not String.IsNullOrEmpty(Rodl.Namespace) then
       file.Imports.Add(new CGImport(Rodl.Namespace));
   end;
-  if not addROSDKPrefix then 
+  if not addROSDKPrefix then
     file.Imports.Add(new CGImport("com.remobjects.sdk"));
 {
   file.Imports.Add(new CGImport(new CGNamedTypeReference("java.net.URI")));

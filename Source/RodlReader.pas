@@ -68,7 +68,7 @@ type
   public
     constructor();abstract;
     constructor(nodeName:String);
-    method LoadFromXmlNode(node: XmlElement; aActivator: method : T);
+    method LoadFromXmlNode(node: XmlElement; aActivator: block : T);
     method GetInheritedItems: List<T>;
     method GetAllItems: List<T>;
     property Items: List<T> read fItems.Items;
@@ -97,7 +97,7 @@ type
     fItems: List<T> := new List<T>;
   public
     constructor(aOwner: RodlEntity; nodeName: String);
-    method LoadFromXmlNode(node: XmlElement; usedRodl: RodlUse; aActivator: method : T);
+    method LoadFromXmlNode(node: XmlElement; usedRodl: RodlUse; aActivator: block : T);
     method AddEntity(entity : T);
     method RemoveEntity(entity: T);
     method RemoveEntity(index: Int32);
