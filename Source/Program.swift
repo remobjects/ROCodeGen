@@ -317,17 +317,14 @@ do {
 		writeLn("Unsupported platform: "+options["platform"])
 		return 2
 	}
-	#if ECHOES
-	if let echoesRodlCodegen = activeRodlCodeGen as? EchoesCodeDomRodlCodeGen {
+	if defined("ECHOES"), let echoesRodlCodegen = activeRodlCodeGen as? EchoesCodeDomRodlCodeGen {
 		echoesRodlCodegen.Language = options["language"]
 		if echoesRodlCodegen.GetCodeDomProviderForLanguage() == nil {
 			writeLn("No CodeDom provider is registered for language: "+options["language"])
 			return 2
 		}
 	}
-	else
-	#endif
-	if codegen == nil {
+	else if codegen == nil {
 		writeSyntax()
 		writeLn("Unsupported language: "+options["language"])
 		return 2
@@ -435,7 +432,7 @@ do {
 
 							if options["service"] == nil || s.Name == options["service"] {
 
-								if let sourceFiles = activeRodlCodeGen?.GenerateImplementationFiles(rodlLibrary, options["namespace"], s.Name) {
+								if let sourceFiles = activeRodlCodeGen?.GenerateImplementationFiles( rodlLibrary, options["namespace"], s.Name) {
 									//for (n,c) in sourceFiles {
 									for n in sourceFiles.Keys {
 										_WriteText(targetFileName(n), sourceFiles[n]);
