@@ -388,7 +388,7 @@ begin
   value := getAncestorEntity;
 end;
 
-method RodlComplexEntity<T>.LoadFromXmlNode(node: XmlElement; aActivator: method : T);
+method RodlComplexEntity<T>.LoadFromXmlNode(node: XmlElement; aActivator: block : T);
 begin
   inherited LoadFromXmlNode(node);
   fItems.LoadFromXmlNode(node.FirstElementWithName(fItemsNodeName), nil, aActivator);
@@ -472,7 +472,7 @@ begin
   exit nil;
 end;
 
-method EntityCollection<T>.LoadFromXmlNode(node: XmlElement; usedRodl: RodlUse; aActivator: method : T);
+method EntityCollection<T>.LoadFromXmlNode(node: XmlElement; usedRodl: RodlUse; aActivator: block : T);
 begin
   if (node = nil) then exit;
 
