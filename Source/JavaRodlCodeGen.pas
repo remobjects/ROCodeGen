@@ -304,7 +304,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor}
-  var lStatements1: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  var lStatements1 := new List<CGStatement>();
   lStatements1.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, new List<CGCallParameter>()));
   if assigned(lInitializerCall) then begin
     lStatements1.Add(lInitializerCall);
@@ -320,7 +320,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor(aCapacity: Integer)}
-  var lStatements2: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  var lStatements2 := new List<CGStatement>();
   lStatements2.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, [ "aCapacity".AsNamedIdentifierExpression().AsCallParameter() ].ToList()));
   if assigned(lInitializerCall) then begin
     lStatements2.Add(lInitializerCall);
@@ -336,7 +336,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor(aCollection: Collection)}
-  var lStatements3: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  var lStatements3 := new List<CGStatement>();
   lStatements3.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, ["aCollection".AsNamedIdentifierExpression().AsCallParameter() ].ToList()));
   if assigned(lInitializerCall) then begin
     lStatements3.Add(lInitializerCall);
@@ -352,7 +352,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor(anArray: array of Object)}
-  var lStatements4: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  var lStatements4 := new List<CGStatement>();
   lStatements4.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, [ "anArray".AsNamedIdentifierExpression().AsCallParameter() ].ToList()));
   if assigned(lInitializerCall) then begin
     lStatements4.Add(lInitializerCall);
