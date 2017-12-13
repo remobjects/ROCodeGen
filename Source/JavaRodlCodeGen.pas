@@ -264,7 +264,11 @@ end;
 method JavaRodlCodeGen.GenerateArray(file: CGCodeUnit; library: RodlLibrary; entity: RodlArray);
 begin
   var lElementType: CGTypeReference := ResolveDataTypeToTypeRef(&library, SafeIdentifier(entity.ElementType));
+  var lElementTypeName: String  := entity.ElementType.ToLowerInvariant();
+  var lIsStandardType: Boolean := ReaderFunctions.ContainsKey(lElementTypeName);
   var lIsEnum: Boolean := isEnum(&library, entity.ElementType);
+  var lIsArray: Boolean := isArray(&library, entity.ElementType);
+  var lIsStruct: Boolean := isStruct(&library, entity.ElementType);
 
   var lArray := new CGClassTypeDefinition(SafeIdentifier(entity.Name), GenerateROSDKType("ArrayType").AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
@@ -421,32 +425,17 @@ begin
   {$ENDREGION}
 
   {$REGION method getItemAtIndex(anIndex: Integer): %ARRAY_TYPE%; override;}
-  var lMethodStatements: List<CGStatement> := new List<CGStatement>();
-  if lIsEnum then begin
-    lMethodStatements.Add(
-      new CGArrayElementAccessExpression(
-        new CGFieldAccessExpression(CGSelfExpression.Self, 'fEnumValues'),
-        [ CGExpression(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'getItemAtIndex', [ 'anIndex'.AsNamedIdentifierExpression().AsCallParameter() ].ToList())) ].ToList()
-      ).AsReturnStatement()
-    );
-  end
-  else begin
-    lMethodStatements.Add(
-      new CGTypeCastExpression(
-        new CGMethodCallExpression(
-          CGInheritedExpression.Inherited,
-          'getItemAtIndex',
-          [ 'anIndex'.AsNamedIdentifierExpression().AsCallParameter() ].ToList()
-        ),
-        lElementType,
-        ThrowsException := true
-      ).AsReturnStatement()
-    );
-  end;
-
   lArray.Members.Add(
     new CGMethodDefinition("getItemAtIndex",
-                            lMethodStatements,
+                            [
+                              CGStatement(
+                                new CGTypeCastExpression(
+                                  new CGMethodCallExpression(CGInheritedExpression.Inherited, 'getItemAtIndex', [ 'anIndex'.AsNamedIdentifierExpression().AsCallParameter() ].ToList()),
+                                  lElementType,
+                                  ThrowsException := true
+                                ).AsReturnStatement()
+                              )
+                            ].ToList(),
                             Parameters := [ new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32)) ].ToList(),
                             ReturnType := lElementType,
                             Virtuality := CGMemberVirtualityKind.Override,
@@ -475,21 +464,15 @@ begin
   {$ENDREGION}
 
   {$REGION method writeItemToMessage(aMessage: Message; anIndex: Integer); override;}
-  var lLower: String  := entity.ElementType.ToLowerInvariant();
-  var l_isStandard := ReaderFunctions.ContainsKey(lLower);
-  var l_isArray := False;
-  var l_isStruct := False;
   var l_methodName: String;
-  if l_isStandard then begin
-    l_methodName := ReaderFunctions[lLower];
+  if lIsStandardType then begin
+    l_methodName := ReaderFunctions[lElementTypeName];
   end
-  else if isArray(&library, entity.ElementType) then begin
+  else if lIsArray then begin
     l_methodName := "Array";
-    l_isArray := True;
   end
-  else if isStruct(&library, entity.ElementType) then begin
+  else if lIsStruct then begin
     l_methodName := "Complex";
-    l_isStruct :=True;
   end
   else if lIsEnum then begin
     l_methodName := "Enum";
@@ -514,27 +497,48 @@ begin
   {$ENDREGION}
 
   {$REGION method readItemFromMessage(aMessage: Message; anIndex: Integer); override;}
-  var l_arg_array : array of CGCallParameter;
-  if l_isStruct or l_isArray then begin
-    l_arg_array:= [l_arg0, new CGTypeOfExpression(lElementType.AsExpression).AsCallParameter];
+  var lArgList: List<CGCallParameter>;
+  if lIsStruct or lIsArray then begin
+    lArgList := [ l_arg0, new CGTypeOfExpression(lElementType.AsExpression()).AsCallParameter() ].ToList();
   end
   else begin
-    l_arg_array:= [l_arg0];
+    lArgList := [ l_arg0 ].ToList();
+  end;
+
+  var lMethodStatements: List<CGStatement> := new List<CGStatement>();
+  if lIsEnum then begin
+    lMethodStatements.Add(
+      new CGMethodCallExpression(
+        CGSelfExpression.Self,
+        "addItem",
+        [
+          new CGArrayElementAccessExpression(
+            new CGFieldAccessExpression(CGSelfExpression.Self, 'fEnumValues'),
+            [ CGExpression(new CGMethodCallExpression('aMessage'.AsNamedIdentifierExpression(), 'readEnum', lArgList)) ].ToList()
+          ).AsCallParameter()
+        ].ToList()
+      )
+    );
+  end
+  else begin
+    lMethodStatements.Add(
+      new CGMethodCallExpression(
+        CGSelfExpression.Self,
+        "addItem",
+        [ new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression(), "read" +  l_methodName, lArgList).AsCallParameter() ].ToList()
+      )
+    );
   end;
 
   lArray.Members.Add(
-    new CGMethodDefinition("readItemFromMessage",
-                           [new CGMethodCallExpression(CGSelfExpression.Self,
-                                                       "addItem",
-                                                       [new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression,
-                                                                                   "read" +  l_methodName,
-                                                                                   l_arg_array.ToList).AsCallParameter].ToList)
-                           ],
+    new CGMethodDefinition(
+      "readItemFromMessage",
+      lMethodStatements,
       Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
                    new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public
-      )
+    )
   );
   {$ENDREGION}
 end;
