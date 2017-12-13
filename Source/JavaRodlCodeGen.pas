@@ -421,7 +421,7 @@ begin
   {$ENDREGION}
 
   {$REGION method getItemAtIndex(anIndex: Integer): %ARRAY_TYPE%; override;}
-  var lMethodStatements: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  var lMethodStatements: List<CGStatement> := new List<CGStatement>();
   if lIsEnum then begin
     lMethodStatements.Add(
       new CGArrayElementAccessExpression(
