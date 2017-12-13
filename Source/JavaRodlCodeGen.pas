@@ -263,76 +263,118 @@ end;
 
 method JavaRodlCodeGen.GenerateArray(file: CGCodeUnit; library: RodlLibrary; entity: RodlArray);
 begin
-  var larray := new CGClassTypeDefinition(SafeIdentifier(entity.Name),GenerateROSDKType("ArrayType").AsTypeReference,
+  var lElementType: CGTypeReference := ResolveDataTypeToTypeRef(&library, SafeIdentifier(entity.ElementType));
+  var lIsEnum: Boolean := isEnum(&library, entity.ElementType);
+
+  var lArray := new CGClassTypeDefinition(SafeIdentifier(entity.Name), GenerateROSDKType("ArrayType").AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
                                           &Partial := true
                                           );
-  larray.Comment := GenerateDocumentation(entity);
-  file.Types.Add(larray);
-  if not isCooperMode then
-    larray.Attributes.Add(new CGAttribute("SuppressWarnings".AsTypeReference,
+  lArray.Comment := GenerateDocumentation(entity);
+  file.Types.Add(lArray);
+
+  if not isCooperMode then begin
+    lArray.Attributes.Add(new CGAttribute("SuppressWarnings".AsTypeReference,
                            ["rawtypes".AsLiteralExpression.AsCallParameter].ToList));
-  {$REGION private class _attributes: HashMap<String, String>;}
-  if (entity.CustomAttributes.Count > 0) then
-    larray.Members.Add(HandleAtributes_private(&library,entity));
+  end;
+
+  {$REGION Private class _attributes: HashMap<String, String>;}
+  if (entity.CustomAttributes.Count > 0) then begin
+    lArray.Members.Add(HandleAtributes_private(&library,entity));
+  end;
+  {$ENDREGION}
+
+  {$REGION Enum values cache}
+  // Actually this should be a static variable. Unfortunately it seems that atm the codegen doesn't allow to define static constructors
+  if lIsEnum then begin
+    // Cache field
+    lArray.Members.Add(new CGFieldDefinition('fEnumValues', new CGArrayTypeReference(lElementType)));
+
+    // Cache initializer
+    lArray.Members.Add(
+      new CGMethodDefinition('initEnumValues',
+                           [ new CGAssignmentStatement(new CGFieldAccessExpression(CGSelfExpression.Self, 'fEnumValues'),
+                                                      new CGMethodCallExpression(lElementType.AsExpression(), 'values')) ],
+                            Visibility := CGMemberVisibilityKind.Private));
+  end;
+  {$ENDREGION}
+
+  {$REGION Optional initializer call}
+  var lInitializerCall: CGStatement := iif(lIsEnum, new CGMethodCallExpression(CGSelfExpression.Self, 'initEnumValues'), nil);
   {$ENDREGION}
 
   {$REGION .ctor}
-  larray.Members.Add(
+  var lStatements1: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  lStatements1.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, new List<CGCallParameter>()));
+  if assigned(lInitializerCall) then begin
+    lStatements1.Add(lInitializerCall);
+  end;
+
+  lArray.Members.Add(
     new CGConstructorDefinition(
       Visibility := CGMemberVisibilityKind.Public,
-      Statements:= [
-        CGStatement(new CGConstructorCallStatement(CGInheritedExpression.Inherited, new List<CGCallParameter>))
-      ].ToList)
+      Statements := lStatements1
+      )
   );
+
   {$ENDREGION}
 
   {$REGION .ctor(aCapacity: Integer)}
-  larray.Members.Add(
+  var lStatements2: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  lStatements2.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, [ "aCapacity".AsNamedIdentifierExpression().AsCallParameter() ].ToList()));
+  if assigned(lInitializerCall) then begin
+    lStatements2.Add(lInitializerCall);
+  end;
+
+  lArray.Members.Add(
     new CGConstructorDefinition(
-            Parameters := [new CGParameterDefinition("aCapacity", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
-            Visibility := CGMemberVisibilityKind.Public,
-            Statements:=
-               [CGStatement(
-                  new CGConstructorCallStatement(CGInheritedExpression.Inherited,["aCapacity".AsNamedIdentifierExpression.AsCallParameter].ToList))
-               ].ToList
-            )
+      Parameters := [ new CGParameterDefinition("aCapacity", ResolveStdtypes(CGPredefinedTypeReference.Int32)) ].ToList(),
+      Visibility := CGMemberVisibilityKind.Public,
+      Statements := lStatements2
+      )
   );
   {$ENDREGION}
 
   {$REGION .ctor(aCollection: Collection)}
-  larray.Members.Add(
+  var lStatements3: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  lStatements3.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, ["aCollection".AsNamedIdentifierExpression().AsCallParameter() ].ToList()));
+  if assigned(lInitializerCall) then begin
+    lStatements3.Add(lInitializerCall);
+  end;
+
+  lArray.Members.Add(
     new CGConstructorDefinition(
       Visibility := CGMemberVisibilityKind.Public,
-      Parameters := [new CGParameterDefinition("aCollection", "java.util.Collection".AsTypeReference)].ToList,
-      Statements := [
-        CGStatement(
-            new CGConstructorCallStatement(CGInheritedExpression.Inherited,["aCollection".AsNamedIdentifierExpression.AsCallParameter].ToList))
-      ].ToList)
+      Parameters := [ new CGParameterDefinition("aCollection", "java.util.Collection".AsTypeReference()) ].ToList(),
+      Statements := lStatements3
+      )
   );
   {$ENDREGION}
 
-  var l_elementType := ResolveDataTypeToTypeRef(&library,SafeIdentifier(entity.ElementType));
-
   {$REGION .ctor(anArray: array of Object)}
-  larray.Members.Add(
+  var lStatements4: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  lStatements4.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, [ "anArray".AsNamedIdentifierExpression().AsCallParameter() ].ToList()));
+  if assigned(lInitializerCall) then begin
+    lStatements4.Add(lInitializerCall);
+  end;
+
+  lArray.Members.Add(
     new CGConstructorDefinition(
       Visibility := CGMemberVisibilityKind.Public,
-      Parameters := [new CGParameterDefinition("anArray", new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.Object)))].ToList,
-      Statements:= [
-        CGStatement(
-            new CGConstructorCallStatement(CGInheritedExpression.Inherited, ["anArray".AsNamedIdentifierExpression.AsCallParameter].ToList ))].ToList)
+      Parameters := [ new CGParameterDefinition("anArray", new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.Object))) ].ToList(),
+      Statements:= lStatements4
+      )
   );
   {$ENDREGION}
 
   {$REGION method add: %ARRAY_TYPE%;}
   if isComplex(&library,entity.ElementType) then
-    larray.Members.Add(
+    lArray.Members.Add(
       new CGMethodDefinition("add",
         Visibility := CGMemberVisibilityKind.Public,
-        ReturnType := l_elementType,
+        ReturnType := lElementType,
         Statements:=
-          [new CGVariableDeclarationStatement('lresult',l_elementType,new CGNewInstanceExpression(l_elementType)),
+          [new CGVariableDeclarationStatement('lresult',lElementType,new CGNewInstanceExpression(lElementType)),
            new CGMethodCallExpression(CGInheritedExpression.Inherited, "addItem", ["lresult".AsNamedIdentifierExpression.AsCallParameter].ToList),
            "lresult".AsNamedIdentifierExpression.AsReturnStatement
           ].ToList
@@ -343,35 +385,35 @@ begin
 
   {$REGION public class method getAttributeValue(aName: String): String; override;}
   if (entity.CustomAttributes.Count > 0) then
-    larray.Members.Add(HandleAtributes_public(&library,entity));
+    lArray.Members.Add(HandleAtributes_public(&library,entity));
   {$ENDREGION}
 
   {$REGION method addItem(anItem: %ARRAY_TYPE%)}
-  larray.Members.Add(
+  lArray.Members.Add(
     new CGMethodDefinition("addItem",
                            [new CGMethodCallExpression(CGInheritedExpression.Inherited, "addItem", ["anItem".AsNamedIdentifierExpression.AsCallParameter].ToList)],
                            Visibility := CGMemberVisibilityKind.Public,
-                           Parameters := [new CGParameterDefinition("anItem", l_elementType)].ToList));
+                           Parameters := [new CGParameterDefinition("anItem", lElementType)].ToList));
   {$ENDREGION}
 
   {$REGION method insertItem(anItem: %ARRAY_TYPE%; anIndex: Integer);}
-  larray.Members.Add(
+  lArray.Members.Add(
     new CGMethodDefinition("insertItem",
                            [new CGMethodCallExpression(CGInheritedExpression.Inherited,"insertItem",
                                                       ["anItem".AsNamedIdentifierExpression.AsCallParameter,
                                                       "anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList)],
-                            Parameters := [new CGParameterDefinition("anItem", l_elementType),
+                            Parameters := [new CGParameterDefinition("anItem", lElementType),
                                            new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                             Visibility := CGMemberVisibilityKind.Public));
   {$ENDREGION}
 
   {$REGION method replaceItemAtIndex(anItem: %ARRAY_TYPE%; anIndex: Integer);}
-  larray.Members.Add(
+  lArray.Members.Add(
     new CGMethodDefinition("replaceItemAtIndex",
                           [new CGMethodCallExpression(CGInheritedExpression.Inherited, "replaceItemAtIndex",
                                                   ["anItem".AsNamedIdentifierExpression.AsCallParameter,
                                                   "anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList)],
-                          Parameters := [new CGParameterDefinition("anItem", l_elementType),
+                          Parameters := [new CGParameterDefinition("anItem", lElementType),
                                          new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                           Visibility := CGMemberVisibilityKind.Public
       )
@@ -379,25 +421,43 @@ begin
   {$ENDREGION}
 
   {$REGION method getItemAtIndex(anIndex: Integer): %ARRAY_TYPE%; override;}
-  larray.Members.Add(
+  var lMethodStatements: System.Collections.Generic.List<CGStatement> := new System.Collections.Generic.List<CGStatement>();
+  if lIsEnum then begin
+    lMethodStatements.Add(
+      new CGArrayElementAccessExpression(
+        new CGFieldAccessExpression(CGSelfExpression.Self, 'fEnumValues'),
+        [ CGExpression(new CGMethodCallExpression(CGInheritedExpression.Inherited, 'getItemAtIndex', [ 'anIndex'.AsNamedIdentifierExpression().AsCallParameter() ].ToList())) ].ToList()
+      ).AsReturnStatement()
+    );
+  end
+  else begin
+    lMethodStatements.Add(
+      new CGTypeCastExpression(
+        new CGMethodCallExpression(
+          CGInheritedExpression.Inherited,
+          'getItemAtIndex',
+          [ 'anIndex'.AsNamedIdentifierExpression().AsCallParameter() ].ToList()
+        ),
+        lElementType,
+        ThrowsException := true
+      ).AsReturnStatement()
+    );
+  end;
+
+  lArray.Members.Add(
     new CGMethodDefinition("getItemAtIndex",
-                           [new CGTypeCastExpression(
-                                                    new CGMethodCallExpression(CGInheritedExpression.Inherited,
-                                                                                "getItemAtIndex",
-                                                                               ["anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList),
-                                                    l_elementType,
-                                                    ThrowsException := true).AsReturnStatement],
-                            Parameters :=[new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
-                            ReturnType := l_elementType,
+                            lMethodStatements,
+                            Parameters := [ new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32)) ].ToList(),
+                            ReturnType := lElementType,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public)
   );
   {$ENDREGION}
 
   {$REGION method itemClass: &Class;}
-  larray.Members.Add(
+  lArray.Members.Add(
     new CGMethodDefinition("itemClass",
-                           [new CGTypeOfExpression(l_elementType.AsExpression).AsReturnStatement],
+                           [new CGTypeOfExpression(lElementType.AsExpression).AsReturnStatement],
                             ReturnType := "Class".AsTypeReference,
                             Visibility := CGMemberVisibilityKind.Public
                             )
@@ -405,7 +465,7 @@ begin
   {$ENDREGION}
 
   {$REGION method itemTypeName: String;}
-  larray.Members.Add(
+  lArray.Members.Add(
     new CGMethodDefinition("itemTypeName",
                            [SafeIdentifier(entity.ElementType).AsLiteralExpression.AsReturnStatement],
                             ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -419,7 +479,6 @@ begin
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
-  var l_isEnum := False;
   var l_methodName: String;
   if l_isStandard then begin
     l_methodName := ReaderFunctions[lLower];
@@ -432,17 +491,18 @@ begin
     l_methodName := "Complex";
     l_isStruct :=True;
   end
-  else if isEnum(&library, entity.ElementType) then begin
+  else if lIsEnum then begin
     l_methodName := "Enum";
-    l_isEnum := True;
   end;
 
   var l_arg0 := new CGNilExpression().AsCallParameter;
   var l_arg1_exp: CGExpression := new CGMethodCallExpression(CGSelfExpression.Self,"getItemAtIndex",["anIndex".AsNamedIdentifierExpression.AsCallParameter].ToList);
-  if l_isEnum then l_arg1_exp := new CGMethodCallExpression(l_arg1_exp,"ordinal");
+  if lIsEnum then begin
+    l_arg1_exp := new CGMethodCallExpression(l_arg1_exp,"ordinal");
+  end;
   var l_arg1 := l_arg1_exp.AsCallParameter;
 
-  larray.Members.Add(
+  lArray.Members.Add(
     new CGMethodDefinition("writeItemToMessage",
                            [new CGMethodCallExpression("aMessage".AsNamedIdentifierExpression,"write" +  l_methodName,  [l_arg0,l_arg1].ToList)],
                             Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
@@ -456,13 +516,13 @@ begin
   {$REGION method readItemFromMessage(aMessage: Message; anIndex: Integer); override;}
   var l_arg_array : array of CGCallParameter;
   if l_isStruct or l_isArray then begin
-    l_arg_array:= [l_arg0, new CGTypeOfExpression(l_elementType.AsExpression).AsCallParameter];
+    l_arg_array:= [l_arg0, new CGTypeOfExpression(lElementType.AsExpression).AsCallParameter];
   end
   else begin
     l_arg_array:= [l_arg0];
   end;
 
-  larray.Members.Add(
+  lArray.Members.Add(
     new CGMethodDefinition("readItemFromMessage",
                            [new CGMethodCallExpression(CGSelfExpression.Self,
                                                        "addItem",
