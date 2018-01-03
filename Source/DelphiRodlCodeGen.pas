@@ -2822,7 +2822,10 @@ begin
                                         'InitializeResponseMessage',
                                         ['__Transport'.AsNamedIdentifierExpression.AsCallParameter,
                                         iif(library.DataSnap,'',library.Name).AsLiteralExpression.AsCallParameter,
-                                        iif(library.DataSnap,l_Iname,l_EntityName).AsLiteralExpression.AsCallParameter,
+                                        iif(library.DataSnap,
+                                            l_Iname.AsLiteralExpression, 
+                                            new CGPropertyAccessExpression(lMessage,'InterfaceName',CallSiteKind := CGCallSiteKind.Reference)
+                                            ).AsCallParameter,
                                         (lmem.Name+'Response').AsLiteralExpression.AsCallParameter
                                         ].ToList,
                                         CallSiteKind:= CGCallSiteKind.Reference));
