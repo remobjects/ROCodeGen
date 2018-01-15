@@ -24,6 +24,8 @@ type
     method cpp_smartInit(file: CGCodeUnit); override;
     method cpp_DefaultNamespace:CGExpression; override;
     method cpp_GetNamespaceForUses(aUse: RodlUse):String;override;
+    method cpp_GlobalCondition_ns:CGConditionalDefine;override;
+    method cpp_GlobalCondition_ns_name: String; override;
   protected
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
@@ -677,6 +679,16 @@ begin
     exit aUse.Namespace
  else
     exit aUse.Name;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_GlobalCondition_ns: CGConditionalDefine;
+begin
+  exit new CGConditionalDefine(cpp_GlobalCondition_ns_name) inverted(true);
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_GlobalCondition_ns_name: String;
+begin
+  exit targetNamespace+'_define';
 end;
 
 end.

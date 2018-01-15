@@ -119,6 +119,8 @@ type
     method cpp_GenerateArrayDestructor(anArray: CGTypeDefinition); virtual; empty;
     method cpp_DefaultNamespace:CGExpression;virtual;
     method cpp_GetNamespaceForUses(aUse: RodlUse):String;virtual;
+    method cpp_GlobalCondition_ns:CGConditionalDefine;virtual;empty;
+    method cpp_GlobalCondition_ns_name: String; virtual; empty;
     {$ENDREGION}
   protected
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); virtual;
@@ -2389,21 +2391,25 @@ end;
 method DelphiRodlCodeGen.AddGlobalConstants(file: CGCodeUnit; &library: RodlLibrary);
 begin
   //var lnamespace := GetNamespace(library);
+  var cond := cpp_GlobalCondition_ns();
 
   file.Globals.Add(new CGFieldDefinition("LibraryUID", ResolveStdtypes(CGPredefinedTypeReference.String),
-                  Constant := true,
-                  Visibility := CGMemberVisibilityKind.Public,
-                  Initializer := ('{'+String(library.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
+                                          Constant := true,
+                                          Visibility := CGMemberVisibilityKind.Public,
+                                          Condition := cond,
+                                          Initializer := ('{'+String(library.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
   if library.CustomAttributes_lower.ContainsKey('wsdl') then
     file.Globals.Add(new CGFieldDefinition("WSDLLocation",ResolveStdtypes(CGPredefinedTypeReference.String),
-                    Constant := true,
-                    Visibility := CGMemberVisibilityKind.Public,
-                    Initializer := ("'"+library.CustomAttributes_lower.Item['wsdl']+"'").AsLiteralExpression).AsGlobal());
+                                            Constant := true,
+                                            Visibility := CGMemberVisibilityKind.Public,
+                                            Condition := cond,
+                                            Initializer := ("'"+library.CustomAttributes_lower.Item['wsdl']+"'").AsLiteralExpression).AsGlobal());
 
   file.Globals.Add(new CGFieldDefinition("DefaultNamespace",ResolveStdtypes(CGPredefinedTypeReference.String),
-                  Constant := true,
-                  Visibility := CGMemberVisibilityKind.Public,
-                  Initializer := targetNamespace.AsLiteralExpression).AsGlobal());
+                                          Constant := true,
+                                          Visibility := CGMemberVisibilityKind.Public,
+                                          Condition := cond,
+                                          Initializer := targetNamespace.AsLiteralExpression).AsGlobal());
 
   var ltargetnamespace: String := '';
   if library.CustomAttributes_lower.ContainsKey('targetnamespace') then
@@ -2411,10 +2417,16 @@ begin
   if String.IsNullOrEmpty(ltargetnamespace ) then ltargetnamespace := targetNamespace;
 
   file.Globals.Add(new CGFieldDefinition("TargetNamespace",ResolveStdtypes(CGPredefinedTypeReference.String),
-                  Constant := true,
-                  Visibility := CGMemberVisibilityKind.Public,
-                  Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
+                                          Constant := true,
+                                          Visibility := CGMemberVisibilityKind.Public,
+                                          Condition := cond,
+                                          Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
 
+  if assigned(cond) then begin
+    file.Globals.Add(new CGFieldDefinition(cpp_GlobalCondition_ns_name, 
+                                           Visibility := CGMemberVisibilityKind.Public,
+                                           Condition := cond).AsGlobal());
+  end;
 
   for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
