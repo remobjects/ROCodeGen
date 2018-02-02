@@ -329,7 +329,7 @@ begin
   else begin
     getItemAtIndex := new CGTypeCastExpression(getItemAtIndex, lElementType, ThrowsException := true);
   end;
-  lList.Add(new CGVariableDeclarationStatement("__item", lElementType, getItemAtIndex, &ReadOnly := true));
+  lList.Add(new CGVariableDeclarationStatement("___item", lElementType, getItemAtIndex, &ReadOnly := true));
 
   var lLower: String  := aEntity.ElementType.ToLowerInvariant();
   var lMethodName: String;
@@ -347,7 +347,7 @@ begin
   end;
 
   var lArguments := new List<CGCallParameter>;
-  lArguments.Add("__item".AsNamedIdentifierExpression.AsCallParameter);
+  lArguments.Add("___item".AsNamedIdentifierExpression.AsCallParameter);
   lArguments.Add(new CGCallParameter(new CGNilExpression(), "withName"));
   if lIsEnum then
     lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
@@ -377,9 +377,9 @@ begin
 
   if lIsComplex or lIsEnum or lIsArray then
     lExpression := new CGTypeCastExpression(lExpression, lElementType, ThrowsException := true);
-  lList.Add(new CGVariableDeclarationStatement("__item", lElementType, lExpression, &ReadOnly := true));
+  lList.Add(new CGVariableDeclarationStatement("___item", lElementType, lExpression, &ReadOnly := true));
 
-  var lItem: CGExpression := "__item".AsNamedIdentifierExpression;
+  var lItem: CGExpression := "___item".AsNamedIdentifierExpression;
   if lIsSimple then begin
     case aEntity.ElementType.ToLowerInvariant of
       "integer": lItem := new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithInteger", [lItem.AsCallParameter]);
@@ -492,9 +492,9 @@ begin
     //  var __result: Integer;
     //  __result := (inherited itemAtIndex(aIndex) as NSNumber) as %ARRAY_TYPE%;
     //  exit __result;
-    lList.Add(new CGVariableDeclarationStatement("__result",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
+    lList.Add(new CGVariableDeclarationStatement("___result",ResolveStdtypes(CGPredefinedTypeReference.Int32)));
     lList.Add(new CGAssignmentStatement(
-                                     "__result".AsNamedIdentifierExpression,
+                                     "___result".AsNamedIdentifierExpression,
                                      new CGTypeCastExpression(
                                         new CGTypeCastExpression(
                                           new CGMethodCallExpression(CGInheritedExpression.Inherited, "itemAtIndex", ["aIndex".AsNamedIdentifierExpression.AsCallParameter].ToList),
@@ -506,7 +506,7 @@ begin
                                      )
 
                   ));
-    lList.Add("__result".AsNamedIdentifierExpression.AsReturnStatement);
+    lList.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
   end;
   if lIsEnum then begin
     //  exit inherited itemAtIndex(aIndex).intValue;
@@ -549,7 +549,7 @@ begin
   {$REGION method writeItemToMessage(aMessage: ROMessage) fromIndex(aIndex: Integer); override;}
   lList := new List<CGStatement>;
   //var __item: %ARRAY_TYPE% := self.itemAtIndex(aIndex);
-  lList.Add(new CGVariableDeclarationStatement("__item",lElementType,new CGMethodCallExpression(new CGSelfExpression,"itemAtIndex",["aIndex".AsNamedIdentifierExpression.AsCallParameter].ToList), &ReadOnly := true));
+  lList.Add(new CGVariableDeclarationStatement("___item",lElementType,new CGMethodCallExpression(new CGSelfExpression,"itemAtIndex",["aIndex".AsNamedIdentifierExpression.AsCallParameter].ToList), &ReadOnly := true));
   var lLower: String  := aEntity.ElementType.ToLowerInvariant();
   var lMethodName: String;
   if ReaderFunctions.ContainsKey(lLower) then begin
@@ -566,7 +566,7 @@ begin
   end;
 
   var lArguments := new List<CGCallParameter>;
-  lArguments.Add("__item".AsNamedIdentifierExpression.AsCallParameter);
+  lArguments.Add("___item".AsNamedIdentifierExpression.AsCallParameter);
   lArguments.Add(new CGCallParameter(new CGNilExpression(), "withName"));
   if lIsEnum then
     lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
@@ -584,7 +584,7 @@ begin
   {$REGION method method readItemFromMessage(aMessage: ROMessage) toIndex(aIndex: Integer); override;}
   lList := new List<CGStatement>;
   //  var __item: %ARRAY_TYPE%;
-  lList.Add(new CGVariableDeclarationStatement("__item", lElementType.NotNullable, &ReadOnly := true));
+  lList.Add(new CGVariableDeclarationStatement("___item", lElementType.NotNullable, &ReadOnly := true));
   lArguments:= new List<CGCallParameter>;
   lArguments.Add(new CGNilExpression().AsCallParameter);
   if lIsEnum then
@@ -599,9 +599,9 @@ begin
        lExpression,
        lElementType,
        ThrowsException := true);
-  lList.Add(new CGAssignmentStatement("__item".AsNamedIdentifierExpression, lExpression));
+  lList.Add(new CGAssignmentStatement("___item".AsNamedIdentifierExpression, lExpression));
   lList.Add(new CGCommentStatement("for efficiency, assumes this is called in ascending order"));
-  lList.Add(new CGMethodCallExpression(new CGSelfExpression, "addItem",["__item".AsNamedIdentifierExpression.AsCallParameter].ToList));
+  lList.Add(new CGMethodCallExpression(new CGSelfExpression, "addItem",["___item".AsNamedIdentifierExpression.AsCallParameter].ToList));
   lArray.Members.Add(
     new CGMethodDefinition(if IsSwift then "readItem" else "readItemFromMessage",
       Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference, ExternalName := if IsSwift then "from"),
@@ -771,13 +771,13 @@ begin
       Visibility := CGMemberVisibilityKind.Public);
     lEventInvoker.Members.Add(linvk_method);
     if IsAppleSwift then begin
-      linvk_method.Statements.Add(new CGVariableDeclarationStatement("__selPattern",
+      linvk_method.Statements.Add(new CGVariableDeclarationStatement("___selPattern",
                                                                      "NSString".AsTypeReference().NotNullable,
                                                                      new CGNewInstanceExpression("NSString".AsTypeReference,
                                                                                                 [SafeIdentifier(lop.Name).AsLiteralExpression.AsCallParameter("string")].ToList)));
     end
     else begin
-      linvk_method.Statements.Add(new CGVariableDeclarationStatement("__selPattern",
+      linvk_method.Statements.Add(new CGVariableDeclarationStatement("___selPattern",
                                                                      "NSString".AsTypeReference,
                                                                      new CGMethodCallExpression("NSMutableString".AsTypeReferenceExpression,
                                                                                                 "stringWithString",
@@ -789,16 +789,16 @@ begin
                                             ResolveStdtypes(CGPredefinedTypeReference.Int),
                                             new CGIntegerLiteralExpression(1),
                                             new CGIntegerLiteralExpression(lInParam.Count),
-                                            new CGAssignmentStatement("__selPattern".AsNamedIdentifierExpression, new CGMethodCallExpression("__selPattern".AsNamedIdentifierExpression, "stringByAppendingString", [":".AsLiteralExpression.AsCallParameter].ToList))
+                                            new CGAssignmentStatement("___selPattern".AsNamedIdentifierExpression, new CGMethodCallExpression("___selPattern".AsNamedIdentifierExpression, "stringByAppendingString", [":".AsLiteralExpression.AsCallParameter].ToList))
                                       ));
-    linvk_method.Statements.Add(new CGVariableDeclarationStatement("__selector",
+    linvk_method.Statements.Add(new CGVariableDeclarationStatement("___selector",
                                                                    SELType,
                                                                    new CGMethodCallExpression(nil,
                                                                                                     "NSSelectorFromString", [
                                                                                                     (if IsAppleSwift then
-                                                                                                      new CGTypeCastExpression("__selPattern".AsNamedIdentifierExpression, "String".AsTypeReference, GuaranteedSafe := true)
+                                                                                                      new CGTypeCastExpression("___selPattern".AsNamedIdentifierExpression, "String".AsTypeReference, GuaranteedSafe := true)
                                                                                                     else
-                                                                                                      "__selPattern".AsNamedIdentifierExpression).AsCallParameter].ToList),
+                                                                                                      "___selPattern".AsNamedIdentifierExpression).AsCallParameter].ToList),
                                                                    &ReadOnly := true));
     var if_true:= new CGBeginEndBlockStatement;
 
@@ -809,35 +809,35 @@ begin
                                                                                                 "methodSignatureForSelector",
                                                                                                 ["__selector".AsNamedIdentifierExpression.AsCallParameter].ToList)));}
     if IsAppleSwift then
-      if_true.Statements.Add(new CGVariableDeclarationStatement("__invocation",
+      if_true.Statements.Add(new CGVariableDeclarationStatement("___invocation",
                                                                 "ROInvocation".AsTypeReference,
                                                                 new CGNewInstanceExpression("ROInvocation".AsTypeReference,
-                                                                                            ["__selector".AsNamedIdentifierExpression.AsCallParameter("selector"),
+                                                                                            ["___selector".AsNamedIdentifierExpression.AsCallParameter("selector"),
                                                                                              "aHandler".AsNamedIdentifierExpression.AsCallParameter("object")].ToList),
                                                                 &ReadOnly := true))
     else
-      if_true.Statements.Add(new CGVariableDeclarationStatement("__invocation",
+      if_true.Statements.Add(new CGVariableDeclarationStatement("___invocation",
                                                                 "ROInvocation".AsTypeReference,
                                                                 new CGMethodCallExpression("ROInvocation".AsTypeReferenceExpression,
                                                                                            "invocationWithSelector",
-                                                                                           ["__selector".AsNamedIdentifierExpression.AsCallParameter,
+                                                                                           ["___selector".AsNamedIdentifierExpression.AsCallParameter,
                                                                                             "aHandler".AsNamedIdentifierExpression.AsCallParameter("object")].ToList),
                                                                 &ReadOnly := true));
     //Indices 0 and 1 indicate the hidden arguments self and _cmd, respectively; you should set these values directly with the target and selector properties. Use indices 2 and greater for the arguments normally passed in a message.
     var linc := 2;
     for m: RodlParameter in lInParam do begin
-      var lm_name:= "__"+SafeIdentifier(m.Name);
+      var lm_name:= "___"+SafeIdentifier(m.Name);
       if_true.Statements.Add(new CGVariableDeclarationStatement(lm_name,ResolveDataTypeToTypeRef(library,m.DataType),GetReaderExpression(&library,m)));
-      if_true.Statements.Add(new CGMethodCallExpression("__invocation".AsNamedIdentifierExpression,
+      if_true.Statements.Add(new CGMethodCallExpression("___invocation".AsNamedIdentifierExpression,
                                                         "setArgument",
                                                         [new CGCallParameter(new CGUnaryOperatorExpression(lm_name.AsNamedIdentifierExpression, CGUnaryOperatorKind.AddressOf)),
                                                         new CGCallParameter(new CGIntegerLiteralExpression(linc), "atIndex")].ToList));
       inc(linc);
     end;
-    if_true.Statements.Add(new CGMethodCallExpression("__invocation".AsNamedIdentifierExpression,"invoke"));
+    if_true.Statements.Add(new CGMethodCallExpression("___invocation".AsNamedIdentifierExpression,"invoke"));
     if_true.Statements.Add(new CGBooleanLiteralExpression(True).AsReturnStatement);
     linvk_method.Statements.Add(new CGIfThenElseStatement(
-                                        new CGMethodCallExpression("aHandler".AsNamedIdentifierExpression,"respondsToSelector",  ["__selector".AsNamedIdentifierExpression.AsCallParameter].ToList),
+                                        new CGMethodCallExpression("aHandler".AsNamedIdentifierExpression,"respondsToSelector",  ["___selector".AsNamedIdentifierExpression.AsCallParameter].ToList),
                                         if_true,
                                         new CGBooleanLiteralExpression(False).AsReturnStatement
     ));
@@ -918,7 +918,7 @@ begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
   if (aEntity.CustomAttributes.Count = 0) then exit;
   exit new CGFieldDefinition(
-                  "__attributes",
+                  "___attributes",
                   "NSDictionary".AsTypeReference,
                   &Static := true,
                   Visibility := CGMemberVisibilityKind.Private);
@@ -935,7 +935,7 @@ begin
                                   Virtuality := CGMemberVirtualityKind.Override,
                                   &Static := true);
 
-  var l_attributes := "__attributes".AsNamedIdentifierExpression;
+  var l_attributes := "___attributes".AsNamedIdentifierExpression;
   var list:= new List<CGCallParameter>;
   list.Add(new CGBooleanLiteralExpression(False).AsCallParameter);
   for l_key: String in aEntity.CustomAttributes.Keys do begin
@@ -1184,18 +1184,18 @@ begin
       lOutParameters.Add(p);
   end;
   if assigned(aEntity.Result) then begin
-    result.Statements.Add(new CGVariableDeclarationStatement("__result",result.ReturnType));
+    result.Statements.Add(new CGVariableDeclarationStatement("___result",result.ReturnType));
   end;
 
-  result.Statements.Add(new CGVariableDeclarationStatement("__localMessage",
+  result.Statements.Add(new CGVariableDeclarationStatement("___localMessage",
                                                            "ROMessage".AsTypeReference,
-                                                           new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "__message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
+                                                           new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "___message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
                                                            &ReadOnly := true));
 
   GenerateOperationAttribute(&library,aEntity,result.Statements);
-  result.Statements.Add(new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression,
+  result.Statements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression,
                                                    if IsAppleSwift then "initialize" else "initializeAsRequestMessage",
-                                                   [new CGPropertyAccessExpression(new CGSelfExpression, "__clientChannel").AsCallParameter(if IsAppleSwift then "asRequest"),
+                                                   [new CGPropertyAccessExpression(new CGSelfExpression, "___clientChannel").AsCallParameter(if IsAppleSwift then "asRequest"),
                                                    new CGCallParameter(library.Name.AsLiteralExpression, "libraryName"),
                                                    new CGCallParameter(new CGMethodCallExpression(new CGSelfExpression(), "__getActiveInterfaceName"), "interfaceName"),
                                                    new CGCallParameter(SafeIdentifier(aEntity.Name).AsLiteralExpression, "messageName")].ToList
@@ -1206,25 +1206,25 @@ begin
   var lFinallyStatements := if SwiftDialect = CGSwiftCodeGeneratorDialect.Silver then new List<CGStatement> else lTryStatements;
 
   for p: RodlParameter in lInParameters do
-    lTryStatements.Add(GetWriterStatement(&library, p, "__localMessage", true));
-  lTryStatements.Add(new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
-  lTryStatements.Add(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression, "__clientChannel"),
+    lTryStatements.Add(GetWriterStatement(&library, p, "___localMessage", true));
+  lTryStatements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
+  lTryStatements.Add(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression, "___clientChannel"),
                                                  "dispatch",
-                                                 ["__localMessage".AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                 ["___localMessage".AsNamedIdentifierExpression.AsCallParameter].ToList));
   if assigned(aEntity.Result) then
-    lTryStatements.Add(new CGAssignmentStatement("__result".AsNamedIdentifierExpression,
-                                                  GetReaderExpression(&library,aEntity.Result,"__localMessage")));
+    lTryStatements.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression,
+                                                  GetReaderExpression(&library,aEntity.Result,"___localMessage")));
 
   for p: RodlParameter in lOutParameters do
     lTryStatements.Add(new CGAssignmentStatement(
                             ApplyParamDirectionExpression(p.Name.AsNamedIdentifierExpression, p.ParamFlag),
-                            GetReaderExpression(&library, p ,"__localMessage")
+                            GetReaderExpression(&library, p ,"___localMessage")
                             ));
 
-  var lSelfMessage := new CGPropertyAccessExpression(new CGSelfExpression, "__message");
+  var lSelfMessage := new CGPropertyAccessExpression(new CGSelfExpression, "___message");
   lFinallyStatements.Add(new CGMethodCallExpression(nil, "objc_sync_enter", [lSelfMessage.AsCallParameter].ToList));
   lFinallyStatements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(lSelfMessage, "clientID"),
-                                         new CGPropertyAccessExpression("__localMessage".AsNamedIdentifierExpression, "clientID")));
+                                         new CGPropertyAccessExpression("___localMessage".AsNamedIdentifierExpression, "clientID")));
   lFinallyStatements.Add(new CGMethodCallExpression(nil,"objc_sync_exit",   [lSelfMessage.AsCallParameter].ToList));
 
   if SwiftDialect = CGSwiftCodeGeneratorDialect.Silver then begin
@@ -1235,7 +1235,7 @@ begin
   end;
 
   if assigned(aEntity.Result) then
-    result.Statements.Add("__result".AsNamedIdentifierExpression.AsReturnStatement);
+    result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
 end;
 
 method CocoaRodlCodeGen.GenerateServiceProxyMethodDeclaration(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
@@ -1255,9 +1255,9 @@ begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library ,aEntity);
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
   // exit self.__clientChannel.asyncDispatch(__localMessage) withProxy(self) start(true);
-  result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression,"__clientChannel"),
+  result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression,"___clientChannel"),
                                                     "asyncDispatch",
-                                                    ["__localMessage".AsNamedIdentifierExpression.AsCallParameter,
+                                                    ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
                                                      new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
                                                      new CGCallParameter(new CGBooleanLiteralExpression(True), "start")].ToList
                           ).AsReturnStatement);
@@ -1266,7 +1266,7 @@ end;
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
   result := new CGMethodDefinition("end" + PascalCase(aEntity.Name), Visibility := CGMemberVisibilityKind.Public);
-  result.Parameters.Add(new CGParameterDefinition("__asyncRequest", "ROAsyncRequest".AsTypeReference));
+  result.Parameters.Add(new CGParameterDefinition("___asyncRequest", "ROAsyncRequest".AsTypeReference));
   var lOutParameters := new List<RodlParameter>;
   for p: RodlParameter in aEntity.Items do begin
     if p.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then begin
@@ -1280,25 +1280,25 @@ begin
   end;
 
   if assigned(aEntity.Result) then
-    result.Statements.Add(new CGVariableDeclarationStatement("__result", result.ReturnType) );
-  result.Statements.Add(new CGVariableDeclarationStatement("__localMessage", "ROMessage".AsTypeReference, new CGPropertyAccessExpression("__asyncRequest".AsNamedIdentifierExpression, "responseMessage"), &ReadOnly := true));
+    result.Statements.Add(new CGVariableDeclarationStatement("___result", result.ReturnType) );
+  result.Statements.Add(new CGVariableDeclarationStatement("___localMessage", "ROMessage".AsTypeReference, new CGPropertyAccessExpression("___asyncRequest".AsNamedIdentifierExpression, "responseMessage"), &ReadOnly := true));
   GenerateOperationAttribute(&library,aEntity,Result.Statements);
   if assigned(aEntity.Result) then
-    result.Statements.Add(new CGAssignmentStatement("__result".AsNamedIdentifierExpression, GetReaderExpression(&library,aEntity.Result,"__localMessage")));
+    result.Statements.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression, GetReaderExpression(&library,aEntity.Result,"___localMessage")));
 
   for p: RodlParameter in lOutParameters do
     result.Statements.Add(new CGAssignmentStatement(
                                     ApplyParamDirectionExpression(p.Name.AsNamedIdentifierExpression,p.ParamFlag),
-                                    GetReaderExpression(&library,p,"__localMessage")
+                                    GetReaderExpression(&library,p,"___localMessage")
                                     ));
 
-  var lSelfMessage := new CGPropertyAccessExpression(new CGSelfExpression, "__message");
+  var lSelfMessage := new CGPropertyAccessExpression(new CGSelfExpression, "___message");
   result.Statements.Add(new CGMethodCallExpression(nil, "objc_sync_enter", [lSelfMessage.AsCallParameter].ToList));
-  result.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(lSelfMessage,"clientID"), new CGPropertyAccessExpression("__localMessage".AsNamedIdentifierExpression, "clientID")));
+  result.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(lSelfMessage,"clientID"), new CGPropertyAccessExpression("___localMessage".AsNamedIdentifierExpression, "clientID")));
   result.Statements.Add(new CGMethodCallExpression(nil,"objc_sync_exit", [lSelfMessage.AsCallParameter].ToList));
 
   if assigned(aEntity.Result) then
-    result.Statements.Add("__result".AsNamedIdentifierExpression.AsReturnStatement);
+    result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
 end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
@@ -1327,7 +1327,7 @@ begin
     end;
     if not IsAppleSwift then
       list.Add(new CGNilExpression().AsCallParameter);
-    Statements.Add(new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression,
+    Statements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression,
                                               "setupAttributes",
                                               [new CGMethodCallExpression(nil,"DictionaryFromNameValueList",list).AsCallParameter].ToList));
   end;
