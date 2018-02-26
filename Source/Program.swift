@@ -35,11 +35,12 @@ func writeSyntax() {
 	writeLn()
 	writeLn("  - oxygene, pas")
 	writeLn("  - hydrogene, c#, cs")
-	writeLn("  - silver")
+	writeLn("  - silver (RemObjects Swift)")
 	writeLn("  - swift (Apple Swift)")
 	writeLn("  - objective-c, Objc")
 	writeLn("  - delphi, pas, c++builder, cpp, c++")
-	writeLn("  - java")
+	writeLn("  - iodine (RemObjects' Java)")
+	writeLn("  - java (Oracle Java)")
 	writeLn()
 	writeLn("Additional options:")
 	writeLn()
@@ -214,9 +215,18 @@ do {
 			options["language"] = "cpp"
 			codegen = CGCPlusPlusCPPCodeGenerator(dialect: .CPlusPlusBuilder)
 			fileExtension = "cpp"
-		case "java":
+		case "iodine":
 			options["language"] = "java"
-			codegen = CGJavaCodeGenerator()
+			codegen = CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Iodine)
+			fileExtension = "java"
+		case "java":
+			if options["platform"]?.ToLower() == "java" {
+				options["language"] = "standard-java"
+				codegen = CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Standard)
+			} else {
+				options["language"] = "java"
+				codegen = CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Iodine)
+			}
 			fileExtension = "java"
 		case "javascript", "js":
 			options["language"] = "javascript"

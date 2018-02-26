@@ -16,8 +16,10 @@ public class CGHelpers {
 				return CGSwiftCodeGenerator(dialect: CGSwiftCodeGeneratorDialect.Standard)
 			case "delphi":
 				return CGDelphiCodeGenerator()
-			case "java":
-				return CGJavaCodeGenerator()
+			case "iodine":
+				return CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Iodine)
+			case "java", "standard-java":
+				return CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Standard)
 			case "javascript", "js":
 				return CGJavaScriptCodeGenerator()
 			default:
@@ -27,14 +29,14 @@ public class CGHelpers {
 
 	public static func FileExtensionForLanguage(_ language: String) -> String? {
 		switch language.ToLower() {
-			case "objc", "obj-c", "objectivec", "objective-c": return "m"
-			case "swift", "silver": return "swift"
-			case "pas", "oxygene", "delphi": return "pas"
-			case "cs", "csharp", "c#","vc#","visual c#", "hydrogene": return "cs"
-			case "vb", "vbnet", "vb.net", "visual basic", "visual basic.net": return "vb"
-			case "java": return "java"
-			case "js", "javascript": return "js"
-			case "cpp", "c++","c++builder","bcb": return "cpp"
+			case "objc", "obj-c", "objectivec", "objective-c": return ".m"
+			case "swift", "silver": return ".swift"
+			case "pas", "oxygene", "delphi": return ".pas"
+			case "cs", "csharp", "c#","vc#","visual c#", "hydrogene": return ".cs"
+			case "vb", "vbnet", "vb.net", "visual basic", "visual basic.net": return ".vb"
+			case "java", "iodine": return ".java"
+			case "js", "javascript": return ".js"
+			case "cpp", "c++","c++builder","bcb": return ".cpp"
 			default: return nil
 		}
 	}
