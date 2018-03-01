@@ -1254,7 +1254,7 @@ method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod(&library: RodlLibra
 begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library ,aEntity);
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
-  // exit self.__clientChannel.asyncDispatch(__localMessage) withProxy(self) start(true);
+  // exit self.___clientChannel.asyncDispatch(___localMessage) withProxy(self) start(true);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression,"___clientChannel"),
                                                     "asyncDispatch",
                                                     ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
@@ -1354,9 +1354,9 @@ begin
     result.Name := result.Name+ "__start";
   result.Parameters.Add(new CGParameterDefinition("___start", ResolveStdtypes(CGPredefinedTypeReference.Boolean), Externalname := if result.Parameters.Count > 0 then "start"));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
-  result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"__clientChannel"),
+  result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
-                                                  ["__localMessage".AsNamedIdentifierExpression.AsCallParameter,
+                                                  ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
                                                    new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
                                                    new CGCallParameter("___start".AsNamedIdentifierExpression, "start")].ToList
                                                   ).AsReturnStatement);
@@ -1370,9 +1370,9 @@ begin
   var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("arg", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
   result.Parameters.Add(new CGParameterDefinition("___block", bl, Externalname := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
-  result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"__clientChannel"),
+  result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
-                                                  ["__localMessage".AsNamedIdentifierExpression.AsCallParameter,
+                                                  ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
                                                    new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
                                                    new CGCallParameter("___block".AsNamedIdentifierExpression, (if IsAppleSwift then "startWith" else "startWithBlock"))].ToList
                           ).AsReturnStatement);
@@ -1394,22 +1394,22 @@ end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_Body(&library: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
 begin
-  Statements.Add(new CGVariableDeclarationStatement("__localMessage",
+  Statements.Add(new CGVariableDeclarationStatement("___localMessage",
                                                     "ROMessage".AsTypeReference,
                                                     new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "__message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
                                                     &ReadOnly := true));
   GenerateOperationAttribute(&library,aEntity,Statements);
   Statements.Add(
-    new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression,
+    new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression,
                                if IsAppleSwift then "initialize" else "initializeAsRequestMessage",
-                               [new CGCallParameter(new CGPropertyAccessExpression(new CGSelfExpression,"__clientChannel"), Name := if IsAppleSwift then "asRequest"),
+                               [new CGCallParameter(new CGPropertyAccessExpression(new CGSelfExpression,"___clientChannel"), Name := if IsAppleSwift then "asRequest"),
                                 new CGCallParameter(library.Name.AsLiteralExpression, "libraryName"),
                                 new CGCallParameter(new CGMethodCallExpression(new CGSelfExpression(), "__getActiveInterfaceName"), "interfaceName"),
                                 new CGCallParameter(SafeIdentifier(aEntity.Name).AsLiteralExpression, "messageName")].ToList));
   for p: RodlParameter in aEntity.Items do
     if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-      Statements.Add(GetWriterStatement(&library,p,"__localMessage", true, true));
-  Statements.Add(new CGMethodCallExpression("__localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
+      Statements.Add(GetWriterStatement(&library,p,"___localMessage", true, true));
+  Statements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
 end;
 
 method CocoaRodlCodeGen.GetNamespace(library: RodlLibrary): String;
