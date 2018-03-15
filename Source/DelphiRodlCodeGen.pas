@@ -3836,7 +3836,7 @@ begin
 
   lUnit.Initialization := new List<CGStatement>;
   lUnit.Finalization := new List<CGStatement>;
-  lUnit.HeaderComment := GenerateUnitComment;
+  lUnit.HeaderComment := GenerateUnitComment(False);
   Add_RemObjects_Inc(lUnit, &library);
   {$REGION interface uses}
 
@@ -3985,7 +3985,7 @@ begin
   Intf_name := Invk_name.Substring(0,Invk_name.Length-5)+'_Intf';
   lUnit.Initialization := new List<CGStatement>;
   lUnit.Finalization := new List<CGStatement>;
-  lUnit.HeaderComment := GenerateUnitComment;
+  lUnit.HeaderComment := GenerateUnitComment(False);
   Add_RemObjects_Inc(lUnit, library);
   {$REGION interface uses}
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
@@ -4095,7 +4095,7 @@ begin
   Invk_name := lunitname+ '_Invk';
 
 
-  lUnit.HeaderComment := GenerateUnitComment;
+  lUnit.HeaderComment := GenerateUnitComment(True);
   Add_RemObjects_Inc(lUnit, library);
   {$REGION interface uses}
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
