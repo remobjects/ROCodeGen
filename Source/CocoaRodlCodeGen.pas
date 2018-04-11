@@ -1396,7 +1396,7 @@ method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_Body(&library: Rodl
 begin
   Statements.Add(new CGVariableDeclarationStatement("___localMessage",
                                                     "ROMessage".AsTypeReference,
-                                                    new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "__message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
+                                                    new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "___message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
                                                     &ReadOnly := true));
   GenerateOperationAttribute(&library,aEntity,Statements);
   Statements.Add(
