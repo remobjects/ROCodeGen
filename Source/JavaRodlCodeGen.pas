@@ -170,7 +170,7 @@ begin
   if String.IsNullOrEmpty(lancestorName) then lancestorName := GenerateROSDKType("ComplexType");
 
   var lstruct := new CGClassTypeDefinition(SafeIdentifier(entity.Name), lancestorName.AsTypeReference,
-                            &Partial := true,
+                           &Partial := isCooperMode,
                             Visibility := CGTypeVisibilityKind.Public
                             );
   lstruct.Comment := GenerateDocumentation(entity);
@@ -272,7 +272,7 @@ begin
 
   var lArray := new CGClassTypeDefinition(SafeIdentifier(entity.Name), GenerateROSDKType("ArrayType").AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
-                                          &Partial := true
+                                         &Partial := isCooperMode
                                           );
   lArray.Comment := GenerateDocumentation(entity);
   file.Types.Add(lArray);
@@ -548,7 +548,7 @@ begin
   var lexception := new CGClassTypeDefinition(SafeIdentifier(entity.Name),
                                               GenerateROSDKType("ExceptionType").AsTypeReference,
                                               Visibility := CGTypeVisibilityKind.Public,
-                                              &Partial := true
+                                             &Partial := isCooperMode
                                               );
   lexception.Comment := GenerateDocumentation(entity);
   file.Types.Add(lexception);
@@ -670,7 +670,7 @@ begin
                                                 [lancestorName.AsTypeReference].ToList,
                                                 [lIService.Name.AsTypeReference].ToList,
                                                   Visibility := CGTypeVisibilityKind.Public,
-                                                  &Partial := true
+                                                 &Partial := isCooperMode
                                                   );
   file.Types.Add(lServiceProxy);
 
@@ -685,7 +685,7 @@ begin
                                                       [GenerateROSDKType("AsyncProxy").AsTypeReference].ToList,
                                                       [lIServiceAsync.Name.AsTypeReference].ToList,
                                                       Visibility := CGTypeVisibilityKind.Public,
-                                                      &Partial := true);
+                                                     &Partial := isCooperMode);
   file.Types.Add(lServiceAsyncProxy);
   GenerateServiceConstructors(&library,entity,lServiceAsyncProxy);
   for lop : RodlOperation in entity.DefaultInterface:Items do begin
@@ -709,7 +709,7 @@ begin
     {$REGION %event_sink%Event}
     var lOperation := new CGClassTypeDefinition(SafeIdentifier(lop.Name+"Event"),GenerateROSDKType("EventType").AsTypeReference,
                                                 Visibility := CGTypeVisibilityKind.Public,
-                                                &Partial := true
+                                               &Partial := isCooperMode
                                                 );
     if not isCooperMode then begin
       for lm :RodlParameter in lop.Items do begin
