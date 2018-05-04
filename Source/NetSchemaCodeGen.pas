@@ -1,6 +1,7 @@
-namespace RemObjects.DataAbstract.CodeGen4;
+﻿namespace RemObjects.DataAbstract.CodeGen4;
 
 uses
+  System,
   System.Collections.Generic,
   System.ComponentModel,
   System.IO,
@@ -234,7 +235,7 @@ type
 
             var comparerCall := new CGMethodCallExpression(comparerInstance, "Compare", fieldReference.AsCallParameter(), (new CGPropertyValueExpression()).AsCallParameter());
 
-            conditionStatement := new CGBinaryOperatorExpression(comparerCall, new CGIntegerLiteralExpression(0), CGBinaryOperatorKind.NotEquals);          
+            conditionStatement := new CGBinaryOperatorExpression(comparerCall, new CGIntegerLiteralExpression(0), CGBinaryOperatorKind.NotEquals);
           end;
 
           var statements := new CGBeginEndBlockStatement();
@@ -367,7 +368,7 @@ type
 
       var eventArgsInstance := new CGNewInstanceExpression(new CGNamedTypeReference(typeOf(PropertyChangedEventArgs).ToString()), (new CGNamedIdentifierExpression(NetTableDefinitionsCodeGen.EVENT_TRIGGER_PARAMETER_NAME)).AsCallParameter());
       var eventInvokeStatement := new CGMethodCallExpression(eventFieldReference, "Invoke", (new CGSelfExpression()).AsCallParameter(), eventArgsInstance.AsCallParameter());
-     
+
       if self.fFullyFeaturedCodeGen then begin
         conditionExpression := new CGBinaryOperatorExpression(
                                         new CGParenthesesExpression(conditionExpression),
