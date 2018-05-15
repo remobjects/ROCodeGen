@@ -164,8 +164,8 @@ type
 
       self.GeneratePropertyChangeEventDefinitions(typeDefinition);
 
-      self.GeneratePropertyChangingEventTrigger(typeDefinition);
       self.GeneratePropertyChangedEventTrigger(typeDefinition);
+      self.GeneratePropertyChangingEventTrigger(typeDefinition);
 
       self.GenerateChangeManagementMethods(typeDefinition);
 
@@ -286,10 +286,13 @@ type
         exit;
       end;
 
-      typeDefinition.ImplementedInterfaces.Add(new CGNamedTypeReference(typeOf(ICloneable).ToString()));
+      var implementedInterface := new CGNamedTypeReference(typeOf(ICloneable).ToString());
+      typeDefinition.ImplementedInterfaces.Add(implementedInterface);
 
       var cloneMethod := new CGMethodDefinition("Clone");
       cloneMethod.Visibility := CGMemberVisibilityKind.Public;
+      cloneMethod.ImplementsInterface := implementedInterface;
+      cloneMethod.ImplementsInterfaceMember := "Clone";
       typeDefinition.Members.Add(cloneMethod);
 
       cloneMethod.ReturnType := CGPredefinedTypeReference.Object;
@@ -317,17 +320,25 @@ type
 
     method GeneratePropertyChangeEventDefinitions(typeDefinition: CGClassTypeDefinition);
     begin
-      typeDefinition.ImplementedInterfaces.Add(new CGNamedTypeReference(typeOf(INotifyPropertyChanged).ToString()));
+      var implementedInterface := new CGNamedTypeReference(typeOf(INotifyPropertyChanged).ToString());
+
+      typeDefinition.ImplementedInterfaces.Add(implementedInterface);
 
       var eventDefinition := new CGEventDefinition(NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGED, new CGNamedTypeReference(typeOf(PropertyChangedEventHandler).ToString()));
       eventDefinition.Visibility := CGMemberVisibilityKind.Public;
+      eventDefinition.ImplementsInterface := implementedInterface;
+      eventDefinition.ImplementsInterfaceMember := NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGED;
       typeDefinition.Members.Add(eventDefinition);
 
       if self.fFullyFeaturedCodeGen then begin
-        typeDefinition.ImplementedInterfaces.Add(new CGNamedTypeReference(typeOf(INotifyPropertyChanging).ToString()));
+        implementedInterface := new CGNamedTypeReference(typeOf(INotifyPropertyChanging).ToString());
+
+        typeDefinition.ImplementedInterfaces.Add(implementedInterface);
 
         eventDefinition := new CGEventDefinition(NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGING, new CGNamedTypeReference(typeOf(PropertyChangingEventHandler).ToString()));
         eventDefinition.Visibility := CGMemberVisibilityKind.Public;
+        eventDefinition.ImplementsInterface := implementedInterface;
+        eventDefinition.ImplementsInterfaceMember := NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGING;
         typeDefinition.Members.Add(eventDefinition);
       end;
     end;
@@ -344,11 +355,11 @@ type
 
       triggerMethod.Parameters.Add(new CGParameterDefinition(NetTableDefinitionsCodeGen.EVENT_TRIGGER_PARAMETER_NAME, CGPredefinedTypeReference.String));
 
-      var eventFieldReference := new CGFieldAccessExpression(new CGSelfExpression(), NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGING);
-      var conditionExpression := new CGBinaryOperatorExpression(eventFieldReference, new CGNilExpression(), CGBinaryOperatorKind.NotEquals);
+      var eventReference := new CGEventAccessExpression(new CGSelfExpression(), NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGING);
+      var conditionExpression := new CGBinaryOperatorExpression(eventReference, new CGNilExpression(), CGBinaryOperatorKind.NotEquals);
 
       var eventArgsInstance := new CGNewInstanceExpression(new CGNamedTypeReference(typeOf(PropertyChangingEventArgs).ToString()), (new CGNamedIdentifierExpression(NetTableDefinitionsCodeGen.EVENT_TRIGGER_PARAMETER_NAME)).AsCallParameter());
-      var eventInvokeStatement := new CGMethodCallExpression(eventFieldReference, "Invoke", (new CGSelfExpression()).AsCallParameter(), eventArgsInstance.AsCallParameter());
+      var eventInvokeStatement := new CGMethodCallExpression(eventReference, "Invoke", (new CGSelfExpression()).AsCallParameter(), eventArgsInstance.AsCallParameter());
 
       triggerMethod.Statements.Add(new CGIfThenElseStatement(conditionExpression, eventInvokeStatement));
 
@@ -363,11 +374,11 @@ type
 
       triggerMethod.Parameters.Add(new CGParameterDefinition(NetTableDefinitionsCodeGen.EVENT_TRIGGER_PARAMETER_NAME, CGPredefinedTypeReference.String));
 
-      var eventFieldReference := new CGFieldAccessExpression(new CGSelfExpression(), NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGED);
-      var conditionExpression := new CGBinaryOperatorExpression(eventFieldReference, new CGNilExpression(), CGBinaryOperatorKind.NotEquals);
+      var eventReference := new CGEventAccessExpression(new CGSelfExpression(), NetTableDefinitionsCodeGen.EVENT_PROPERTY_CHANGED);
+      var conditionExpression := new CGBinaryOperatorExpression(eventReference, new CGNilExpression(), CGBinaryOperatorKind.NotEquals);
 
       var eventArgsInstance := new CGNewInstanceExpression(new CGNamedTypeReference(typeOf(PropertyChangedEventArgs).ToString()), (new CGNamedIdentifierExpression(NetTableDefinitionsCodeGen.EVENT_TRIGGER_PARAMETER_NAME)).AsCallParameter());
-      var eventInvokeStatement := new CGMethodCallExpression(eventFieldReference, "Invoke", (new CGSelfExpression()).AsCallParameter(), eventArgsInstance.AsCallParameter());
+      var eventInvokeStatement := new CGMethodCallExpression(eventReference, "Invoke", (new CGSelfExpression()).AsCallParameter(), eventArgsInstance.AsCallParameter());
 
       if self.fFullyFeaturedCodeGen then begin
         conditionExpression := new CGBinaryOperatorExpression(
