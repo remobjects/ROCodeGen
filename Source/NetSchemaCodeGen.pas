@@ -53,6 +53,20 @@ type
     end;
 
 
+    method GetValidIdentifier(typeName: String;  name: String): String;
+    begin
+      var identifier := self.GetValidIdentifier(name);
+
+      // In C# member names cannot be the same as their enclosing type
+      // Check is not case-sensitive because VB.NET and Oxygene don't care about identifier case
+      if String.Equals(identifier, typeName, StringComparison.OrdinalIgnoreCase) then begin
+        identifier := identifier + '_Field';
+      end;
+
+      exit identifier;
+    end;
+
+
     method GetTableRelationships(schema: Schema;  tableName: String): IList<SchemaRelationship>;
     begin
       var relationships: List<SchemaRelationship> := new List<SchemaRelationship>();
@@ -187,7 +201,7 @@ type
                                   new CGNamedTypeReference(fieldType.ToString()) defaultNullability(CGTypeNullabilityKind.Default));
         end;
 
-        var fieldName: String := self.GetValidIdentifier(schemaField.Name);
+        var fieldName: String := self.GetValidIdentifier(typeDefinition.Name, schemaField.Name);
         // In C# member names cannot be the same as their enclosing type
         // Check is not case-sensitive because VB.NET and Oxygene don't care about identifier case
         if String.Equals(fieldName, table.Name, StringComparison.OrdinalIgnoreCase) then begin
@@ -305,7 +319,7 @@ type
           continue;
         end;
 
-        var fieldName: String := NetTableDefinitionsCodeGen.CODE_FIELD_PREFIX + GetValidIdentifier(field.Name);
+        var fieldName: String := NetTableDefinitionsCodeGen.CODE_FIELD_PREFIX + self.GetValidIdentifier(typeDefinition.Name, field.Name);
         cloneMethod.Statements.Add(new CGAssignmentStatement(new CGFieldAccessExpression(clonedInstance, fieldName), new CGFieldAccessExpression(new CGSelfExpression(), fieldName)));
       end;
 
