@@ -192,8 +192,7 @@ type
         var fieldType: &Type := FieldUtils.DataTypeToType(schemaField.DataType);
         var fieldTypeReference: CGTypeReference;
         if fieldType.IsValueType and not schemaField.Required then begin
-          fieldTypeReference := new CGNamedTypeReference('System.Nullable');
-          CGNamedTypeReference(fieldTypeReference).GenericArguments := new List<CGTypeReference>([ new CGNamedTypeReference(fieldType.ToString()) ]);
+          fieldTypeReference := (new CGNamedTypeReference(fieldType.ToString()) defaultNullability(CGTypeNullabilityKind.NotNullable)).copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped);
         end
         else begin
           fieldTypeReference := iif(fieldType.IsArray,
