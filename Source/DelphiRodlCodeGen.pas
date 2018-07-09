@@ -1534,9 +1534,8 @@ begin
     lancestor := ResolveDataTypeToTypeRefFullQualified(library, 'I'+lancestorName+'_Async',Intf_name,lancestorName)
   else
     lancestor := 'IROAsyncInterface'.AsTypeReference;
-  ltype := new CGInterfaceTypeDefinition(l_IName_Async,lancestor,
+  ltype := new CGInterfaceTypeDefinition(l_IName_Async,lancestor,//InterfaceGuid := Guid.NewGuid,
                                          Visibility := CGTypeVisibilityKind.Public);
-  ltype.InterfaceGuid := Guid.NewGuid;
   file.Types.Add(ltype);
 
   {$REGION Invoke_%service_method%}
@@ -1558,7 +1557,7 @@ begin
     lancestor := ResolveDataTypeToTypeRefFullQualified(library, 'I'+lancestorName+'_AsyncEx',Intf_name,lancestorName)
   else
     lancestor := 'IROAsyncInterfaceEx'.AsTypeReference;
-  ltype := new CGInterfaceTypeDefinition(l_IName_AsyncEx,lancestor,InterfaceGuid := Guid.NewGuid,
+  ltype := new CGInterfaceTypeDefinition(l_IName_AsyncEx,lancestor,//InterfaceGuid := Guid.NewGuid,
                                       Visibility := CGTypeVisibilityKind.Public);
   file.Types.Add(ltype);
 
