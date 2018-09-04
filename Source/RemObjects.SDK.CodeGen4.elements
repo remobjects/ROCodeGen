@@ -72,6 +72,7 @@
     <Reference Include="RemObjects.SDK">
       <HintPath>..\..\..\..\RemObjects SDK for .NET\Bin\RemObjects.SDK.dll</HintPath>
     </Reference>
+    <Reference Include="Swift" />
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core">
