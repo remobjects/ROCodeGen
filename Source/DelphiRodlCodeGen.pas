@@ -68,6 +68,7 @@ type
     method CapitalizeString(aValue: String):String;virtual;
     method DuplicateType(aTypeRef: CGTypeReference; isClass: Boolean): CGTypeReference;
     method CreateCodeFirstAttributes;
+    method GenerateDestroyExpression(aExpr: CGExpression):CGStatement;
     {$ENDREGION}
 
     {$REGION generate _Intf}
@@ -357,7 +358,7 @@ begin
         lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'FreeInternalProperties'));
       for lentityItem :RodlTypedEntity in entity.Items do begin
         if isComplex(library,lentityItem.DataType) then
-          lm.Statements.Add(new CGDestroyInstanceExpression(('f'+lentityItem.Name).AsNamedIdentifierExpression));
+          lm.Statements.Add(GenerateDestroyExpression(('f'+lentityItem.Name).AsNamedIdentifierExpression));
       end;
       ltype.Members.Add(lm);
     {$ENDREGION}
@@ -428,18 +429,20 @@ begin
     for lentityItem :RodlTypedEntity in entity.Items do begin
       var entityname := lentityItem.Name;
       var fentityname := 'f'+lentityItem.Name;
+      var fentityname_expr := fentityname.AsNamedIdentifierExpression;
       if isComplex(library,lentityItem.DataType) then begin
         var ltemp := lct;
         var lSourcefentitynameExpr := new CGFieldAccessExpression(lSourceExpr,fentityname,CallSiteKind:= CGCallSiteKind.Reference);
         if not entity.AutoCreateProperties then begin
           ltemp := new CGBeginEndBlockStatement();
-          lct.Statements.Add(new CGIfThenElseStatement(new CGAssignedExpression(fentityname.AsNamedIdentifierExpression),ltemp));
+          lct.Statements.Add(new CGIfThenElseStatement(new CGAssignedExpression(fentityname_expr),ltemp));
         end;
+
         ltemp.Statements.Add(new CGIfThenElseStatement(new CGAssignedExpression(lSourcefentitynameExpr),
                                                        new CGMethodCallExpression(new CGFieldAccessExpression(CGSelfExpression.Self,entityname, CallSiteKind := CGCallSiteKind.Reference),'Assign',[lSourcefentitynameExpr.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference),
                                                        new CGBeginEndBlockStatement(
-                                                            [new CGDestroyInstanceExpression(fentityname.AsNamedIdentifierExpression),
-                                                            new CGAssignmentStatement(fentityname.AsNamedIdentifierExpression,CGNilExpression.Nil)]
+                                                            [GenerateDestroyExpression(fentityname_expr),
+                                                            new CGAssignmentStatement(fentityname_expr,CGNilExpression.Nil)]
                                                        )));
 
       end
@@ -653,7 +656,7 @@ begin
   lm.Statements.Add(err_ArrayIndexOutOfBounds);
   if isComplex(library,lElementType) then begin
     lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(fItems_aIndex, 'Value'.AsNamedIdentifierExpression, CGBinaryOperatorKind.NotEquals),
-                                                new CGBeginEndBlockStatement([new CGDestroyInstanceExpression(fItems_aIndex),
+                                                new CGBeginEndBlockStatement([GenerateDestroyExpression(fItems_aIndex),
                                                                               new CGAssignmentStatement(fItems_aIndex, 'Value'.AsNamedIdentifierExpression)].ToList)));
   end
   else begin
@@ -695,7 +698,7 @@ begin
                                                ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                fCount_subtract_1,
                                                anElementCount,
-                                               new CGDestroyInstanceExpression(fItems_i),
+                                               GenerateDestroyExpression(fItems_i),
                                                Direction := CGLoopDirectionKind.Backward));
   end;
   lm.Statements.Add(Array_SetLength(fItems, anElementCount));
@@ -780,7 +783,7 @@ begin
     lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression('Ref'.AsNamedIdentifierExpression,  fItems_aIndex, CGBinaryOperatorKind.NotEquals),
                                                 new CGBeginEndBlockStatement([
                                                                             new CGIfThenElseStatement(new CGAssignedExpression(fItems_aIndex),
-                                                                                                      new CGDestroyInstanceExpression(fItems_aIndex)),
+                                                                                                      GenerateDestroyExpression(fItems_aIndex)),
                                                                             new CGAssignmentStatement(fItems_aIndex,
                                                                                                       new CGTypeCastExpression('Ref'.AsNamedIdentifierExpression, el_typeref))].ToList)));
     {$ENDREGION}
@@ -799,7 +802,7 @@ begin
                                               ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                               new CGIntegerLiteralExpression(0),
                                               fCount_subtract_1,
-                                              new CGDestroyInstanceExpression(fItems_i)
+                                              GenerateDestroyExpression(fItems_i)
                                               ));
 
   end;
@@ -836,7 +839,7 @@ begin
   ));
   lm.Statements.Add(new CGEmptyStatement);
   if isComplex(library, lElementType) then begin
-    lm.Statements.Add(new CGDestroyInstanceExpression(new CGArrayElementAccessExpression(fItems,[aIndex].ToList)));
+    lm.Statements.Add(GenerateDestroyExpression(new CGArrayElementAccessExpression(fItems,[aIndex].ToList)));
     lm.Statements.Add(new CGEmptyStatement);
   end;
 
@@ -1340,7 +1343,7 @@ begin
                                                                         'Assign',
                                                                         [flde.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference),
                                              new CGBeginEndBlockStatement([
-                                                                            new CGDestroyInstanceExpression(fname.AsNamedIdentifierExpression),
+                                                                            GenerateDestroyExpression(fname.AsNamedIdentifierExpression),
                                                                             new CGAssignmentStatement(fname.AsNamedIdentifierExpression,CGNilExpression.Nil)]));
         if entity.AutoCreateProperties then
           lct.Statements.Add(new CGIfThenElseStatement(new CGAssignedExpression(new CGFieldAccessExpression(CGSelfExpression.Self,fname,CallSiteKind:= CGCallSiteKind.Reference)),
@@ -2154,7 +2157,7 @@ begin
           if isComplex(library, lmemparam.DataType) then
             List2.Add(new CGMethodCallExpression(lObjectDisposer,'Add',[('l_'+lmemparam.Name).AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
 
-        finList2.Add(new CGDestroyInstanceExpression(lObjectDisposer));
+        finList2.Add(GenerateDestroyExpression(lObjectDisposer));
         finList.Add(new CGTryFinallyCatchStatement(List2, FinallyStatements:= finList2));
         mem.Statements.Add(new CGTryFinallyCatchStatement(list, FinallyStatements:= finList));
       end
@@ -2499,11 +2502,7 @@ begin
     lexcept.Add(lexc1);
     aStatements.Add(new CGTryFinallyCatchStatement(trys,CatchBlocks := lexcept));
     if isComplex(library,lmem.DataType)  and not isEnum(library,lmem.DataType) then begin
-      var ldest: CGStatement := new CGDestroyInstanceExpression(local_int_name);
-      if PureDelphi then
-        ldest := new CGConditionalBlockStatement(new CGConditionalDefine('NEXTGEN'),
-                                                  [new CGMethodCallExpression(local_int_name,'DisposeOf',CallSiteKind:= CGCallSiteKind.Reference) as CGStatement].ToList,
-                                                  [ldest].ToList);
+      var ldest:= GenerateDestroyExpression(local_int_name);
       if aSerializeInitializedStructValues then
         aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(local_name,local_l_name, CGBinaryOperatorKind.NotEquals), ldest))
       else
@@ -2912,7 +2911,7 @@ begin
           ltry2.Add(new CGMethodCallExpression(lObjectDisposer,'Add',['lResult'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind:= CGCallSiteKind.Reference));
 
 
-      lfin2.Add(new CGDestroyInstanceExpression(lObjectDisposer));
+      lfin2.Add(GenerateDestroyExpression(lObjectDisposer));
       lfin.Add(new CGTryFinallyCatchStatement(ltry2, FinallyStatements:= lfin2));
     end;
 
@@ -3294,7 +3293,7 @@ begin
     var ltry2 := new CGTryFinallyCatchStatement();
     ltry2.Statements.Add(ltry3);
     ltry2.FinallyStatements.Add(new CGIfThenElseStatement(lFreeStream,
-                                                          new CGDestroyInstanceExpression(l__response)
+                                                          GenerateDestroyExpression(l__response)
                                                           ));
     ltry.Statements.Add(ltry2);
     ltry.FinallyStatements.Add(new CGAssignmentStatement(lMessage,CGNilExpression.Nil));
@@ -3671,6 +3670,17 @@ begin
   else begin
     exit aTypeRef;
   end;
+end;
+
+method DelphiRodlCodeGen.GenerateDestroyExpression(aExpr: CGExpression): CGStatement;
+begin
+  var op: CGStatement := new CGDestroyInstanceExpression(aExpr);
+  if PureDelphi then begin
+    op := new CGConditionalBlockStatement(new CGConditionalDefine('NEXTGEN'),
+                                          [new CGMethodCallExpression(aExpr,'DisposeOf',CallSiteKind:= CGCallSiteKind.Reference) as CGStatement].ToList,
+                                          [op].ToList);
+  end;
+  exit op;
 end;
 {$ENDREGION}
 
