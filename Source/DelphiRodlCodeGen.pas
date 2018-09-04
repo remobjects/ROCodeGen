@@ -1537,7 +1537,7 @@ begin
   ltype := new CGInterfaceTypeDefinition(l_IName_Async,lancestor,
                                          Visibility := CGTypeVisibilityKind.Public);
   if not PureDelphi then ltype.InterfaceGuid := Guid.NewGuid;
-  
+
   file.Types.Add(ltype);
 
   {$REGION Invoke_%service_method%}
@@ -2425,7 +2425,7 @@ begin
                                           Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
 
   if assigned(cond) then begin
-    file.Globals.Add(new CGFieldDefinition(cpp_GlobalCondition_ns_name, 
+    file.Globals.Add(new CGFieldDefinition(cpp_GlobalCondition_ns_name,
                                            Visibility := CGMemberVisibilityKind.Public,
                                            Condition := cond).AsGlobal());
   end;
@@ -2499,10 +2499,15 @@ begin
     lexcept.Add(lexc1);
     aStatements.Add(new CGTryFinallyCatchStatement(trys,CatchBlocks := lexcept));
     if isComplex(library,lmem.DataType)  and not isEnum(library,lmem.DataType) then begin
+      var ldest: CGStatement := new CGDestroyInstanceExpression(local_int_name);
+      if PureDelphi then
+        ldest := new CGConditionalBlockStatement(new CGConditionalDefine('NEXTGEN'),
+                                                  [new CGMethodCallExpression(local_int_name,'DisposeOf',CallSiteKind:= CGCallSiteKind.Reference) as CGStatement].ToList,
+                                                  [ldest].ToList);
       if aSerializeInitializedStructValues then
-        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(local_name,local_l_name, CGBinaryOperatorKind.NotEquals), new CGDestroyInstanceExpression(local_int_name)))
+        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(local_name,local_l_name, CGBinaryOperatorKind.NotEquals), ldest))
       else
-        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(local_int_name,local_l_name, CGBinaryOperatorKind.NotEquals), new CGDestroyInstanceExpression(local_int_name)))
+        aStatements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(local_int_name,local_l_name, CGBinaryOperatorKind.NotEquals), ldest));
     end;
     aStatements.Add(new CGAssignmentStatement(local_name, local_l_name));
   end;
@@ -2837,7 +2842,7 @@ begin
                                         ['__Transport'.AsNamedIdentifierExpression.AsCallParameter,
                                         iif(library.DataSnap,'',library.Name).AsLiteralExpression.AsCallParameter,
                                         iif(library.DataSnap,
-                                            l_Iname.AsLiteralExpression, 
+                                            l_Iname.AsLiteralExpression,
                                             new CGPropertyAccessExpression(lMessage,'InterfaceName',CallSiteKind := CGCallSiteKind.Reference)
                                             ).AsCallParameter,
                                         (lmem.Name+'Response').AsLiteralExpression.AsCallParameter
