@@ -42,10 +42,12 @@ type
     property OwnerLibrary: RodlLibrary read getOwnerLibrary;
     property DontCodegen: Boolean;
     {$endregion}
+    {$IFDEF ECHOES}
     method ToString: String; override;
     begin
       exit Name;
     end;
+    {$ENDIF}
   end;
 
   RodlTypedEntity = public abstract class (RodlEntity)
