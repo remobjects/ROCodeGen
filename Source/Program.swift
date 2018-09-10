@@ -315,11 +315,11 @@ do {
 		fileEncoding = Encoding.ASCII
 	}
 
-	func targetFileNameWithSuffix(_ suffix: String) -> String {
+	func targetFileNameWithSuffix(_ suffix: String) -> String? {
 		return Path.Combine(Path.GetParentDirectory(targetRodlFileName), Path.GetFileNameWithoutExtension(Path.GetFileName(targetRodlFileName))+"_"+suffix+"."+fileExtension)
 	}
 
-	func targetFileName(_ name: String) -> String {
+	func targetFileName(_ name: String) -> String? {
 		return Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
 	}
 

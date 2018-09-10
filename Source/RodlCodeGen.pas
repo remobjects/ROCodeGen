@@ -117,7 +117,7 @@ end;
 method RodlCodeGen.EntityNeedsCodeGen(entity: RodlEntity): Boolean;
 begin
   if entity.DontCodegen then exit false;
-  Result := not entity.IsFromUsedRodl;
+  Result := not (entity.IsFromUsedRodl or (entity.FromUsedRodlId <> Guid.EmptyGuid));
 {
   if (not Result) then begin
     Result := (entity.FromUsedRodl = nil);

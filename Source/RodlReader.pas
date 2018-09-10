@@ -20,13 +20,13 @@ type
   protected
     method FixLegacyTypes(aName: String):String;
   public
-    constructor(); virtual;
+    constructor(); virtual; empty;
     constructor(node: XmlElement);
     method LoadFromXmlNode(node: XmlElement); virtual;
     method HasCustomAttributes: Boolean;
     property IsFromUsedRodl: Boolean read assigned(FromUsedRodl);
     {$region Properties}
-    property EntityID: Guid;
+    property EntityID: Guid := Guid.EmptyGuid;
     property Name: String;
     property OriginalName: String read getOriginalName write fOriginalName;
     property Documentation: String;
@@ -37,11 +37,15 @@ type
     //property HasPluginData: Boolean read getPluginData;
     property GroupUnder: RodlGroup;
     property FromUsedRodl: RodlUse;
-    property FromUsedRodlId: Guid;
+    property FromUsedRodlId: Guid := Guid.EmptyGuid;
     property Owner: RodlEntity;
     property OwnerLibrary: RodlLibrary read getOwnerLibrary;
     property DontCodegen: Boolean;
     {$endregion}
+    method ToString: String; override;
+    begin
+      exit Name;
+    end;
   end;
 
   RodlTypedEntity = public abstract class (RodlEntity)
@@ -343,12 +347,6 @@ begin
       end;
     end;
   end;
-end;
-
-constructor RodlEntity();
-begin
-  EntityID := Guid.NewGuid();
-  FromUsedRodlId := Guid.EmptyGuid;
 end;
 
 constructor RodlEntity(node: XmlElement);
