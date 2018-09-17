@@ -63,7 +63,7 @@ func _WriteText(_ aFileName: String, _ Content: String) {
 	File.WriteBytes(aFileName, b);
 }
 
-let options = [String:String]()
+var options = [String:String]()
 
 func parseParameters(_ cmdlineParams: [String]) {
 	for s in cmdlineParams {
