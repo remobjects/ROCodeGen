@@ -28,8 +28,6 @@ type
     {$REGION CodeFirst attributes}
     property CF_condition: CGConditionalDefine;
     property CF_condition_inverted: CGConditionalDefine;
-    property attr_ROSerializeResultAsAnsiString: CGAttribute;
-    property attr_ROSerializeResultAsUTF8String: CGAttribute;
     property attr_ROSerializeAsAnsiString: CGAttribute;
     property attr_ROSerializeAsUTF8String: CGAttribute;
     property attr_ROServiceMethod: CGAttribute;
@@ -1542,10 +1540,10 @@ begin
           cg4_param.Type := new CGConstantTypeReference(cg4_param.Type)
         else
           cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
-        if CodeFirstCompatible then begin
-          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
-          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
-        end;
+//        if CodeFirstCompatible then begin
+//          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
+//          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
+//        end;
         GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
         GenerateCodeFirstCustomAttributes(cg4_param, rodl_param);
         cg4_member.Parameters.Add(cg4_param);
@@ -2102,8 +2100,8 @@ begin
     end;
     if assigned(rodl_member.Result) then begin
       if CodeFirstCompatible then begin
-        if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsAnsiString) else
-        if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsUTF8String);
+        if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
+        if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
       end;
       cg4_member.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,rodl_member.Result.DataType, Intf_name);
     end;
@@ -3589,8 +3587,8 @@ begin
     cg4_member.Statements.Add(AddMessageDirective(rodl_member.Name+" is not implemented yet!"));
     if assigned(rodl_member.Result) then begin
       if CodeFirstCompatible then begin
-        if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsAnsiString) else
-        if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeResultAsUTF8String);
+        if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
+        if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
       end;
       cg4_member.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,rodl_member.Result.DataType, Intf_name);
       if isComplex(library, rodl_member.Result.DataType) then
@@ -4283,11 +4281,9 @@ method DelphiRodlCodeGen.CreateCodeFirstAttributes;
 begin
   CF_condition := new CGConditionalDefine('RO_RTTI_Support');
   CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(True);
-
-  attr_ROSerializeResultAsAnsiString := new CGAttribute('ROSerializeResultAsAnsiString'.AsTypeReference, Condition := CF_condition);
-  attr_ROSerializeResultAsUTF8String := new CGAttribute('ROSerializeResultAsUTF8String'.AsTypeReference, Condition := CF_condition);
-  attr_ROSerializeAsAnsiString := new CGAttribute('ROSerializeAsAnsiString'.AsTypeReference, Condition := CF_condition);
-  attr_ROSerializeAsUTF8String := new CGAttribute('ROSerializeAsUTF8String'.AsTypeReference, Condition := CF_condition);
+  
+  attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference, 'emAnsi'.AsNamedIdentifierExpression.asCallParameter, Condition := CF_condition);
+  attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference, 'emUTF8'.AsNamedIdentifierExpression.asCallParameter, Condition := CF_condition);
 
   attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, Condition := CF_condition);
   attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, Condition := CF_condition);
