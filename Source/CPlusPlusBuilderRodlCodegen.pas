@@ -382,7 +382,7 @@ begin
 
   result.Add(new CGIfThenElseStatement( new CGUnaryOperatorExpression(lQuery,CGUnaryOperatorKind.Not),
                                         new CGBeginEndBlockStatement(
-                                            [ new CGDestroyInstanceExpression(lproxy),
+                                            [ GenerateDestroyExpression(lproxy),
                                               new CGThrowStatement(new CGNewInstanceExpression('EIntfCastError'.AsNamedIdentifierExpression,
                                               [String.Format('{0} interface not supported',[aInterface.Name]).AsLiteralExpression.AsCallParameter]))
                                             ]),

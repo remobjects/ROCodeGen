@@ -3047,7 +3047,7 @@ begin
                                          l_EID.AsNamedIdentifierExpression.AsCallParameter].ToList,
                                         CallSiteKind := CGCallSiteKind.Reference));
 
-    lfin.Add(new CGMethodCallExpression(l__eventdata,'Free',CallSiteKind := CGCallSiteKind.Reference));
+    lfin.Add(GenerateDestroyExpression(l__eventdata));
     lfin.Add(new CGAssignmentStatement(lmessage,CGNilExpression.Nil));
 
     mem.Statements.Add(new CGTryFinallyCatchStatement(ltry, FinallyStatements :=lfin));
@@ -3696,13 +3696,7 @@ end;
 
 method DelphiRodlCodeGen.GenerateDestroyExpression(aExpr: CGExpression): CGStatement;
 begin
-  var op: CGStatement := new CGDestroyInstanceExpression(aExpr);
-  if PureDelphi then begin
-    op := new CGConditionalBlockStatement(new CGConditionalDefine('NEXTGEN'),
-                                          [new CGMethodCallExpression(aExpr,'DisposeOf',CallSiteKind := CGCallSiteKind.Reference) as CGStatement].ToList,
-                                          [op].ToList);
-  end;
-  exit op;
+  exit new CGMethodCallExpression(nil, 'FreeOrDisposeOf',[aExpr.AsCallParameter], CallSiteKind := CGCallSiteKind.Reference);    
 end;
 {$ENDREGION}
 
@@ -3943,6 +3937,7 @@ begin
 
   cpp_smartInit(lUnit);
   {$REGION implementation uses}
+  lUnit.ImplementationImports.Add(GenerateCGImport('uROSystem'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uROSerializer'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uROClient'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uROTransportChannel'));
@@ -4076,6 +4071,7 @@ begin
 
   cpp_smartInit(lUnit);
   {$REGION implementation uses}
+  lUnit.ImplementationImports.Add(GenerateCGImport('uROSystem'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uROEventRepository'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uRORes'));
   lUnit.ImplementationImports.Add(GenerateCGImport('uROClient'));
