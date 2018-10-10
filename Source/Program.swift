@@ -51,15 +51,17 @@ func writeSyntax() {
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --no-utf8 (disable UTF-8 for IDEs from last century)")
+	writeLn("  --no-bom (omit BOM from UTF-8 files; default fore java)")
 	writeLn()
 
 	#hint add --await
 }
 
 var fileEncoding = Encoding.UTF8
+var omitBom = false
 
 func _WriteText(_ aFileName: String, _ Content: String) {
-	let b = fileEncoding.GetBytes(Content, includeBOM: true);
+	let b = fileEncoding.GetBytes(Content, includeBOM: !omitBom);
 	File.WriteBytes(aFileName, b);
 }
 
@@ -124,7 +126,7 @@ do {
 
 	var targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName;
 	if let outPath = options["outpath"] {
-		targetRodlFileName = Path.Combine(outPath, Path.GetFileName(targetRodlFileName))
+		targetRodlFileName = Path.Combine(outPath, Path.GetFileName(targetRodlFileName))!
 		Folder.Create(Path.GetParentDirectory(targetRodlFileName))
 	}
 
@@ -222,6 +224,7 @@ do {
 		case "java":
 			if options["platform"]?.ToLower() == "java" {
 				options["language"] = "standard-java"
+				omitBom = true
 				codegen = CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Standard)
 			} else {
 				options["language"] = "java"
@@ -313,6 +316,9 @@ do {
 
 	if options["no-utf8"] != nil {
 		fileEncoding = Encoding.ASCII
+	}
+	if options["no-bom"] != nil {
+		omitBom = true
 	}
 
 	func targetFileNameWithSuffix(_ suffix: String) -> String? {
