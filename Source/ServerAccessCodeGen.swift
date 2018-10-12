@@ -11,7 +11,7 @@ public __abstract class ServerAccessCodeGen {
 	}
 
 	func isCodeGenerationRequired(_ service: RodlService!) -> Boolean {
-		if service.DontCodegen {
+		if service.Abstract || service.DontCodegen {
 			return false;
 		}
 
@@ -305,16 +305,17 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 	}
 
 	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
-		let field = CGFieldDefinition("_serverUrl", "System.String".AsTypeReference().NotNullable)
-		serverAccess.Members.Add(field)
+		serverAccess.Members.Add(CGFieldDefinition("_serverUrl", "System.String".AsTypeReference().NotNullable))
+		serverAccess.Members.Add(CGFieldDefinition("_clientChannel", "IClientChannel".AsTypeReference().NotNullable))
+		serverAccess.Members.Add(CGFieldDefinition("_message", "IMessage".AsTypeReference().NotNullable))
 
-		let addressProperty = CGPropertyDefinition("ServerUrl", "System.String".AsTypeReference().NotNullable)
-		serverAccess.Members.Add(addressProperty)
-		addressProperty.Visibility = .Public
+		let urlProperty = CGPropertyDefinition("ServerUrl", "System.String".AsTypeReference().NotNullable)
+		serverAccess.Members.Add(urlProperty)
+		urlProperty.Visibility = .Public
 
-		let propertyGetter = List<CGStatement>()
-		propertyGetter.Add(CGUnaryOperatorExpression(CGFieldAccessExpression(CGSelfExpression.`Self`, "_serverUrl"), .ForceUnwrapNullable).AsReturnStatement())
-		addressProperty.GetStatements = propertyGetter
+		let urlPropertyGetter = List<CGStatement>()
+		urlPropertyGetter.Add(CGUnaryOperatorExpression(CGFieldAccessExpression(CGSelfExpression.`Self`, "_serverUrl"), .ForceUnwrapNullable).AsReturnStatement())
+		urlProperty.GetStatements = urlPropertyGetter
 
 		let ctor = CGConstructorDefinition()
 		serverAccess.Members.Add(ctor)
@@ -327,6 +328,18 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		} else {
 			ctor.Statements.Add(CGAssignmentStatement(CGFieldAccessExpression(CGSelfExpression.`Self`, "_serverUrl"), "http://yourserver.example.com:8099/bin".AsLiteralExpression()))
 		}
+
+		ctor.Statements.Add(CGAssignmentStatement(
+								CGFieldAccessExpression(CGSelfExpression.`Self`, "_clientChannel"),
+								CGMethodCallExpression(CGTypeReferenceExpression("ClientChannel".AsTypeReference()),
+														"ChannelMatchingTargetUri",
+														[ CGFieldAccessExpression(CGSelfExpression.`Self`, "_serverUrl").AsCallParameter() ])));
+
+		ctor.Statements.Add(CGAssignmentStatement(
+								CGFieldAccessExpression(CGSelfExpression.`Self`, "_message "),
+								CGMethodCallExpression(CGTypeReferenceExpression("Message".AsTypeReference()),
+														"MessageMatchingTargetUri",
+														[ CGFieldAccessExpression(CGSelfExpression.`Self`, "_serverUrl").AsCallParameter() ])));
 	}
 
 	override func generateLoginPattern(_ serverAccess: CGClassTypeDefinition) {
@@ -357,7 +370,10 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		property.Visibility = .Public
 
 		let propertyGetter = List<CGStatement>()
-		let create = CGMethodCallExpression(CGTypeReferenceExpression(proxyClassType), "Create", [ CGPropertyAccessExpression(CGSelfExpression.`Self`, "ServerUrl").AsCallParameter("url") ])
+		let create = CGMethodCallExpression(CGTypeReferenceExpression(proxyClassType),
+											"Create",
+											[ CGPropertyAccessExpression(CGSelfExpression.`Self`, "_message").AsCallParameter("message"),
+												CGPropertyAccessExpression(CGSelfExpression.`Self`, "_clientChannel").AsCallParameter("clientChannel"), ])
 		propertyGetter.Add(CGUnaryOperatorExpression(create, .ForceUnwrapNullable).AsReturnStatement()) // workaround, while CodeDom-based CG cant emit non-nullable Co* methods
 		property.GetStatements = propertyGetter
 	}
