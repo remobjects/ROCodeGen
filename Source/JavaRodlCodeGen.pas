@@ -595,7 +595,7 @@ begin
                         new CGConstructorDefinition(
                                                     Parameters := [new CGParameterDefinition("anExceptionMessage", ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
                                                     Visibility := CGMemberVisibilityKind.Public,
-                                                    statements := [CGStatement(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
+                                                    Statements := [CGStatement(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
                                                                                                               ["anExceptionMessage".AsNamedIdentifierExpression.AsCallParameter].ToList))].ToList
                                                     ));
   {$ENDREGION}
@@ -1362,9 +1362,9 @@ begin
   var ltype : CGTypeDefinition;
 
   if isCooperMode then
-    ltype := new CGClassTypeDefinition(GetGlobalName(library), visibility:= CGTypeVisibilityKind.Public)
+    ltype := new CGClassTypeDefinition(GetGlobalName(library), Visibility:= CGTypeVisibilityKind.Public)
   else
-    ltype := new CGInterfaceTypeDefinition(GetGlobalName(library), visibility:= CGTypeVisibilityKind.Public);
+    ltype := new CGInterfaceTypeDefinition(GetGlobalName(library), Visibility:= CGTypeVisibilityKind.Public);
 
   file.Types.Add(ltype);
 

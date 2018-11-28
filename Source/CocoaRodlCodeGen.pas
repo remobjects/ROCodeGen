@@ -356,8 +356,8 @@ begin
   lArray.Members.Add(
     new CGMethodDefinition( "writeItem",
       Parameters := [new CGParameterDefinition("aItem", CGPredefinedTypeReference.Dynamic.NotNullable),
-                     new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable, Externalname := if IsAppleSwift then "to" else "toMessage"),
-                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := if IsAppleSwift then "with" else "withIndex")].ToList,
+                     new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable, ExternalName := if IsAppleSwift then "to" else "toMessage"),
+                     new CGParameterDefinition("aIndex", NSUIntegerType, ExternalName := if IsAppleSwift then "with" else "withIndex")].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
       Statements := lList as not nullable));
@@ -396,7 +396,7 @@ begin
   lArray.Members.Add(
     new CGMethodDefinition(if IsAppleSwift then "readItem" else "readItemFromMessage",
       Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference().NotNullable, ExternalName := if IsAppleSwift then "from"),
-                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := if IsAppleSwift then "with" else "withIndex")].ToList,
+                     new CGParameterDefinition("aIndex", NSUIntegerType, ExternalName := if IsAppleSwift then "with" else "withIndex")].ToList,
                      ReturnType := CGPredefinedTypeReference.Dynamic.NullableNotUnwrapped,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
@@ -457,7 +457,7 @@ begin
     new CGMethodDefinition("insertItem",
       [new CGMethodCallExpression(CGInheritedExpression.Inherited, "insertItem", [lExpression.AsCallParameter,new CGCallParameter("aIndex".AsNamedIdentifierExpression, "atIndex")].ToList)],
       Parameters := [new CGParameterDefinition("aObject", lElementType),
-                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := "atIndex")].ToList,
+                     new CGParameterDefinition("aIndex", NSUIntegerType, ExternalName := "atIndex")].ToList,
       Visibility := CGMemberVisibilityKind.Public
       )
   );
@@ -473,7 +473,7 @@ begin
                                                                                                   ["aIndex".AsNamedIdentifierExpression.AsCallParameter,
                                                                                                    new CGCallParameter(lExpression, "withItem")].ToList)],
                             Parameters := [new CGParameterDefinition("aIndex", NSUIntegerType),
-                                          new CGParameterDefinition("aItem", lElementType, Externalname := "withItem")].ToList,
+                                          new CGParameterDefinition("aItem", lElementType, ExternalName := "withItem")].ToList,
                             Visibility := CGMemberVisibilityKind.Public)
   );
   {$ENDREGION}
@@ -521,7 +521,7 @@ begin
       ReturnType := lElementType,
       Visibility := CGMemberVisibilityKind.Public,
       Virtuality := CGMemberVirtualityKind.Reintroduce,
-      statements := lList as not nullable));
+      Statements := lList as not nullable));
   {$ENDREGION}
 
   {$REGION method itemClass: &Class; override;}
@@ -575,7 +575,7 @@ begin
   lArray.Members.Add(
     new CGMethodDefinition( "writeItemToMessage",
       Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference),
-                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname :="fromIndex" )].ToList,
+                     new CGParameterDefinition("aIndex", NSUIntegerType, ExternalName :="fromIndex" )].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
       Statements := lList as not nullable));
@@ -605,7 +605,7 @@ begin
   lArray.Members.Add(
     new CGMethodDefinition(if IsSwift then "readItem" else "readItemFromMessage",
       Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference, ExternalName := if IsSwift then "from"),
-                     new CGParameterDefinition("aIndex", NSUIntegerType, Externalname := "toIndex")].ToList,
+                     new CGParameterDefinition("aIndex", NSUIntegerType, ExternalName := "toIndex")].ToList,
       Virtuality := CGMemberVirtualityKind.Override,
       Visibility := CGMemberVisibilityKind.Public,
       Statements := lList as not nullable));
@@ -766,7 +766,7 @@ begin
 
     var linvk_method := new CGMethodDefinition("Invoke_"+lop.Name,
                               Parameters := [new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference),
-                                             new CGParameterDefinition("aHandler", ResolveStdtypes(CGPredefinedTypeReference.Object), Externalname := "handler")].ToList,
+                                             new CGParameterDefinition("aHandler", ResolveStdtypes(CGPredefinedTypeReference.Object), ExternalName := "handler")].ToList,
                               ReturnType:= ResolveStdtypes(CGPredefinedTypeReference.Boolean),
       Visibility := CGMemberVisibilityKind.Public);
     lEventInvoker.Members.Add(linvk_method);
@@ -1352,7 +1352,7 @@ begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__start";
-  result.Parameters.Add(new CGParameterDefinition("___start", ResolveStdtypes(CGPredefinedTypeReference.Boolean), Externalname := if result.Parameters.Count > 0 then "start"));
+  result.Parameters.Add(new CGParameterDefinition("___start", ResolveStdtypes(CGPredefinedTypeReference.Boolean), ExternalName := if result.Parameters.Count > 0 then "start"));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
@@ -1368,7 +1368,7 @@ begin
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__startWithBlock";
   var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("arg", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
-  result.Parameters.Add(new CGParameterDefinition("___block", bl, Externalname := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
+  result.Parameters.Add(new CGParameterDefinition("___block", bl, ExternalName := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
