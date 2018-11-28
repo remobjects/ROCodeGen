@@ -118,7 +118,7 @@ type
 
   RodlLibrary = public class (RodlEntity)
   private
-    fXmlNode: XmlElement; // only for supporting SaveToFile
+    fXmlDocument: XmlDocument; // only for supporting SaveToFile
 
     fStructs: EntityCollection<RodlStruct>;
     fArrays: EntityCollection<RodlArray>;
@@ -589,19 +589,15 @@ end;
 
 method RodlLibrary.SaveToFile(aFilename: String);
 begin
-  if assigned(fXmlNode) then
-    fXmlNode.Document.SaveToFile(aFilename);
+  if assigned(fXmlDocument) then
+    fXmlDocument.SaveToFile(aFilename);
 end;
 
 
 method RodlLibrary.ToString: String;
 begin
-  if assigned(fXmlNode) then
-    {$IFDEF FAKESUGAR}
-    result := fXmlNode.OwnerDocument.InnerXml;
-    {$ELSE}
-    result := fXmlNode.ToString();
-    {$ENDIF}
+  if assigned(fXmlDocument) then
+    result := fXmlDocument.ToString();
 end;
 
 method RodlLibrary.LoadFromXmlString(aString: String);
@@ -683,7 +679,7 @@ end;
 method RodlLibrary.LoadFromXmlNode(node: XmlElement; use: RodlUse);
 begin
   if use = nil then begin
-    fXmlNode := node;
+    fXmlDocument := node.Document; // needs to be kept in scope
     inherited LoadFromXmlNode(node);
     if (node.Attribute["Namespace"] <> nil) then
       &Namespace := node.Attribute["Namespace"].Value;
