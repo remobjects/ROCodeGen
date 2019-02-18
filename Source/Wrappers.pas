@@ -139,12 +139,12 @@ begin
       lfileext := 'pas';
     end;
     Codegen4Language.CSharp: begin
-      codegen.Generator := new CGCSharpCodeGenerator(dialect:= CGCSharpCodeGeneratorDialect.Hydrogene);
+      codegen.Generator := new CGCSharpCodeGenerator(Dialect := CGCSharpCodeGeneratorDialect.Hydrogene);
       llang := 'c#';
       lfileext := 'cs';
     end;
     Codegen4Language.Standard_CSharp: begin
-      codegen.Generator := new CGCSharpCodeGenerator(dialect:= CGCSharpCodeGeneratorDialect.Standard);
+      codegen.Generator := new CGCSharpCodeGenerator(Dialect := CGCSharpCodeGeneratorDialect.Standard);
       llang := 'standard-c#';
       lfileext := 'cs';
     end;
