@@ -3587,6 +3587,7 @@ begin
     cg4_member.Statements.Add(AddMessageDirective(rodl_member.Name+" is not implemented yet!"));
     if assigned(rodl_member.Result) then begin
       if CodeFirstCompatible then begin
+        if rodl_member.Result.Name <> 'Result' then AddCGAttribute(cg4_member, new CGAttribute('ROServiceMethodResultName'.AsTypeReference, rodl_member.Result.Name.AsLiteralExpression.asCallParameter, Condition := CF_condition));
         if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
         if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
       end;
