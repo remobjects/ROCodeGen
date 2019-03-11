@@ -10,7 +10,16 @@ type
   EchoesCodeDomRodlCodeGen = public class(RodlCodeGen)
   private
     method GenerateCodeFromCompileUnit(aUnit: CodeCompileUnit): not nullable String;
-  protected
+
+    method ConvertRodlLibrary(library: RodlLibrary): not nullable RemObjects.SDK.Rodl.RodlLibrary;
+    begin
+      var rodl := new RemObjects.SDK.Rodl.RodlLibrary();
+      rodl.LoadFromString(library.ToString());
+      rodl.FileName := library.Filename;
+
+      exit rodl;
+    end;
+
   public
     constructor;
 
@@ -47,8 +56,7 @@ method EchoesCodeDomRodlCodeGen.GenerateInterfaceFile(library: RodlLibrary; aTar
 begin
   var lCodegen := new CodeGen_Intf();
 
-  var lRodl := new RemObjects.SDK.Rodl.RodlLibrary();
-  lRodl.LoadFromString(library.ToString);
+  var lRodl := self.ConvertRodlLibrary(library);
 
   var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport, false);
   result := GenerateCodeFromCompileUnit(lUnit);
@@ -58,8 +66,7 @@ method EchoesCodeDomRodlCodeGen.GenerateInvokerFile(library: RodlLibrary; aTarge
 begin
   var lCodegen := new CodeGen_Invk();
 
-  var lRodl := new RemObjects.SDK.Rodl.RodlLibrary();
-  lRodl.LoadFromString(library.ToString);
+  var lRodl := self.ConvertRodlLibrary(library);
 
   var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
   result := GenerateCodeFromCompileUnit(lUnit);
@@ -74,8 +81,7 @@ method EchoesCodeDomRodlCodeGen.GenerateImplementationFiles(library: RodlLibrary
 begin
   var lCodegen := new CodeGen_Impl();
 
-  var lRodl := new RemObjects.SDK.Rodl.RodlLibrary();
-  lRodl.LoadFromString(library.ToString);
+  var lRodl := self.ConvertRodlLibrary(library);
 
   var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
   var lunitname := aServiceName + '_Impl.'+GetCodeDomProviderForLanguage().FileExtension;
