@@ -652,6 +652,7 @@ begin
   else if lUrl.Scheme = "file" then begin
     var lXml := LoadXML(lUrl.AbsolutePath);
     LoadFromXmlNode(lXml.Root);
+    Filename := lUrl.AbsolutePath;
   end else begin
     raise new Exception("Unspoorted URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
   end;
@@ -662,8 +663,9 @@ begin
     LoadFromXmlNode(lXml.Root);
   end
   else if lUrl.Scheme = "file" then begin
-    var lXml := LoadXML(lUrl.Path);
+    var lXml := LoadXML(lUrl.FilePath);
     LoadFromXmlNode(lXml.Root);
+    Filename := lUrl.FilePath;
   end else begin
     raise new Exception("Unspoorted URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
   end;
