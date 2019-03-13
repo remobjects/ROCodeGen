@@ -154,7 +154,8 @@ end;
 
 class method CocoaTableDefinitionsCodeGen.BuildCodegenModelForSchema(schema: Schema;  skippedTables: ICollection<String>;  &namespace: String;  includePrivateTables: Boolean): CGCodeUnit;
 begin
-  var f := new CGCodeUnit(&namespace);
+  var ns: CGNamespaceReference := iif(not String.IsNullOrEmpty(&namespace), new CGNamespaceReference(&namespace), nil);
+  var f := new CGCodeUnit(ns);
   f.Imports.Add(new CGImport('Foundation'));
   f.Imports.Add(new CGImport('DataAbstract'));
 

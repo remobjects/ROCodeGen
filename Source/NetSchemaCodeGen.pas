@@ -144,7 +144,8 @@ type
         skippedTablesList.Add(tableName);
       end;
 
-      self.fCodeUnit := new CGCodeUnit(&namespace);
+      var namespaceReference: CGNamespaceReference := iif(not String.IsNullOrEmpty(&namespace), new CGNamespaceReference(&namespace), nil);
+      self.fCodeUnit := new CGCodeUnit(namespaceReference);
 
       self.GenerateCodeMetadata(schemaName, schemaUri, skippedTables, includePrivateTables);
 
