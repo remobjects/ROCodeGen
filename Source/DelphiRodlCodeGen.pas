@@ -2803,10 +2803,13 @@ begin
     var p1: List<CGExpression>;
     var p2: List<CGExpression>;
     GenerateAttributes(library, entity, lmem,out p1, out p2);
+    var transport_callparameter := '__Transport'.AsNamedIdentifierExpression.AsCallParameter;
     if p1.Count > 0 then begin
-      mem.Statements.Add(new CGMethodCallExpression(lMessage,'SetAttributes',['__Transport'.AsNamedIdentifierExpression.AsCallParameter,
+      mem.Statements.Add(new CGMethodCallExpression(lMessage,'SetAttributes',[transport_callparameter,
                                                                               new CGArrayLiteralExpression(p1).AsCallParameter,
                                                                               new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
+                                                    CallSiteKind := CGCallSiteKind.Reference));
+      mem.Statements.Add(new CGMethodCallExpression(lMessage,'ApplyAttributes2_Transport',[transport_callparameter].ToList,
                                                     CallSiteKind := CGCallSiteKind.Reference));
     end;
     for lmemparam in lmem.Items do begin
@@ -2860,7 +2863,7 @@ begin
     ltry.Add(new CGEmptyStatement);
     ltry.Add(new CGMethodCallExpression(lMessage,
                                         'InitializeResponseMessage',
-                                        ['__Transport'.AsNamedIdentifierExpression.AsCallParameter,
+                                        [transport_callparameter,
                                         iif(library.DataSnap,'',library.Name).AsLiteralExpression.AsCallParameter,
                                         iif(library.DataSnap,
                                             l_Iname.AsLiteralExpression,
@@ -2906,7 +2909,8 @@ begin
       end;
     {$ENDREGION}
     ltry.Add(new CGMethodCallExpression(lMessage,'Finalize',CallSiteKind := CGCallSiteKind.Reference));
-    ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes',['__Transport'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
+    ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes2_Transport',[transport_callparameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
+    ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes',[transport_callparameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
     ltry.Add(new CGEmptyStatement);
 
 
