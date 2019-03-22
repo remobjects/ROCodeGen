@@ -520,7 +520,7 @@ begin
       Parameters := [new CGParameterDefinition("aIndex", NSUIntegerType)].ToList,
       ReturnType := lElementType,
       Visibility := CGMemberVisibilityKind.Public,
-      Virtuality := CGMemberVirtualityKind.Reintroduce,
+      Reintroduced := true,
       Statements := lList as not nullable));
   {$ENDREGION}
 

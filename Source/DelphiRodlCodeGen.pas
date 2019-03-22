@@ -427,19 +427,19 @@ begin
     for lprop :RodlTypedEntity in entity.Items do begin
       var propname := lprop.Name;
       var fpropname := 'f'+lprop.Name;
-      var l_Self_fpropname_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, fpropname, CallSiteKind := CGCallSiteKind.Reference);      
+      var l_Self_fpropname_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, fpropname, CallSiteKind := CGCallSiteKind.Reference);
       var l_Self_propname_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, propname, CallSiteKind := CGCallSiteKind.Reference);
       var l_Source_fpropname_Expr := new CGFieldAccessExpression(lSourceExpr, fpropname, CallSiteKind := CGCallSiteKind.Reference);
       var l_Source_propname_Expr := new CGFieldAccessExpression(lSourceExpr, propname, CallSiteKind := CGCallSiteKind.Reference);
       if isComplex(library,lprop.DataType) then begin
         var ltemp := lct;
-        
+
         if not entity.AutoCreateProperties then begin
           ltemp := new CGBeginEndBlockStatement();
           lct.Statements.Add(new CGIfThenElseStatement(new CGAssignedExpression(l_Self_fpropname_Expr),ltemp));
         end;
 
-        var lclone_method := new CGAssignmentStatement(l_Self_fpropname_Expr, 
+        var lclone_method := new CGAssignmentStatement(l_Self_fpropname_Expr,
                                                        new CGTypeCastExpression(new CGMethodCallExpression(l_Source_fpropname_Expr, 'Clone', CallSiteKind := CGCallSiteKind.Reference),
                                                                                 ResolveDataTypeToTypeRefFullQualified(&library,lprop.DataType,Intf_name)));
         var lassign_method := new CGMethodCallExpression(l_Self_propname_Expr,
@@ -448,8 +448,8 @@ begin
                                                          CallSiteKind := CGCallSiteKind.Reference);
         ltemp.Statements.Add(new CGIfThenElseStatement(new CGAssignedExpression(l_Source_fpropname_Expr),
                                                        new CGIfThenElseStatement(
-                                                            new CGAssignedExpression(l_Self_fpropname_Expr), 
-                                                            lassign_method, 
+                                                            new CGAssignedExpression(l_Self_fpropname_Expr),
+                                                            lassign_method,
                                                             lclone_method),
                                                        new CGBeginEndBlockStatement(
                                                             [GenerateDestroyExpression(l_Self_fpropname_Expr),
@@ -1349,23 +1349,23 @@ begin
       var l_lSource_prop_Expr := new CGFieldAccessExpression(l_lSource, l_prop, CallSiteKind := CGCallSiteKind.Reference);
       var l_Self_prop_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, l_prop,CallSiteKind := CGCallSiteKind.Reference);
       if isComplex(library,lprop.DataType) then begin
-        
+
         var l_fprop := 'f'+l_prop;
-        
+
         var l_Self_fprop_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, l_fprop,CallSiteKind := CGCallSiteKind.Reference);
         var l_lSource_fprop_Expr := new CGFieldAccessExpression(l_lSource, l_fprop, CallSiteKind := CGCallSiteKind.Reference);
         var lassign_method := new CGMethodCallExpression(l_Self_prop_Expr,
                                                          'Assign',
                                                          [l_lSource_fprop_Expr.AsCallParameter].ToList,
                                                          CallSiteKind := CGCallSiteKind.Reference);
-        var lclone_method := new CGAssignmentStatement(l_Self_fprop_Expr, 
+        var lclone_method := new CGAssignmentStatement(l_Self_fprop_Expr,
                                                         new CGTypeCastExpression(new CGMethodCallExpression(l_lSource_fprop_Expr,'Clone',CallSiteKind := CGCallSiteKind.Reference),
-                                                                                 ResolveDataTypeToTypeRefFullQualified(&library,lprop.DataType,Intf_name)));        
+                                                                                 ResolveDataTypeToTypeRefFullQualified(&library,lprop.DataType,Intf_name)));
 
         var ifs := new CGIfThenElseStatement(new CGAssignedExpression(l_lSource_fprop_Expr),
                                              new CGIfThenElseStatement(
-                                                            new CGAssignedExpression(l_Self_fprop_Expr), 
-                                                            lassign_method, 
+                                                            new CGAssignedExpression(l_Self_fprop_Expr),
+                                                            lassign_method,
                                                             lclone_method),
                                              new CGBeginEndBlockStatement([
                                                                             GenerateDestroyExpression(l_Self_fprop_Expr),
@@ -2340,8 +2340,8 @@ begin
   {$REGION public function Add: %structtype%; reintroduce;}
   lm := new CGMethodDefinition('Add',
                             ReturnType := ltyperef,
-                            Virtuality := CGMemberVirtualityKind.Reintroduce,
                             Visibility := CGMemberVisibilityKind.Public,
+                            Reintroduced := true,
                             CallingConvention := CGCallingConventionKind.Register
                         );
   ltype.Members.Add(lm);
@@ -3701,7 +3701,7 @@ end;
 
 method DelphiRodlCodeGen.GenerateDestroyExpression(aExpr: CGExpression): CGStatement;
 begin
-  exit new CGMethodCallExpression(nil, 'FreeOrDisposeOf',[aExpr.AsCallParameter], CallSiteKind := CGCallSiteKind.Reference);    
+  exit new CGMethodCallExpression(nil, 'FreeOrDisposeOf',[aExpr.AsCallParameter], CallSiteKind := CGCallSiteKind.Reference);
 end;
 {$ENDREGION}
 
@@ -4282,7 +4282,7 @@ method DelphiRodlCodeGen.CreateCodeFirstAttributes;
 begin
   CF_condition := new CGConditionalDefine('RO_RTTI_Support');
   CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(True);
-  
+
   attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference, 'emAnsi'.AsNamedIdentifierExpression.asCallParameter, Condition := CF_condition);
   attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference, 'emUTF8'.AsNamedIdentifierExpression.asCallParameter, Condition := CF_condition);
 
