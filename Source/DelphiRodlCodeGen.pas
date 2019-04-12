@@ -33,6 +33,8 @@ type
     property attr_ROServiceMethod: CGAttribute;
     property attr_ROEventSink: CGAttribute;
     property attr_ROSkip: CGAttribute;
+    property cond_GenericArray: CGConditionalDefine;
+    property cond_GenericArray_inverted: CGConditionalDefine;
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
     method GenerateCodeFirstDocumentation(file: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
     method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
@@ -558,7 +560,16 @@ begin
   var array_typeref := ResolveDataTypeToTypeRefFullQualified(library, larrayname, Intf_name);
   var lEnumerator := larrayname +'Enumerator';
 
+  if PureDelphi then begin
+    var genArray := new CGClassTypeDefinition(entity.Name, ('TROArray<'+lElementType+'>').AsTypeReference,
+                                    Visibility := CGTypeVisibilityKind.Public);
+    genArray.Condition := cond_GenericArray;
+    file.Types.Add(genArray);
+  end;
+
+
   var linternalarr := new CGTypeAliasDefinition(larrayname+"_"+lElementType, new CGArrayTypeReference(el_typeref));
+  if PureDelphi then linternalarr.Condition := cond_GenericArray_inverted;
   var linternalarr_typeref := DuplicateType(ResolveDataTypeToTypeRefFullQualified(library, linternalarr.Name, Intf_name,larrayname), false);
 
 
@@ -576,6 +587,7 @@ begin
     if IsUTF8String(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsUTF8String);
   end;
 
+  if PureDelphi then ltype.Condition := cond_GenericArray_inverted;
   file.Types.Add(ltype);
 
   var aIndex: CGExpression := 'aIndex'.AsNamedIdentifierExpression;             //aIndex
@@ -1151,6 +1163,7 @@ begin
   {$REGION %arrayname%Enumerator}
   var lenumtype := new CGClassTypeDefinition(lEnumerator, 'TObject'.AsTypeReference,
                                              Visibility := CGTypeVisibilityKind.Public);
+  if PureDelphi then lenumtype.Condition := cond_GenericArray_inverted;
   file.Types.Add(lenumtype);
   {$REGION private fArray: %arrayname%}
   lenumtype.Members.Add(
@@ -3882,7 +3895,9 @@ begin
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
   if CodeFirstCompatible then
-    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := new CGConditionalDefine('RO_RTTI_Support')));
+    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := CF_condition));
+  if PureDelphi then 
+    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uROArray'), Condition := cond_GenericArray));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROUri'));
   lUnit.Imports.Add(GenerateCGImport('uROProxy'));
@@ -4289,6 +4304,9 @@ begin
   attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, Condition := CF_condition);
   attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, Condition := CF_condition);
   attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference, Condition := CF_condition);
+
+  cond_GenericArray := new CGConditionalDefine('RO_GenericArray');
+  cond_GenericArray_inverted := new CGConditionalDefine('RO_GenericArray') inverted(True);
 end;
 
 method DelphiRodlCodeGen.AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
