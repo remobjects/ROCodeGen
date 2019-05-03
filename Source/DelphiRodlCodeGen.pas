@@ -3547,7 +3547,16 @@ begin
                                              Visibility := CGTypeVisibilityKind.Public);
   if CodeFirstCompatible then begin
     if not entity.Abstract then
-      AddCGAttribute(lservice,new CGAttribute('ROService'.AsTypeReference,['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter].ToList, Condition := CF_condition));
+      file.Globals.Add(new CGFieldDefinition("__ServiceID" , //ResolveStdtypes(CGPredefinedTypeReference.String),
+                      Constant := true,
+                      Visibility := CGMemberVisibilityKind.Public,
+                      Initializer := ("{"+entity.DefaultInterface.EntityID.ToString+"}").AsLiteralExpression).AsGlobal());
+      AddCGAttribute(lservice,
+                     new CGAttribute(
+                            'ROService'.AsTypeReference,
+                            ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
+                             '__ServiceID'.AsNamedIdentifierExpression.AsCallParameter].ToList, 
+                            Condition := CF_condition));
 
     if entity.Private then
       AddCGAttribute(lservice, attr_ROSkip);
