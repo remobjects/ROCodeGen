@@ -77,6 +77,7 @@ type
     DelphiScopedEnums = 'DelphiScopedEnums';
     DelphiLegacyStrings = 'DelphiLegacyStrings';
     DelphiCodeFirstCompatible = 'DelphiCodeFirstCompatible';
+    DelphiGenerateGenericArray = 'DelphiGenerateGenericArray';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -121,6 +122,8 @@ begin
         DelphiRodlCodeGen(codegen).LegacyStrings := true;
       if ParseAddParams(lparams,DelphiCodeFirstCompatible) = '1' then
         DelphiRodlCodeGen(codegen).CodeFirstCompatible := true;
+      if ParseAddParams(lparams,DelphiGenerateGenericArray) = '0' then
+        DelphiRodlCodeGen(codegen).GenerateGenericArray := false;       
     end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
     Codegen4Platform.Java: codegen := new JavaRodlCodeGen;

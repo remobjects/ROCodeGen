@@ -162,6 +162,7 @@ type
     property GenerateDFMs: Boolean := true;
     property LegacyStrings: Boolean read fLegacyStrings write _SetLegacyStrings;
     property CodeFirstCompatible: Boolean := False;virtual;
+    property GenerateGenericArray: Boolean := True;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -560,16 +561,16 @@ begin
   var array_typeref := ResolveDataTypeToTypeRefFullQualified(library, larrayname, Intf_name);
   var lEnumerator := larrayname +'Enumerator';
 
-  if PureDelphi then begin
+  if PureDelphi and GenerateGenericArray then begin
     var genArray := new CGClassTypeDefinition(entity.Name, ('TROArray<'+lElementType+'>').AsTypeReference,
-                                    Visibility := CGTypeVisibilityKind.Public);
+                                              Visibility := CGTypeVisibilityKind.Public);
     genArray.Condition := cond_GenericArray;
     file.Types.Add(genArray);
   end;
 
 
   var linternalarr := new CGTypeAliasDefinition(larrayname+"_"+lElementType, new CGArrayTypeReference(el_typeref));
-  if PureDelphi then linternalarr.Condition := cond_GenericArray_inverted;
+  if PureDelphi and GenerateGenericArray then linternalarr.Condition := cond_GenericArray_inverted;
   var linternalarr_typeref := DuplicateType(ResolveDataTypeToTypeRefFullQualified(library, linternalarr.Name, Intf_name,larrayname), false);
 
 
@@ -587,7 +588,7 @@ begin
     if IsUTF8String(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsUTF8String);
   end;
 
-  if PureDelphi then ltype.Condition := cond_GenericArray_inverted;
+  if PureDelphi and GenerateGenericArray then ltype.Condition := cond_GenericArray_inverted;
   file.Types.Add(ltype);
 
   var aIndex: CGExpression := 'aIndex'.AsNamedIdentifierExpression;             //aIndex
@@ -1163,7 +1164,7 @@ begin
   {$REGION %arrayname%Enumerator}
   var lenumtype := new CGClassTypeDefinition(lEnumerator, 'TObject'.AsTypeReference,
                                              Visibility := CGTypeVisibilityKind.Public);
-  if PureDelphi then lenumtype.Condition := cond_GenericArray_inverted;
+  if PureDelphi and GenerateGenericArray then lenumtype.Condition := cond_GenericArray_inverted;
   file.Types.Add(lenumtype);
   {$REGION private fArray: %arrayname%}
   lenumtype.Members.Add(
@@ -3905,7 +3906,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
   if CodeFirstCompatible then
     lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := CF_condition));
-  if PureDelphi then 
+  if PureDelphi and GenerateGenericArray then 
     lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uROArray'), Condition := cond_GenericArray));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROUri'));
