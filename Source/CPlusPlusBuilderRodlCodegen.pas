@@ -26,6 +26,7 @@ type
     method cpp_GetNamespaceForUses(aUse: RodlUse):String;override;
     method cpp_GlobalCondition_ns:CGConditionalDefine;override;
     method cpp_GlobalCondition_ns_name: String; override;
+    method cpp_GetTROAsyncCallbackType: String; override; 
   protected
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
@@ -689,6 +690,13 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_GlobalCondition_ns_name: String;
 begin
   exit targetNamespace+'_define';
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_GetTROAsyncCallbackType: String;
+begin
+  result := inherited cpp_GetTROAsyncCallbackType;
+  if not AsyncCallback_as_reqular_method then
+    result := '_di_'+result;
 end;
 
 end.

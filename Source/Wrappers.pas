@@ -78,6 +78,7 @@ type
     DelphiLegacyStrings = 'DelphiLegacyStrings';
     DelphiCodeFirstCompatible = 'DelphiCodeFirstCompatible';
     DelphiGenerateGenericArray = 'DelphiGenerateGenericArray';
+    DelphiAsyncCallback_as_reqular_method = 'DelphiAsyncCallback_as_reqular_method';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -124,6 +125,8 @@ begin
         DelphiRodlCodeGen(codegen).CodeFirstCompatible := true;
       if ParseAddParams(lparams,DelphiGenerateGenericArray) = '0' then
         DelphiRodlCodeGen(codegen).GenerateGenericArray := false;       
+      if ParseAddParams(lparams,DelphiAsyncCallback_as_reqular_method) = '1' then
+        DelphiRodlCodeGen(codegen).AsyncCallback_as_reqular_method := true;               
     end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
     Codegen4Platform.Java: codegen := new JavaRodlCodeGen;
