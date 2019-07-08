@@ -126,7 +126,7 @@ do {
 
 	if options["namespace"] == nil {
 
-		options["namespace"] = iif(!String.IsNullOrEmpty(library.Namespace), library.Namespace, "YourNamespace")
+		options["namespace"] = iif(!String.IsNullOrEmpty(rodlLibrary.Namespace), rodlLibrary.Namespace, "YourNamespace")
 	}
 
 	var targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName;
