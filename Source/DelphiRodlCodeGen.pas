@@ -106,6 +106,7 @@ type
     method cpp_Impl_constructor(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); virtual; empty;
     {$ENDREGION}
     {$REGION cpp support}
+    method cpp_GetTROAsyncCallbackType: String;virtual;
     method cpp_smartInit(file: CGCodeUnit);virtual; empty;
     method cpp_GenerateAsyncAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); virtual; empty;
     method cpp_GenerateAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition; aMode: ModeKind); virtual; empty;
@@ -163,6 +164,7 @@ type
     property LegacyStrings: Boolean read fLegacyStrings write _SetLegacyStrings;
     property CodeFirstCompatible: Boolean := False;virtual;
     property GenerateGenericArray: Boolean := True;
+    property AsyncCallback_as_reqular_method: Boolean := False;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -3362,7 +3364,7 @@ begin
       result.Parameters.Add(lparam);
     end;
   end;
-  result.Parameters.Add(new CGParameterDefinition('aCallback',new CGNamedTypeReference('TROAsyncCallback') isclasstype(false), Modifier :=CGParameterModifierKind.Const));
+  result.Parameters.Add(new CGParameterDefinition('aCallback',new CGNamedTypeReference(cpp_GetTROAsyncCallbackType) isclasstype(false), Modifier :=CGParameterModifierKind.Const));
   result.Parameters.Add(new CGParameterDefinition('aUserData', CGPointerTypeReference.VoidPointer, DefaultValue := CGNilExpression.Nil, Modifier :=CGParameterModifierKind.Const));
   result.ReturnType := ResolveInterfaceTypeRef(nil, 'IROAsyncRequest','uROAsync','', true);
   if aNeedBody then begin
@@ -3832,6 +3834,11 @@ end;
 method DelphiRodlCodeGen.cpp_AddressOf(value: CGExpression): CGExpression;
 begin
   exit value;
+end;
+
+method DelphiRodlCodeGen.cpp_GetTROAsyncCallbackType: String;
+begin
+  Result := 'TROAsyncCallback';
 end;
 {$ENDREGION}
 

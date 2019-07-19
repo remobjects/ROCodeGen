@@ -125,12 +125,17 @@ do {
 
 	let rodlLibrary = RodlLibrary(rodlFileName)
 
+	if options["namespace"] == nil {
+		options["namespace"] = iif(!String.IsNullOrEmpty(rodlLibrary.Namespace), rodlLibrary.Namespace, "YourNamespace")
+	}
+
 	var targetRodlFileName = options["outfilename"]
 	if targetRodlFileName != nil {
 		targetRodlFileName = targetRodlFileName+".rodl"
 	} else {
 		targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName
 	}
+
 	if let outPath = options["outpath"] {
 		targetRodlFileName = Path.Combine(outPath, Path.GetFileName(targetRodlFileName))!
 		Folder.Create(Path.GetParentDirectory(targetRodlFileName))
@@ -157,10 +162,6 @@ do {
 	if options["language"] == nil {
 		writeSyntax()
 		return 1
-	}
-
-	if options["namespace"] == nil {
-		options["namespace"] = "YourNamespace"
 	}
 
 	switch options["type"]?.ToLower() {
