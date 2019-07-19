@@ -50,6 +50,7 @@ func writeSyntax() {
 	writeLn("  --codefirst-compatible (Delphi only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
+	writeLn("  --outfilename:<name> (optional base filename for generated files)")
 	writeLn("  --no-utf8 (disable UTF-8 for IDEs from last century)")
 	writeLn("  --no-bom (omit BOM from UTF-8 files; default fore java)")
 	writeLn()
@@ -124,7 +125,12 @@ do {
 
 	let rodlLibrary = RodlLibrary(rodlFileName)
 
-	var targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName;
+	var targetRodlFileName = options["outfilename"]
+	if targetRodlFileName != nil {
+		targetRodlFileName = targetRodlFileName+".rodl"
+	} else {
+		targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName
+	}
 	if let outPath = options["outpath"] {
 		targetRodlFileName = Path.Combine(outPath, Path.GetFileName(targetRodlFileName))!
 		Folder.Create(Path.GetParentDirectory(targetRodlFileName))
