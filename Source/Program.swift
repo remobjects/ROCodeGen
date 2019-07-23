@@ -3,9 +3,9 @@
 func writeSyntax() {
 	writeLn("Syntax:")
 	writeLn()
-	writeLn("  rodl2code <rodl> --type:<type> --platform:<platform> --language:<language> --namespace:<namespace>")
-	writeLn("  rodl2code <rodl> --service:<name> --platform:<platform> --language:<language> --namespace:<namespace>")
-	writeLn("  rodl2code <rodl> --services --platform:<platform> --language:<language> --namespace:<namespace>")
+	writeLn("  rodl2code <rodl> --type:<type> --platform:<platform> --language:<language>")
+	writeLn("  rodl2code <rodl> --service:<name> --platform:<platform> --language:<language>")
+	writeLn("  rodl2code <rodl> --services --platform:<platform> --language:<language>")
 	writeLn()
 	writeLn("<rodl> can be:")
 	writeLn()
@@ -50,9 +50,10 @@ func writeSyntax() {
 	writeLn("  --codefirst-compatible (Delphi only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
-	writeLn("  --outfilename:<name> (optional base filename for generated files)")
+	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
 	writeLn("  --no-utf8 (disable UTF-8 for IDEs from last century)")
 	writeLn("  --no-bom (omit BOM from UTF-8 files; default fore java)")
+	writeLn("  --namespace:<namespace> (optional namespace for generated files)")
 	writeLn()
 
 	#hint add --await
@@ -131,6 +132,7 @@ do {
 
 	var targetRodlFileName = options["outfilename"]
 	if targetRodlFileName != nil {
+		rodlLibrary.Name = targetRodlFileName
 		targetRodlFileName = targetRodlFileName+".rodl"
 	} else {
 		targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName
