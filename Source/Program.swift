@@ -52,7 +52,7 @@ func writeSyntax() {
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
 	writeLn("  --no-utf8 (disable UTF-8 for IDEs from last century)")
-	writeLn("  --no-bom (omit BOM from UTF-8 files; default fore java)")
+	writeLn("  --no-bom (omit BOM from UTF-8 files; default for Java)")
 	writeLn("  --namespace:<namespace> (optional namespace for generated files)")
 	writeLn()
 
