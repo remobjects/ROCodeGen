@@ -57,24 +57,11 @@ public __abstract class ServerAccessCodeGen {
 		generateStandardImports(unit)
 		generatUsedRodlImports(unit)
 
-		let serverAccess = CGClassTypeDefinition("ServerAccess")
-		serverAccess.Visibility = .Public
-
-		unit.Types.Add(serverAccess)
+		let serverAccess = generateServerAccessType(unit)
 
 		generateSingletonPattern(serverAccess)
 		generateBasics(serverAccess)
-
-		for i in 0 ..< rodl.Services.Count {
-			let service = rodl.Services[i]
-			if isCodeGenerationRequired(service) {
-				generateService(serverAccess, service: service)
-			}
-		}
-
-		if hasLoginService() {
-			generateLoginPattern(serverAccess)
-		}
+		generateServices(serverAccess, library: rodl)
 
 		return unit
 	}
@@ -103,6 +90,29 @@ public __abstract class ServerAccessCodeGen {
 			}
 		}
 	}
+
+	/*fileprivate*/internal func generateServerAccessType(_ unit: CGCodeUnit) -> CGClassTypeDefinition {
+		let serverAccess = CGClassTypeDefinition("ServerAccess")
+		serverAccess.Visibility = .Public
+
+		unit.Types.Add(serverAccess)
+
+		return serverAccess
+	}
+
+	/*fileprivate*/internal func generateServices(_ serverAccess: CGClassTypeDefinition,  library: RodlLibrary) {
+		for i in 0 ..< rodl.Services.Count {
+			let service = rodl.Services[i]
+			if isCodeGenerationRequired(service) {
+				generateService(serverAccess, service: service)
+			}
+		}
+
+		if hasLoginService() {
+			generateLoginPattern(serverAccess)
+		}
+	}
+
 	/*fileprivate*/internal __abstract func getPlatformSpecificNamespace(_ reference: RodlUse) -> String!;
 	/*fileprivate*/internal __abstract func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition)
 	/*fileprivate*/internal __abstract func generateBasics(_ serverAccess: CGClassTypeDefinition)
@@ -262,6 +272,8 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 
 public class NetServerAccessCodeGen : ServerAccessCodeGen {
 
+	var serverInterface: CGInterfaceTypeDefinition?
+
 	public init(rodl: RodlLibrary, namespace namespace: String!) {
 		super.init(rodl: rodl);
 		self.namespace = namespace;
@@ -283,25 +295,20 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		}
 	}
 
+	override func generateServerAccessType(_ unit: CGCodeUnit) -> CGClassTypeDefinition {
+		let serverInterface = CGInterfaceTypeDefinition("IServerAccess")
+		unit.Types.Add(serverInterface)
+
+		self.serverInterface = serverInterface
+
+		let serverAccess = super.generateServerAccessType(unit)    
+		serverAccess.ImplementedInterfaces.Add(serverInterface.Name.AsTypeReference())
+
+		return serverAccess
+	}
+
 	override func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition) {
-		let serverAccessType = serverAccess.Name.AsTypeReferenceExpression()
-
-		let field = CGFieldDefinition("_instance", serverAccess.Name.AsTypeReference().NullableNotUnwrapped)
-		serverAccess.Members.Add(field)
-		field.Static = true
-
-		let fieldAccess = CGFieldAccessExpression(serverAccessType, "_instance")
-
-		let property = CGPropertyDefinition("Instance", serverAccess.Name.AsTypeReference().NotNullable)
-		serverAccess.Members.Add(property)
-		property.Static = true
-		property.Visibility = .Public
-
-		let ifInstantiated = CGIfThenElseStatement(CGAssignedExpression(fieldAccess, inverted: true), CGAssignmentStatement(fieldAccess, CGNewInstanceExpression(serverAccess.Name.AsTypeReference())))
-		let propertyGetter = List<CGStatement>()
-		propertyGetter.Add(ifInstantiated)
-		propertyGetter.Add(CGUnaryOperatorExpression(fieldAccess, .ForceUnwrapNullable).AsReturnStatement())
-		property.GetStatements = propertyGetter
+		// Do not generate singleton for .NET code
 	}
 
 	override func generateBasics(_ serverAccess: CGClassTypeDefinition) {
@@ -376,6 +383,10 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 												CGPropertyAccessExpression(CGSelfExpression.`Self`, "_clientChannel").AsCallParameter("clientChannel"), ])
 		propertyGetter.Add(CGUnaryOperatorExpression(create, .ForceUnwrapNullable).AsReturnStatement()) // workaround, while CodeDom-based CG cant emit non-nullable Co* methods
 		property.GetStatements = propertyGetter
+
+		let interfaceProperty = CGPropertyDefinition(propertyName, proxyInterfaceType.NotNullable)
+		interfaceProperty.ReadOnly = true
+		self.serverInterface!.Members.Add(interfaceProperty)
 	}
 }
 
