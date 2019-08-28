@@ -4173,8 +4173,10 @@ begin
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
-  if CodeFirstCompatible then
+  if CodeFirstCompatible then begin
     lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := CF_condition));
+    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uROArray'), Condition := CF_condition));
+  end;
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
   lUnit.Imports.Add(GenerateCGImport('uROClientIntf'));
