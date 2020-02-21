@@ -2515,31 +2515,7 @@ begin
     var lName := lmem.OriginalName.AsLiteralExpression.AsCallParameter;
     var lValue := local_l_name.AsCallParameter;
     var lDataType := ResolveDataTypeToTypeRefFullQualified(library, lmem.DataType,Intf_name);
-    var trys := new List<CGStatement>;
-    trys.Add(Intf_generateReadStatement(library,lmem.DataType,aSerializer,lName,lValue,lDataType,nil));
-    var lentName: String;
-    lentName := coalesce(lmem.CustomAttributes_lower['soapname'], lmem.Name);
-    var lexcept := new List<CGCatchBlockStatement>;
-    var lexc1 := new CGCatchBlockStatement('E', 'Exception'.AsTypeReference);
-{
-    var lformat := new CGMethodCallExpression(nil,
-                                              'Format',
-                                                                                ['Exception "%s" with message "%s" happens during reading field "%s".'.AsLiteralExpression.AsCallParameter,
-                                                                                 new CGArrayLiteralExpression([
-                                                                            new CGMethodCallExpression('E'.AsNamedIdentifierExpression,'ClassName',CallSiteKind := CGCallSiteKind.Reference),
-                                                                            new CGFieldAccessExpression('E'.AsNamedIdentifierExpression,'Message',CallSiteKind := CGCallSiteKind.Reference),
-                                                                                                              lentName.AsLiteralExpression
-                                                                                                              ].ToList).AsCallParameter
-                                              ].ToList);
-    lexc1.Statements.Add(RaiseError(lformat,nil));
-    //lexc1.Statements.Add(new CGMethodCallExpression(nil,'uROClasses.RaiseError',[lformat].ToList));
-}
-    lexc1.Statements.Add(RaiseError('Exception "%s" with message "%s" happens during reading field "%s".'.AsLiteralExpression,
-                         [new CGMethodCallExpression('E'.AsNamedIdentifierExpression,'ClassName',CallSiteKind := CGCallSiteKind.Reference),
-                          new CGFieldAccessExpression('E'.AsNamedIdentifierExpression,'Message',CallSiteKind := CGCallSiteKind.Reference),
-                          lentName.AsLiteralExpression].ToList));
-    lexcept.Add(lexc1);
-    aStatements.Add(new CGTryFinallyCatchStatement(trys,CatchBlocks := lexcept));
+    aStatements.Add(Intf_generateReadStatement(library,lmem.DataType,aSerializer,lName,lValue,lDataType,nil));
     if isComplex(library,lmem.DataType)  and not isEnum(library,lmem.DataType) then begin
       var ldest := GenerateDestroyExpression(local_int_name);
       if aSerializeInitializedStructValues then
@@ -2576,32 +2552,32 @@ begin
   aValue.Modifier := CGParameterModifierKind.Var;
   var k: CGMethodCallExpression;
   case aElementType.ToLowerInvariant of
-    'integer':    k := new CGMethodCallExpression(aSerializer, 'ReadInteger',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
-    'datetime':   k := new CGMethodCallExpression(aSerializer, 'ReadDateTime',[aName, aValue].ToList);
-    'double':     k := new CGMethodCallExpression(aSerializer, 'ReadDouble',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
-    'currency':   k := new CGMethodCallExpression(aSerializer, 'ReadDouble',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
+    'integer':    k := new CGMethodCallExpression(aSerializer, 'ReadIntegerWithErrorHandling',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
+    'datetime':   k := new CGMethodCallExpression(aSerializer, 'ReadDateTimeWithErrorHandling',[aName, aValue].ToList);
+    'double':     k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
+    'currency':   k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
     'ansistring': if fLegacyStrings then
-                    k := new CGMethodCallExpression(aSerializer, 'ReadAnsiString',[aName, aValue].ToList)
+                    k := new CGMethodCallExpression(aSerializer, 'ReadAnsiStringWithErrorHandling',[aName, aValue].ToList)
                   else
-                    k := new CGMethodCallExpression(aSerializer, 'ReadLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
+                    k := new CGMethodCallExpression(aSerializer, 'ReadLegacyStringWithErrorHandling',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'utf8string': if fLegacyStrings then
-                    k := new CGMethodCallExpression(aSerializer, 'ReadUTF8String',[aName, aValue].ToList)
+                    k := new CGMethodCallExpression(aSerializer, 'ReadUTF8StringWithErrorHandling',[aName, aValue].ToList)
                   else
-                    k := new CGMethodCallExpression(aSerializer, 'ReadLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
-    'int64':      k := new CGMethodCallExpression(aSerializer, 'ReadInt64',[aName, aValue].ToList);
-    'boolean':    k := new CGMethodCallExpression(aSerializer, 'ReadEnumerated',[aName,GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList);
-    'variant':    k := new CGMethodCallExpression(aSerializer, 'ReadVariant',[aName, aValue].ToList);
-    'binary':     k := new CGMethodCallExpression(aSerializer, 'ReadBinary',[aName, aValue].ToList);
-    'xml':        k := new CGMethodCallExpression(aSerializer, 'ReadXml',[aName, aValue].ToList);
-    'guid':       k := new CGMethodCallExpression(aSerializer, 'ReadGuid',[aName, aValue].ToList);
-    'decimal':    k := new CGMethodCallExpression(aSerializer, 'ReadDecimal',[aName, aValue].ToList);
-    'xsdatetime': k := new CGMethodCallExpression(aSerializer, 'ReadStruct',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList);
-    'widestring': k := new CGMethodCallExpression(aSerializer, 'ReadUnicodeString',[aName, aValue].ToList, CallSiteKind := CGCallSiteKind.Reference);
+                    k := new CGMethodCallExpression(aSerializer, 'ReadLegacyStringWithErrorHandling',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
+    'int64':      k := new CGMethodCallExpression(aSerializer, 'ReadInt64WithErrorHandling',[aName, aValue].ToList);
+    'boolean':    k := new CGMethodCallExpression(aSerializer, 'ReadEnumeratedWithErrorHandling',[aName,GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList);
+    'variant':    k := new CGMethodCallExpression(aSerializer, 'ReadVariantWithErrorHandling',[aName, aValue].ToList);
+    'binary':     k := new CGMethodCallExpression(aSerializer, 'ReadBinaryWithErrorHandling',[aName, aValue].ToList);
+    'xml':        k := new CGMethodCallExpression(aSerializer, 'ReadXmlWithErrorHandling',[aName, aValue].ToList);
+    'guid':       k := new CGMethodCallExpression(aSerializer, 'ReadGuidWithErrorHandling',[aName, aValue].ToList);
+    'decimal':    k := new CGMethodCallExpression(aSerializer, 'ReadDecimalWithErrorHandling',[aName, aValue].ToList);
+    'xsdatetime': k := new CGMethodCallExpression(aSerializer, 'ReadStructWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList);
+    'widestring': k := new CGMethodCallExpression(aSerializer, 'ReadUnicodeStringWithErrorHandling',[aName, aValue].ToList, CallSiteKind := CGCallSiteKind.Reference);
   else
-    if isArray(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadArray',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
-    else if isStruct(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadStruct',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
-    else if isException(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadException',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
-    else if isEnum(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadEnumerated',
+    if isArray(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadArrayWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
+    else if isStruct(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadStructWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
+    else if isException(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadExceptionWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
+    else if isEnum(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadEnumeratedWithErrorHandling',
                                                                                                             [aName,
                                                                                                             GenerateTypeInfoCall(library,aDataType).AsCallParameter,
                                                                                                             aValue].ToList)
