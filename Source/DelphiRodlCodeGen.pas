@@ -85,7 +85,7 @@ type
 
     method Intf_GenerateAsyncInvoke(library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
     method Intf_GenerateAsyncRetrieve(library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
-    method Intf_GenerateAsyncExBegin(library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
+    method Intf_GenerateAsyncExBegin(library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean; aMethod:Boolean): CGMethodDefinition;
     method Intf_GenerateAsyncExEnd(library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
 
     method Intf_generateReadStatement(library: RodlLibrary; aElementType: String; aSerializer: CGExpression; aName, aValue:CGCallParameter; aDataType: CGTypeReference; aIndex: CGCallParameter): List<CGStatement>;
@@ -107,6 +107,7 @@ type
     {$ENDREGION}
     {$REGION cpp support}
     method cpp_GetTROAsyncCallbackType: String;virtual;
+    method cpp_GetTROAsyncCallbackMethodType: String;virtual;
     method cpp_smartInit(file: CGCodeUnit);virtual; empty;
     method cpp_GenerateAsyncAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); virtual; empty;
     method cpp_GenerateAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition; aMode: ModeKind); virtual; empty;
@@ -163,8 +164,7 @@ type
     property GenerateDFMs: Boolean := true;
     property LegacyStrings: Boolean read fLegacyStrings write _SetLegacyStrings;
     property CodeFirstCompatible: Boolean := False;virtual;
-    property GenerateGenericArray: Boolean := True;
-    property AsyncCallback_as_reqular_method: Boolean := False;
+    property GenerateGenericArray: Boolean := True;    
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -1607,8 +1607,11 @@ begin
   file.Types.Add(ltype);
 
   {$REGION Invoke_%service_method%}
-  for lmem in entity.DefaultInterface.Items do
-    ltype.Members.Add(Intf_GenerateAsyncExBegin(library, entity, lmem, false));
+  for lmem in entity.DefaultInterface.Items do begin
+    ltype.Members.Add(Intf_GenerateAsyncExBegin(library, entity, lmem, false, false));
+    ltype.Members.Add(Intf_GenerateAsyncExBegin(library, entity, lmem, false, true));
+  end;
+
   {$ENDREGION}
 
   {$REGION Retrieve_%service_method%}
@@ -2050,8 +2053,10 @@ begin
   cpp_GenerateAncestorMethodCalls(library, entity, ltype1, ModeKind.AsyncEx);
 
   {$REGION Begin%service_method%}
-  for lmem in entity.DefaultInterface.Items do
-    ltype1.Members.Add(Intf_GenerateAsyncExBegin(library, entity, lmem, true));
+  for lmem in entity.DefaultInterface.Items do begin
+    ltype1.Members.Add(Intf_GenerateAsyncExBegin(library, entity, lmem, true, false));
+    ltype1.Members.Add(Intf_GenerateAsyncExBegin(library, entity, lmem, true, true));
+  end;
   {$ENDREGION}
 
   {$REGION End%service_method%}
@@ -3323,12 +3328,12 @@ begin
   end;
 end;
 
-method DelphiRodlCodeGen.Intf_GenerateAsyncExBegin(&library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody: Boolean): CGMethodDefinition;
+method DelphiRodlCodeGen.Intf_GenerateAsyncExBegin(&library: RodlLibrary; entity: RodlService; operation: RodlOperation; aNeedBody: Boolean; aMethod:Boolean): CGMethodDefinition;
 begin
   result := new CGMethodDefinition('Begin'+operation.Name,
                                     Visibility := CGMemberVisibilityKind.Protected,
-                                    CallingConvention := CGCallingConventionKind.Register
-                                    {Virtuality := CGMemberVirtualityKind.Virtual});
+                                    CallingConvention := CGCallingConventionKind.Register,
+                                    Overloaded := true);
   for mem in operation.Items do begin
     if mem.ParamFlag in [ParamFlags.In, ParamFlags.InOut] then begin
       var lparam := new CGParameterDefinition(mem.Name,
@@ -3340,7 +3345,13 @@ begin
       result.Parameters.Add(lparam);
     end;
   end;
-  result.Parameters.Add(new CGParameterDefinition('aCallback',new CGNamedTypeReference(cpp_GetTROAsyncCallbackType) isclasstype(false), Modifier :=CGParameterModifierKind.Const));
+  if aMethod then begin
+    result.Parameters.Add(new CGParameterDefinition('aCallbackMethod',new CGNamedTypeReference(cpp_GetTROAsyncCallbackMethodType) isclasstype(false), Modifier :=CGParameterModifierKind.Const));
+  end
+  else begin
+    result.Parameters.Add(new CGParameterDefinition('aCallback',new CGNamedTypeReference(cpp_GetTROAsyncCallbackType) isclasstype(false), Modifier :=CGParameterModifierKind.Const));
+  end;
+  
   result.Parameters.Add(new CGParameterDefinition('aUserData', CGPointerTypeReference.VoidPointer, DefaultValue := CGNilExpression.Nil, Modifier :=CGParameterModifierKind.Const));
   result.ReturnType := ResolveInterfaceTypeRef(nil, 'IROAsyncRequest','uROAsync','', true);
   if aNeedBody then begin
@@ -3385,9 +3396,11 @@ begin
       end;
     end;
 
+    var lcallback := if aMethod then 'aCallbackMethod' else 'aCallback';
+
     ltry.Statements.Add(new CGAssignmentStatement('lResult'.AsNamedIdentifierExpression,
                                                   new CGMethodCallExpression(nil,'__DispatchAsyncRequest', [lMessage.AsCallParameter,
-                                                                                                            'aCallback'.AsNamedIdentifierExpression.AsCallParameter,
+                                                                                                            lcallback.AsNamedIdentifierExpression.AsCallParameter,
                                                                                                             'aUserData'.AsNamedIdentifierExpression.AsCallParameter].ToList)));
     ltry.FinallyStatements.Add(new CGAssignmentStatement(lMessage,CGNilExpression.Nil));
     ltry.FinallyStatements.Add(new CGAssignmentStatement(lTransportChannel,CGNilExpression.Nil));
@@ -3815,6 +3828,11 @@ end;
 method DelphiRodlCodeGen.cpp_GetTROAsyncCallbackType: String;
 begin
   Result := 'TROAsyncCallback';
+end;
+
+method DelphiRodlCodeGen.cpp_GetTROAsyncCallbackMethodType: String;
+begin
+  Result := 'TROAsyncCallbackMethod';
 end;
 {$ENDREGION}
 

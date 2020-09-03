@@ -27,6 +27,7 @@ type
     method cpp_GlobalCondition_ns:CGConditionalDefine;override;
     method cpp_GlobalCondition_ns_name: String; override;
     method cpp_GetTROAsyncCallbackType: String; override; 
+    method cpp_GetTROAsyncCallbackMethodType: String; override; 
   protected
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
@@ -181,7 +182,13 @@ begin
     ModeKind.AsyncEx: begin
       {$REGION Begin%service_method%}
       for lmem in lentity.DefaultInterface.Items do begin
-        var lm := Intf_GenerateAsyncExBegin(library, lentity, lmem, false);
+        var lm := Intf_GenerateAsyncExBegin(library, lentity, lmem, false, false);
+        lm.Virtuality := CGMemberVirtualityKind.Override;
+
+        cpp_generateInheritedBody(lm);
+        service.Members.Add(lm);
+
+        lm := Intf_GenerateAsyncExBegin(library, lentity, lmem, false, true);
         lm.Virtuality := CGMemberVirtualityKind.Override;
 
         cpp_generateInheritedBody(lm);
@@ -694,9 +701,12 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.cpp_GetTROAsyncCallbackType: String;
 begin
-  result := inherited cpp_GetTROAsyncCallbackType;
-  if not AsyncCallback_as_reqular_method then
-    result := '_di_'+result;
+  result := '_di_'+inherited cpp_GetTROAsyncCallbackType;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_GetTROAsyncCallbackMethodType: String;
+begin
+  result := inherited cpp_GetTROAsyncCallbackMethodType;
 end;
 
 end.
