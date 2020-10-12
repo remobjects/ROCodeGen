@@ -47,7 +47,8 @@ func writeSyntax() {
 	writeLn("  --full-type-names (Currently Delphi/BCB only)")
 	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
 	writeLn("  --legacy-strings (Delphi/BCB only)")
-	writeLn("  --codefirst-compatible (Delphi only)")
+	writeLn("  --codefirst-compatible (Delphi only)")  
+	writeLn("  --hydra (Delphi only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
@@ -317,6 +318,9 @@ do {
 	}
 	if options["legacy-strings"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.LegacyStrings = true
+	}
+	if options["hydra"] != nil {
+		(activeRodlCodeGen as? DelphiRodlCodeGen)?.IsHydra = true
 	}
 
 	if options["codefirst-compatible"] != nil {

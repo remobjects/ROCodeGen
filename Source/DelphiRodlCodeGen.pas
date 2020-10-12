@@ -156,9 +156,10 @@ type
     // default ancestor is TRORemoteDataModule, also generate .dfm
     property DefaultServerAncestor: DelphiServerAncestor := DelphiServerAncestor.RemoteDataModule;
     property CustomAncestor: String read fCustomAncestor write set_CustomAncestor;
-    property CustomUses: String;
+    property CustomUses: String;    
     // include {$SCOPEDENUMS ON} into _Intf
     property ScopedEnums: Boolean := false;
+    property IsHydra:Boolean := false;
     method isDFMNeeded: Boolean;
 
     property GenerateDFMs: Boolean := true;
@@ -3522,6 +3523,11 @@ begin
     file.Initialization := new List<CGStatement>;
     file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
     file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
+    if IsHydra then begin
+      file.Initialization.Add(new CGNewInstanceExpression('THYROFactory'.AsTypeReference,
+                                                          ['HInstance'.AsNamedIdentifierExpression.AsCallParameter,
+                                                          l_fClassFactoryExpr.AsCallParameter]));
+    end;
     file.Finalization := new List<CGStatement>;
     file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
     file.Finalization.Add(new CGAssignmentStatement(l_fClassFactoryExpr, CGNilExpression.Nil));
@@ -4185,6 +4191,11 @@ begin
     DelphiServerAncestor.Custom: lUnit.Imports.Add(GenerateCGImport(CustomUses));
   end;
 
+  if IsHydra then begin
+    lUnit.Imports.Add(GenerateCGImport('uHYRes'));
+    lUnit.Imports.Add(GenerateCGImport('uHYIntf'));
+    lUnit.Imports.Add(GenerateCGImport('uHYROFactory'));
+  end;
   if service.AncestorEntity <> nil then begin
     var anc_unit := RodlService(service.AncestorEntity).ImplUnit;
     if String.IsNullOrEmpty(anc_unit) then anc_unit := service.AncestorName+'_Impl';

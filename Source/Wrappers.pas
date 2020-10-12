@@ -78,6 +78,7 @@ type
     DelphiLegacyStrings = 'DelphiLegacyStrings';
     DelphiCodeFirstCompatible = 'DelphiCodeFirstCompatible';
     DelphiGenerateGenericArray = 'DelphiGenerateGenericArray';
+    DelphiHydra = 'DelphiHydra';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -124,6 +125,8 @@ begin
         DelphiRodlCodeGen(codegen).CodeFirstCompatible := true;
       if ParseAddParams(lparams,DelphiGenerateGenericArray) = '0' then
         DelphiRodlCodeGen(codegen).GenerateGenericArray := false;       
+      if ParseAddParams(lparams,DelphiHydra) = '1' then 
+        DelphiRodlCodeGen(codegen).IsHydra := true;
     end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
     Codegen4Platform.Java: codegen := new JavaRodlCodeGen;
