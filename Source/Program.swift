@@ -187,7 +187,7 @@ do {
 		return
 	}
 
-	var codegen: CGCodeGenerator?
+	var codegen: CGCodeGenerator?  
 
 	var fileExtension = "txt"
 	switch options["language"]?.ToLower() {
@@ -248,7 +248,7 @@ do {
 			fileExtension = "js"
 			return 2
 		default:
-	}
+	}  
 
 	var serverSupport = false
 	var activeRodlCodeGen: RodlCodeGen?
@@ -310,6 +310,7 @@ do {
 		default:
 	}
 
+	activeRodlCodeGen?.RodlFileName = Path.GetFileName(targetRodlFileName);
 	if options["full-type-names"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.IncludeUnitNameForOwnTypes = true
 	}

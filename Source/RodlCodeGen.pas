@@ -54,6 +54,7 @@ type
     property Generator: CGCodeGenerator; virtual;
     property DontPrefixEnumValues: Boolean := false; virtual;
     property CodeUnitSupport: Boolean := True; virtual;
+    property RodlFileName: String :='';
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;

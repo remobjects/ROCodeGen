@@ -79,6 +79,7 @@ type
     DelphiCodeFirstCompatible = 'DelphiCodeFirstCompatible';
     DelphiGenerateGenericArray = 'DelphiGenerateGenericArray';
     DelphiHydra = 'DelphiHydra';
+    RODLFileName = 'RodlFileName';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -138,6 +139,7 @@ begin
     end;
    // Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
+  codegen.RodlFileName := ParseAddParams(lparams,RODLFileName);
   case Language of
     Codegen4Language.Oxygene: begin
       codegen.Generator := new CGOxygeneCodeGenerator();
