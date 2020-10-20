@@ -39,9 +39,8 @@ type
     property attr_ROServiceMethod: CGAttribute;
     property attr_ROEventSink: CGAttribute;
     property attr_ROSkip: CGAttribute;
-    property attr_RODefinitionRODL: CGAttribute;
+    property attr_ROLibraryAttributes: CGAttribute;
     property attr_ROAbstract: CGAttribute;
-    property attr_DefaultNamespace: CGAttribute;
     property cond_GenericArray: CGConditionalDefine;
     property cond_GenericArray_inverted: CGConditionalDefine;
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
@@ -243,8 +242,7 @@ begin
                             );
   file.Types.Add(lenum);
   lenum.Comment := GenerateDocumentation(entity, true);
-  AddCGAttribute(lenum, attr_RODefinitionRODL);
-  AddCGAttribute(lenum, attr_DefaultNamespace);
+  AddCGAttribute(lenum, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name, lenum, entity.Documentation);
   GenerateCodeFirstCustomAttributes(lenum,entity);
 
@@ -300,8 +298,7 @@ begin
                                          );
   file.Types.Add(ltype);
   ltype.Comment := GenerateDocumentation(entity, true);
-  AddCGAttribute(ltype, attr_RODefinitionRODL);
-  AddCGAttribute(ltype, attr_DefaultNamespace);
+  AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype,entity);
 
@@ -599,8 +596,7 @@ begin
                               Visibility := CGTypeVisibilityKind.Public
                               );
   ltype.Comment := GenerateDocumentation(entity, true);
-  AddCGAttribute(ltype, attr_RODefinitionRODL);
-  AddCGAttribute(ltype, attr_DefaultNamespace);
+  AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, entity);
 
@@ -1266,8 +1262,7 @@ begin
                                          );
   file.Types.Add(ltype);
   ltype.Comment := GenerateDocumentation(entity, true);
-  AddCGAttribute(ltype, attr_RODefinitionRODL);
-  AddCGAttribute(ltype, attr_DefaultNamespace);
+  AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, entity);
 
@@ -2108,8 +2103,7 @@ begin
   {$REGION I%eventsink%}
   var ltype := new CGInterfaceTypeDefinition(l_IName);
   AddCGAttribute(ltype, attr_ROEventSink);
-  AddCGAttribute(ltype, attr_RODefinitionRODL);
-  AddCGAttribute(ltype, attr_DefaultNamespace);
+  AddCGAttribute(ltype, attr_ROLibraryAttributes);
   if not String.IsNullOrEmpty(lancestorName) then
     ltype.Ancestors.Add(ResolveDataTypeToTypeRefFullQualified(library, 'I'+lancestorName,Intf_name,lancestorName))
   else
@@ -2481,11 +2475,6 @@ begin
   //var lnamespace := GetNamespace(library);
   var cond := cpp_GlobalCondition_ns();
 
-  file.Globals.Add(new CGFieldDefinition("DefaultRodlName",// ResolveStdtypes(CGPredefinedTypeReference.String),
-                                          Constant := true,
-                                          Visibility := CGMemberVisibilityKind.Public,
-                                          Condition := cond,
-                                          Initializer := GetRODLName(library).AsLiteralExpression).AsGlobal());
   file.Globals.Add(new CGFieldDefinition("LibraryUID", ResolveStdtypes(CGPredefinedTypeReference.String),
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
@@ -2509,7 +2498,7 @@ begin
     ltargetnamespace := library.CustomAttributes_lower.Item['targetnamespace'];
   if String.IsNullOrEmpty(ltargetnamespace ) then ltargetnamespace := targetNamespace;
 
-  file.Globals.Add(new CGFieldDefinition("TargetNamespace", //ResolveStdtypes(CGPredefinedTypeReference.String),
+  file.Globals.Add(new CGFieldDefinition("TargetNamespace", ResolveStdtypes(CGPredefinedTypeReference.String),
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
@@ -3580,14 +3569,14 @@ begin
   var lancestorName := GetServiceAncestor(library, entity);
   var lservice := new CGClassTypeDefinition(l_TName,lancestorName.AsTypeReference,[l_IName.AsTypeReference].ToList,
                                              Visibility := CGTypeVisibilityKind.Public);
+  file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeReference.String),
+                  Constant := true,
+                  Visibility := CGMemberVisibilityKind.Public,
+                  Initializer := l_EntityName.AsLiteralExpression).AsGlobal());
+
   if CodeFirstCompatible then begin
-    AddCGAttribute(lservice, attr_RODefinitionRODL);
-    AddCGAttribute(lservice, attr_DefaultNamespace);
+    AddCGAttribute(lservice, attr_ROLibraryAttributes);
     if entity.Abstract then AddCGAttribute(lservice, attr_ROAbstract);
-    file.Globals.Add(new CGFieldDefinition("__ServiceName" , //ResolveStdtypes(CGPredefinedTypeReference.String),
-                    Constant := true,
-                    Visibility := CGMemberVisibilityKind.Public,
-                    Initializer := l_EntityName.AsLiteralExpression).AsGlobal());
 
     file.Globals.Add(new CGFieldDefinition("__ServiceID" , //ResolveStdtypes(CGPredefinedTypeReference.String),
                     Constant := true,
@@ -4026,30 +4015,15 @@ begin
   cpp_pragmalink(lUnit,CapitalizeString('uROProxy'));
   cpp_pragmalink(lUnit,CapitalizeString('uROAsync'));
   AddGlobalConstants(lUnit, &library);
+  
+  var la: CGNamedTypeReference;
 
-  attr_RODefinitionRODL := new CGAttribute('RODefinitionRODL'.AsTypeReference, [(new CGNamedTypeReference('DefaultRodlName') isclasstype(false)).AsExpression.AsCallParameter], Condition := CF_condition);
-  attr_DefaultNamespace := new CGAttribute('RONamespace'.AsTypeReference, [(new CGNamedTypeReference('TargetNamespace') isclasstype(false)).AsExpression.AsCallParameter], Condition := CF_condition);
-
+  if IncludeUnitNameForOwnTypes then
+    la := new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(true)
+  else
+    la := new CGNamedTypeReference('TLibraryAttributes') isclasstype(true);
+  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, [la.AsExpression.AsCallParameter], Condition := CF_condition);
   Intf_GenerateLibraryAttributes(lUnit, library);
-  LibraryAttributes.Members.Add(new CGMethodDefinition('RodlName',
-                                                        ['DefaultRodlName'.AsNamedIdentifierExpression.AsReturnStatement],
-                                                        Visibility := CGMemberVisibilityKind.Public,
-                                                        &Static := true,
-                                                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
-                                                        CallingConvention := CGCallingConventionKind.Register));
-  LibraryAttributes.Members.Add(new CGMethodDefinition('TargetNamespace',
-                                                        [GenerateQualifiedName('TargetNamespace', Intf_name).AsReturnStatement],
-                                                        Visibility := CGMemberVisibilityKind.Public,
-                                                        &Static := true,
-                                                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
-                                                        CallingConvention := CGCallingConventionKind.Register));
-  LibraryAttributes.Members.Add(new CGMethodDefinition('Documentation',
-                                                        [coalesce(library.Documentation,'').AsLiteralExpression.AsReturnStatement],
-                                                        Visibility := CGMemberVisibilityKind.Public,
-                                                        &Static := true,
-                                                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
-                                                        CallingConvention := CGCallingConventionKind.Register));
-
 
   if library.Enums.Count >0 then begin
     if PureDelphi and ScopedEnums then
@@ -4232,8 +4206,7 @@ begin
   Intf_name := lunitname+ '_Intf';
   Invk_name := lunitname+ '_Invk';
 
-  attr_RODefinitionRODL := new CGAttribute('RODefinitionRODL'.AsTypeReference, [(new CGNamedTypeReference('DefaultRodlName') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(false)).AsExpression.AsCallParameter], Condition := CF_condition);
-  attr_DefaultNamespace := new CGAttribute('RONamespace'.AsTypeReference, [(new CGNamedTypeReference('TargetNamespace') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(false)).AsExpression.AsCallParameter], Condition := CF_condition);
+  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, [(new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(false)).AsExpression.AsCallParameter], Condition := CF_condition);
 
   lUnit.HeaderComment := GenerateUnitComment(True);
   Add_RemObjects_Inc(lUnit, library);
@@ -4485,6 +4458,20 @@ method DelphiRodlCodeGen.Intf_GenerateLibraryAttributes(file: CGCodeUnit; librar
 begin
   LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes');
 
+  ProcessAttributes(library, LibraryAttributes, true);
+  LibraryAttributes.Members.Add(new CGMethodDefinition('DefaultNamespace',
+                                                        [GenerateQualifiedName('DefaultNamespace', Intf_name).AsReturnStatement],
+                                                        Visibility := CGMemberVisibilityKind.Public,
+                                                        &Static := true,
+                                                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                        CallingConvention := CGCallingConventionKind.Register));
+  LibraryAttributes.Members.Add(new CGMethodDefinition('Documentation',
+                                                        [coalesce(library.Documentation,'').AsLiteralExpression.AsReturnStatement],
+                                                        Visibility := CGMemberVisibilityKind.Public,
+                                                        &Static := true,
+                                                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                        CallingConvention := CGCallingConventionKind.Register));
+
   LibraryAttributes.Members.Add(new CGMethodDefinition('LibraryName',
                                                         [library.Name.AsLiteralExpression.AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
@@ -4497,19 +4484,19 @@ begin
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
-  LibraryAttributes.Members.Add(new CGMethodDefinition('DefaultNamespace',
-                                                        [GenerateQualifiedName('DefaultNamespace', Intf_name).AsReturnStatement],
+  LibraryAttributes.Members.Add(new CGMethodDefinition('RodlName',
+                                                        [GetRODLName(library).AsLiteralExpression.AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
-  ProcessAttributes(library, LibraryAttributes, true);
-
+  LibraryAttributes.Members.Add(new CGMethodDefinition('TargetNamespace',
+                                                        [GenerateQualifiedName('TargetNamespace', Intf_name).AsReturnStatement],
+                                                        Visibility := CGMemberVisibilityKind.Public,
+                                                        &Static := true,
+                                                        ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                        CallingConvention := CGCallingConventionKind.Register));
   file.Types.Add(LibraryAttributes);
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterLibraryAttributes',[LibraryAttributes.Name.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  var m1 := new CGMethodDefinition('RegisterLibraryAttributes');
-  m1.Parameters:Add([new CGParameterDefinition('la','TClass'.AsTypeReference() isClassType(true))]);
-  file.Globals:Add(m1.AsGlobal);
 end;
 
 end.
