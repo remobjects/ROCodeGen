@@ -35,6 +35,8 @@ func writeSyntax() {
 	writeLn()
 	writeLn("  - oxygene, pas")
 	writeLn("  - hydrogene, c#, cs")
+	writeLn("  - visual-basic, visualbasic, vb, vb.net")
+	writeLn("  - mercury")
 	writeLn("  - silver (RemObjects Swift)")
 	writeLn("  - swift (Apple Swift)")
 	writeLn("  - objective-c, Objc")
@@ -47,7 +49,7 @@ func writeSyntax() {
 	writeLn("  --full-type-names (Currently Delphi/BCB only)")
 	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
 	writeLn("  --legacy-strings (Delphi/BCB only)")
-	writeLn("  --codefirst-compatible (Delphi only)")  
+	writeLn("  --codefirst-compatible (Delphi only)")
 	writeLn("  --hydra (Delphi only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
@@ -187,7 +189,7 @@ do {
 		return
 	}
 
-	var codegen: CGCodeGenerator?  
+	var codegen: CGCodeGenerator?
 
 	var fileExtension = "txt"
 	switch options["language"]?.ToLower() {
@@ -203,8 +205,13 @@ do {
 			options["language"] = "standard-c#"
 			codegen = CGCSharpCodeGenerator(dialect: CGCSharpCodeGeneratorDialect.Standard)
 			fileExtension = "cs"
-		case "visual-basic", "visualbasic", "visualbasic.net", "vb", "vb.ndet":
+		case "visual-basic", "visualbasic", "visualbasic.net", "vb", "vb.net":
+			options["language"] = "standard-vb"
+			codegen = CGVisualBasicNetCodeGenerator(dialect: CGVisualBasicCodeGeneratorDialect.Standard)
+			fileExtension = "vb"
+		case "mercury":
 			options["language"] = "vb"
+			codegen = CGVisualBasicNetCodeGenerator(dialect: CGVisualBasicCodeGeneratorDialect.Mercury)
 			fileExtension = "vb"
 		case "silver":
 			options["language"] = "swift"
@@ -248,7 +255,7 @@ do {
 			fileExtension = "js"
 			return 2
 		default:
-	}  
+	}
 
 	var serverSupport = false
 	var activeRodlCodeGen: RodlCodeGen?

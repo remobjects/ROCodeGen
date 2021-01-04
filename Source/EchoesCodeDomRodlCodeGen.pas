@@ -89,7 +89,8 @@ begin
   result.Add(lunitname, GenerateCodeFromCompileUnit(lUnit));
 end;
 
-method EchoesCodeDomRodlCodeGen.GetCodeDomProviderForLanguage: nullable CodeDomProvider;
+
+method EchoesCodeDomRodlCodeGen.GetCodeDomProviderForLanguage(): nullable CodeDomProvider;
 begin
   var lLookingForCodeDomName: String;
   try
@@ -98,14 +99,14 @@ begin
           lLookingForCodeDomName := 'Oxygene';
           result := CodeDomProvider.CreateProvider("pas");
         end;
-      'hydrogene','cs','c#': begin
+      'hydrogene','cs','c#', 'standard-c#': begin
           result := new Microsoft.CSharp.CSharpCodeProvider();
         end;
       'silver', 'swift': begin
           lLookingForCodeDomName := 'Silver';
           result := CodeDomProvider.CreateProvider("Silver");
         end;
-      'vb','visualbasic','visual basic': begin
+      'vb','visualbasic','visual basic', 'standard-vb': begin
           result := new Microsoft.VisualBasic.VBCodeProvider();
         end;
     end;
@@ -113,9 +114,9 @@ begin
     on E: System.Configuration.ConfigurationException do begin
       result := nil;
     end;
-    end;
-  if not assigned(result) then begin
+  end;
 
+  if not assigned(result) then begin
     //Console.WriteLine(Language:ToLower());
     //Console.WriteLine("Known CodeDom providers:");
     for each p in CodeDomProvider.GetAllCompilerInfo do begin
@@ -127,10 +128,10 @@ begin
         //Console.Write(l);
       end;
       //Console.WriteLine();
-
     end;
   end;
 end;
+
 
 method EchoesCodeDomRodlCodeGen.GenerateCodeFromCompileUnit(aUnit: CodeCompileUnit): not nullable String;
 begin
