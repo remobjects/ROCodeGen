@@ -283,8 +283,8 @@ do {
 			serverSupport = true
 			#if ECHOES
 			activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
-			#else
 			activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
+			#else
 			//activeRodlCodeGen = DotNetRodlCodeGen()
 			writeLn(".NET codegen is not supported in the Mac version of rodl2code, sorry. Use 'mono rodl2code.exe', instead.")
 			return 2
