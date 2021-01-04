@@ -301,7 +301,7 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 
 		self.serverInterface = serverInterface
 
-		let serverAccess = super.generateServerAccessType(unit)    
+		let serverAccess = super.generateServerAccessType(unit)
 		serverAccess.ImplementedInterfaces.Add(serverInterface.Name.AsTypeReference())
 
 		return serverAccess
@@ -375,6 +375,8 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		let property = CGPropertyDefinition(propertyName, proxyInterfaceType.NotNullable)
 		serverAccess.Members.Add(property)
 		property.Visibility = .Public
+		property.ImplementsInterface = "IServerAccess".AsTypeReference()
+		property.ImplementsInterfaceMember = propertyName
 
 		let propertyGetter = List<CGStatement>()
 		let create = CGMethodCallExpression(CGTypeReferenceExpression(proxyClassType),
