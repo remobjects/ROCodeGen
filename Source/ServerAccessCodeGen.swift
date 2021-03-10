@@ -381,8 +381,8 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		let propertyGetter = List<CGStatement>()
 		let create = CGMethodCallExpression(CGTypeReferenceExpression(proxyClassType),
 											"Create",
-											[ CGPropertyAccessExpression(CGSelfExpression.`Self`, "_message").AsCallParameter("message"),
-												CGPropertyAccessExpression(CGSelfExpression.`Self`, "_clientChannel").AsCallParameter("clientChannel"), ])
+											[ CGPropertyAccessExpression(CGSelfExpression.`Self`, "_message").AsCallParameter(),
+												CGPropertyAccessExpression(CGSelfExpression.`Self`, "_clientChannel").AsCallParameter() ])
 		propertyGetter.Add(CGUnaryOperatorExpression(create, .ForceUnwrapNullable).AsReturnStatement()) // workaround, while CodeDom-based CG cant emit non-nullable Co* methods
 		property.GetStatements = propertyGetter
 
