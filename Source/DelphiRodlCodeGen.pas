@@ -3556,9 +3556,10 @@ begin
     file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
     file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
     if IsHydra then begin
-      file.Initialization.Add(new CGNewInstanceExpression('THYROFactory'.AsTypeReference,
-                                                          ['HInstance'.AsNamedIdentifierExpression.AsCallParameter,
-                                                          l_fClassFactoryExpr.AsCallParameter]));
+//      file.Initialization.Add(new CGNewInstanceExpression('THYROFactory'.AsTypeReference,
+//                                                          ['HInstance'.AsNamedIdentifierExpression.AsCallParameter,
+//                                                          l_fClassFactoryExpr.AsCallParameter]));
+      file.Initialization.Add(new CGMethodCallExpression(nil, 'RegisterServicePlugin',['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter]));
     end;
     file.Finalization := new List<CGStatement>;
     file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
@@ -4233,9 +4234,10 @@ begin
   end;
 
   if IsHydra then begin
-    lUnit.Imports.Add(GenerateCGImport('uHYRes'));
-    lUnit.Imports.Add(GenerateCGImport('uHYIntf'));
-    lUnit.Imports.Add(GenerateCGImport('uHYROFactory'));
+//    lUnit.Imports.Add(GenerateCGImport('uHYRes'));
+//    lUnit.Imports.Add(GenerateCGImport('uHYIntf'));
+//    lUnit.Imports.Add(GenerateCGImport('uHYROFactory'));
+    lUnit.Imports.Add(GenerateCGImport('Hydra.Core.ModuleController'));
   end;
   if service.AncestorEntity <> nil then begin
     var anc_unit := RodlService(service.AncestorEntity).ImplUnit;
