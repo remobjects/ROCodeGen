@@ -4,6 +4,7 @@ interface
 
 type
   ModeKind = public enum (Plain, &Async, AsyncEx);
+  State = public enum (Off, &On, Auto);
 
   DelphiServerAncestor = public enum (Remotable,RemoteDataModule, Custom);
 
@@ -58,10 +59,18 @@ type
     method get_IROMessage_typeref: CGTypeReference;
     method get_IROTransport_typeref: CGTypeReference;
     method GenerateParamAttributes(aName: String):CGSetLiteralExpression;
+    method IsCodeFirstCompatible: Boolean;
+    begin
+      exit CodeFirstMode in [State.On, State.Auto];
+    end;
+    method IsGenericArrayCompatible: Boolean;
+    begin
+      exit GenericArrayMode in [State.On, State.Auto];
+    end;
   protected
     fLegacyStrings: Boolean := False;
     method _SetLegacyStrings(value: Boolean); virtual;
-    property PureDelphi: Boolean := True;
+    property PureDelphi: Boolean read True; virtual;
     property Intf_name: String;
     property Invk_name: String;
     property Impl_name: String;
@@ -154,7 +163,8 @@ type
 
     method cpp_pragmalink(file: CGCodeUnit; aUnitName: String); virtual; empty;
     method cpp_ClassId(anExpression: CGExpression): CGExpression; virtual;
-    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'; aCondition: CGConditionalDefine := nil): CGImport;virtual;
+    method GenerateCGImport(aName: String; aCondition: CGConditionalDefine): CGImport;
+    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'): CGImport;virtual;
     method GenerateIsClause(aSource: CGExpression; aType: CGTypeReference):CGExpression;
   public
     constructor;
@@ -173,8 +183,11 @@ type
 
     property GenerateDFMs: Boolean := true;
     property LegacyStrings: Boolean read fLegacyStrings write _SetLegacyStrings;
-    property CodeFirstCompatible: Boolean := False;virtual;
-    property GenerateGenericArray: Boolean := True;
+
+    property DelphiXE2Mode: State := State.Auto; virtual;
+    property FPCMode: State := State.Auto; virtual;
+    property CodeFirstMode: State := State.Auto; virtual;
+    property GenericArrayMode: State := State.Auto; virtual;
 
     method GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -183,7 +196,6 @@ type
 
     method GenerateInvokerFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
     method GenerateImplementationFiles(library: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>; override;
-
   end;
 
 implementation
@@ -224,7 +236,6 @@ begin
   "unimplemented", "unit", "until", "uses", "var", "varargs", "virtual", "while", "with", "write", "xor"]);
 
   fParamAttributes_typeref := new CGNamedTypeReference('TParamAttributes') isClasstype(False);
-  CreateCodeFirstAttributes;
 end;
 
 method DelphiRodlCodeGen.Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary);
@@ -251,7 +262,7 @@ begin
     cg4_member.Comment :=  GenerateDocumentation(rodl_member, true);
     GenerateCodeFirstDocumentation(file, 'docs_'+entity.Name+'_'+rodl_member.Name, cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member,rodl_member);
-    if CodeFirstCompatible then begin
+    if IsCodeFirstCompatible then begin
       if rodl_member.OriginalName <> rodl_member.Name then
         AddCGAttribute(lenum,new CGAttribute('ROEnumSoapName'.AsTypeReference,
                                             [rodl_member.Name.AsLiteralExpression.AsCallParameter,
@@ -548,7 +559,7 @@ begin
     cg4_member.Comment := GenerateDocumentation(rodl_member, true);
     GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
-    if CodeFirstCompatible then begin
+    if IsCodeFirstCompatible then begin
       if IsAnsiString(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
       if IsUTF8String(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
     end;
@@ -577,35 +588,34 @@ begin
   var array_typeref := ResolveDataTypeToTypeRefFullQualified(library, larrayname, Intf_name);
   var lEnumerator := larrayname +'Enumerator';
 
-  if PureDelphi and GenerateGenericArray then begin
-    var genArray := new CGClassTypeDefinition(entity.Name, ('TROArray<'+lElementType+'>').AsTypeReference,
-                                              Visibility := CGTypeVisibilityKind.Public);
-    genArray.Condition := cond_GenericArray;
-    file.Types.Add(genArray);
+  if PureDelphi and IsGenericArrayCompatible then begin
+    file.Types.Add(new CGClassTypeDefinition(entity.Name, ('TROArray<'+lElementType+'>').AsTypeReference,
+                                             Visibility := CGTypeVisibilityKind.Public, 
+                                             Condition := cond_GenericArray));
   end;
+  if GenericArrayMode = State.On then exit;
 
+  // non generic arrays
+  var linternalarr := new CGTypeAliasDefinition(larrayname+"_"+lElementType, 
+                                                new CGArrayTypeReference(el_typeref),
+                                                Condition := cond_GenericArray_inverted);
 
-  var linternalarr := new CGTypeAliasDefinition(larrayname+"_"+lElementType, new CGArrayTypeReference(el_typeref));
-  if PureDelphi and GenerateGenericArray then linternalarr.Condition := cond_GenericArray_inverted;
   var linternalarr_typeref := DuplicateType(ResolveDataTypeToTypeRefFullQualified(library, linternalarr.Name, Intf_name,larrayname), false);
-
-
   file.Types.Add(linternalarr);
-
   var ltype := new CGClassTypeDefinition(larrayname,'TROArray'.AsTypeReference,
-                              Visibility := CGTypeVisibilityKind.Public
+                              Visibility := CGTypeVisibilityKind.Public,
+                              Condition := cond_GenericArray_inverted,
+                              Comment := GenerateDocumentation(entity, true)
                               );
-  ltype.Comment := GenerateDocumentation(entity, true);
   AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(file,'docs_'+entity.Name,ltype, entity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, entity);
 
-  if CodeFirstCompatible then begin
+  if IsCodeFirstCompatible then begin
     if IsAnsiString(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsAnsiString) else
     if IsUTF8String(entity.ElementType) then AddCGAttribute(ltype,attr_ROSerializeAsUTF8String);
   end;
 
-  if PureDelphi and GenerateGenericArray then ltype.Condition := cond_GenericArray_inverted;
   file.Types.Add(ltype);
 
   var aIndex: CGExpression := 'aIndex'.AsNamedIdentifierExpression;             //aIndex
@@ -1180,8 +1190,8 @@ begin
 
   {$REGION %arrayname%Enumerator}
   var lenumtype := new CGClassTypeDefinition(lEnumerator, 'TObject'.AsTypeReference,
-                                             Visibility := CGTypeVisibilityKind.Public);
-  if PureDelphi and GenerateGenericArray then lenumtype.Condition := cond_GenericArray_inverted;
+                                             Visibility := CGTypeVisibilityKind.Public,
+                                             Condition := cond_GenericArray_inverted);
   file.Types.Add(lenumtype);
   {$REGION private fArray: %arrayname%}
   lenumtype.Members.Add(
@@ -1499,7 +1509,7 @@ begin
     cg4_member.Comment := GenerateDocumentation(rodl_member, true);
     GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
-    if CodeFirstCompatible then begin
+    if IsCodeFirstCompatible then begin
       if IsAnsiString(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
       if IsUTF8String(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
     end;
@@ -1572,7 +1582,7 @@ begin
           cg4_param.Type := new CGConstantTypeReference(cg4_param.Type)
         else
           cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
-//        if CodeFirstCompatible then begin
+//        if IsCodeFirstCompatible then begin
 //          if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
 //          if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
 //        end;
@@ -2128,7 +2138,7 @@ begin
       if rodl_param.ParamFlag <> ParamFlags.Result then begin
 
         var cg4_param := new CGParameterDefinition(rodl_param.Name, ResolveDataTypeToTypeRefFullQualified(library,rodl_param.DataType, Intf_name),Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag));
-        if CodeFirstCompatible then begin
+        if IsCodeFirstCompatible then begin
           if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
           if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
         end;
@@ -2138,7 +2148,7 @@ begin
       end;
     end;
     if assigned(rodl_member.Result) then begin
-      if CodeFirstCompatible then begin
+      if IsCodeFirstCompatible then begin
         if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
         if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
       end;
@@ -2740,7 +2750,11 @@ end;
 
 method DelphiRodlCodeGen.GenerateInvokerFile(&library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
-  exit Generator.GenerateUnit(GenerateInvokerCodeUnit(library, aTargetNamespace, aUnitName));
+  CreateCodeFirstAttributes;
+  if CodeFirstMode = State.On then 
+    exit ''
+  else
+    exit Generator.GenerateUnit(GenerateInvokerCodeUnit(library, aTargetNamespace, aUnitName));
 end;
 
 {$REGION generate _Invk}
@@ -3545,25 +3559,31 @@ begin
   {$REGION implementation method + initialization/finalization}
     var l_fClassFactory := 'fClassFactory_'+l_EntityName;
     var l_fClassFactoryExpr := l_fClassFactory.AsNamedIdentifierExpression;
-    var lcreator := new CGMethodDefinition(l_methodName,
-                                           Parameters := [new CGParameterDefinition('anInstance', ResolveInterfaceTypeRef(nil,'IInterface',''),Modifier := CGParameterModifierKind.Out)].ToList,
-                                           Visibility := CGMemberVisibilityKind.Private,
-                                           CallingConvention := CGCallingConventionKind.Register);
-    Impl_GenerateCreateService(lcreator, new CGNewInstanceExpression(l_TName.AsTypeReference,[CGNilExpression.Nil.AsCallParameter].ToList));
-    file.Globals.Add(lcreator.AsGlobal);
-    file.Globals.Add(new CGFieldDefinition(l_fClassFactory,ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), Visibility := CGMemberVisibilityKind.Private).AsGlobal);
+    if CodeFirstMode <> State.On then begin
+      var lcreator := new CGMethodDefinition(l_methodName,
+                                             Parameters := [new CGParameterDefinition('anInstance', ResolveInterfaceTypeRef(nil,'IInterface',''),Modifier := CGParameterModifierKind.Out)].ToList,
+                                             Visibility := CGMemberVisibilityKind.Private,
+                                             CallingConvention := CGCallingConventionKind.Register);
+      Impl_GenerateCreateService(lcreator, new CGNewInstanceExpression(l_TName.AsTypeReference,[CGNilExpression.Nil.AsCallParameter].ToList));
+      file.Globals.Add(lcreator.AsGlobal);
+      file.Globals.Add(new CGFieldDefinition(l_fClassFactory,
+                                             ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), 
+                                             Visibility := CGMemberVisibilityKind.Private).AsGlobal);
+    end;
     file.Initialization := new List<CGStatement>;
     file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
-    file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
+    if CodeFirstMode <> State.On then begin 
+      file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
+      file.Finalization := new List<CGStatement>;
+      file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
+      file.Finalization.Add(new CGAssignmentStatement(l_fClassFactoryExpr, CGNilExpression.Nil));
+    end;
     if IsHydra then begin
 //      file.Initialization.Add(new CGNewInstanceExpression('THYROFactory'.AsTypeReference,
 //                                                          ['HInstance'.AsNamedIdentifierExpression.AsCallParameter,
 //                                                          l_fClassFactoryExpr.AsCallParameter]));
       file.Initialization.Add(new CGMethodCallExpression(nil, 'RegisterServicePlugin',['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter]));
     end;
-    file.Finalization := new List<CGStatement>;
-    file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
-    file.Finalization.Add(new CGAssignmentStatement(l_fClassFactoryExpr, CGNilExpression.Nil));
   {$ENDREGION}
   end;
 
@@ -3575,7 +3595,7 @@ begin
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer := l_EntityName.AsLiteralExpression).AsGlobal());
 
-  if CodeFirstCompatible then begin
+  if IsCodeFirstCompatible then begin
     AddCGAttribute(lservice, attr_ROLibraryAttributes);
     if entity.Abstract then AddCGAttribute(lservice, attr_ROAbstract);
 
@@ -3593,7 +3613,10 @@ begin
       AddCGAttribute(lservice, attr_ROSkip);
 
     for lr in entity.Roles.Roles do
-      AddCGAttribute(lservice,new CGAttribute('RORole'.AsTypeReference,[(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, Condition := CF_condition));
+      AddCGAttribute(lservice,
+                     new CGAttribute('RORole'.AsTypeReference,
+                                     [(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, 
+                                     Condition := CF_condition));
   end;
 
   lservice.Comment := GenerateDocumentation(entity, true);
@@ -3610,11 +3633,14 @@ begin
                                       Virtuality := CGMemberVirtualityKind.Virtual,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
-    if CodeFirstCompatible then begin
+    if IsCodeFirstCompatible then begin
       AddCGAttribute(cg4_member,attr_ROServiceMethod);
       if (rodl_member.Roles.Roles.Count>0) then begin
         for lr in rodl_member.Roles.Roles do
-          AddCGAttribute(cg4_member,new CGAttribute('RORole'.AsTypeReference,[(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, Condition := CF_condition));
+          AddCGAttribute(cg4_member,
+                         new CGAttribute('RORole'.AsTypeReference,
+                                         [(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, 
+                                         Condition := CF_condition));
       end;
     end;
 
@@ -3631,7 +3657,7 @@ begin
           cg4_param.Type := new CGConstantTypeReference(cg4_param.Type)
         else
           cg4_param.Modifier := RODLParamFlagToCodegenFlag(rodl_param.ParamFlag);
-        if CodeFirstCompatible then begin
+        if IsCodeFirstCompatible then begin
           if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
           if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
         end;
@@ -3642,8 +3668,12 @@ begin
     end;
     cg4_member.Statements.Add(AddMessageDirective(rodl_member.Name+" is not implemented yet!"));
     if assigned(rodl_member.Result) then begin
-      if CodeFirstCompatible then begin
-        if rodl_member.Result.Name <> 'Result' then AddCGAttribute(cg4_member, new CGAttribute('ROServiceMethodResultName'.AsTypeReference, rodl_member.Result.Name.AsLiteralExpression.asCallParameter, Condition := CF_condition));
+      if IsCodeFirstCompatible then begin
+        if rodl_member.Result.Name <> 'Result' then 
+          AddCGAttribute(cg4_member, 
+                         new CGAttribute('ROServiceMethodResultName'.AsTypeReference, 
+                                         rodl_member.Result.Name.AsLiteralExpression.asCallParameter, 
+                                         Condition := CF_condition));
         if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
         if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
       end;
@@ -3658,37 +3688,60 @@ end;
 
 method DelphiRodlCodeGen.Impl_GenerateDFMInclude(file: CGCodeUnit);
 begin
-  file.ImplementationDirectives.Add(new CGCompilerDirective("{%CLASSGROUP 'System.Classes.TPersistent'}", new CGConditionalDefine("DELPHIXE2UP")));
-  file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.dfm}",new CGConditionalDefine("FPC") inverted(true)));
-  file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.lfm}",new CGConditionalDefine("FPC")));
+  case DelphiXE2Mode of
+    State.On:   file.ImplementationDirectives.Add(new CGCompilerDirective("{%CLASSGROUP 'System.Classes.TPersistent'}"));
+    State.Off:;
+    State.Auto: file.ImplementationDirectives.Add(new CGCompilerDirective("{%CLASSGROUP 'System.Classes.TPersistent'}", new CGConditionalDefine("DELPHIXE2UP")));
+  end;
+  case FPCMode of
+    State.On:  file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.lfm}"));  
+    State.Off: file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.dfm}"));
+    State.Auto: begin
+      file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.dfm}",new CGConditionalDefine("FPC") inverted(true)));
+      file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.lfm}",new CGConditionalDefine("FPC")));
+    end;
+  end;
 end;
 
 method DelphiRodlCodeGen.Impl_CreateClassFactory(library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;
 begin
   var r := new List<CGStatement>;
   var l_EntityName := entity.Name;
-  var l_TInvoker := 'T'+l_EntityName+'_Invoker';
+  var l_serviceName := 'T'+l_EntityName; 
+  var l_TInvoker := l_serviceName+'_Invoker';
   var l_methodName := 'Create_'+l_EntityName;
+  var l_FPCPrefix := case FPCMode of
+                       State.Auto: '{$IFDEF FPC}@{$ENDIF}';
+                       State.On: '@';
+                       State.Off: '';
+                     end;
 
   var lRODLCreate := new CGAssignmentStatement(lvar,
                                  new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
                                            ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
-                                            ('{$IFDEF FPC}@{$ENDIF}'+l_methodName).AsNamedIdentifierExpression.AsCallParameter,
+                                            (l_FPCPrefix+l_methodName).AsNamedIdentifierExpression.AsCallParameter,
                                             l_TInvoker.AsNamedIdentifierExpression.AsCallParameter]));
-  if CodeFirstCompatible then begin
-    var lbl := new CGConditionalBlockStatement(CF_condition);
-    var lCFCreate := new CGAssignmentStatement(lvar,
-                                               new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
-                                               ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
-                                               (l_methodName).AsNamedIdentifierExpression.AsCallParameter,
-                                                'TRORTTIInvoker'.AsNamedIdentifierExpression.AsCallParameter]));
-    lbl.Statements.Add(lCFCreate);
-    lbl.ElseStatements := new List<CGStatement>;
-    lbl.ElseStatements.Add(lRODLCreate);
-    r.Add(lbl);
-  end
-  else begin
-    r.Add(lRODLCreate);
+
+  case CodeFirstMode of
+    State.Off: r.Add(lRODLCreate);
+    State.On:  r.Add(new CGMethodCallExpression(nil,'RegisterCodeFirstService',[l_serviceName.AsNamedIdentifierExpression.AsCallParameter]));
+    State.Auto: begin
+      if IsCodeFirstCompatible then begin
+        var lbl := new CGConditionalBlockStatement(CF_condition);
+        var lCFCreate := new CGAssignmentStatement(lvar,
+                                                   new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
+                                                   ['__ServiceName'.AsNamedIdentifierExpression.AsCallParameter,
+                                                   (l_methodName).AsNamedIdentifierExpression.AsCallParameter,
+                                                    'TRORTTIInvoker'.AsNamedIdentifierExpression.AsCallParameter]));
+        lbl.Statements.Add(lCFCreate);
+        lbl.ElseStatements := new List<CGStatement>;
+        lbl.ElseStatements.Add(lRODLCreate);
+        r.Add(lbl);
+      end
+      else begin
+        r.Add(lRODLCreate);
+      end;
+    end;
   end;
   exit r;
 end;
@@ -3890,12 +3943,22 @@ begin
   aMethod.Parameters.Add(aDynamicArrayParam.AsCallParameter);
 end;
 
-method DelphiRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String; aCondition: CGConditionalDefine := nil): CGImport;
+method DelphiRodlCodeGen.GenerateCGImport(aName: String; aCondition: CGConditionalDefine): CGImport;
+begin
+  exit new CGImport(new CGNamedTypeReference(aName), Condition := aCondition)
+end;
+
+method DelphiRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
 begin
   if String.IsNullOrEmpty(aNamespace) then
-    exit new CGImport(new CGNamedTypeReference(aName), Condition := aCondition)
-  else
-    exit new CGImport(String.Format('{{$IFDEF DELPHIXE2UP}}{0}.{1}{{$ELSE}}{1}{{$ENDIF}}',[aNamespace, aName]));
+    exit new CGImport(new CGNamedTypeReference(aName))
+  else begin
+    case DelphiXE2Mode of
+      State.Auto: exit new CGImport(String.Format('{{$IFDEF DELPHIXE2UP}}{0}.{1}{{$ELSE}}{1}{{$ENDIF}}',[aNamespace, aName]));
+      State.Off: exit new CGImport(aName);
+      State.On: exit new CGImport(String.Format('{0}.{1}',[aNamespace, aName]));
+    end;
+  end;
 end;
 
 method DelphiRodlCodeGen.cpp_ClassId(anExpression: CGExpression): CGExpression;
@@ -3910,6 +3973,7 @@ end;
 
 method DelphiRodlCodeGen.GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
 begin
+  CreateCodeFirstAttributes;
   ScopedEnums := ScopedEnums or library.ScopedEnums;
   //special mode, only if library.ScopedEnums is set
   IncludeUnitNameForOwnTypes := IncludeUnitNameForOwnTypes or library.ScopedEnums;
@@ -3943,10 +4007,11 @@ begin
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
-  if CodeFirstCompatible then
-    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := CF_condition));
-  if PureDelphi and GenerateGenericArray then
-    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uROArray'), Condition := cond_GenericArray));
+  if PureDelphi then begin
+    if IsCodeFirstCompatible    then lUnit.Imports.Add(GenerateCGImport('uRORTTIAttributes', CF_condition));
+    if IsGenericArrayCompatible then lUnit.Imports.Add(GenerateCGImport('uROArray',cond_GenericArray));
+  end;
+
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROUri'));
   lUnit.Imports.Add(GenerateCGImport('uROProxy'));
@@ -4023,7 +4088,9 @@ begin
     la := new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(true)
   else
     la := new CGNamedTypeReference('TLibraryAttributes') isclasstype(true);
-  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, [la.AsExpression.AsCallParameter], Condition := CF_condition);
+  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, 
+                                              [la.AsExpression.AsCallParameter], 
+                                              Condition := CF_condition);
   Intf_GenerateLibraryAttributes(lUnit, library);
 
   if library.Enums.Count >0 then begin
@@ -4074,6 +4141,8 @@ end;
 
 method DelphiRodlCodeGen.GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
 begin
+  CreateCodeFirstAttributes;
+  if CodeFirstMode = State.On then exit nil;
   IncludeUnitNameForOwnTypes := true;
   targetNamespace := aTargetNamespace;
   if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Namespace;
@@ -4184,6 +4253,7 @@ end;
 
 method DelphiRodlCodeGen.GenerateImplementationCodeUnit(library: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit;
 begin
+  CreateCodeFirstAttributes;
   var service := library.Services.FindEntity(aServiceName);
   if service = nil then raise new Exception(String.Format('{0} wasn''t found!',[aServiceName]));
   if service.IsFromUsedRodl then begin
@@ -4207,7 +4277,9 @@ begin
   Intf_name := lunitname+ '_Intf';
   Invk_name := lunitname+ '_Invk';
 
-  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, [(new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(false)).AsExpression.AsCallParameter], Condition := CF_condition);
+  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, 
+                                              [(new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(false)).AsExpression.AsCallParameter], 
+                                              Condition := CF_condition);
 
   lUnit.HeaderComment := GenerateUnitComment(True);
   Add_RemObjects_Inc(lUnit, library);
@@ -4215,9 +4287,9 @@ begin
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
-  if CodeFirstCompatible then begin
-    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uRORTTIAttributes'), Condition := CF_condition));
-    lUnit.Imports.Add(new CGImport(new CGNamedTypeReference('uROArray'), Condition := CF_condition));
+  if PureDelphi then begin
+    if IsCodeFirstCompatible then lUnit.Imports.Add(GenerateCGImport('uRORTTIAttributes', CF_condition));
+    if IsGenericArrayCompatible then lUnit.Imports.Add(GenerateCGImport('uROArray',cond_GenericArray));
   end;
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
@@ -4302,15 +4374,18 @@ begin
       end;
       s1 := s1+ '_Invk';
       if not list.Contains(s1) then begin
-        lUnit.ImplementationImports.Add(GenerateCGImport(s1,'',lext, iif(CodeFirstCompatible, CF_condition_inverted, nil)));
+        case CodeFirstMode of
+          State.Auto: lUnit.ImplementationImports.Add(GenerateCGImport(s1, CF_condition_inverted));
+          State.Off: lUnit.ImplementationImports.Add(GenerateCGImport(s1,'',lext));
+          State.On: ;
+        end;
         list.Add(s1);
       end;
     end;
-    if CodeFirstCompatible then begin
-      lUnit.ImplementationImports.Add(new CGImport(new CGNamedTypeReference('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}')));
-    end
-    else begin
-      lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
+    case CodeFirstMode of
+      State.Auto: lUnit.ImplementationImports.Add(GenerateCGImport('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}', nil));                 
+      State.Off:  lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
+      State.On:   ;
     end;
   {$ENDREGION}
   end;
@@ -4320,6 +4395,7 @@ end;
 
 method DelphiRodlCodeGen.GenerateImplementationFiles(file: CGCodeUnit; library: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;
 begin
+  CreateCodeFirstAttributes;
   var service := library.Services.FindEntity(aServiceName);
   result := new Dictionary<String,String>;
   result.Add(Path.ChangeExtension(file.FileName, Generator.defaultFileExtension),
@@ -4362,24 +4438,58 @@ end;
 
 method DelphiRodlCodeGen.CreateCodeFirstAttributes;
 begin
-  CF_condition := new CGConditionalDefine('RO_RTTI_Support');
-  CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(True);
+  if PureDelphi then begin
+    if FPCMode = State.On then begin
+      DelphiXE2Mode := State.Off;
+      CodeFirstMode := State.Off;
+      GenericArrayMode := State.Off;
+    end;
+    if DelphiXE2Mode = State.On then 
+      FPCMode := State.Off;
+    if DelphiXE2Mode = State.Off then begin
+      CodeFirstMode := State.Off;
+      GenericArrayMode := State.Off;
+    end;
+    if CodeFirstMode = State.On then 
+      DelphiXE2Mode := State.On;
+    if CodeFirstMode = State.Off then 
+      GenericArrayMode := State.Off;
+    if GenericArrayMode = State.On then begin
+      DelphiXE2Mode := State.On;
+      CodeFirstMode := State.On;
+    end;
 
-  attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference, 'emAnsi'.AsNamedIdentifierExpression.asCallParameter, Condition := CF_condition);
-  attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference, 'emUTF8'.AsNamedIdentifierExpression.asCallParameter, Condition := CF_condition);
+    if (CodeFirstMode = State.Auto) then begin
+      CF_condition := new CGConditionalDefine('RO_RTTI_Support');
+      CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(True);
+    end;
+    if (GenericArrayMode = State.Auto) then begin
+      cond_GenericArray := new CGConditionalDefine('RO_GenericArray');
+      cond_GenericArray_inverted := new CGConditionalDefine('RO_GenericArray') inverted(True);
+    end;
+  end;
 
-  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, Condition := CF_condition);
-  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, Condition := CF_condition);
-  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference, Condition := CF_condition);
-  attr_ROAbstract := new CGAttribute('ROAbstract'.AsTypeReference, Condition := CF_condition);
+  attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference, 
+                                                  'emAnsi'.AsNamedIdentifierExpression.asCallParameter, 
+                                                  Condition := CF_condition);
+  attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference, 
+                                                  'emUTF8'.AsNamedIdentifierExpression.asCallParameter, 
+                                                  Condition := CF_condition);
 
-  cond_GenericArray := new CGConditionalDefine('RO_GenericArray');
-  cond_GenericArray_inverted := new CGConditionalDefine('RO_GenericArray') inverted(True);
+  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, 
+                                          Condition := CF_condition);
+  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, 
+                                      Condition := CF_condition);
+  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference, 
+                                 Condition := CF_condition);
+  attr_ROAbstract := new CGAttribute('ROAbstract'.AsTypeReference, 
+                                     Condition := CF_condition);
+
 end;
 
 method DelphiRodlCodeGen.AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
 begin
-  if CodeFirstCompatible then begin
+  if IsCodeFirstCompatible then begin
     if aType is CGTypeDefinition then begin
       var ltype :=  CGTypeDefinition(aType);
       ltype.Attributes.Add(anAttribute);
@@ -4402,25 +4512,27 @@ end;
 
 method DelphiRodlCodeGen.GenerateCodeFirstDocumentation(file: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
 begin
-  if CodeFirstCompatible and not String.IsNullOrEmpty(aDoc) then begin
+  if IsCodeFirstCompatible and not String.IsNullOrEmpty(aDoc) then begin
     file.Globals.Add(new CGFieldDefinition(aName,
                     Constant := true,
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := aDoc.AsLiteralExpression,
                     Condition := CF_condition).AsGlobal());
-    var attr := new CGAttribute('RODocumentation'.AsTypeReference,[aName.AsNamedIdentifierExpression.AsCallParameter], Condition := CF_condition);
+    var attr := new CGAttribute('RODocumentation'.AsTypeReference,
+                                [aName.AsNamedIdentifierExpression.AsCallParameter], 
+                                Condition := CF_condition);
     AddCGAttribute(aType, attr);
   end;
 end;
 
 method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
 begin
-  if CodeFirstCompatible then begin
+  if IsCodeFirstCompatible then begin
     for k in aEntity.CustomAttributes.Keys do begin
       var attr := new CGAttribute('ROCustom'.AsTypeReference,
                                   [k.AsLiteralExpression.AsCallParameter,
-                                   aEntity.CustomAttributes[k].AsLiteralExpression.AsCallParameter],
-                                  Condition := CF_condition);
+                                   aEntity.CustomAttributes[k].AsLiteralExpression.AsCallParameter]);
+      if CodeFirstMode = State.Auto then attr.Condition := CF_condition;
       AddCGAttribute(aType, attr);
     end;
   end;

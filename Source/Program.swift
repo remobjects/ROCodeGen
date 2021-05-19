@@ -332,7 +332,7 @@ do {
 	}
 
 	if options["codefirst-compatible"] != nil {
-		(activeRodlCodeGen as? DelphiRodlCodeGen)?.CodeFirstCompatible = true
+		(activeRodlCodeGen as? DelphiRodlCodeGen)?.CodeFirstMode = State.Auto
 	}
 
 	if options["no-utf8"] != nil {
@@ -460,8 +460,10 @@ do {
 						writeLn("Generating server code is not supported for this platform.")
 					}
 					let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Invk"))
-					_WriteText(targetFileNameWithSuffix("Invk"), source);
-					writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
+					if !String.IsNullOrWhiteSpace {
+						_WriteText(targetFileNameWithSuffix("Invk"), source);
+						writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
+					}
 
 				case "impl":
 

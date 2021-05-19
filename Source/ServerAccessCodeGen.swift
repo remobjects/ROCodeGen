@@ -422,6 +422,7 @@ public class JavaServerAccessCodeGen : ServerAccessCodeGen {
 
 public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 
+	var DelphiXE2Mode: State = State.Auto;
 	var lunit: CGCodeUnit!;
 	var ch_name: String!;
 	var mes_name: String!;
@@ -444,9 +445,16 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 	}
 
 	func generateImplementationInclude() {
-		lunit.ImplementationDirectives.Add("{$IFDEF DELPHIXE2}".AsCompilerDirective());
-		lunit.ImplementationDirectives.Add("  {%CLASSGROUP 'System.Classes.TPersistent'}".AsCompilerDirective());
-		lunit.ImplementationDirectives.Add("{$ENDIF}".AsCompilerDirective());
+		switch DelphiXE2Mode {
+			case State.Off: break;
+			case State.On:  lunit.ImplementationDirectives.Add("{%CLASSGROUP 'System.Classes.TPersistent'}".AsCompilerDirective());
+							break;
+			case State.Auto:
+				lunit.ImplementationDirectives.Add("{$IFDEF DELPHIXE2UP}".AsCompilerDirective());
+				lunit.ImplementationDirectives.Add("  {%CLASSGROUP 'System.Classes.TPersistent'}".AsCompilerDirective());
+				lunit.ImplementationDirectives.Add("{$ENDIF}".AsCompilerDirective());
+				break;
+		}
 		lunit.ImplementationDirectives.Add("{$R *.dfm}".AsCompilerDirective());
 	}
 
@@ -457,8 +465,14 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 	func generateImport(_ aName: String, aExt: String, aNamespace: String, aGeneratePragma: Boolean)-> CGImport{
 		if String.IsNullOrEmpty(aNamespace) {
 			return CGImport(CGNamedTypeReference(aName))
-		}else{
-			return CGImport("{$IFDEF DELPHIXE2UP}"+aNamespace+"."+aName+"{$ELSE}"+aName+"{$ENDIF}");
+		}
+		else
+		{
+			switch DelphiXE2Mode {
+				case State.Auto:	return CGImport("{$IFDEF DELPHIXE2UP}"+aNamespace+"."+aName+"{$ELSE}"+aName+"{$ENDIF}");
+				case State.Off:		return CGImport(aName);
+				case State.On:		return CGImport(aNamespace+"."+aName);
+			}
 		}
 	}
 

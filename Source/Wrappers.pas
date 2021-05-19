@@ -76,12 +76,17 @@ type
     DelphiFullQualifiedNames = 'DelphiFullQualified';
     DelphiScopedEnums = 'DelphiScopedEnums';
     DelphiLegacyStrings = 'DelphiLegacyStrings';
-    DelphiCodeFirstCompatible = 'DelphiCodeFirstCompatible';
-    DelphiGenerateGenericArray = 'DelphiGenerateGenericArray';
+    DelphiCodeFirstCompatible = 'DelphiCodeFirstCompatible';   // deprecated
+    DelphiGenerateGenericArray = 'DelphiGenerateGenericArray'; // deprecated
     DelphiHydra = 'DelphiHydra';
     RODLFileName = 'RodlFileName';
+    DelphiXE2Mode = 'DelphiXE2Mode';
+    DelphiFPCMode = 'DelphiFPCMode';
+    DelphiCodeFirstMode = 'DelphiCodeFirstMode';
+    DelphiGenericArrayMode = 'DelphiGenericArrayMode';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
+    method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState:State):State;
     method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
     method GenerateAsyncFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
     method GenerateInvokerFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
@@ -123,9 +128,28 @@ begin
       if ParseAddParams(lparams,DelphiLegacyStrings) = '1' then
         DelphiRodlCodeGen(codegen).LegacyStrings := true;
       if ParseAddParams(lparams,DelphiCodeFirstCompatible) = '1' then
-        DelphiRodlCodeGen(codegen).CodeFirstCompatible := true;
+        DelphiRodlCodeGen(codegen).CodeFirstMode := State.Auto;
       if ParseAddParams(lparams,DelphiGenerateGenericArray) = '0' then
-        DelphiRodlCodeGen(codegen).GenerateGenericArray := false;       
+        DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;       
+      DelphiRodlCodeGen(codegen).CodeFirstMode := ParseAddParams(lparams,DelphiCodeFirstMode, DelphiRodlCodeGen(codegen).CodeFirstMode);
+      DelphiRodlCodeGen(codegen).FPCMode := ParseAddParams(lparams,DelphiFPCMode, DelphiRodlCodeGen(codegen).FPCMode);
+      DelphiRodlCodeGen(codegen).GenericArrayMode := ParseAddParams(lparams,DelphiGenericArrayMode, DelphiRodlCodeGen(codegen).GenericArrayMode);
+      DelphiRodlCodeGen(codegen).DelphiXE2Mode := ParseAddParams(lparams,DelphiXE2Mode, DelphiRodlCodeGen(codegen).DelphiXE2Mode);
+
+      if DelphiRodlCodeGen(codegen).FPCMode = State.On then 
+        DelphiRodlCodeGen(codegen).DelphiXE2Mode := State.Off;
+
+      if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.Off then begin
+        DelphiRodlCodeGen(codegen).CodeFirstMode := State.Off;
+        DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;
+      end;
+
+      if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.On then
+        DelphiRodlCodeGen(codegen).FPCMode := State.Off;
+
+      if DelphiRodlCodeGen(codegen).CodeFirstMode = State.Off then 
+        DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;
+
       if ParseAddParams(lparams,DelphiHydra) = '1' then 
         DelphiRodlCodeGen(codegen).IsHydra := true;
     end;
@@ -238,6 +262,18 @@ begin
   exit iif(aParams.ContainsKey(aParamName),aParams[aParamName],'');
 end;
 
+method Codegen4Wrapper.ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State): State;
+begin
+  case ParseAddParams(aParams, aParamName) of
+    '0': exit State.Off;
+    '1': exit State.On;
+    '2': exit State.Auto;
+  else
+    exit aDefaultState;
+  end;  
+end;
+
+
 method Codegen4Wrapper.GenerateInterfaceFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl: RodlLibrary; &namespace: String;fileext: String);
 begin
   var lunitname := rodl.Name + '_Intf.'+fileext;
@@ -275,15 +311,19 @@ begin
   var lunitname := rodl.Name + '_Invk.'+fileext;
   if codegen.CodeUnitSupport then begin
     var lunit := codegen.GenerateInvokerCodeUnit(rodl,&namespace,lunitname);
-    Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
-    if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
-      var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
-      lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
-      Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
+    if lunit <> nil then begin
+      Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
+      if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
+        var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
+        lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
+        Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
+      end;
     end;
   end
   else begin
-    Res.Add(new Codegen4Record(lunitname, codegen.GenerateInvokerFile(rodl,&namespace,lunitname), Codegen4FileType.Unit));
+    var s := codegen.GenerateInvokerFile(rodl,&namespace,lunitname);
+    if not String.IsNullOrWhiteSpace(s) then 
+      Res.Add(new Codegen4Record(lunitname, s, Codegen4FileType.Unit));
   end;
 end;
 
@@ -338,7 +378,19 @@ method Codegen4Wrapper.GenerateServerAccess(Res: Codegen4Records; codegen :RodlC
 begin
   var sa : ServerAccessCodeGen;
   case &Platform of
-    Codegen4Platform.Delphi: sa := new DelphiServerAccessCodeGen withRodl(rodl);
+    Codegen4Platform.Delphi: begin
+      sa := new DelphiServerAccessCodeGen withRodl(rodl);
+      // remove defines {$IFDEF DELPHIXE2UP} if
+      // DelphiXE2Mode = on
+      // DelphiXE2Mode = auto, CodeFirst = on
+      // DelphiXE2Mode = auto, CodeFirst = auto, GenericArray = on
+      DelphiServerAccessCodeGen(sa).DelphiXE2Mode := ParseAddParams(&params, DelphiXE2Mode, State.Auto);
+      if (ParseAddParams(&params, DelphiXE2Mode, State.Auto) = State.Auto) and
+         ((ParseAddParams(&params, DelphiCodeFirstMode, State.Auto) = State.On) or
+          ((ParseAddParams(&params, DelphiCodeFirstMode, State.Auto) = State.Auto) and (ParseAddParams(&params, DelphiGenericArrayMode, State.Auto) = State.On))
+         ) then
+        DelphiServerAccessCodeGen(sa).DelphiXE2Mode := State.On; 
+    end;
     Codegen4Platform.CppBuilder: sa := new CPlusPlusBuilderServerAccessCodeGen withRodl(rodl);
     Codegen4Platform.Java: sa:= new JavaServerAccessCodeGen withRodl(rodl);
     Codegen4Platform.Cocoa: sa := new CocoaServerAccessCodeGen withRodl(rodl) generator(codegen.Generator);

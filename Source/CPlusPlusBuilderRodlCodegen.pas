@@ -29,6 +29,7 @@ type
     method cpp_GetTROAsyncCallbackType: String; override; 
     method cpp_GetTROAsyncCallbackMethodType: String; override; 
   protected
+    property PureDelphi: Boolean read False; override;
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
     method Array_GetLength(anArray: CGExpression): CGExpression; override;
@@ -44,12 +45,15 @@ type
     method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;override;
     method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);override;
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
-    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'; aCondition: CGConditionalDefine := nil):CGImport; override;
+    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'):CGImport; override;
     method Invk_GetDefaultServiceRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
     method Invk_CheckRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
 
   public
-    property CodeFirstCompatible: Boolean read False; override;
+    property DelphiXE2Mode: State := State.On; override;
+    property FPCMode: State read State.Off; override;
+    property CodeFirstMode: State read State.Off; override;
+    property GenericArrayMode: State read State.Off; override;
     constructor;
   end;
 
@@ -58,8 +62,6 @@ implementation
 constructor CPlusPlusBuilderRodlCodeGen;
 begin
   fLegacyStrings := False;
-  PureDelphi := False;
-  CodeFirstCompatible := False;
   IncludeUnitNameForOwnTypes := true;
   IncludeUnitNameForOtherTypes := true;
   PredefinedTypes.Add(CGPredefinedTypeKind.String,new CGNamedTypeReference("UnicodeString") &namespace(new CGNamespaceReference("System")) isClasstype(False));
@@ -506,7 +508,7 @@ begin
   exit inherited ResolveDataTypeToTypeRefFullQualified(library, dataType, aDefaultUnitName, aOrigDataType, aCapitalize and (aDefaultUnitName <> targetNamespace));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String; aCondition: CGConditionalDefine): CGImport;
+method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
 begin
   var lns := aName+'.'+aExt;
   if aExt = 'hpp' then begin
