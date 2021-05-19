@@ -4444,8 +4444,6 @@ begin
       CodeFirstMode := State.Off;
       GenericArrayMode := State.Off;
     end;
-    if DelphiXE2Mode = State.On then 
-      FPCMode := State.Off;
     if DelphiXE2Mode = State.Off then begin
       CodeFirstMode := State.Off;
       GenericArrayMode := State.Off;
@@ -4458,6 +4456,8 @@ begin
       DelphiXE2Mode := State.On;
       CodeFirstMode := State.On;
     end;
+    if DelphiXE2Mode = State.On then 
+      FPCMode := State.Off;
 
     if (CodeFirstMode = State.Auto) then begin
       CF_condition := new CGConditionalDefine('RO_RTTI_Support');
