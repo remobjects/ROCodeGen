@@ -460,7 +460,7 @@ do {
 						writeLn("Generating server code is not supported for this platform.")
 					}
 					let source = activeRodlCodeGen?.GenerateInvokerFile(rodlLibrary, options["namespace"], targetFileNameWithSuffix("Invk"))
-					if !String.IsNullOrWhiteSpace {
+					if !String.IsNullOrWhiteSpace(source) {
 						_WriteText(targetFileNameWithSuffix("Invk"), source);
 						writeLn("Wrote file \(targetFileNameWithSuffix("Invk"))")
 					}
