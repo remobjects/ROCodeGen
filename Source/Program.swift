@@ -119,6 +119,16 @@ writeLn("Processing RODL file "+rodlFileName)
 do {
 
 	var isUrl = rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
+	var isUnsupportedUrl =	rodlFileName.hasPrefix("superhttp://") || rodlFileName.hasPrefix("superhttps://") ||
+							rodlFileName.hasPrefix("supertcp://") || rodlFileName.hasPrefix("supertcps://") ||
+							rodlFileName.hasPrefix("tcp://") || rodlFileName.hasPrefix("tcps://") ||
+							rodlFileName.hasPrefix("udp://") || rodlFileName.hasPrefix("udps://")
+	if isUnsupportedUrl {
+		var lUrl = Url.UrlWithString(rodlFileName)
+		writeLn("Unsupported URL Scheme ("+lUrl.Scheme+")")
+		return 2
+	}
+
 	var url = isUrl ? rodlFileName : nil
 
 	if !isUrl && !File.Exists(params[0]) {

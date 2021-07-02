@@ -657,7 +657,7 @@ begin
     LoadFromXmlNode(lXml.Root);
     Filename := lUrl.AbsolutePath;
   end else begin
-    raise new Exception("Unspoorted URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
+    raise new Exception("Unsupported URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
   end;
   {$ELSE}
   var lUrl := Url.UrlWithString(aUrl);
@@ -670,7 +670,7 @@ begin
     LoadFromXmlNode(lXml.Root);
     Filename := lUrl.FilePath;
   end else begin
-    raise new Exception("Unspoorted URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
+    raise new Exception("Unsupported URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
   end;
   {$ENDIF}
 
