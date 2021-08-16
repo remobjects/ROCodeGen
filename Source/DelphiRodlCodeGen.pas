@@ -1569,7 +1569,7 @@ begin
   for rodl_member in entity.DefaultInterface.Items do begin
     {$REGION service methods}
     var cg4_member := new CGMethodDefinition(rodl_member.Name,
-                                      //Virtuality := CGMemberVirtualityKind.Virtual,
+                                      Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
     cg4_member.Comment := GenerateDocumentation(rodl_member, true);
     GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
@@ -2130,6 +2130,7 @@ begin
   for rodl_member in entity.DefaultInterface.Items do begin
     {$REGION eventsink methods}
     var cg4_member := new CGMethodDefinition(rodl_member.Name,
+                                      Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
     cg4_member.Comment := GenerateDocumentation(rodl_member, true);
     GenerateCodeFirstDocumentation(file,'docs_'+entity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
@@ -3022,6 +3023,7 @@ begin
   for lmem in entity.DefaultInterface.Items do begin
     {$REGION eventsink methods}
     var mem := new CGMethodDefinition(lmem.Name,
+                                      Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
     mem.Parameters.Add(new CGParameterDefinition('__Sender', 'TGUID'.AsTypeReference,Modifier := CGParameterModifierKind.Const));
     for lmemparam in lmem.Items do begin
