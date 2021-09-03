@@ -2854,9 +2854,9 @@ begin
                                                                               new CGArrayLiteralExpression(p1).AsCallParameter,
                                                                               new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
                                                     CallSiteKind := CGCallSiteKind.Reference));
-      mem.Statements.Add(new CGMethodCallExpression(lMessage,'ApplyAttributes2_Transport',[transport_callparameter].ToList,
-                                                    CallSiteKind := CGCallSiteKind.Reference));
     end;
+    mem.Statements.Add(new CGMethodCallExpression(lMessage,'ApplyAttributes2_Transport',[transport_callparameter].ToList,
+                                                  CallSiteKind := CGCallSiteKind.Reference));
     for lmemparam in lmem.Items do begin
       if isComplex(library, lmemparam.DataType) then begin
         mem.Statements.Add(new CGAssignmentStatement(('l_'+lmemparam.Name).AsNamedIdentifierExpression,CGNilExpression.Nil));
