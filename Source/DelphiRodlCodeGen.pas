@@ -2917,6 +2917,14 @@ begin
                                         (lmem.Name+'Response').AsLiteralExpression.AsCallParameter
                                         ].ToList,
                                         CallSiteKind := CGCallSiteKind.Reference));
+    if p1.Count > 0 then begin
+      ltry.Add(new CGMethodCallExpression(lMessage,'SetAttributes',[transport_callparameter,
+                                                                              new CGArrayLiteralExpression(p1).AsCallParameter,
+                                                                              new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
+                                                    CallSiteKind := CGCallSiteKind.Reference));
+    end;
+    ltry.Add(new CGMethodCallExpression(lMessage,'ApplyAttributes2_Transport',[transport_callparameter].ToList,
+                                                  CallSiteKind := CGCallSiteKind.Reference));
     {$REGION ! DataSnap}
     if not library.DataSnap then
       if assigned(lmem.Result) then begin
@@ -2954,8 +2962,8 @@ begin
       end;
     {$ENDREGION}
     ltry.Add(new CGMethodCallExpression(lMessage,'Finalize',CallSiteKind := CGCallSiteKind.Reference));
-    ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes2_Transport',[transport_callparameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
-    ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes',[transport_callparameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
+    //ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes2_Transport',[transport_callparameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
+    //ltry.Add(new CGMethodCallExpression(lMessage,'UnsetAttributes',[transport_callparameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
     ltry.Add(new CGEmptyStatement);
 
 
