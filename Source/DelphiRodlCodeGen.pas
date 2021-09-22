@@ -4583,8 +4583,12 @@ begin
   LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes');
 
   ProcessAttributes(library, LibraryAttributes, true);
+  var ldefaultnamespace := if CanUseNameSpace then
+                              targetNamespace
+                            else
+                              Intf_name;
   LibraryAttributes.Members.Add(new CGMethodDefinition('DefaultNamespace',
-                                                        [GenerateQualifiedName('DefaultNamespace', Intf_name).AsReturnStatement],
+                                                        [GenerateQualifiedName('DefaultNamespace', ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -4603,7 +4607,7 @@ begin
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
   LibraryAttributes.Members.Add(new CGMethodDefinition('LibraryUID',
-                                                        [GenerateQualifiedName('LibraryUID', Intf_name).AsReturnStatement],
+                                                        [GenerateQualifiedName('LibraryUID', ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -4615,7 +4619,7 @@ begin
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
   LibraryAttributes.Members.Add(new CGMethodDefinition('TargetNamespace',
-                                                        [GenerateQualifiedName('TargetNamespace', Intf_name).AsReturnStatement],
+                                                        [GenerateQualifiedName('TargetNamespace', ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
