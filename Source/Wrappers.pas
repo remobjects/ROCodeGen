@@ -4,8 +4,7 @@ interface
 
 uses
   System.Runtime.InteropServices,
-  RemObjects.CodeGen4,
-  Sugar.*;
+  RemObjects.CodeGen4;
 
 type
   [ComVisible(true)]
@@ -18,8 +17,8 @@ type
   Codegen4FileType = public enum (&Unit, Header, Form);
 
   [ComVisible(true)]
-  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B24"),
-        ClassInterface(ClassInterfaceType.AutoDual)]
+  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B24")]
+  [ClassInterface(ClassInterfaceType.AutoDual)]
   Codegen4Record = public class
   private
   public
@@ -28,24 +27,15 @@ type
     property Content: String; readonly;
     property &Type: Codegen4FileType; readonly;
   end;
-{
-  [ComVisible(true)]
-  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B23")]
-  ICodegen4Records = public interface
-    function Item(anIndex:Integer):Codegen4Record;
-    function Count: Integer;
-  end;}
 
   [ComVisible(true)]
-  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B22"),
-        ClassInterface(ClassInterfaceType.AutoDual){,
-        ComSourceInterfaces(typeOf(ICodegen4Records))}]
-  Codegen4Records = public class//(ICodegen4Records)
+  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B22")]
+  [ClassInterface(ClassInterfaceType.AutoDual)]
+  Codegen4Records = public class
   private
     fList: List<Codegen4Record> := new List<Codegen4Record>;
   assembly
     method Add(anItem: Codegen4Record);
-
   public
     function Item(anIndex:Integer):Codegen4Record;
     function Count: Integer;
@@ -53,18 +43,10 @@ type
     property Items: List<Codegen4Record> read fList;
   end;
 
-
   [ComVisible(true)]
-  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B21")]
-  ICodegen4Wrapper = public interface
-    method Generate(Platform: Codegen4Platform; Mode: Codegen4Mode; Generator:Codegen4Language; aRODLXML: String; AdditionalParameters: String): Codegen4Records;
-  end;
-
-  [ComVisible(true)]
-  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B20"),
-        ClassInterface(ClassInterfaceType.AutoDual){,
-        ComSourceInterfaces(typeOf(ICodegen4Wrapper))}]
-  Codegen4Wrapper = public class //(ICodegen4Wrapper)
+  [Guid("F94EEEBC-9966-4B32-9C9C-763B22E31B20")]
+  [ClassInterface(ClassInterfaceType.AutoDual)]
+  Codegen4Wrapper = public class
   public const
     TargetNameSpace = 'Namespace';
     ServiceName = 'ServiceName';
