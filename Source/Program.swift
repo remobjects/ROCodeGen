@@ -49,7 +49,10 @@ func writeSyntax() {
 	writeLn("  --full-type-names (Currently Delphi/BCB only)")
 	writeLn("  --scoped-enums (Currently Delphi/BCB only)")
 	writeLn("  --legacy-strings (Delphi/BCB only)")
-	writeLn("  --codefirst-compatible (Delphi only)")
+	writeLn("  --xe2:<on|off|auto> (Delphi only)")
+	writeLn("  --fpc:<on|off|auto> (FreePascal only)")
+	writeLn("  --codefirst:<on|off|auto> (Delphi only)")
+	writeLn("  --genericarray:<on|off|auto> (Delphi only)")
 	writeLn("  --hydra (Delphi only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
@@ -337,12 +340,59 @@ do {
 	if options["legacy-strings"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.LegacyStrings = true
 	}
-	if options["hydra"] != nil {
-		(activeRodlCodeGen as? DelphiRodlCodeGen)?.IsHydra = true
+	if (options["platform"] == "delphi") {
+		let lcodegen = (activeRodlCodeGen as? DelphiRodlCodeGen)?;
+
+		if options["xe2"] != nil {
+			switch options["xe2"]?.ToLower() {
+				case "on": lcodegen.DelphiXE2Mode = State.On;
+				case "off": lcodegen.DelphiXE2Mode = State.Off;
+				case "auto": lcodegen.DelphiXE2Mode = State.Auto;
+				default:
+			} 
+		}
+		if options["fpc"] != nil {
+			switch options["fpc"]?.ToLower() {
+				case "on": lcodegen.FPCMode = State.On;
+				case "off": lcodegen.FPCMode = State.Off;
+				case "auto": lcodegen.FPCMode = State.Auto;
+				default:
+			}
+		}
+		if options["codefirst"] != nil {
+			switch options["codefirst"]?.ToLower() {
+				case "on": lcodegen.CodeFirstMode = State.On;
+				case "off": lcodegen.CodeFirstMode = State.Off;
+				case "auto": lcodegen.CodeFirstMode = State.Auto;
+				default:
+			}
+		}
+		if options["genericarray"] != nil {
+			switch options["genericarray"]?.ToLower() {
+				case "on": lcodegen.GenericArrayMode = State.On;
+				case "off": lcodegen.GenericArrayMode = State.Off;
+				case "auto": lcodegen.GenericArrayMode = State.Auto;
+				default:
+			}
+		}
+
+		if (lcodegen.FPCMode == State.On) {
+			lcodegen.DelphiXE2Mode = State.Off;
+		}
+		if (lcodegen.DelphiXE2Mode == State.Off) {
+			lcodegen.CodeFirstMode = State.Off;
+			lcodegen.GenericArrayMode = State.Off;
+		}
+		if (lcodegen.DelphiXE2Mode == State.On) {
+			lcodegen.FPCMode = State.Off;
+		}
+		if (lcodegen.CodeFirstMode == State.Off) {
+			lcodegen.GenericArrayMode = State.Off;
+		}
 	}
 
-	if options["codefirst-compatible"] != nil {
-		(activeRodlCodeGen as? DelphiRodlCodeGen)?.CodeFirstMode = State.Auto
+	if options["hydra"] != nil {
+		(activeRodlCodeGen as? DelphiRodlCodeGen)?.IsHydra = true
 	}
 
 	if options["no-utf8"] != nil {
