@@ -122,7 +122,7 @@ writeLn("Processing RODL file "+rodlFileName)
 do {
 
 	var isUrl = rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
-	var isUnsupportedUrl =	rodlFileName.hasPrefix("superhttp://") || rodlFileName.hasPrefix("superhttps://") ||
+	var isUnsupportedUrl =    rodlFileName.hasPrefix("superhttp://") || rodlFileName.hasPrefix("superhttps://") ||
 							rodlFileName.hasPrefix("supertcp://") || rodlFileName.hasPrefix("supertcps://") ||
 							rodlFileName.hasPrefix("tcp://") || rodlFileName.hasPrefix("tcps://") ||
 							rodlFileName.hasPrefix("udp://") || rodlFileName.hasPrefix("udps://")
@@ -349,7 +349,7 @@ do {
 				case "off": lcodegen.DelphiXE2Mode = State.Off;
 				case "auto": lcodegen.DelphiXE2Mode = State.Auto;
 				default:
-			} 
+			}
 		}
 		if options["fpc"] != nil {
 			switch options["fpc"]?.ToLower() {
@@ -560,7 +560,7 @@ do {
 } catch {
 	writeLn("There was a problem loading the RODL.")
 	writeLn()
-	writeLn(error.ToString())
+	writeLn(error.ToString() as String!)
 	writeLn()
 	return 2
 }
