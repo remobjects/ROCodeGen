@@ -2784,7 +2784,7 @@ begin
                                     Virtuality := CGMemberVirtualityKind.Override,
                                     CallingConvention := CGCallingConventionKind.Register);
   mem.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited));
-  mem.Statements.Add(new CGAssignmentStatement(new CGFieldAccessExpression(nil,'FAbstract'),new CGBooleanLiteralExpression(entity.Abstract)));
+  mem.Statements.Add(new CGAssignmentStatement(new CGFieldAccessExpression(nil,'fAbstract'),new CGBooleanLiteralExpression(entity.Abstract)));
   ltype.Members.Add(mem);
   {$ENDREGION}
   var TStringArray_typeref := new CGNamedTypeReference('TStringArray') isclasstype(false);
