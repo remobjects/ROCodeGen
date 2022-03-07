@@ -590,13 +590,13 @@ begin
 
   if PureDelphi and IsGenericArrayCompatible then begin
     file.Types.Add(new CGClassTypeDefinition(entity.Name, ('TROArray<'+lElementType+'>').AsTypeReference,
-                                             Visibility := CGTypeVisibilityKind.Public, 
+                                             Visibility := CGTypeVisibilityKind.Public,
                                              Condition := cond_GenericArray));
   end;
   if GenericArrayMode = State.On then exit;
 
   // non generic arrays
-  var linternalarr := new CGTypeAliasDefinition(larrayname+"_"+lElementType, 
+  var linternalarr := new CGTypeAliasDefinition(larrayname+"_"+lElementType,
                                                 new CGArrayTypeReference(el_typeref),
                                                 Condition := cond_GenericArray_inverted);
 
@@ -2384,10 +2384,14 @@ begin
                                                                                                 ['aIndex'.AsNamedIdentifierExpression.AsCallParameter].ToList,
                                                                                                 CallSiteKind := CGCallSiteKind.Static),
                                                                  ltyperef)));
+  var value_param: CGExpression := 'Value'.AsNamedIdentifierExpression;
+  if not PureDelphi then
+    value_param := new CGTypeCastExpression(value_param, 'TPersistent'.AsTypeReference);
+
   lm.Statements.Add(new CGMethodCallExpression(
                                         new CGLocalVariableAccessExpression('lvalue'),
                                         'Assign',
-                                        ['Value'.AsNamedIdentifierExpression.AsCallParameter].ToList,
+                                        [value_param.AsCallParameter].ToList,
                                         CallSiteKind := CGCallSiteKind.Reference
                                         ));
   {$ENDREGION}
@@ -2598,13 +2602,13 @@ method DelphiRodlCodeGen.Intf_generateReadStatement(library: RodlLibrary; aEleme
 begin
   result := new List<CGStatement>;
   aName.Modifier := CGParameterModifierKind.Const;
-  aValue.Modifier := CGParameterModifierKind.Var;
+  aValue.Modifier := CGParameterModifierKind.In;
   var k: CGMethodCallExpression;
   case aElementType.ToLowerInvariant of
-    'integer':    k := new CGMethodCallExpression(aSerializer, 'ReadIntegerWithErrorHandling',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
+    'integer':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadIntegerWithErrorHandling',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);end;
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'ReadDateTimeWithErrorHandling',[aName, aValue].ToList);
-    'double':     k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
-    'currency':   k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
+    'double':     begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);end;
+    'currency':   begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);end;
     'ansistring': if fLegacyStrings then
                     k := new CGMethodCallExpression(aSerializer, 'ReadAnsiStringWithErrorHandling',[aName, aValue].ToList)
                   else
@@ -2614,15 +2618,16 @@ begin
                   else
                     k := new CGMethodCallExpression(aSerializer, 'ReadLegacyStringWithErrorHandling',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'int64':      k := new CGMethodCallExpression(aSerializer, 'ReadInt64WithErrorHandling',[aName, aValue].ToList);
-    'boolean':    k := new CGMethodCallExpression(aSerializer, 'ReadEnumeratedWithErrorHandling',[aName,GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList);
+    'boolean':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadEnumeratedWithErrorHandling',[aName,GenerateTypeInfoCall(library,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList); end;
     'variant':    k := new CGMethodCallExpression(aSerializer, 'ReadVariantWithErrorHandling',[aName, aValue].ToList);
     'binary':     k := new CGMethodCallExpression(aSerializer, 'ReadBinaryWithErrorHandling',[aName, aValue].ToList);
     'xml':        k := new CGMethodCallExpression(aSerializer, 'ReadXmlWithErrorHandling',[aName, aValue].ToList);
     'guid':       k := new CGMethodCallExpression(aSerializer, 'ReadGuidWithErrorHandling',[aName, aValue].ToList);
     'decimal':    k := new CGMethodCallExpression(aSerializer, 'ReadDecimalWithErrorHandling',[aName, aValue].ToList);
-    'xsdatetime': k := new CGMethodCallExpression(aSerializer, 'ReadStructWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList);
+    'xsdatetime': begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadStructWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList);end;
     'widestring': k := new CGMethodCallExpression(aSerializer, 'ReadUnicodeStringWithErrorHandling',[aName, aValue].ToList, CallSiteKind := CGCallSiteKind.Reference);
   else
+    aValue.Modifier := CGParameterModifierKind.Var;
     if isArray(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadArrayWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
     else if isStruct(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadStructWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
     else if isException(library,aElementType) then k := new CGMethodCallExpression(aSerializer, 'ReadExceptionWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList)
@@ -2752,7 +2757,7 @@ end;
 method DelphiRodlCodeGen.GenerateInvokerFile(&library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
   CreateCodeFirstAttributes;
-  if CodeFirstMode = State.On then 
+  if CodeFirstMode = State.On then
     exit ''
   else
     exit Generator.GenerateUnit(GenerateInvokerCodeUnit(library, aTargetNamespace, aUnitName));
@@ -3577,12 +3582,12 @@ begin
       Impl_GenerateCreateService(lcreator, new CGNewInstanceExpression(l_TName.AsTypeReference,[CGNilExpression.Nil.AsCallParameter].ToList));
       file.Globals.Add(lcreator.AsGlobal);
       file.Globals.Add(new CGFieldDefinition(l_fClassFactory,
-                                             ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True), 
+                                             ResolveInterfaceTypeRef(nil,'IROClassFactory','uROServerIntf','',True),
                                              Visibility := CGMemberVisibilityKind.Private).AsGlobal);
     end;
     file.Initialization := new List<CGStatement>;
     file.Initialization.Add(Impl_CreateClassFactory(library, entity, l_fClassFactoryExpr));
-    if CodeFirstMode <> State.On then begin 
+    if CodeFirstMode <> State.On then begin
       file.Initialization.Add(new CGCodeCommentStatement(new CGMethodCallExpression(nil,'RegisterForZeroConf',[l_fClassFactoryExpr.AsCallParameter,l_zeroconf.AsLiteralExpression.AsCallParameter])));
       file.Finalization := new List<CGStatement>;
       file.Finalization.Add(new CGMethodCallExpression(nil,'UnRegisterClassFactory',[l_fClassFactoryExpr.AsCallParameter].ToList));
@@ -3625,7 +3630,7 @@ begin
     for lr in entity.Roles.Roles do
       AddCGAttribute(lservice,
                      new CGAttribute('RORole'.AsTypeReference,
-                                     [(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, 
+                                     [(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList,
                                      Condition := CF_condition));
   end;
 
@@ -3649,7 +3654,7 @@ begin
         for lr in rodl_member.Roles.Roles do
           AddCGAttribute(cg4_member,
                          new CGAttribute('RORole'.AsTypeReference,
-                                         [(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList, 
+                                         [(iif(lr.Not,'!','')+ lr.Role).AsLiteralExpression.AsCallParameter].ToList,
                                          Condition := CF_condition));
       end;
     end;
@@ -3679,10 +3684,10 @@ begin
     cg4_member.Statements.Add(AddMessageDirective(rodl_member.Name+" is not implemented yet!"));
     if assigned(rodl_member.Result) then begin
       if IsCodeFirstCompatible then begin
-        if rodl_member.Result.Name <> 'Result' then 
-          AddCGAttribute(cg4_member, 
-                         new CGAttribute('ROServiceMethodResultName'.AsTypeReference, 
-                                         rodl_member.Result.Name.AsLiteralExpression.asCallParameter, 
+        if rodl_member.Result.Name <> 'Result' then
+          AddCGAttribute(cg4_member,
+                         new CGAttribute('ROServiceMethodResultName'.AsTypeReference,
+                                         rodl_member.Result.Name.AsLiteralExpression.asCallParameter,
                                          Condition := CF_condition));
         if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
         if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
@@ -3704,7 +3709,7 @@ begin
     State.Auto: file.ImplementationDirectives.Add(new CGCompilerDirective("{%CLASSGROUP 'System.Classes.TPersistent'}", new CGConditionalDefine("DELPHIXE2UP")));
   end;
   case FPCMode of
-    State.On:  file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.lfm}"));  
+    State.On:  file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.lfm}"));
     State.Off: file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.dfm}"));
     State.Auto: begin
       file.ImplementationDirectives.Add(new CGCompilerDirective("{$R *.dfm}",new CGConditionalDefine("FPC") inverted(true)));
@@ -3717,7 +3722,7 @@ method DelphiRodlCodeGen.Impl_CreateClassFactory(library: RodlLibrary; entity: R
 begin
   var r := new List<CGStatement>;
   var l_EntityName := entity.Name;
-  var l_serviceName := 'T'+l_EntityName; 
+  var l_serviceName := 'T'+l_EntityName;
   var l_TInvoker := l_serviceName+'_Invoker';
   var l_methodName := 'Create_'+l_EntityName;
   var l_FPCPrefix := case FPCMode of
@@ -4091,15 +4096,15 @@ begin
   cpp_pragmalink(lUnit,CapitalizeString('uROProxy'));
   cpp_pragmalink(lUnit,CapitalizeString('uROAsync'));
   AddGlobalConstants(lUnit, &library);
-  
+
   var la: CGNamedTypeReference;
 
   if IncludeUnitNameForOwnTypes then
     la := new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(true)
   else
     la := new CGNamedTypeReference('TLibraryAttributes') isclasstype(true);
-  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, 
-                                              [la.AsExpression.AsCallParameter], 
+  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference,
+                                              [la.AsExpression.AsCallParameter],
                                               Condition := CF_condition);
   Intf_GenerateLibraryAttributes(lUnit, library);
 
@@ -4287,8 +4292,8 @@ begin
   Intf_name := lunitname+ '_Intf';
   Invk_name := lunitname+ '_Invk';
 
-  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference, 
-                                              [(new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(false)).AsExpression.AsCallParameter], 
+  attr_ROLibraryAttributes := new CGAttribute('ROLibraryAttributes'.AsTypeReference,
+                                              [(new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(Intf_name)) isclasstype(false)).AsExpression.AsCallParameter],
                                               Condition := CF_condition);
 
   lUnit.HeaderComment := GenerateUnitComment(True);
@@ -4393,7 +4398,7 @@ begin
       end;
     end;
     case CodeFirstMode of
-      State.Auto: lUnit.ImplementationImports.Add(GenerateCGImport('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}', nil));                 
+      State.Auto: lUnit.ImplementationImports.Add(GenerateCGImport('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}', nil));
       State.Off:  lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
       State.On:   ;
     end;
@@ -4458,15 +4463,15 @@ begin
       CodeFirstMode := State.Off;
       GenericArrayMode := State.Off;
     end;
-    if CodeFirstMode = State.On then 
+    if CodeFirstMode = State.On then
       DelphiXE2Mode := State.On;
-    if CodeFirstMode = State.Off then 
+    if CodeFirstMode = State.Off then
       GenericArrayMode := State.Off;
     if GenericArrayMode = State.On then begin
       DelphiXE2Mode := State.On;
       CodeFirstMode := State.On;
     end;
-    if DelphiXE2Mode = State.On then 
+    if DelphiXE2Mode = State.On then
       FPCMode := State.Off;
 
     if (CodeFirstMode = State.Auto) then begin
@@ -4479,20 +4484,20 @@ begin
     end;
   end;
 
-  attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference, 
-                                                  'emAnsi'.AsNamedIdentifierExpression.asCallParameter, 
+  attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference,
+                                                  'emAnsi'.AsNamedIdentifierExpression.asCallParameter,
                                                   Condition := CF_condition);
-  attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference, 
-                                                  'emUTF8'.AsNamedIdentifierExpression.asCallParameter, 
+  attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference,
+                                                  'emUTF8'.AsNamedIdentifierExpression.asCallParameter,
                                                   Condition := CF_condition);
 
-  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference, 
+  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference,
                                           Condition := CF_condition);
-  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference, 
+  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference,
                                       Condition := CF_condition);
-  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference, 
+  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference,
                                  Condition := CF_condition);
-  attr_ROAbstract := new CGAttribute('ROAbstract'.AsTypeReference, 
+  attr_ROAbstract := new CGAttribute('ROAbstract'.AsTypeReference,
                                      Condition := CF_condition);
 
 end;
@@ -4529,7 +4534,7 @@ begin
                     Initializer := aDoc.AsLiteralExpression,
                     Condition := CF_condition).AsGlobal());
     var attr := new CGAttribute('RODocumentation'.AsTypeReference,
-                                [aName.AsNamedIdentifierExpression.AsCallParameter], 
+                                [aName.AsNamedIdentifierExpression.AsCallParameter],
                                 Condition := CF_condition);
     AddCGAttribute(aType, attr);
   end;
