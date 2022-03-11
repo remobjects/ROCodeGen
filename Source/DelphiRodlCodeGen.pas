@@ -4585,7 +4585,9 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateLibraryAttributes(file: CGCodeUnit; library: RodlLibrary);
 begin
-  LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes');
+  LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes',
+                                                 "TObject".AsTypeReference,
+                                                 Visibility := CGTypeVisibilityKind.Public);
 
   ProcessAttributes(library, LibraryAttributes, true);
   var ldefaultnamespace := if CanUseNameSpace then

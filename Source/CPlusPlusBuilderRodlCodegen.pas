@@ -342,6 +342,9 @@ begin
   var lenum_typeref := new CGNamedTypeReference(entity.Name) isclasstype(false);
   var lenum := new CGClassTypeDefinition(entity.Name+'TypeHolder','TPersistent'.AsTypeReference,
                                          Visibility := CGTypeVisibilityKind.Public);
+  lenum.Members.Add(new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public,
+                                                CallingConvention := CGCallingConventionKind.Register));
+
   lenum.Members.Add(new CGFieldDefinition('fHolderField',lenum_typeref, Visibility := CGMemberVisibilityKind.Private));
   lenum.Members.Add(new CGPropertyDefinition('HolderField',lenum_typeref,
                                              Visibility := CGMemberVisibilityKind.Published,
