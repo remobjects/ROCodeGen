@@ -67,6 +67,10 @@ type
     begin
       exit GenericArrayMode in [State.On, State.Auto];
     end;
+    method GenerateExternalSym(file: CGCodeUnit; name: String);
+    begin
+      // if PureDelphi then file.RawFooter.Add('{$EXTERNALSYM '+name+'}');
+    end;
   protected
     fLegacyStrings: Boolean := False;
     method _SetLegacyStrings(value: Boolean); virtual;
@@ -2495,19 +2499,21 @@ begin
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
                                           Initializer := ('{'+String(library.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
+//  file.RawFooter := new List<not nullable String>;
+  GenerateExternalSym(file, 'LibraryUID');
   if library.CustomAttributes_lower.ContainsKey('wsdl') then
     file.Globals.Add(new CGFieldDefinition("WSDLLocation",ResolveStdtypes(CGPredefinedTypeReference.String),
                                             Constant := true,
                                             Visibility := CGMemberVisibilityKind.Public,
                                             Condition := cond,
                                             Initializer := ("'"+library.CustomAttributes_lower.Item['wsdl']+"'").AsLiteralExpression).AsGlobal());
-
+  GenerateExternalSym(file, 'WSDLLocation');
   file.Globals.Add(new CGFieldDefinition("DefaultNamespace",ResolveStdtypes(CGPredefinedTypeReference.String),
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
                                           Initializer := targetNamespace.AsLiteralExpression).AsGlobal());
-
+  GenerateExternalSym(file, 'DefaultNamespace');
   var ltargetnamespace: String := '';
   if library.CustomAttributes_lower.ContainsKey('targetnamespace') then
     ltargetnamespace := library.CustomAttributes_lower.Item['targetnamespace'];
@@ -2518,7 +2524,7 @@ begin
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
                                           Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
-
+  GenerateExternalSym(file, 'TargetNamespace');
   if assigned(cond) then begin
     file.Globals.Add(new CGFieldDefinition(cpp_GlobalCondition_ns_name,
                                            Visibility := CGMemberVisibilityKind.Public,
@@ -2527,7 +2533,7 @@ begin
 
   for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
-    GlobalsConst_GenerateServerGuid(file, &library,lentity);
+    GlobalsConst_GenerateServerGuid(file, &library, lentity);
   end;
 
   for lentity : RodlEventSink in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
@@ -2623,7 +2629,10 @@ begin
     'binary':     k := new CGMethodCallExpression(aSerializer, 'ReadBinaryWithErrorHandling',[aName, aValue].ToList);
     'xml':        k := new CGMethodCallExpression(aSerializer, 'ReadXmlWithErrorHandling',[aName, aValue].ToList);
     'guid':       k := new CGMethodCallExpression(aSerializer, 'ReadGuidWithErrorHandling',[aName, aValue].ToList);
-    'decimal':    k := new CGMethodCallExpression(aSerializer, 'ReadDecimalWithErrorHandling',[aName, aValue].ToList);
+    'decimal':    begin
+                    k := new CGMethodCallExpression(aSerializer, 'ReadDecimalWithErrorHandling',[aName, aValue].ToList);
+                    if not PureDelphi then k.Name := 'ReadDecimalWithErrorHandling_cpp';
+                  end;
     'xsdatetime': begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadStructWithErrorHandling',[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList);end;
     'widestring': k := new CGMethodCallExpression(aSerializer, 'ReadUnicodeStringWithErrorHandling',[aName, aValue].ToList, CallSiteKind := CGCallSiteKind.Reference);
   else
