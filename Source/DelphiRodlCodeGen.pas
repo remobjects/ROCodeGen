@@ -67,9 +67,12 @@ type
     begin
       exit GenericArrayMode in [State.On, State.Auto];
     end;
-    method GenerateExternalSym(file: CGCodeUnit; name: String);
+    method GenerateExternalSym(globalvar: CGGlobalVariableDefinition);
     begin
-      // if PureDelphi then file.RawFooter.Add('{$EXTERNALSYM '+name+'}');
+       if PureDelphi then begin
+         globalvar.RawFooter := new List<not nullable String>;
+         globalvar.RawFooter.Add('{$EXTERNALSYM '+globalvar.Variable.Name+'}');
+       end;
     end;
   protected
     fLegacyStrings: Boolean := False;
@@ -2493,38 +2496,41 @@ method DelphiRodlCodeGen.AddGlobalConstants(file: CGCodeUnit; &library: RodlLibr
 begin
   //var lnamespace := GetNamespace(library);
   var cond := cpp_GlobalCondition_ns();
-
-  file.Globals.Add(new CGFieldDefinition("LibraryUID", ResolveStdtypes(CGPredefinedTypeReference.String),
+  var globalvar := new CGFieldDefinition("LibraryUID", ResolveStdtypes(CGPredefinedTypeReference.String),
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
-                                          Initializer := ('{'+String(library.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal());
-//  file.RawFooter := new List<not nullable String>;
-  GenerateExternalSym(file, 'LibraryUID');
-  if library.CustomAttributes_lower.ContainsKey('wsdl') then
-    file.Globals.Add(new CGFieldDefinition("WSDLLocation",ResolveStdtypes(CGPredefinedTypeReference.String),
+                                          Initializer := ('{'+String(library.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression).AsGlobal();
+  file.Globals.Add(globalvar);
+  GenerateExternalSym(globalvar);
+  if library.CustomAttributes_lower.ContainsKey('wsdl') then begin
+    globalvar := new CGFieldDefinition("WSDLLocation",ResolveStdtypes(CGPredefinedTypeReference.String),
                                             Constant := true,
                                             Visibility := CGMemberVisibilityKind.Public,
                                             Condition := cond,
-                                            Initializer := ("'"+library.CustomAttributes_lower.Item['wsdl']+"'").AsLiteralExpression).AsGlobal());
-  GenerateExternalSym(file, 'WSDLLocation');
-  file.Globals.Add(new CGFieldDefinition("DefaultNamespace",ResolveStdtypes(CGPredefinedTypeReference.String),
+                                            Initializer := ("'"+library.CustomAttributes_lower.Item['wsdl']+"'").AsLiteralExpression).AsGlobal();
+    file.Globals.Add(globalvar);
+    GenerateExternalSym(globalvar);
+  end;
+  globalvar := new CGFieldDefinition("DefaultNamespace",ResolveStdtypes(CGPredefinedTypeReference.String),
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
-                                          Initializer := targetNamespace.AsLiteralExpression).AsGlobal());
-  GenerateExternalSym(file, 'DefaultNamespace');
+                                          Initializer := targetNamespace.AsLiteralExpression).AsGlobal();
+  file.Globals.Add(globalvar);
+  GenerateExternalSym(globalvar);
   var ltargetnamespace: String := '';
   if library.CustomAttributes_lower.ContainsKey('targetnamespace') then
     ltargetnamespace := library.CustomAttributes_lower.Item['targetnamespace'];
   if String.IsNullOrEmpty(ltargetnamespace ) then ltargetnamespace := targetNamespace;
 
-  file.Globals.Add(new CGFieldDefinition("TargetNamespace", ResolveStdtypes(CGPredefinedTypeReference.String),
+  globalvar := new CGFieldDefinition("TargetNamespace", ResolveStdtypes(CGPredefinedTypeReference.String),
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
-                                          Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal());
-  GenerateExternalSym(file, 'TargetNamespace');
+                                          Initializer :=  ltargetnamespace.AsLiteralExpression).AsGlobal();
+  file.Globals.Add(globalvar);
+  GenerateExternalSym(globalvar);
   if assigned(cond) then begin
     file.Globals.Add(new CGFieldDefinition(cpp_GlobalCondition_ns_name,
                                            Visibility := CGMemberVisibilityKind.Public,
@@ -4564,7 +4570,10 @@ end;
 
 method DelphiRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse):String;
 begin
-  exit aUse.Name+'_Intf';
+  if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then 
+    exit aUse.Includes.DelphiModule + '_Intf' // std RODL like DA, DA_simple => delphi mode
+  else
+    exit aUse.Name+'_Intf';
 end;
 
 method DelphiRodlCodeGen.isDAProject(library: RodlLibrary): Boolean;
@@ -4597,7 +4606,7 @@ begin
   LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes',
                                                  "TObject".AsTypeReference,
                                                  Visibility := CGTypeVisibilityKind.Public);
-
+  AddCGAttribute(LibraryAttributes, attr_ROSkip);
   ProcessAttributes(library, LibraryAttributes, true);
   var ldefaultnamespace := if CanUseNameSpace then
                               targetNamespace

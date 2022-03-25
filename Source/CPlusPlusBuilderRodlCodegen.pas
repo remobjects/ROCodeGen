@@ -687,10 +687,10 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse): String;
 begin
   if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then 
-    exit aUse.Name+'_Intf' // std RODL like DA, DA_simple => delphi mode
+    exit aUse.Includes:DelphiModule + '_Intf' // std RODL like DA, DA_simple => delphi mode
   else if not String.IsNullOrEmpty(aUse.Namespace) then 
     exit aUse.Namespace
- else
+  else
     exit aUse.Name;
 end;
 
