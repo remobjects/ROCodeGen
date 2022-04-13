@@ -28,9 +28,9 @@ type
     fParamAttributes_typeref: CGNamedTypeReference;
     method isDAProject(library:RodlLibrary): Boolean;
     method GetRODLName(library:RodlLibrary): String;
-    method GenerateQualifiedName(aName, aUnitName: String): CGExpression;
+    method GenerateGlobalVarName(aName, aUnitName: String): CGExpression;
     begin
-      exit (new CGNamedTypeReference(aName) &namespace(new CGNamespaceReference(aUnitName)) isclasstype(false)).AsExpression;
+      exit new CGFieldAccessExpression(aUnitName.AsNamedIdentifierExpression, aName, CallSiteKind := CGCallSiteKind.Static);
     end;
     {$REGION CodeFirst attributes}
     property CF_condition: CGConditionalDefine;
@@ -350,7 +350,9 @@ begin
           ifs_true := new CGAssignmentStatement(
                                                 fentityname,
                                                 new CGMethodCallExpression(lentityItem.DataType.AsNamedIdentifierExpression,'CreateFmt',
-                                                                          [''.AsLiteralExpression.AsCallParameter, new CGArrayLiteralExpression().AsCallParameter].ToList,
+                                                                          [''.AsLiteralExpression.AsCallParameter,
+                                                                           new CGArrayLiteralExpression().AsCallParameter
+                                                                          ].ToList,
                                                                           CallSiteKind := CGCallSiteKind.Reference))
         else
           ifs_true := new CGAssignmentStatement(
@@ -1943,8 +1945,8 @@ begin
     GenerateAttributes(library, entity, lmem,out p1, out p2);
     if p1.Count > 0 then begin
       mem.Statements.Add(new CGMethodCallExpression(lMessage,'SetAttributes',[lTransportChannel.AsCallParameter,
-                                                                              new CGArrayLiteralExpression(p1).AsCallParameter,
-                                                                              new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
+                                                                              new CGArrayLiteralExpression(p1, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter,
+                                                                              new CGArrayLiteralExpression(p2, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter].ToList,
                                                     CallSiteKind := CGCallSiteKind.Reference));
     end;
     var ltry :=new CGTryFinallyCatchStatement();
@@ -2871,8 +2873,8 @@ begin
     var transport_callparameter := '__Transport'.AsNamedIdentifierExpression.AsCallParameter;
     if p1.Count > 0 then begin
       mem.Statements.Add(new CGMethodCallExpression(lMessage,'SetAttributes',[transport_callparameter,
-                                                                              new CGArrayLiteralExpression(p1).AsCallParameter,
-                                                                              new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
+                                                                              new CGArrayLiteralExpression(p1, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter,
+                                                                              new CGArrayLiteralExpression(p2, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter].ToList,
                                                     CallSiteKind := CGCallSiteKind.Reference));
     end;
     mem.Statements.Add(new CGMethodCallExpression(lMessage,'ApplyAttributes2_Transport',[transport_callparameter].ToList,
@@ -2939,8 +2941,8 @@ begin
                                         CallSiteKind := CGCallSiteKind.Reference));
     if p1.Count > 0 then begin
       ltry.Add(new CGMethodCallExpression(lMessage,'SetAttributes',[transport_callparameter,
-                                                                              new CGArrayLiteralExpression(p1).AsCallParameter,
-                                                                              new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
+                                                                              new CGArrayLiteralExpression(p1, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter,
+                                                                              new CGArrayLiteralExpression(p2, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter].ToList,
                                                     CallSiteKind := CGCallSiteKind.Reference));
     end;
     ltry.Add(new CGMethodCallExpression(lMessage,'ApplyAttributes2_Transport',[transport_callparameter].ToList,
@@ -3251,8 +3253,8 @@ begin
     GenerateAttributes(library, entity, operation,out p1, out p2);
     if p1.Count > 0 then begin
       ltry.Statements.Add(new CGMethodCallExpression(lMessage,'SetAttributes',[lTransportChannel.AsCallParameter,
-                                                                              new CGArrayLiteralExpression(p1).AsCallParameter,
-                                                                              new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
+                                                                              new CGArrayLiteralExpression(p1, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter,
+                                                                              new CGArrayLiteralExpression(p2, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter].ToList,
                                                                               CallSiteKind := CGCallSiteKind.Reference));
     end;
     ltry.Statements.Add(new CGMethodCallExpression(lMessage,
@@ -3447,8 +3449,8 @@ begin
     GenerateAttributes(library, entity, operation,out p1, out p2);
     if p1.Count > 0 then begin
       ltry.Statements.Add(new CGMethodCallExpression(lMessage,'StoreAttributes2',[
-                                                                              new CGArrayLiteralExpression(p1).AsCallParameter,
-                                                                              new CGArrayLiteralExpression(p2).AsCallParameter].ToList,
+                                                                              new CGArrayLiteralExpression(p1, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter,
+                                                                              new CGArrayLiteralExpression(p2, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter].ToList,
                                                      CallSiteKind := CGCallSiteKind.Reference));
       ltry.Statements.Add(new CGMethodCallExpression(lMessage,'ApplyAttributes2',CallSiteKind := CGCallSiteKind.Reference));
     end;
@@ -3865,7 +3867,7 @@ method DelphiRodlCodeGen.RaiseError(aMessage:CGExpression; aParams:List<CGExpres
 begin
   var lres := new CGMethodCallExpression('uROClasses'.AsNamedIdentifierExpression, 'RaiseError',[aMessage.AsCallParameter].ToList);
   if aParams <> nil then
-    lres.Parameters.Add(new CGArrayLiteralExpression(aParams).AsCallParameter);
+    lres.Parameters.Add(new CGArrayLiteralExpression(aParams, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter);
   exit lres;
 end;
 
@@ -4081,18 +4083,17 @@ begin
                                   CallingConvention := CGCallingConventionKind.Register);
 
   m.LocalVariables := new List<CGVariableDeclarationStatement>;
-  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeReference.String), new CGLocalVariableAccessExpression('DefaultNamespace')));
+  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeReference.String), cpp_DefaultNamespace));
 
   var lres := new CGLocalVariableAccessExpression('lres');
   var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
   for k in list_use do begin
+    var lt:= new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(CapitalizeString(cpp_GetNamespaceForUses(k)))) isclassType(True);
+    var lexpr := new CGMethodCallExpression(lt.AsExpression, 'DefaultNamespace', CallSiteKind := CGCallSiteKind.Static);
     m.Statements.Add(new CGAssignmentStatement(lres,
-                                               new CGBinaryOperatorExpression(lres1,
-                                                                              new CGFieldAccessExpression(CapitalizeString(cpp_GetNamespaceForUses(k)).AsNamedIdentifierExpression,
-                                                                                  'DefaultNamespace',
-                                                                                  CallSiteKind := CGCallSiteKind.Static),
-                                                                              CGBinaryOperatorKind.Addition)
-                                                ));
+                                               new CGBinaryOperatorExpression(lres1, lexpr, CGBinaryOperatorKind.Addition)
+                                               )
+                    );
   end;
   m.Statements.Add(lres.AsReturnStatement);
   lUnit.Globals.Add(m.AsGlobal);
@@ -4336,9 +4337,6 @@ begin
   end;
 
   if IsHydra then begin
-//    lUnit.Imports.Add(GenerateCGImport('uHYRes'));
-//    lUnit.Imports.Add(GenerateCGImport('uHYIntf'));
-//    lUnit.Imports.Add(GenerateCGImport('uHYROFactory'));
     lUnit.Imports.Add(GenerateCGImport('Hydra.Core.ModuleController'));
   end;
   if service.AncestorEntity <> nil then begin
@@ -4362,7 +4360,14 @@ begin
       lUnit.Imports.Add(GenerateCGImport('uDASchema'));
     end;
     {$ENDREGION}
-    lUnit.Imports.Add(GenerateCGImport(anc_unit));
+    var lext := 'hpp';
+    if assigned(service.AncestorEntity.FromUsedRodl) then begin
+      var s1 := service.AncestorEntity.FromUsedRodl.Includes:DelphiModule;
+      if String.IsNullOrEmpty(s1) then
+        lext := 'h';
+    end;
+
+    lUnit.Imports.Add(GenerateCGImport(anc_unit, '', lext));
     cpp_pragmalink(lUnit,CapitalizeString(anc_unit));
   end;
 
@@ -4463,7 +4468,10 @@ end;
 
 method DelphiRodlCodeGen.cpp_DefaultNamespace:CGExpression;
 begin
-  exit 'DefaultNamespace'.AsNamedIdentifierExpression;
+  var lt := new CGNamedTypeReference('TLibraryAttributes') isclassType(True);
+  exit new CGMethodCallExpression(lt.AsExpression,
+                                  'DefaultNamespace',
+                                  CallSiteKind := CGCallSiteKind.Static);
 end;
 
 method DelphiRodlCodeGen.CreateCodeFirstAttributes;
@@ -4570,7 +4578,7 @@ end;
 
 method DelphiRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse):String;
 begin
-  if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then 
+  if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then
     exit aUse.Includes.DelphiModule + '_Intf' // std RODL like DA, DA_simple => delphi mode
   else
     exit aUse.Name+'_Intf';
@@ -4613,7 +4621,7 @@ begin
                             else
                               Intf_name;
   LibraryAttributes.Members.Add(new CGMethodDefinition('DefaultNamespace',
-                                                        [GenerateQualifiedName('DefaultNamespace', ldefaultnamespace).AsReturnStatement],
+                                                        [GenerateGlobalVarName('DefaultNamespace', ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -4632,7 +4640,7 @@ begin
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
   LibraryAttributes.Members.Add(new CGMethodDefinition('LibraryUID',
-                                                        [GenerateQualifiedName('LibraryUID', ldefaultnamespace).AsReturnStatement],
+                                                        [GenerateGlobalVarName('LibraryUID', ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -4644,7 +4652,7 @@ begin
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
   LibraryAttributes.Members.Add(new CGMethodDefinition('TargetNamespace',
-                                                        [GenerateQualifiedName('TargetNamespace', ldefaultnamespace).AsReturnStatement],
+                                                        [GenerateGlobalVarName('TargetNamespace', ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),

@@ -26,8 +26,8 @@ type
     method cpp_GetNamespaceForUses(aUse: RodlUse):String;override;
     method cpp_GlobalCondition_ns:CGConditionalDefine;override;
     method cpp_GlobalCondition_ns_name: String; override;
-    method cpp_GetTROAsyncCallbackType: String; override; 
-    method cpp_GetTROAsyncCallbackMethodType: String; override; 
+    method cpp_GetTROAsyncCallbackType: String; override;
+    method cpp_GetTROAsyncCallbackMethodType: String; override;
   protected
     property PureDelphi: Boolean read False; override;
     property CanUseNameSpace: Boolean := True; override;
@@ -514,7 +514,7 @@ end;
 method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
 begin
   var lns := aName+'.'+aExt;
-  if aExt = 'hpp' then begin
+  if aExt in ['h', 'hpp'] then begin
     if String.IsNullOrEmpty(aNamespace) then
       exit new CGImport(CapitalizeString(lns))
     else
@@ -681,14 +681,17 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.cpp_DefaultNamespace:CGExpression;
 begin
-  exit new CGFieldAccessExpression(targetNamespace.AsNamedIdentifierExpression, 'DefaultNamespace', CallSiteKind := CGCallSiteKind.Static);
+  var lt := new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(targetNamespace)) isclassType(True);
+  exit new CGMethodCallExpression(lt.AsExpression,
+                                  'DefaultNamespace',
+                                  CallSiteKind := CGCallSiteKind.Static);
 end;
 
 method CPlusPlusBuilderRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse): String;
 begin
-  if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then 
+  if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then
     exit aUse.Includes:DelphiModule + '_Intf' // std RODL like DA, DA_simple => delphi mode
-  else if not String.IsNullOrEmpty(aUse.Namespace) then 
+  else if not String.IsNullOrEmpty(aUse.Namespace) then
     exit aUse.Namespace
   else
     exit aUse.Name;
