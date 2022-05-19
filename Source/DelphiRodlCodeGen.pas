@@ -4614,7 +4614,7 @@ begin
   LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes',
                                                  "TObject".AsTypeReference,
                                                  Visibility := CGTypeVisibilityKind.Public);
-  AddCGAttribute(LibraryAttributes, attr_ROSkip);
+  //AddCGAttribute(LibraryAttributes, attr_ROSkip);
   ProcessAttributes(library, LibraryAttributes, true);
   var ldefaultnamespace := if CanUseNameSpace then
                               targetNamespace
