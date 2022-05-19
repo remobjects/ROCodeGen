@@ -3805,7 +3805,8 @@ end;
 method DelphiRodlCodeGen.GetServiceAncestor(library: RodlLibrary; entity: RodlService): String;
 begin
   if not String.IsNullOrEmpty(entity.AncestorName) then begin
-    result := RodlService(entity.AncestorEntity).ImplClass;
+    if Assigned(entity.AncestorEntity) then 
+      result := RodlService(entity.AncestorEntity).ImplClass;
     if String.IsNullOrEmpty(result) then exit 'T'+entity.AncestorName
   end
   else begin
