@@ -3,7 +3,7 @@
   <PropertyGroup>
     <ProductVersion>3.5</ProductVersion>
     <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
-    <ProjectGuid>5FC49704-B393-45D9-B944-B5EF8FAE1DAC</ProjectGuid>
+    <ProjectGuid>{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}</ProjectGuid>
     <OutputType>exe</OutputType>
     <AssemblyName>rodl2code</AssemblyName>
     <AllowGlobals>False</AllowGlobals>
@@ -56,7 +56,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="Swift">
+    <Reference Include="Silver">
       <Private>True</Private>
     </Reference>
     <Reference Include="RemObjects.SDK">
