@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
   <PropertyGroup>
     <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
-    <ProjectGuid>EAE7DA8A-6033-4785-AF39-D67681B97B95</ProjectGuid>
+    <ProjectGuid>{EAE7DA8A-6033-4785-AF39-D67681B97B95}</ProjectGuid>
     <OutputType>executable</OutputType>
     <AssemblyName>rodl2code</AssemblyName>
     <AllowGlobals>False</AllowGlobals>
@@ -42,6 +42,7 @@
     <Reference Include="libSwift" />
     <Reference Include="libxml2" />
     <Reference Include="libElements" />
+    <Reference Include="libSilver" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
