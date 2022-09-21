@@ -43,6 +43,7 @@ begin
     'hydrogene' , 'cs', '.cs':   gen := new CGCSharpCodeGenerator(Dialect := CGCSharpCodeGeneratorDialect.Hydrogene);
     'silver', 'swift', '.swift': gen := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Silver);
     'iodine', 'java', '.java':   gen := new CGJavaCodeGenerator(Dialect := CGJavaCodeGeneratorDialect.Iodine);
+    'mercury', 'vb', '.vb':   gen := new CGVisualBasicNetCodeGenerator(Dialect := CGVisualBasicCodeGeneratorDialect.Mercury);
     else raise new NotSupportedException(String.Format('Unable to generate Cocoa Table Definitions. Unsupported language {0}', self.fLanguage));
   end;
 

@@ -20,7 +20,7 @@ public __abstract class ServerAccessCodeGen {
 		}
 
 		// If UsedRodl is null but its Id is set then special handling is required
-		if service.FromUsedRodlId == Guid.EmptyGuid {
+		if service.FromUsedRodlId == Guid.Empty {
 			return true;
 		}
 
@@ -469,9 +469,9 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 		else
 		{
 			switch DelphiXE2Mode {
-				case State.Auto:	return CGImport("{$IFDEF DELPHIXE2UP}"+aNamespace+"."+aName+"{$ELSE}"+aName+"{$ENDIF}");
-				case State.Off:		return CGImport(aName);
-				case State.On:		return CGImport(aNamespace+"."+aName);
+				case State.Auto: return CGImport("{$IFDEF DELPHIXE2UP}"+aNamespace+"."+aName+"{$ELSE}"+aName+"{$ENDIF}");
+				case State.Off: return CGImport(aName);
+				case State.On: return CGImport(aNamespace+"."+aName);
 			}
 		}
 	}
