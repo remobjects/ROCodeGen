@@ -528,6 +528,10 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 				lunit.Imports.Add(generateImport("uROPostMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				mes_name = "TROPostMessage";
 			}
+			else if sa.EndsWith("/json") {
+				lunit.Imports.Add(generateImport("uROJSONMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
+				mes_name = "TROJSONMessage";
+			}
 			else if sa.EndsWith("/xmlrpc") {
 				lunit.Imports.Add(generateImport("uROXmlRpcMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				mes_name = "TROXmlRpcMessage";
@@ -537,18 +541,18 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 				lunit.Imports.Add(generateImport("uROIndyHTTPChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				ch_name = "TROIndyHTTPChannel";
 			}
-			else if sa.StartsWith("tcp://") {
+			else if sa.StartsWith("tcp://") || sa.StartsWith("tcps://") {
 				lunit.Imports.Add(generateImport("uROIndyTCPChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				ch_name = "TROIndyTCPChannel";
 			}
-			else if sa.StartsWith("superhttp://") {
+			else if sa.StartsWith("superhttp://") || sa.StartsWith("superhttps://") {
 				lunit.Imports.Add(generateImport("uROBaseActiveEventChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperHttpChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROIndySuperHttpChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				ch_name = "TROIndySuperHTTPChannel";
 			}
-			else if sa.StartsWith("supertcp://") {
+			else if sa.StartsWith("supertcp://") || sa.StartsWith("supertcps://") {
 				lunit.Imports.Add(generateImport("uROBaseActiveEventChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				lunit.Imports.Add(generateImport("uROBaseSuperTCPChannel", aExt: "hpp", aNamespace:"", aGeneratePragma: true));

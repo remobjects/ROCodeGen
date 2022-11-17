@@ -3,9 +3,9 @@
   <PropertyGroup>
     <ProductVersion>3.5</ProductVersion>
     <RootNamespace>RemObjects.CodeGen4</RootNamespace>
-    <ProjectGuid>{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}</ProjectGuid>
+    <ProjectGuid>{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AssemblyName>RemObjects.SDK.CodeGen4</AssemblyName>
+    <BinaryName>RemObjects.SDK.CodeGen4</BinaryName>
     <AllowGlobals>False</AllowGlobals>
     <AllowLegacyWith>False</AllowLegacyWith>
     <AllowLegacyOutParams>False</AllowLegacyOutParams>
@@ -21,7 +21,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ConditionalDefines>DEBUG;TRACE</ConditionalDefines>
     <GeneratePDB>True</GeneratePDB>
     <GenerateMDB>True</GenerateMDB>
     <CaptureConsoleOutput>False</CaptureConsoleOutput>
@@ -99,8 +99,8 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.Echoes.targets" />
+  <Import Project="rodl2code.Shared.projitems" Label="Shared" />
   <PropertyGroup>
     <PreBuildEvent />
   </PropertyGroup>
-  <Import Project="rodl2code.Shared.projitems" Label="Shared" />
 </Project>

@@ -5,7 +5,7 @@
     <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
     <ProjectGuid>{5FC49704-B393-45D9-B944-B5EF8FAE1DAC}</ProjectGuid>
     <OutputType>exe</OutputType>
-    <AssemblyName>rodl2code</AssemblyName>
+    <BinaryName>rodl2code</BinaryName>
     <AllowGlobals>False</AllowGlobals>
     <AllowLegacyWith>False</AllowLegacyWith>
     <AllowLegacyOutParams>False</AllowLegacyOutParams>
@@ -20,7 +20,7 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <Optimize>false</Optimize>
     <OutputPath>.\bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;TRACE;</DefineConstants>
+    <ConditionalDefines>DEBUG;TRACE;</ConditionalDefines>
     <GeneratePDB>True</GeneratePDB>
     <GenerateMDB>True</GenerateMDB>
     <EnableAsserts>True</EnableAsserts>
