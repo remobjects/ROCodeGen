@@ -1367,7 +1367,7 @@ begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__startWithBlock";
-  var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("arg", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
+  var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
   result.Parameters.Add(new CGParameterDefinition("___block", bl, ExternalName := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
   GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
