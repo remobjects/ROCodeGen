@@ -4469,10 +4469,7 @@ end;
 
 method DelphiRodlCodeGen.cpp_DefaultNamespace:CGExpression;
 begin
-  var lt := new CGNamedTypeReference('TLibraryAttributes') isclassType(True);
-  exit new CGMethodCallExpression(lt.AsExpression,
-                                  'DefaultNamespace',
-                                  CallSiteKind := CGCallSiteKind.Static);
+  exit new CGFieldAccessExpression(Intf_name.AsNamedIdentifierExpression, 'DefaultNamespace', CallSiteKind := CGCallSiteKind.Static);
 end;
 
 method DelphiRodlCodeGen.CreateCodeFirstAttributes;

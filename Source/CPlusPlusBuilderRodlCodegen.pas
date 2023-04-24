@@ -681,10 +681,7 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.cpp_DefaultNamespace:CGExpression;
 begin
-  var lt := new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(targetNamespace)) isclassType(True);
-  exit new CGMethodCallExpression(lt.AsExpression,
-                                  'DefaultNamespace',
-                                  CallSiteKind := CGCallSiteKind.Static);
+  exit new CGFieldAccessExpression(targetNamespace.AsNamedIdentifierExpression, 'DefaultNamespace', CallSiteKind := CGCallSiteKind.Static);
 end;
 
 method CPlusPlusBuilderRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse): String;
