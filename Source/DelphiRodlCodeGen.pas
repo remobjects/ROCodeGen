@@ -4089,12 +4089,13 @@ begin
   var lres := new CGLocalVariableAccessExpression('lres');
   var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
   for k in list_use do begin
-    var lt:= new CGNamedTypeReference('TLibraryAttributes') &namespace(new CGNamespaceReference(CapitalizeString(cpp_GetNamespaceForUses(k)))) isclassType(True);
-    var lexpr := new CGMethodCallExpression(lt.AsExpression, 'DefaultNamespace', CallSiteKind := CGCallSiteKind.Static);
     m.Statements.Add(new CGAssignmentStatement(lres,
-                                               new CGBinaryOperatorExpression(lres1, lexpr, CGBinaryOperatorKind.Addition)
-                                               )
-                    );
+                                               new CGBinaryOperatorExpression(lres1,
+                                                                              new CGFieldAccessExpression(CapitalizeString(cpp_GetNamespaceForUses(k)).AsNamedIdentifierExpression,
+                                                                                  'DefaultNamespace',
+                                                                                  CallSiteKind := CGCallSiteKind.Static),
+                                                                              CGBinaryOperatorKind.Addition)
+                                                ));
   end;
   m.Statements.Add(lres.AsReturnStatement);
   lUnit.Globals.Add(m.AsGlobal);
