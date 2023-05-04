@@ -52,7 +52,7 @@ type
   public
     class property KnownRODLPaths: Dictionary<String,String> := new Dictionary<String,String>;
     property Generator: CGCodeGenerator; virtual;
-    property DontPrefixEnumValues: Boolean := false; virtual;
+    property DontPrefixEnumValues: Boolean := True; virtual;
     property CodeUnitSupport: Boolean := True; virtual;
     property RodlFileName: String :='';
 

@@ -183,6 +183,7 @@ type
     property DefaultServerAncestor: DelphiServerAncestor := DelphiServerAncestor.RemoteDataModule;
     property CustomAncestor: String read fCustomAncestor write set_CustomAncestor;
     property CustomUses: String;
+    property DontPrefixEnumValues: Boolean := false; override;
     // include {$SCOPEDENUMS ON} into _Intf
     property ScopedEnums: Boolean := false;
     property IsHydra:Boolean := false;
