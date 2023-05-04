@@ -1344,7 +1344,8 @@ end;
 method JavaRodlCodeGen.GenerateEnum(file: CGCodeUnit; library: RodlLibrary; entity: RodlEnum);
 begin
   var lenum := new CGEnumTypeDefinition(SafeIdentifier(entity.Name),
-                                        Visibility := CGTypeVisibilityKind.Public);
+                                        Visibility := CGTypeVisibilityKind.Public,
+                                        BaseType := new CGNamedTypeReference('Enum'));
   lenum.Comment := GenerateDocumentation(entity);
   file.Types.Add(lenum);
   for enummember: RodlEnumValue in entity.Items do begin
