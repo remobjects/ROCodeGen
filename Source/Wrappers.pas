@@ -112,13 +112,13 @@ begin
       if ParseAddParams(lparams,DelphiCodeFirstCompatible) = '1' then
         DelphiRodlCodeGen(codegen).CodeFirstMode := State.Auto;
       if ParseAddParams(lparams,DelphiGenerateGenericArray) = '0' then
-        DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;       
+        DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;
       DelphiRodlCodeGen(codegen).CodeFirstMode := ParseAddParams(lparams,DelphiCodeFirstMode, DelphiRodlCodeGen(codegen).CodeFirstMode);
       DelphiRodlCodeGen(codegen).FPCMode := ParseAddParams(lparams,DelphiFPCMode, DelphiRodlCodeGen(codegen).FPCMode);
       DelphiRodlCodeGen(codegen).GenericArrayMode := ParseAddParams(lparams,DelphiGenericArrayMode, DelphiRodlCodeGen(codegen).GenericArrayMode);
       DelphiRodlCodeGen(codegen).DelphiXE2Mode := ParseAddParams(lparams,DelphiXE2Mode, DelphiRodlCodeGen(codegen).DelphiXE2Mode);
 
-      if DelphiRodlCodeGen(codegen).FPCMode = State.On then 
+      if DelphiRodlCodeGen(codegen).FPCMode = State.On then
         DelphiRodlCodeGen(codegen).DelphiXE2Mode := State.Off;
 
       if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.Off then begin
@@ -129,10 +129,10 @@ begin
       if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.On then
         DelphiRodlCodeGen(codegen).FPCMode := State.Off;
 
-      if DelphiRodlCodeGen(codegen).CodeFirstMode = State.Off then 
+      if DelphiRodlCodeGen(codegen).CodeFirstMode = State.Off then
         DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;
 
-      if ParseAddParams(lparams,DelphiHydra) = '1' then 
+      if ParseAddParams(lparams,DelphiHydra) = '1' then
         DelphiRodlCodeGen(codegen).IsHydra := true;
     end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
@@ -177,8 +177,10 @@ begin
       codegen.Generator := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Standard);
       llang := 'standard-swift';
       lfileext := 'swift';
-      if codegen is CocoaRodlCodeGen then
+      if codegen is CocoaRodlCodeGen then begin
         CocoaRodlCodeGen(codegen).SwiftDialect := CGSwiftCodeGeneratorDialect.Standard;
+        CocoaRodlCodeGen(codegen).FixUpForAppleSwift;
+      end;
     end;
     Codegen4Language.ObjC: begin
       codegen.Generator := new CGObjectiveCMCodeGenerator();
@@ -218,8 +220,8 @@ begin
       raise new Exception("Generating server code is not supported for this platform.");
 
   var ltargetnamespace := ParseAddParams(lparams,TargetNameSpace);
-  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Namespace;
-  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Name;
+//  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Namespace;
+//  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Name;
 
   case Mode of
     Codegen4Mode.Intf: GenerateInterfaceFiles(result, codegen, rodl, ltargetnamespace, lfileext);
@@ -252,7 +254,7 @@ begin
     '2': exit State.Auto;
   else
     exit aDefaultState;
-  end;  
+  end;
 end;
 
 
@@ -304,7 +306,7 @@ begin
   end
   else begin
     var s := codegen.GenerateInvokerFile(rodl,&namespace,lunitname);
-    if not String.IsNullOrWhiteSpace(s) then 
+    if not String.IsNullOrWhiteSpace(s) then
       Res.Add(new Codegen4Record(lunitname, s, Codegen4FileType.Unit));
   end;
 end;
@@ -345,14 +347,9 @@ end;
 
 method Codegen4Wrapper.GenerateAllImplFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl: RodlLibrary; &namespace: String; &params: Dictionary<String,String>);
 begin
-  if codegen is EchoesCodeDomRodlCodeGen then begin
-    GenerateImplFiles(Res, codegen,rodl,&namespace, &params, ServiceName); //EchoesCodeDomRodlCodeGen generates all services in one file
-  end
-  else begin
-    for serv in rodl.Services.Items do begin
-      if serv.DontCodegen or serv.IsFromUsedRodl then continue;
-      GenerateImplFiles(Res, codegen,rodl,&namespace, &params, serv.Name);
-    end;
+  for serv in rodl.Services.Items do begin
+    if serv.DontCodegen or serv.IsFromUsedRodl then continue;
+    GenerateImplFiles(Res, codegen,rodl,&namespace, &params, serv.Name);
   end;
 end;
 
@@ -371,12 +368,12 @@ begin
          ((ParseAddParams(&params, DelphiCodeFirstMode, State.Auto) = State.On) or
           ((ParseAddParams(&params, DelphiCodeFirstMode, State.Auto) = State.Auto) and (ParseAddParams(&params, DelphiGenericArrayMode, State.Auto) = State.On))
          ) then
-        DelphiServerAccessCodeGen(sa).DelphiXE2Mode := State.On; 
+        DelphiServerAccessCodeGen(sa).DelphiXE2Mode := State.On;
     end;
     Codegen4Platform.CppBuilder: sa := new CPlusPlusBuilderServerAccessCodeGen withRodl(rodl);
     Codegen4Platform.Java: sa:= new JavaServerAccessCodeGen withRodl(rodl);
     Codegen4Platform.Cocoa: sa := new CocoaServerAccessCodeGen withRodl(rodl) generator(codegen.Generator);
-    Codegen4Platform.Net: sa := new NetServerAccessCodeGen withRodl(rodl) &namespace(TargetNameSpace);
+    Codegen4Platform.Net: sa := new NetServerAccessCodeGen withRodl(rodl) &namespace(&namespace);
     // Codegen4Platform.JavaScript: codegen := new JavaScriptServerAccessCodeGen;
   else
     exit;
@@ -414,7 +411,7 @@ begin
       // generate unit for backward compatibility, Delphi/C++Builder only
 
       var ltargetNamespace := &namespace;
-      if String.IsNullOrEmpty(ltargetNamespace) then ltargetNamespace := rodl.Namespace;
+      //if String.IsNullOrEmpty(ltargetNamespace) then ltargetNamespace := rodl.Namespace;
       if String.IsNullOrEmpty(ltargetNamespace) then ltargetNamespace := rodl.Name;
       var lUnit := new CGCodeUnit();
       lUnit.Namespace := new CGNamespaceReference(ltargetNamespace);

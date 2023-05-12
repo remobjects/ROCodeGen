@@ -49,8 +49,8 @@ type
     method GenerateException(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlException); override;
     method GenerateService(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlService); override;
     method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlEventSink); override;
-    method GetNamespace(library: RodlLibrary): String;override;
-    method GetGlobalName(library: RodlLibrary): String;override;
+    method GetIncludesNamespace(library: RodlLibrary): String; override;
+    method GetGlobalName(library: RodlLibrary): String; override;
 
     property EnumBaseType: CGTypeReference read NSUIntegerType; override;
   public
@@ -58,7 +58,7 @@ type
     property DontPrefixEnumValues: Boolean := not IsObjC; override;
     constructor;
     constructor withSwiftDialect(aSwiftDialect: CGSwiftCodeGeneratorDialect);
-    method FixUpForAppeSwift;
+    method FixUpForAppleSwift;
   end;
 
 implementation
@@ -902,7 +902,7 @@ begin
   SwiftDialect := aSwiftDialect;
 end;
 
-method CocoaRodlCodeGen.FixUpForAppeSwift;
+method CocoaRodlCodeGen.FixUpForAppleSwift;
 begin
   // nasty hack, but so fuck it!
   CodeGenTypes.Remove("binary");
@@ -1412,10 +1412,15 @@ begin
   Statements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
 end;
 
-method CocoaRodlCodeGen.GetNamespace(library: RodlLibrary): String;
+method CocoaRodlCodeGen.GetIncludesNamespace(library: RodlLibrary): String;
 begin
-  if assigned(library.Includes) then result := library.Includes.CocoaModule;
-  if String.IsNullOrWhiteSpace(result) then result := inherited GetNamespace(library);
+  if assigned(library.Includes) then begin
+    if IsObjC then
+      exit library.Includes.ObjCModule
+    else
+      exit library.Includes.CocoaModule;
+  end;
+  exit inherited GetIncludesNamespace(library);
 end;
 
 method CocoaRodlCodeGen.GetGlobalName(library: RodlLibrary): String;
@@ -1425,12 +1430,10 @@ end;
 
 method CocoaRodlCodeGen.AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary);
 begin
-  var TargetNamespaceName := GetNamespace(library);
-
   file.Globals.Add(new CGFieldDefinition("TargetNamespace", CGPredefinedTypeReference.String.NotNullable,
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
-                  Initializer := if assigned(TargetNamespaceName) then TargetNamespaceName.AsLiteralExpression).AsGlobal());
+                  Initializer := if assigned(targetNamespace) then targetNamespace.AsLiteralExpression).AsGlobal());
 
   for lentity: RodlEntity in &library.EventSinks.Items do begin
     if not EntityNeedsCodeGen(lentity) then Continue;

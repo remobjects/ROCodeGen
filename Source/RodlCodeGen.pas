@@ -45,7 +45,8 @@ type
     method GenerateService(file: CGCodeUnit; library: RodlLibrary; entity: RodlService);virtual; empty;
     method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; entity: RodlEventSink);virtual; empty;
     method GenerateUnitComment(isImpl: Boolean): CGCommentStatement; virtual;
-    method GetNamespace(library: RodlLibrary): String;virtual;
+    method GetNamespace(library: RodlLibrary): String; virtual;
+    method GetIncludesNamespace(library: RodlLibrary): String; virtual; empty;
     method GetGlobalName(library: RodlLibrary): String; abstract;
 
     property EnumBaseType: CGTypeReference read ResolveStdtypes(CGPredefinedTypeReference.UInt32); virtual;
@@ -306,12 +307,11 @@ end;
 
 method RodlCodeGen.DoGenerateInterfaceFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit;
 begin
-  targetNamespace := aTargetNamespace;
+  targetNamespace := coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library));
   result := new CGCodeUnit();
   result.Namespace := new CGNamespaceReference(targetNamespace);
   result.HeaderComment := GenerateUnitComment(False);
   result.FileName := aUnitName;
-  if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Namespace;
 
   AddUsedNamespaces(result, &library);
 
@@ -374,8 +374,7 @@ end;
 
 method RodlCodeGen.GenerateInterfaceCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
 begin
-  var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);
-  exit DoGenerateInterfaceFile(library, lnamespace, aUnitName);
+  exit DoGenerateInterfaceFile(library, coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library)), aUnitName);
 end;
 
 method RodlCodeGen.GenerateInvokerCodeUnit(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;

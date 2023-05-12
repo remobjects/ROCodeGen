@@ -291,7 +291,7 @@ do {
 			if let cocoaRodlCodeGen = activeRodlCodeGen as? CocoaRodlCodeGen {
 				if options["language"] == "standard-swift" {
 					cocoaRodlCodeGen.SwiftDialect = .Standard
-					cocoaRodlCodeGen.FixUpForAppeSwift()
+					cocoaRodlCodeGen.FixUpForAppleSwift()
 				} else {
 					cocoaRodlCodeGen.SwiftDialect = .Silver
 				}

@@ -277,13 +277,30 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 	public init(rodl: RodlLibrary, namespace namespace: String!) {
 		super.init(rodl: rodl);
 		self.namespace = namespace;
+		if String.IsNullOrWhiteSpace(self.namespace) {
+			if length(self.rodl.Includes?.NetModule) > 0 {
+				self.namespace = self.rodl.Includes.NetModule;
+			}
+		}
+		if String.IsNullOrWhiteSpace(self.namespace) {
+			self.namespace = rodl.Namespace;
+		}
+		if String.IsNullOrWhiteSpace(self.namespace) {
+			self.namespace = rodl.Name;
+		}
 	}
 
 	override func generateStandardImports(_ unit: CGCodeUnit) {
 		unit.Imports.Add(CGImport("RemObjects.SDK"))
 		// if let won't help here because namespace and RODL namespace can be non-NULL empty strings
-		if (length(self.namespace) > 0) && (length(self.rodl.Namespace) > 0) && (self.namespace != self.rodl.Namespace) {
-			unit.Imports.Add(CGImport(self.rodl.Namespace))
+		var rodl_namespace: String = "";
+		if length(self.rodl.Includes?.NetModule) > 0 {
+			rodl_namespace = self.rodl.Includes.NetModule;
+		} else {
+			rodl_namespace = self.rodl.Namespace;
+		}
+		if (length(self.namespace) > 0) && (length(rodl_namespace) > 0) && (self.namespace != rodl_namespace) {
+			unit.Imports.Add(CGImport(rodl_namespace))
 		}
 	}
 

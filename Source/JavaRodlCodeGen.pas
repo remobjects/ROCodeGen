@@ -37,7 +37,7 @@ type
     method GenerateService(file: CGCodeUnit; library: RodlLibrary; entity: RodlService);override;
     method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; entity: RodlEventSink);override;
     method GetGlobalName(library: RodlLibrary): String;override;
-    method GetNamespace(library: RodlLibrary): String;override;
+    method GetIncludesNamespace(library: RodlLibrary): String; override;
   public
     constructor;
     property addROSDKPrefix: Boolean := True;
@@ -1303,21 +1303,20 @@ end;
 
 method JavaRodlCodeGen.GetGlobalName(library: RodlLibrary): String;
 begin
-  exit 'Defines_'+GetNamespace(library).Replace('.','_');
+  exit 'Defines_' + targetNamespace.Replace('.', '_');
 end;
 
-method JavaRodlCodeGen.GetNamespace(library: RodlLibrary): String;
+method JavaRodlCodeGen.GetIncludesNamespace(library: RodlLibrary): String;
 begin
-  if assigned(library.Includes) then result := library.Includes.JavaModule;
-  if String.IsNullOrWhiteSpace(result) then result := inherited GetNamespace(library);
+  if assigned(library.Includes) then exit library.Includes.JavaModule;
+  exit inherited GetIncludesNamespace(library);
 end;
 
 method JavaRodlCodeGen.GenerateInterfaceFiles(library: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
 begin
   isCooperMode := False;
   result := new Dictionary<String,String>;
-  var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);
-  var lunit := DoGenerateInterfaceFile(library, lnamespace);
+  var lunit := DoGenerateInterfaceFile(library, aTargetNamespace);
   //var lgn := GetGlobalName(library);
   for k in lunit.Types.OrderBy(b->b.Name) do begin
 {    if (k is CGInterfaceTypeDefinition) and (CGInterfaceTypeDefinition(k).Name = lgn) then
@@ -1358,7 +1357,6 @@ end;
 
 method JavaRodlCodeGen.AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary);
 begin
-  var TargetNamespaceName := GetNamespace(library);
 
   var ltype : CGTypeDefinition;
 
@@ -1373,7 +1371,7 @@ begin
                     Constant := true,
                     &Static := true,
                     Visibility := CGMemberVisibilityKind.Public,
-                    Initializer := if assigned(TargetNamespaceName) then TargetNamespaceName.AsLiteralExpression));
+                    Initializer := if assigned(targetNamespace) then targetNamespace.AsLiteralExpression));
 
   for lentity: RodlEntity in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;

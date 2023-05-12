@@ -161,7 +161,7 @@ type
     method AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary); override;
     method GlobalsConst_GenerateServerGuid(file: CGCodeUnit; library: RodlLibrary; entity: RodlService); virtual;
     method isComplex(library: RodlLibrary; dataType: String): Boolean; override;
-    method GetNamespace(library: RodlLibrary): String;override;
+    method GetIncludesNamespace(library: RodlLibrary): String; override;
     method GetGlobalName(library: RodlLibrary): String; override; empty;
 
     method ResolveInterfaceTypeRef(library: RodlLibrary; dataType: String; aDefaultUnitName: String; aOrigDataType: String := ''; aCapitalize: Boolean := False): CGNamedTypeReference; virtual;
@@ -3796,10 +3796,10 @@ begin
   end;
 end;
 
-method DelphiRodlCodeGen.GetNamespace(library: RodlLibrary): String;
+method DelphiRodlCodeGen.GetIncludesNamespace(library: RodlLibrary): String;
 begin
-  if assigned(library.Includes) then result := library.Includes.DelphiModule;
-  if String.IsNullOrWhiteSpace(result) then result := inherited GetNamespace(library);
+  if assigned(library.Includes) then exit library.Includes.DelphiModule;
+  exit inherited GetIncludesNamespace(library);
 end;
 
 {$REGION support methods}
@@ -4011,24 +4011,15 @@ begin
   ScopedEnums := ScopedEnums or library.ScopedEnums;
   //special mode, only if library.ScopedEnums is set
   IncludeUnitNameForOwnTypes := IncludeUnitNameForOwnTypes or library.ScopedEnums;
-  targetNamespace := aTargetNamespace;
-  if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Namespace;
-  if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Name;
+  targetNamespace := coalesce(GetIncludesNamespace(library), aTargetNamespace, library.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
   lUnit.Namespace := new CGNamespaceReference(targetNamespace);
-  if String.IsNullOrEmpty(aUnitName) then begin
-    var lunitname: String;
-    try
-      if assigned(library.Includes) then lunitname := library.Includes.DelphiModule;
-      if String.IsNullOrEmpty(lunitname) then lunitname := library.Name;
-    except
-      lunitname := 'Unknown';
-    end;
-    lUnit.FileName := lunitname+ '_Intf';
-  end
-  else begin
+
+  if String.IsNullOrEmpty(aUnitName) then
+    lUnit.FileName := coalesce(GetIncludesNamespace(library), library.Name, 'Unknown') + '_Intf'
+  else
     lUnit.FileName := Path.GetFileNameWithoutExtension(aUnitName);
-  end;
+
   Intf_name := lUnit.FileName;
 
 
@@ -4178,24 +4169,14 @@ begin
   CreateCodeFirstAttributes;
   if CodeFirstMode = State.On then exit nil;
   IncludeUnitNameForOwnTypes := true;
-  targetNamespace := aTargetNamespace;
-  if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Namespace;
-  if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Name;
+  targetNamespace := coalesce(GetIncludesNamespace(library), aTargetNamespace, library.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
-  lUnit.Namespace := new CGNamespaceReference(targetNamespace);
-  if String.IsNullOrEmpty(aUnitName) then begin
-    var lunitname: String;
-    try
-      if assigned(library.Includes) then lunitname := library.Includes.DelphiModule;
-      if String.IsNullOrEmpty(lunitname) then lunitname := library.Name;
-    except
-      lunitname := 'Unknown';
-    end;
-    lUnit.FileName := lunitname+ '_Invk';
-  end
-  else begin
+
+  if String.IsNullOrEmpty(aUnitName) then
+    lUnit.FileName := coalesce(GetIncludesNamespace(library), library.Name, 'Unknown') + '_Invk'
+  else
     lUnit.FileName := Path.GetFileNameWithoutExtension(aUnitName);
-  end;
+
   Invk_name := lUnit.FileName;
   Intf_name := Invk_name.Substring(0,Invk_name.Length-5)+'_Intf';
   lUnit.Initialization := new List<CGStatement>;
@@ -4293,21 +4274,13 @@ begin
   if service.IsFromUsedRodl then begin
     library := service.FromUsedRodl.OwnerLibrary;
   end;
-  targetNamespace := aTargetNamespace;
-  if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Namespace;
-  if String.IsNullOrEmpty(targetNamespace) then targetNamespace := library.Name;
+  targetNamespace := coalesce(GetIncludesNamespace(library), aTargetNamespace, library.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
   lUnit.Namespace := new CGNamespaceReference(targetNamespace);
   lUnit.FileName := aServiceName+ '_Impl';
   Impl_name := lUnit.FileName;
 
-  var lunitname: String;
-  try
-    if assigned(library.Includes) then lunitname := library.Includes.DelphiModule;
-    if String.IsNullOrEmpty(lunitname) then lunitname := library.Name;
-  except
-    lunitname := 'Unknown';
-  end;
+  var lunitname: String := coalesce(GetIncludesNamespace(library), library.Name, 'Unknown');
   Intf_name := lunitname+ '_Intf';
   Invk_name := lunitname+ '_Invk';
 

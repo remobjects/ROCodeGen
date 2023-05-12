@@ -19,7 +19,12 @@ type
 
       exit rodl;
     end;
-
+  protected
+    method GetIncludesNamespace(library: RodlLibrary): String; override;
+    begin
+      if assigned(library.Includes) then exit library.Includes.NetModule;
+      exit inherited GetIncludesNamespace(library);
+    end;
   public
     constructor;
 
@@ -58,7 +63,8 @@ begin
 
   var lRodl := self.ConvertRodlLibrary(library);
 
-  var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport, false);
+  var lUnit := lCodegen.GenerateCompileUnit(lRodl, coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library)), FullFramework, AsyncSupport, false);
+
   result := GenerateCodeFromCompileUnit(lUnit);
 end;
 
@@ -68,7 +74,8 @@ begin
 
   var lRodl := self.ConvertRodlLibrary(library);
 
-  var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
+  var lUnit := lCodegen.GenerateCompileUnit(lRodl, coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library)), FullFramework, AsyncSupport);
+
   result := GenerateCodeFromCompileUnit(lUnit);
 end;
 
@@ -82,8 +89,13 @@ begin
   var lCodegen := new CodeGen_Impl();
 
   var lRodl := self.ConvertRodlLibrary(library);
+  var lService := RemObjects.SDK.Rodl.RodlService(lRodl.Services.FindEntity(aServiceName));
+  var lUnit: CodeCompileUnit;
+  if assigned(lService) then
+    lUnit := lCodegen.GenerateCompileUnit(lService, coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library)), FullFramework)
+  else
+    lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
 
-  var lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
   var lunitname := aServiceName + '_Impl.'+GetCodeDomProviderForLanguage().FileExtension;
   result := new Dictionary<String,String>;
   result.Add(lunitname, GenerateCodeFromCompileUnit(lUnit));
