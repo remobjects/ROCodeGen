@@ -120,12 +120,12 @@ method RodlCodeGen.EntityNeedsCodeGen(entity: RodlEntity): Boolean;
 begin
   if entity.DontCodegen then exit false;
   Result := not (entity.IsFromUsedRodl or (entity.FromUsedRodlId <> Guid.Empty));
-{
+
   if (not Result) then begin
     Result := (entity.FromUsedRodl = nil);
     if (not Result) then Result := not entity.FromUsedRodl.DontApplyCodeGen;
   end;
-}
+
 end;
 
 method RodlCodeGen.PascalCase(name: String): String;
