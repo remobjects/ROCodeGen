@@ -263,9 +263,9 @@ do {
 		case "javascript", "js":
 			options["language"] = "javascript"
 			codegen = CGJavaScriptCodeGenerator()
-			writeLn("JavaScript language codegen is not supported in rodl2code yet, sorry.")
+			//writeLn("JavaScript language codegen is not supported in rodl2code yet, sorry.")
 			fileExtension = "js"
-			return 2
+			//return 2
 		default:
 	}
 
@@ -322,10 +322,10 @@ do {
 			activeServerAccessCodeGen = CPlusPlusBuilderServerAccessCodeGen(rodl:rodlLibrary)
 		case "javascript", "js":
 			options["platform"] = "javascript"
-			//activeRodlCodeGen = JavaScriptRodlCodeGen()
+			activeRodlCodeGen = JavaScriptRodlCodeGen()
 			//activeServerAccessCodeGen = JavaScriptServerAccessCodeGen()
-			writeLn("javaScript RODL codegen is not supported in rodl2code yet, sorry.")
-			return 2
+			//writeLn("javaScript RODL codegen is not supported in rodl2code yet, sorry.")
+			//return 2
 		default:
 	}
 
