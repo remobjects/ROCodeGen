@@ -29,7 +29,7 @@ func writeSyntax() {
 	writeLn("  - cocoa, xcode, toffee")
 	writeLn("  - java, cooper")
 	writeLn("  - delphi, c++builder, bcb")
-	writeLn("  - javascript, js (not supported yet)")
+	writeLn("  - javascript, js")
 	writeLn()
 	writeLn("Valid <language> values:")
 	writeLn()
@@ -239,6 +239,7 @@ do {
 			fileExtension = "m"
 		case "delphi":
 			options["language"] = "delphi"
+			options["platform"] = "delphi" // force platform to Delphi
 			codegen = CGDelphiCodeGenerator()
 			codegen!.splitLinesLongerThan = 200
 			fileExtension = "pas"
@@ -262,10 +263,9 @@ do {
 			fileExtension = "java"
 		case "javascript", "js":
 			options["language"] = "javascript"
+			options["platform"] = "javascript" // force platform to JavaScript
 			codegen = CGJavaScriptCodeGenerator()
-			//writeLn("JavaScript language codegen is not supported in rodl2code yet, sorry.")
 			fileExtension = "js"
-			//return 2
 		default:
 	}
 
@@ -322,10 +322,8 @@ do {
 			activeServerAccessCodeGen = CPlusPlusBuilderServerAccessCodeGen(rodl:rodlLibrary)
 		case "javascript", "js":
 			options["platform"] = "javascript"
+			options["language"] = "js" // force language to JavaScript
 			activeRodlCodeGen = JavaScriptRodlCodeGen()
-			//activeServerAccessCodeGen = JavaScriptServerAccessCodeGen()
-			//writeLn("javaScript RODL codegen is not supported in rodl2code yet, sorry.")
-			//return 2
 		default:
 	}
 

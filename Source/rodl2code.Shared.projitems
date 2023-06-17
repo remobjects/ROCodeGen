@@ -4,9 +4,8 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
     <HasSharedItems>true</HasSharedItems>
     <SharedGUID>37995C14-DAB7-4461-B35A-E316BD5F4E02</SharedGUID>
-  </PropertyGroup>
-  <PropertyGroup Label="Configuration">
     <Import_RootNamespace>codegen4.Shared</Import_RootNamespace>
+    <ProjectGuid>{37995C14-DAB7-4461-B35A-E316BD5F4E02}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="CG4">
