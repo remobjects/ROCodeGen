@@ -106,7 +106,7 @@ method EchoesCodeDomRodlCodeGen.GetCodeDomProviderForLanguage(): nullable CodeDo
 begin
   var lLookingForCodeDomName: String;
   try
-    case Language:ToLower() of
+    case Language:ToLowerInvariant() of
       'oxygene','pas': begin
           lLookingForCodeDomName := 'Oxygene';
           result := CodeDomProvider.CreateProvider("pas");
@@ -129,7 +129,7 @@ begin
   end;
 
   if not assigned(result) then begin
-    //Console.WriteLine(Language:ToLower());
+    //Console.WriteLine(Language:ToLowerInvariant());
     //Console.WriteLine("Known CodeDom providers:");
     for each p in CodeDomProvider.GetAllCompilerInfo do begin
       //Console.Write("  ");

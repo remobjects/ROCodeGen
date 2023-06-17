@@ -532,7 +532,7 @@ public class DelphiServerAccessCodeGen : ServerAccessCodeGen {
 
 		if let serverAddress = self.serverAddress {
 			server_Address = self.serverAddress!;
-			let sa = self.serverAddress!.ToLower();
+			let sa = self.serverAddress!.ToLowerInvariant();
 			if sa.EndsWith("/bin") {
 				lunit.Imports.Add(generateImport("uROBinMessage", aExt: "hpp", aNamespace:"", aGeneratePragma: true));
 				mes_name = "TROBinMessage";

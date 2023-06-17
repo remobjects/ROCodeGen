@@ -3,7 +3,7 @@
 public class CGHelpers {
 
 	public static func CodeGeneratorForLanguage(_ language: String) -> CGCodeGenerator? {
-		switch language.ToLower() {
+		switch language.ToLowerInvariant() {
 			case "oxygene", "pas":
 				return CGOxygeneCodeGenerator(style: .Standard, quoteStyle: .SmartDouble)
 			case "hydrogene", "cs", "c#", "csharp":
@@ -28,7 +28,7 @@ public class CGHelpers {
 	}
 
 	public static func FileExtensionForLanguage(_ language: String) -> String? {
-		switch language.ToLower() {
+		switch language.ToLowerInvariant() {
 			case "objc", "obj-c", "objectivec", "objective-c": return ".m"
 			case "swift", "silver": return ".swift"
 			case "pas", "oxygene", "delphi": return ".pas"

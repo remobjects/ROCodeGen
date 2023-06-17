@@ -84,8 +84,8 @@ func parseParameters(_ cmdlineParams: [String]) {
 			if p > 0 {
 				var name = param.Substring(0, p)
 				var value = param.Substring(p+1)
-				options[name.ToLower()] = value // retest 72610: Sugar mapping fails at runtime, trying to call the mapped method
-				//(options as! NSMutableDictionary)[name] = value.ToLower() // Parameter 1 is "String", should be "TValue", in call to NSMutableDictionary<TKey,TValue>!.setObject(anObject: TValue, forKeyedSubscript aKey: TKey)
+				options[name.ToLowerInvariant()] = value // retest 72610: Sugar mapping fails at runtime, trying to call the mapped method
+				//(options as! NSMutableDictionary)[name] = value.ToLowerInvariant() // Parameter 1 is "String", should be "TValue", in call to NSMutableDictionary<TKey,TValue>!.setObject(anObject: TValue, forKeyedSubscript aKey: TKey)
 																		  // Parameter 2 is "String!", should be "TKey", in call to NSMutableDictionary<TKey,TValue>!.setObject(anObject: TValue, forKeyedSubscript aKey: TKey)
 			}
 			else {
@@ -159,7 +159,7 @@ do {
 		Folder.Create(Path.GetParentDirectory(targetRodlFileName))
 	}
 
-	if options["type"]?.ToLower() == "res" {
+	if options["type"]?.ToLowerInvariant() == "res" {
 		let resFileName = Path.ChangeExtension(targetRodlFileName, ".res")
 		ResGenerator.GenerateResFile(rodlLibrary, resFileName);
 		writeLn("Wrote file \(resFileName)")
@@ -177,10 +177,10 @@ do {
 		writeSyntax()
 		return 1
 	}
-	if options["platform"]?.ToLower() == "delphi" && options["language"] == nil {
+	if options["platform"]?.ToLowerInvariant() == "delphi" && options["language"] == nil {
 		options["language"] = "delphi"
 	}
-	if options["platform"]?.ToLower() == "bcb" && options["language"] == nil {
+	if options["platform"]?.ToLowerInvariant() == "bcb" && options["language"] == nil {
 		options["language"] = "cpp"
 	}
 	if options["language"] == nil {
@@ -188,7 +188,7 @@ do {
 		return 1
 	}
 
-	switch options["type"]?.ToLower() {
+	switch options["type"]?.ToLowerInvariant() {
 		case "intf": break
 		case "invk": break
 		case "impl": break
@@ -204,7 +204,7 @@ do {
 	var codegen: CGCodeGenerator?
 
 	var fileExtension = "txt"
-	switch options["language"]?.ToLower() {
+	switch options["language"]?.ToLowerInvariant() {
 		case "oxygene", "pas":
 			options["language"] = "oxygene"
 			codegen = CGOxygeneCodeGenerator()
@@ -252,7 +252,7 @@ do {
 			codegen = CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Iodine)
 			fileExtension = "java"
 		case "java":
-			if options["platform"]?.ToLower() == "java" {
+			if options["platform"]?.ToLowerInvariant() == "java" {
 				options["language"] = "standard-java"
 				omitBom = true
 				codegen = CGJavaCodeGenerator(dialect: CGJavaCodeGeneratorDialect.Standard)
@@ -272,7 +272,7 @@ do {
 	var serverSupport = false
 	var activeRodlCodeGen: RodlCodeGen?
 	var activeServerAccessCodeGen: ServerAccessCodeGen?
-	switch options["platform"]?.ToLower() {
+	switch options["platform"]?.ToLowerInvariant() {
 		case "cooper", "java":
 			options["platform"] = "java"
 			if options["language"] == "swift" {
@@ -282,7 +282,7 @@ do {
 			activeServerAccessCodeGen = JavaServerAccessCodeGen(rodl: rodlLibrary)
 		case "toffee", "nougat", "cocoa", "xcode": // keep Nougat, undocumdented, for backwards comopatibility
 			options["platform"] = "cocoa"
-			if options["language"]?.ToLower() == "swift" && (options["platform"]?.ToLower() == "toffee" || options["platform"]?.ToLower() == "nougat") {
+			if options["language"]?.ToLowerInvariant() == "swift" && (options["platform"]?.ToLowerInvariant() == "toffee" || options["platform"]?.ToLowerInvariant() == "nougat") {
 					options["language"] = "silver" // force our Swift
 			}
 			activeRodlCodeGen = CocoaRodlCodeGen()
@@ -341,7 +341,7 @@ do {
 		let lcodegen = (activeRodlCodeGen as? DelphiRodlCodeGen)?;
 
 		if options["xe2"] != nil {
-			switch options["xe2"]?.ToLower() {
+			switch options["xe2"]?.ToLowerInvariant() {
 				case "on": lcodegen.DelphiXE2Mode = State.On;
 				case "off": lcodegen.DelphiXE2Mode = State.Off;
 				case "auto": lcodegen.DelphiXE2Mode = State.Auto;
@@ -349,7 +349,7 @@ do {
 			}
 		}
 		if options["fpc"] != nil {
-			switch options["fpc"]?.ToLower() {
+			switch options["fpc"]?.ToLowerInvariant() {
 				case "on": lcodegen.FPCMode = State.On;
 				case "off": lcodegen.FPCMode = State.Off;
 				case "auto": lcodegen.FPCMode = State.Auto;
@@ -357,7 +357,7 @@ do {
 			}
 		}
 		if options["codefirst"] != nil {
-			switch options["codefirst"]?.ToLower() {
+			switch options["codefirst"]?.ToLowerInvariant() {
 				case "on": lcodegen.CodeFirstMode = State.On;
 				case "off": lcodegen.CodeFirstMode = State.Off;
 				case "auto": lcodegen.CodeFirstMode = State.Auto;
@@ -365,7 +365,7 @@ do {
 			}
 		}
 		if options["genericarray"] != nil {
-			switch options["genericarray"]?.ToLower() {
+			switch options["genericarray"]?.ToLowerInvariant() {
 				case "on": lcodegen.GenericArrayMode = State.On;
 				case "off": lcodegen.GenericArrayMode = State.Off;
 				case "auto": lcodegen.GenericArrayMode = State.Auto;
@@ -445,7 +445,7 @@ do {
 		if let activeRodlCodeGen = activeRodlCodeGen {
 			activeRodlCodeGen.Generator = codegen
 
-			switch type.ToLower() {
+			switch type.ToLowerInvariant() {
 				case "intf":
 					if codegen is CGJavaCodeGenerator {
 						let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
