@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <PropertyGroup>
+    <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
+    <ProjectGuid>{554C06A3-E2E1-4B18-8FA5-825365643B91}</ProjectGuid>
+    <OutputType>executable</OutputType>
+    <AssemblyName>rodl2code</AssemblyName>
+    <AllowGlobals>False</AllowGlobals>
+    <AllowLegacyWith>False</AllowLegacyWith>
+    <AllowLegacyOutParams>False</AllowLegacyOutParams>
+    <AllowLegacyCreate>False</AllowLegacyCreate>
+    <AllowUnsafeCode>False</AllowUnsafeCode>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <EntitlementsFile>Entitlements.entitlements</EntitlementsFile>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <DefaultUses>RemObjects.Elements.RTL</DefaultUses>
+    <Mode>Island</Mode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <Optimize>false</Optimize>
+    <OutputPath>.\bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;</DefineConstants>
+    <GenerateDebugInfo>True</GenerateDebugInfo>
+    <EnableAsserts>True</EnableAsserts>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <CaptureConsoleOutput>False</CaptureConsoleOutput>
+    <WarnOnCaseMismatch>True</WarnOnCaseMismatch>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>true</Optimize>
+    <OutputPath>.\bin\Release</OutputPath>
+    <GenerateDebugInfo>False</GenerateDebugInfo>
+    <EnableAsserts>False</EnableAsserts>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <CaptureConsoleOutput>False</CaptureConsoleOutput>
+    <WarnOnCaseMismatch>True</WarnOnCaseMismatch>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Target)' == 'Windows'">
+    <SubMode>Windows</SubMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Target)' == 'Linux'">
+    <SubMode>Linux</SubMode>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Target)' == 'macOS'">
+    <SubMode>Darwin</SubMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="#" />
+    <Reference Include="Elements" />
+    <Reference Include="Silver" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.targets" />
+  <Import Project="rodl2code.Shared.projitems" Label="Shared" />
+  <ItemGroup>
+    <Compile Include="Program.swift" />
+  </ItemGroup>
+</Project>
