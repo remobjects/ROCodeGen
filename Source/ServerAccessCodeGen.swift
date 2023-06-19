@@ -20,7 +20,7 @@ public __abstract class ServerAccessCodeGen {
 		}
 
 		// If UsedRodl is null but its Id is set then special handling is required
-		if service.FromUsedRodlId == Guid.Empty {
+		if service.FromUsedRodlId == Guid.EmptyGuid {
 			return true;
 		}
 
