@@ -8,11 +8,11 @@ uses
 
 type
   [ComVisible(true)]
-  Codegen4Platform = public enum (Cocoa, Delphi, Java, Net, CppBuilder);
+  Codegen4Platform = public enum (Cocoa, Delphi, Java, Net, CppBuilder, JavaScript);
   [ComVisible(true)]
   Codegen4Mode = public enum (Intf, Invk, Impl, &Async, All_Impl, _ServerAccess, All);
   [ComVisible(true)]
-  Codegen4Language = public enum (Oxygene, CSharp, Standard_CSharp, VB, Silver, Standard_Swift, ObjC, Delphi, Java, CppBuilder);
+  Codegen4Language = public enum (Oxygene, CSharp, Standard_CSharp, VB, Silver, Standard_Swift, ObjC, Delphi, Java, CppBuilder, JavaScript);
   [ComVisible(true)]
   Codegen4FileType = public enum (&Unit, Header, Form);
 
@@ -143,7 +143,7 @@ begin
       EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
       EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
     end;
-   // Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
+    Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
   codegen.RodlFileName := ParseAddParams(lparams,RODLFileName);
   case Language of
@@ -196,6 +196,11 @@ begin
       codegen.Generator := new CGJavaCodeGenerator();
       llang := 'java';
       lfileext := 'java';
+    end;
+    Codegen4Language.JavaScript: begin
+      codegen.Generator := new CGJavaScriptCodeGenerator();
+      llang := 'js';
+      lfileext := 'js';
     end;
     Codegen4Language.CppBuilder: begin
       codegen.Generator := new CGCPlusPlusCPPCodeGenerator(Dialect:=CGCPlusPlusCodeGeneratorDialect.CPlusPlusBuilder, splitLinesLongerThan := 200);

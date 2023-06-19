@@ -513,7 +513,7 @@ begin
     exit;
   end;}
 
-  for each lt in fItems do begin
+  for each lt in fItems.OrderBy(b->b.Name) do begin
     var laname:= RodlEntityWithAncestor(lt):AncestorName;
     if not String.IsNullOrEmpty(laname) and (fItems.Where(b->b.Name.EqualsIgnoringCaseInvariant(laname)).Count>0) then
       lAncestors.Add(lt)

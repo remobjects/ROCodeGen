@@ -2901,7 +2901,7 @@ begin
     var lfin := new List<CGStatement>;
     ltry.Add(new CGIfThenElseStatement(
                   new CGUnaryOperatorExpression(lcast,CGUnaryOperatorKind.Not),
-                  new CGThrowStatement(new CGNewInstanceExpression('EIntfCastError'.AsNamedIdentifierExpression,
+                  new CGThrowExpression(new CGNewInstanceExpression('EIntfCastError'.AsNamedIdentifierExpression,
                                               [String.Format('Critical error in {0}.{1}: __Instance does not support {2} interface',[l_TInvoker,mem.Name,l_EntityName]).AsLiteralExpression.AsCallParameter]))));
     ltry.Add(new CGEmptyStatement);
     for lmemparam in lmem.Items do begin
@@ -3343,7 +3343,7 @@ begin
     ltry4.Statements.Add(new CGMethodCallExpression(lMessage,'ReadFromStream',[l__response.AsCallParameter,lFreeStream.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
     var lexcept1 := new CGCatchBlockStatement('E','Exception'.AsTypeReference);
     lexcept1.Statements.Add(new CGAssignmentStatement(lFreeStream, new CGBooleanLiteralExpression(true)));
-    lexcept1.Statements.Add(new CGThrowStatement());
+    lexcept1.Statements.Add(new CGThrowExpression());
     ltry4.CatchBlocks.Add(lexcept1);
     var ltry3 := new CGTryFinallyCatchStatement();
     ltry3.Statements.Add(ltry4);
@@ -3388,10 +3388,10 @@ begin
     lEROSessionNotFound.Statements.Add(new CGAssignmentStatement(ltc,new CGTypeCastExpression(new CGMethodCallExpression(lTransportChannel,'GetTransportObject',CallSiteKind := CGCallSiteKind.Reference),'TMyTransportChannel'.AsTypeReference)));
     lEROSessionNotFound.Statements.Add(new CGAssignmentStatement(lretry, new CGBooleanLiteralExpression(false)));
     lEROSessionNotFound.Statements.Add(new CGMethodCallExpression(ltc,'DoLoginNeeded',[lMessage.AsCallParameter,'E'.AsNamedIdentifierExpression.AsCallParameter,lretry.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
-    lEROSessionNotFound.Statements.Add(new CGIfThenElseStatement(new CGUnaryOperatorExpression(lretry, CGUnaryOperatorKind.Not),new CGThrowStatement()));
+    lEROSessionNotFound.Statements.Add(new CGIfThenElseStatement(new CGUnaryOperatorExpression(lretry, CGUnaryOperatorKind.Not),new CGThrowExpression()));
     ltry3.CatchBlocks.Add(lEROSessionNotFound);
     var lexception :=new CGCatchBlockStatement('E','Exception'.AsTypeReference);
-    lexception.Statements.Add(new CGThrowStatement());
+    lexception.Statements.Add(new CGThrowExpression());
     ltry3.CatchBlocks.Add(lexception);
     var ltry2 := new CGTryFinallyCatchStatement();
     ltry2.Statements.Add(ltry3);

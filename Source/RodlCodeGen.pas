@@ -324,7 +324,7 @@ begin
   {$endregion}
 
   {$region Generate Enums}
-  for entity: RodlEnum in library.Enums.Items do begin
+  for entity: RodlEnum in library.Enums.Items.OrderBy(b->b.Name) do begin
     if not EntityNeedsCodeGen(entity) then Continue;
     GenerateEnum(result, &library, entity);
   end;
@@ -338,7 +338,7 @@ begin
   {$endregion}
 
   {$region Generate Arrays}
-  for entity: RodlArray  in library.Arrays.Items do begin
+  for entity: RodlArray  in library.Arrays.Items.OrderBy(b->b.Name) do begin
     if not EntityNeedsCodeGen(entity) then Continue;
     GenerateArray(result, &library, entity);
   end;
@@ -359,7 +359,7 @@ begin
   {$endregion}
 
   {$region Generate EventSinks}
-  for entity: RodlEventSink in library.EventSinks.Items do begin
+  for entity: RodlEventSink in library.EventSinks.Items.OrderBy(b->b.Name) do begin
     if not EntityNeedsCodeGen(entity) then Continue;
     GenerateEventSink(result, &library, entity);
   end;
