@@ -179,13 +179,13 @@ begin
                               new CGAssignedExpression("lResult".AsNamedIdentifierExpression),
                               new CGPropertyAccessExpression("lResult".AsNamedIdentifierExpression,"unsignedIntValue").AsReturnStatement,
                               if IsAppleSwift then
-                                new CGThrowStatement(new CGNewInstanceExpression("NSError".AsTypeReference,
+                                new CGThrowExpression(new CGNewInstanceExpression("NSError".AsTypeReference,
                                                                                  ["ROException".AsLiteralExpression.AsCallParameter("domain"),
                                                                                   0.AsLiteralExpression.AsCallParameter("code"),
                                                                                   CGNilExpression.Nil.AsCallParameter("userInfo")
                                                                                   ].ToList))
                               else
-                                new CGThrowStatement(new CGNewInstanceExpression("NSException".AsTypeReference,
+                                new CGThrowExpression(new CGNewInstanceExpression("NSException".AsTypeReference,
                                                                                  [if IsAppleSwift then
                                                                                     new CGNewInstanceExpression("NSExceptionName".AsTypeReference, "ROException".AsLiteralExpression.AsCallParameter).AsCallParameter
                                                                                   else

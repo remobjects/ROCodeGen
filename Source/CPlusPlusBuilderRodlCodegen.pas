@@ -396,7 +396,7 @@ begin
   result.Add(new CGIfThenElseStatement( new CGUnaryOperatorExpression(lQuery,CGUnaryOperatorKind.Not),
                                         new CGBeginEndBlockStatement(
                                             [ GenerateDestroyExpression(lproxy),
-                                              new CGThrowStatement(new CGNewInstanceExpression('EIntfCastError'.AsNamedIdentifierExpression,
+                                              new CGThrowExpression(new CGNewInstanceExpression('EIntfCastError'.AsNamedIdentifierExpression,
                                               [String.Format('{0} interface not supported',[aInterface.Name]).AsLiteralExpression.AsCallParameter]))
                                             ]),
                                         lresult.AsReturnStatement));
