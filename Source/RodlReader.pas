@@ -26,7 +26,7 @@ type
     method HasCustomAttributes: Boolean;
     property IsFromUsedRodl: Boolean read assigned(FromUsedRodl);
     {$region Properties}
-    property EntityID: Guid := Guid.EmptyGuid;
+    property EntityID: Guid := Guid.Empty;
     property Name: String;
     property OriginalName: String read getOriginalName write fOriginalName;
     property Documentation: String;
@@ -37,7 +37,7 @@ type
     //property HasPluginData: Boolean read getPluginData;
     property GroupUnder: RodlGroup;
     property FromUsedRodl: RodlUse;
-    property FromUsedRodlId: Guid := Guid.EmptyGuid;
+    property FromUsedRodlId: Guid := Guid.Empty;
     property Owner: RodlEntity;
     property OwnerLibrary: RodlLibrary read getOwnerLibrary;
     property DontCodegen: Boolean;
@@ -187,7 +187,7 @@ type
     property &Namespace: String;
     property Includes: RodlInclude;
     property UsedRodlId: Guid;
-    property IsMerged: Boolean read not UsedRodlId.Equals(Guid.EmptyGuid);
+    property IsMerged: Boolean read not UsedRodlId.Equals(Guid.Empty);
     property DontApplyCodeGen: Boolean;
     property Loaded: Boolean;
     property AbsoluteFileName: String;
@@ -796,7 +796,7 @@ constructor RodlUse;
 begin
   inherited constructor;
   Includes := nil;
-  UsedRodlId := Guid.EmptyGuid;
+  UsedRodlId := Guid.Empty;
 end;
 
 method RodlUse.LoadFromXmlNode(node: XmlElement);
