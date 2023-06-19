@@ -195,7 +195,7 @@ type
         l_st_list.Add(new CGAssignmentStatement(
                           new CGPropertyAccessExpression(new CGSelfExpression(), SafeIdentifier(item.Name)),
                           new CGNewInstanceExpression(new CGNilExpression,
-                                                      [new CGCallParameter(_FixDataType(item.DataType).AsLiteralExpression, 'datatype'),
+                                                      [new CGCallParameter(_FixDataType(item.DataType).AsLiteralExpression, 'dataType'),
                                                        new CGCallParameter(new CGNilExpression, 'value')])));
 
       var l_st := new CGAssignmentStatement(
@@ -367,7 +367,7 @@ type
           if (entity.AncestorEntity.IsFromUsedRodl) and not String.IsNullOrEmpty(entity.AncestorEntity.FromUsedRodl.Includes.JavaScriptModule) then
             l_AncestorNS := entity.AncestorEntity.FromUsedRodl.Includes.JavaScriptModule;
           if not String.IsNullOrEmpty(l_AncestorNS) then
-            l_AncestorNS := l_AncestorNS.Replace('_', '.') + '__';
+            l_AncestorNS := l_AncestorNS.Replace('.', '_') + '__';
         end;
         l_AncestorNS := $"__{l_AncestorNS}namespace";
 
