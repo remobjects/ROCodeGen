@@ -225,6 +225,7 @@ begin
       raise new Exception("Generating server code is not supported for this platform.");
 
   var ltargetnamespace := ParseAddParams(lparams,TargetNameSpace);
+  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := nil;
 //  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Namespace;
 //  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Name;
 
