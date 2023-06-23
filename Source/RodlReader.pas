@@ -122,6 +122,7 @@ type
 
   RodlTypedEntity = public abstract class (RodlEntity)
   public
+
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
@@ -673,25 +674,46 @@ type
 
   RodlInclude= public class(RodlEntity)
   private
+
     method LoadAttribute(node:XmlElement; aName:String):String;
     begin
       exit iif(node.Attribute[aName] <> nil, node.Attribute[aName].Value, "");
     end;
 
   public
+
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
 
-      DelphiModule := LoadAttribute(node, "Delphi");
-      NetModule := LoadAttribute(node, "DotNet");
-      ObjCModule := LoadAttribute(node, "ObjC");
-      JavaModule := LoadAttribute(node, "Java");
-      JavaScriptModule := LoadAttribute(node, "JavaScript");
-      CocoaModule := LoadAttribute(node, "Cocoa");
+      DelphiModule := node.Attribute("Delphi"):Value;
+      NetModule := node.Attribute("DotNet"):Value;
+      ObjCModule := node.Attribute("ObjC"):Value;
+      JavaModule := node.Attribute("Java"):Value;
+      JavaScriptModule := node.Attribute("JavaScript"):Value;
+      CocoaModule := node.Attribute("Cocoa"):Value;
       //backward compatibility
       if String.IsNullOrEmpty(CocoaModule) then
-        CocoaModule := LoadAttribute(node, "Nougat");
+        CocoaModule := node.Attribute("Nougat"):Value;
+      if String.IsNullOrEmpty(CocoaModule) then
+        CocoaModule := node.Attribute("Tooffee"):Value;
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      inherited LoadFromJsonNode(node);
+
+      DelphiModule := node["Delphi"]:StringValue;
+      NetModule := node["DotNet"]:StringValue;
+      ObjCModule := node["ObjC"]:StringValue;
+      JavaModule := node["Java"]:StringValue;
+      JavaScriptModule := node["JavaScript"]:StringValue;
+      CocoaModule := node["Cocoa"]:StringValue;
+      //backward compatibility
+      if String.IsNullOrEmpty(CocoaModule) then
+        CocoaModule := node["Nougat"]:StringValue;
+      if String.IsNullOrEmpty(CocoaModule) then
+        CocoaModule := node["Toffee"]:StringValue;
     end;
 
     property DelphiModule: String;
@@ -735,6 +757,56 @@ type
         UsedRodlId := Guid.TryParse(node.Attribute["UsedRodlUID"].Value);
 
       DontApplyCodeGen := (node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1");
+
+      var usedRodlFileName: String := Path.GetFullPath(FileName);
+      if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
+        if (OwnerLibrary.Filename <> nil) then
+          usedRodlFileName := Path.GetFullPath(Path.Combine(Path.GetFullPath(OwnerLibrary.Filename).GetParentDirectory, FileName));
+      end;
+
+      if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
+        if (FromUsedRodl:AbsoluteFileName <> nil) then
+          usedRodlFileName := Path.GetFullPath(Path.Combine(FromUsedRodl:AbsoluteFileName:GetParentDirectory, FileName));
+      end;
+
+
+      if (not usedRodlFileName.FileExists) then usedRodlFileName := AbsoluteRodl;
+      if String.IsNullOrEmpty(usedRodlFileName) then Exit;
+      if (not usedRodlFileName.FileExists) then begin
+        usedRodlFileName := usedRodlFileName.Replace("/", Path.DirectorySeparatorChar).Replace("\", Path.DirectorySeparatorChar);
+        var lFilename := Path.GetFileName(usedRodlFileName).ToLowerInvariant;
+        //writeLn("checking for "+lFilename);
+        if RodlCodeGen.KnownRODLPaths.ContainsKey(lFilename) then
+          usedRodlFileName := RodlCodeGen.KnownRODLPaths[lFilename];
+      end;
+
+      //writeLn("using rodl: "+usedRodlFileName);
+
+      if (usedRodlFileName.FileExists) then begin
+        AbsoluteFileName := usedRodlFileName;
+        OwnerLibrary.LoadUsedFibraryFromFile(usedRodlFileName, self);
+        Loaded := true;
+      end;
+
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      inherited LoadFromJsonNode(node);
+
+      var lIncludes := node["Includes"];
+      if assigned(lIncludes) then begin
+        Includes := new RodlInclude();
+        Includes.LoadFromJsonNode(lIncludes);
+      end
+      else begin
+        Includes := nil;
+      end;
+
+      FileName := node["Rodl"]:StringValue;
+      AbsoluteRodl := node["AbsoluteRodl"]:StringValue;
+      UsedRodlId := Guid.TryParse(node["UsedRodlID"]:StringValue);
+      DontApplyCodeGen := valueOrDefault(node["DontCodeGen"]:BooleanValue);
 
       var usedRodlFileName: String := Path.GetFullPath(FileName);
       if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
