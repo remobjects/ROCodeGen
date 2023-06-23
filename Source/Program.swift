@@ -121,26 +121,25 @@ writeLn("Processing RODL file "+rodlFileName)
 
 do {
 
-	var isUrl = rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
-	var isUnsupportedUrl =    rodlFileName.hasPrefix("superhttp://") || rodlFileName.hasPrefix("superhttps://") ||
+	var isSupportedUrl =    rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
+	var isUnsupportedUrl =  rodlFileName.hasPrefix("superhttp://") || rodlFileName.hasPrefix("superhttps://") ||
 							rodlFileName.hasPrefix("supertcp://") || rodlFileName.hasPrefix("supertcps://") ||
 							rodlFileName.hasPrefix("tcp://") || rodlFileName.hasPrefix("tcps://") ||
 							rodlFileName.hasPrefix("udp://") || rodlFileName.hasPrefix("udps://")
 	if isUnsupportedUrl {
 		var lUrl = Url.UrlWithString(rodlFileName)
 		writeLn("Unsupported URL Scheme ("+lUrl.Scheme+")")
+		writeLn()
 		return 2
 	}
-
-	var url = isUrl ? rodlFileName : nil
-
-	if !isUrl && !File.Exists(params[0]) {
-		writeLn("File \(params[0]) not found")
+	if !isSupportedUrl && !File.Exists(rodlFileName) {
+		writeLn("File \(rodlFileName) not found")
 		writeLn()
 		return 2
 	}
 
-	let rodlLibrary = RodlLibrary(rodlFileName)
+	var url = isSupportedUrl ? Url.UrlWithString(rodlFileName) : Url.UrlWithFilePath(rodlFileName)
+	let rodlLibrary = RodlLibrary(URL: url)
 
 	if options["namespace"] == nil {
 		options["namespace"] = iif(!String.IsNullOrEmpty(rodlLibrary.Namespace), rodlLibrary.Namespace, "YourNamespace")
@@ -151,7 +150,7 @@ do {
 		rodlLibrary.Name = targetRodlFileName
 		targetRodlFileName = targetRodlFileName+".rodl"
 	} else {
-		targetRodlFileName = isUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName
+		targetRodlFileName = isSupportedUrl ? "."+Path.DirectorySeparatorChar+rodlLibrary.Name+".rodl" : rodlFileName
 	}
 
 	if let outPath = options["outpath"] {
@@ -478,8 +477,8 @@ do {
 				case "serveraccess":
 
 					if let activeServerAccessCodeGen = activeServerAccessCodeGen, let codegen = codegen {
-						if isUrl {
-							activeServerAccessCodeGen.serverAddress = url;
+						if isSupportedUrl {
+							activeServerAccessCodeGen.serverAddress = url.ToAbsoluteString();
 						}
 						if codegen is CGJavaCodeGenerator {
 							if let sourceFiles = (activeServerAccessCodeGen as? JavaServerAccessCodeGen)?.generateFiles(codegen/*options["namespace"]*/) {

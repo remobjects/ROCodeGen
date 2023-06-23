@@ -29,34 +29,61 @@ type
 
   public
     constructor(); virtual; empty;
+
     constructor(node: XmlElement);
     begin
-      constructor();
       LoadFromXmlNode(node);
+    end;
+
+    constructor(node: JsonNode);
+    begin
+      LoadFromJsonNode(node);
     end;
 
     method LoadFromXmlNode(node: XmlElement); virtual;
     begin
       Name := node.Attribute["Name"]:Value;
-      if (node.Attribute["UID"] <> nil) then EntityID := Guid.TryParse(node.Attribute["UID"].Value);
-      if (node.Attribute["FromUsedRodlUID"] <> nil) then FromUsedRodlId := Guid.TryParse(node.Attribute["FromUsedRodlUID"].Value);
+      EntityID := Guid.TryParse(node.Attribute["UID"]:Value);
+      FromUsedRodlId := Guid.TryParse(node.Attribute["FromUsedRodlUID"]:Value);
       &Abstract := node.Attribute["Abstract"]:Value = "1";
       DontCodegen :=  node.Attribute["DontCodeGen"]:Value = "1";
-      var ldoc := node.FirstElementWithName("Documentation");
 
-      if (ldoc ≠ nil) and (ldoc.Nodes.Count>0) and (ldoc.Nodes[0] is XmlCData) then begin
-          // FirstChild because data should be enclosed within CDATA
-        Documentation := (ldoc.Nodes[0] as XmlCData).Value;
+      var lDoc := node.FirstElementWithName("Documentation");
+      if (lDoc ≠ nil) and (lDoc.Nodes.Count>0) and (lDoc.Nodes[0] is XmlCData) then begin
+        // FirstChild because data should be enclosed within CDATA
+        Documentation := (lDoc.Nodes[0] as XmlCData).Value;
       end;
 
-      var lSubNode: XmlElement := node.FirstElementWithName("CustomAttributes");
-      if (lSubNode <> nil) then begin
-        for each childNode: XmlElement in lSubNode.Elements do begin
+      var lCustomAttributes := node.FirstElementWithName("CustomAttributes");
+      if assigned(lCustomAttributes) then begin
+        for each childNode: XmlElement in lCustomAttributes.Elements do begin
           var lValue: XmlAttribute := childNode.Attribute["Value"];
-          if (lValue <> nil) then begin
+          if assigned(lValue) then begin
             CustomAttributes[childNode.LocalName] := lValue.Value;
             CustomAttributes_lower[childNode.LocalName.ToLowerInvariant] := lValue.Value;
             if childNode.LocalName.ToLowerInvariant = "soapname" then fOriginalName := lValue.Value;
+          end;
+        end;
+      end;
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); virtual;
+    begin
+      Name := node["Name"]:StringValue;
+      EntityID := Guid.TryParse(node["UID"]:StringValue);
+      FromUsedRodlId := Guid.TryParse(node["FromUsedRodlUID"]:StringValue);
+      &Abstract := node["Abstract"]:BooleanValue;
+      DontCodegen :=  node["DontCodeGen"]:BooleanValue;
+      Documentation := node["Documentation"]:StringValue;
+
+      var lCustomAttributes := node["CustomAttributes"];
+      if assigned(lCustomAttributes) then begin
+        for each k in lCustomAttributes.Keys do begin
+          var lValue := lCustomAttributes["Value"]:StringValue;
+          if length(lValue) > 0 then begin
+            CustomAttributes[k] := lValue;
+            CustomAttributes_lower[k.ToLowerInvariant] := lValue;
+            if k.ToLowerInvariant = "soapname" then fOriginalName := lValue;
           end;
         end;
       end;
@@ -69,7 +96,7 @@ type
 
     property IsFromUsedRodl: Boolean read assigned(FromUsedRodl);
     {$region Properties}
-    property EntityID: Guid := Guid.Empty;
+    property EntityID: nullable Guid;
     property Name: String;
     property OriginalName: String read getOriginalName write fOriginalName;
     property Documentation: String;
@@ -80,7 +107,7 @@ type
     //property HasPluginData: Boolean read getPluginData;
     property GroupUnder: RodlGroup;
     property FromUsedRodl: RodlUse;
-    property FromUsedRodlId: Guid := Guid.Empty;
+    property FromUsedRodlId: nullable Guid;
     property Owner: RodlEntity;
     property OwnerLibrary: RodlLibrary read getOwnerLibrary;
     property DontCodegen: Boolean;
@@ -99,6 +126,12 @@ type
     begin
       inherited LoadFromXmlNode(node);
       DataType := FixLegacyTypes(node.Attribute["DataType"].Value);
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      inherited LoadFromJsonNode(node);
+      DataType := FixLegacyTypes(node["DataType"]:StringValue);
     end;
 
     property DataType: String;
@@ -121,10 +154,17 @@ type
     end;
 
   public
+
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
       if (node.Attribute["Ancestor"] <> nil) then AncestorName := node.Attribute["Ancestor"].Value;
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      inherited LoadFromJsonNode(node);
+      AncestorName := node["Ancestor"]:StringValue;
     end;
 
     property AncestorName: String;
@@ -149,6 +189,12 @@ type
     begin
       inherited LoadFromXmlNode(node);
       fItems.LoadFromXmlNode(node.FirstElementWithName(fItemsNodeName), nil, aActivator);
+    end;
+
+    method LoadFromJsonNode(node: JsonNode; aActivator: block : T);
+    begin
+      inherited LoadFromJsonNode(node);
+      fItems.LoadFromJsonNode(node, nil, aActivator);
     end;
 
     method GetInheritedItems: List<T>;
@@ -188,6 +234,12 @@ type
         AutoCreateProperties := (node.Attribute["AutoCreateParams"].Value = "1");
     end;
 
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      LoadFromJsonNode(node, -> new RodlField);
+      AutoCreateProperties := valueOrDefault(node["AutoCreateParams"]:BooleanValue);
+    end;
+
     property AutoCreateProperties: Boolean := False;
   end;
 
@@ -199,9 +251,15 @@ type
     end;
 
     property DefaultInterface: RodlInterface read iif(Count>0,Item[0],nil);
+
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       LoadFromXmlNode(node,-> new RodlInterface);
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      LoadFromJsonNode(node, -> new RodlInterface);
     end;
 
   end;
@@ -246,6 +304,37 @@ type
           end;
           if lIsNew then AddEntity(lEntity);
         end;
+      end;
+    end;
+
+    method LoadFromJsonNode(node: JsonNode; usedRodl: RodlUse; aActivator: block : T);
+    begin
+      if (node = nil) then exit;
+
+      for lNode in (node as JsonArray) do begin
+        //var lr := (lNode.NodeType = XmlNodeType.Element) and (XmlElement(lNode).LocalName = fEntityNodeName);
+        //if lr then begin
+          var lEntity := aActivator();
+          lEntity.FromUsedRodl := usedRodl;
+          lEntity.Owner := Owner;
+          lEntity.LoadFromJsonNode(lNode);
+
+          var lIsNew := true;
+          for entity:T in fItems do begin
+            if (entity is RodlParameter) and (lEntity is RodlParameter) and
+              (RodlParameter(entity).ParamFlag <> RodlParameter(lEntity).ParamFlag) then Continue;
+            if entity.EntityID.Equals(lEntity.EntityID) then begin
+              if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
+                lIsNew := false;
+                break;
+              end
+              else begin
+                lEntity.EntityID := Guid.NewGuid;
+              end;
+            end;
+          end;
+          if lIsNew then AddEntity(lEntity);
+        //end;
       end;
     end;
 
@@ -321,6 +410,7 @@ type
   RodlLibrary = public class (RodlEntity)
   private
     fXmlDocument: XmlDocument; // only for supporting SaveToFile
+    fJsonNode: JsonNode; // only for supporting SaveToFile
 
     fStructs: EntityCollection<RodlStruct>;
     fArrays: EntityCollection<RodlArray>;
@@ -330,14 +420,10 @@ type
     fUses: EntityCollection<RodlUse>;
     fServices: EntityCollection<RodlService>;
     fEventSinks: EntityCollection<RodlEventSink>;
+
     method LoadXML(aFile: String): XmlDocument;
     begin
-      {$IFDEF FAKESUGAR}
-      Result := new XmlDocument;
-      result.Load(aFile);
-      {$ELSE}
       exit XmlDocument.FromFile(aFile);
-      {$ENDIF}
     end;
 
     method isUsedRODLLoaded(anUse:RodlUse): Boolean;
@@ -364,16 +450,9 @@ type
       fEventSinks := new EntityCollection<RodlEventSink>(self, "EventSink");
     end;
 
-    constructor (aFilename: String);
+    constructor withURL(aURL: Url);
     begin
-      constructor();
-      if aFilename.StartsWith('http://') or aFilename.StartsWith('https://') or
-        aFilename.StartsWith('superhttp://') or aFilename.StartsWith('superhttps://') or
-        aFilename.StartsWith('tcp://') or aFilename.StartsWith('tcps://') or
-        aFilename.StartsWith('supertcp://') or aFilename.StartsWith('supertcps://') then
-        LoadFromUrl(aFilename)
-      else
-        LoadFromFile(aFilename);
+      LoadFromUrl(aURL);
     end;
 
     constructor (node: XmlElement);
@@ -382,12 +461,13 @@ type
       LoadFromXmlNode(node, nil);
     end;
 
-    method LoadFromXmlNode(node: XmlElement); override;
+    constructor (node: JsonNode);
     begin
-      LoadFromXmlNode(node, nil);
+      constructor();
+      LoadFromJsonNode(node, nil);
     end;
 
-    method LoadFromXmlNode(node: XmlElement; use: RodlUse);
+    method LoadFromXmlNode(node: XmlElement; use: RodlUse := nil);
     begin
       if use = nil then begin
         fXmlDocument := node.Document; // needs to be kept in scope
@@ -436,6 +516,62 @@ type
       fEventSinks.LoadFromXmlNode(node.FirstElementWithName("EventSinks"), use, -> new RodlEventSink);
     end;
 
+    method LoadFromJsonNode(node: JsonNode; use: RodlUse := nil);
+    begin
+      if not assigned(use) then begin
+        fJsonNode := node; // needs to be kept in scope
+        inherited LoadFromJsonNode(node);
+        &Namespace := node["Namespace"]:StringValue;
+        DataSnap := valueOrDefault(node["DataSnap"]:BooleanValue);
+        ScopedEnums := valueOrDefault(node["ScopedEnums"]:BooleanValue);
+        DontApplyCodeGen := valueOrDefault(node["SkipCodeGen"]:BooleanValue) or valueOrDefault(node["DontCodeGen"]:BooleanValue);
+
+        var lInclude := node["Includes"];
+        if assigned(lInclude) then begin
+          Includes := new RodlInclude();
+          Includes.LoadFromJsonNode(lInclude);
+        end
+        else begin
+          Includes := nil;
+        end;
+      end
+      else begin
+        use.Name := node["Name"]:StringValue;
+        use.UsedRodlId := Guid.TryParse(node["ID"]:StringValue);
+        use.DontApplyCodeGen := valueOrDefault(node["SkipCodeGen"]:BooleanValue) or valueOrDefault(node["DontCodeGen"]:BooleanValue);
+        use.Namespace := node["Namespace"]:StringValue;
+
+        var lInclude := node["Includes"];
+        if assigned(lInclude) then begin
+          Includes := new RodlInclude();
+          Includes.LoadFromJsonNode(lInclude);
+        end;
+        if isUsedRODLLoaded(use) then exit;
+      end;
+
+      fUses.LoadFromJsonNode(node["Uses"], use, -> new RodlUse);
+      fStructs.LoadFromJsonNode(node["Structs"], use, -> new RodlStruct);
+      fArrays.LoadFromJsonNode(node["Arrays"], use, -> new RodlArray);
+      fEnums.LoadFromJsonNode(node["Enums"], use, -> new RodlEnum);
+      fExceptions.LoadFromJsonNode(node["Exceptions"], use, -> new RodlException);
+      fGroups.LoadFromJsonNode(node["Groups"], use, -> new RodlGroup);
+      fServices.LoadFromJsonNode(node["Services"], use, -> new RodlService);
+      fEventSinks.LoadFromJsonNode(node["EventSinks"], use, -> new RodlEventSink);
+    end;
+
+    method LoadFromString(aString: String; use: RodlUse := nil);
+    begin
+      if length(aString) > 0 then begin
+        case aString[0] of
+          '<': LoadFromXmlNode(XmlDocument.FromString(aString).Root, use);
+          '{': LoadFromJsonNode(JsonDocument.FromString(aString).Root, use);
+          else raise new Exception("Unexpected file format for rodl.");
+        end;
+      end;
+    end;
+
+    //
+
     method LoadRemoteRodlFromXmlNode(node: XmlElement);
     begin
       {$MESSAGE optimize code}
@@ -444,100 +580,53 @@ type
       if lServers.Count ≠ 1 then
         raise new Exception("Server element not found in remoteRODL.");
 
-      {$IFDEF FAKESUGAR}
-      var lServerUris := (lServers.Item(0)as XmlElement):GetElementsByTagName("ServerUri");
-      if lServerUris.Count ≠ 1 then
-        raise new Exception("lServerUris element not found in remoteRODL.");
-      LoadFromUrl(lServerUris.Item(0).Value);
-      {$ELSE}
       var lServerUris := lServers.FirstOrDefault.ElementsWithName("ServerUri");
       if lServerUris.Count ≠ 1 then
         raise new Exception("lServerUris element not found in remoteRODL.");
-      LoadFromUrl(lServerUris.FirstOrDefault.Value);
-      {$ENDIF}
-    end;
-
-    method LoadFromUrl(aUrl: String);
-    begin
-      {$IFDEF FAKESUGAR}
-      var lUrl := new Uri(aUrl);
-      if lUrl.Scheme in ["http", "https"] then begin
-        var allData := new System.IO.MemoryStream();
-        using webRequest := System.Net.WebRequest.Create(lUrl) as System.Net.HttpWebRequest do begin
-          webRequest.AllowAutoRedirect := true;
-          //webRequest.UserAgent := "RemObjects Sugar/8.0 http://www.elementscompiler.com/elements/sugar";
-          webRequest.Method := 'GET';
-          var webResponse := webRequest.GetResponse() as System.Net.HttpWebResponse;
-          webResponse.GetResponseStream().CopyTo(allData);
-        end;
-        var lXml := new XmlDocument;
-        lXml.Load(allData);
-        LoadFromXmlNode(lXml.Root);
-      end
-      else if lUrl.Scheme = "file" then begin
-        var lXml := LoadXML(lUrl.AbsolutePath);
-        LoadFromXmlNode(lXml.Root);
-        Filename := lUrl.AbsolutePath;
-      end else begin
-        raise new Exception("Unsupported URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
-      end;
-      {$ELSE}
-      var lUrl := Url.UrlWithString(aUrl);
-      if lUrl.Scheme in ["http", "https"] then begin
-        var lXml := Http.GetXml(new HttpRequest(lUrl));// why is this cast needed, we have operator Implicit from Url to HttpRequest
-        LoadFromXmlNode(lXml.Root);
-      end
-      else if lUrl.Scheme = "file" then begin
-        var lXml := LoadXML(lUrl.FilePath);
-        LoadFromXmlNode(lXml.Root);
-        Filename := lUrl.FilePath;
-      end else begin
-        raise new Exception("Unsupported URL Scheme ("+lUrl.Scheme+") in remoteRODL.");
-      end;
-      {$ENDIF}
-
+      LoadFromUrl(Url.UrlWithString(lServerUris.FirstOrDefault.Value));
     end;
 
     method LoadFromFile(aFilename: String);
     begin
       if Path.GetExtension(aFilename):ToLowerInvariant = ".remoterodl" then begin
-
         var lRemoteRodl := LoadXML(aFilename);
         if not assigned(lRemoteRodl)then
           raise new Exception("Could not read "+aFilename);
         LoadRemoteRodlFromXmlNode(lRemoteRodl.Root);
-
       end
       else begin
         Filename := aFilename;
-        var lDocument := LoadXML(aFilename);
-          if not assigned(lDocument)then
-            raise new Exception("Could not read "+aFilename);
-        LoadFromXmlNode(lDocument.Root);
+        LoadFromString(File.ReadText(Filename));
       end;
     end;
 
-    method LoadFromXmlString(aString: String);
+    method LoadFromUrl(aUrl: Url);
     begin
-      {$IFDEF FAKESUGAR}
-      var lDocument := new XmlDocument();
-      lDocument.LoadXml(aString);
-      {$ELSE}
-      var lDocument := XmlDocument.FromString(aString);
-      {$ENDIF}
-      LoadFromXmlNode(lDocument.Root);
+      case caseInsensitive(aUrl.Scheme) of
+        "http", "https": begin
+            LoadFromString(Http.GetString(new HttpRequest(aUrl)));
+          end;
+        "file": begin
+            LoadFromFile(aUrl.FilePath);
+          end;
+        "superhttp", "superhttps",
+        "supertcp", "supertcps",
+        "tcp", "tcps": raise new Exception("Unsupported URL Scheme ("+aUrl.Scheme+") in remoteRODL.");
+        else raise new Exception("Unsupported URL Scheme ("+aUrl.Scheme+") in remoteRODL.");
+      end;
     end;
 
     method LoadUsedFibraryFromFile(aFilename: String; use: RodlUse);
     begin
-      var lDocument := LoadXML(aFilename);
-      LoadFromXmlNode(lDocument.Root, use);
+      LoadFromString(File.ReadText(aFilename), use);
     end;
 
     method SaveToFile(aFilename: String);
     begin
       if assigned(fXmlDocument) then
-        fXmlDocument.SaveToFile(aFilename);
+        fXmlDocument.SaveToFile(aFilename)
+      else if assigned(fJsonNode) then
+        File.WriteText(aFilename, fJsonNode.ToString);
     end;
 
     [ToString]
