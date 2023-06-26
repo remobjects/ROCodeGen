@@ -122,10 +122,10 @@ type
         ScopedEnums := valueOrDefault(node["ScopedEnums"]:BooleanValue);
         DontApplyCodeGen := valueOrDefault(node["SkipCodeGen"]:BooleanValue) or valueOrDefault(node["DontCodeGen"]:BooleanValue);
 
-        var lInclude := node["Includes"];
-        if assigned(lInclude) then begin
+        var lIncludes := coalesce(node["Includes"], node["Platforms"]);
+        if assigned(lIncludes) then begin
           Includes := new RodlInclude();
-          Includes.LoadFromJsonNode(lInclude);
+          Includes.LoadFromJsonNode(lIncludes);
         end
         else begin
           Includes := nil;
@@ -137,10 +137,10 @@ type
         use.DontApplyCodeGen := valueOrDefault(node["SkipCodeGen"]:BooleanValue) or valueOrDefault(node["DontCodeGen"]:BooleanValue);
         use.Namespace := node["Namespace"]:StringValue;
 
-        var lInclude := node["Includes"];
-        if assigned(lInclude) then begin
+        var lIncludes := coalesce(node["Includes"], node["Platforms"]);
+        if assigned(lIncludes) then begin
           Includes := new RodlInclude();
-          Includes.LoadFromJsonNode(lInclude);
+          Includes.LoadFromJsonNode(lIncludes);
         end;
         if isUsedRODLLoaded(use) then exit;
       end;
@@ -281,10 +281,10 @@ type
     begin
       inherited LoadFromXmlNode(node);
 
-      var linclude: XmlElement := node.FirstElementWithName("Includes");
-      if (linclude <> nil) then begin
+      var lInclude: XmlElement := node.FirstElementWithName("Includes");
+      if assigned(lInclude) then begin
         Includes := new RodlInclude();
-        Includes.LoadFromXmlNode(linclude);
+        Includes.LoadFromXmlNode(lInclude);
       end
       else begin
         Includes := nil;
@@ -337,7 +337,7 @@ type
     begin
       inherited LoadFromJsonNode(node);
 
-      var lIncludes := node["Includes"];
+      var lIncludes := coalesce(node["Includes"], node["Platforms"]);
       if assigned(lIncludes) then begin
         Includes := new RodlInclude();
         Includes.LoadFromJsonNode(lIncludes);

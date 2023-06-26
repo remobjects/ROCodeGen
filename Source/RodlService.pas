@@ -79,35 +79,23 @@ type
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
-
       DelphiModule := node.Attribute["Delphi"]:Value;
       NetModule := node.Attribute["DotNet"]:Value;
       ObjCModule := node.Attribute["ObjC"]:Value;
       JavaModule := node.Attribute["Java"]:Value;
       JavaScriptModule := node.Attribute["JavaScript"]:Value;
-      CocoaModule := node.Attribute["Cocoa"]:Value;
-      //backward compatibility
-      if String.IsNullOrEmpty(CocoaModule) then
-        CocoaModule := node.Attribute["Nougat"]:Value;
-      if String.IsNullOrEmpty(CocoaModule) then
-        CocoaModule := node.Attribute["Toffee"]:Value;
+      CocoaModule := coalesce(node.Attribute["Cocoa"]:Value, node.Attribute["Nougat"]:Value, node.Attribute["Toffee"]:Value);
     end;
 
     method LoadFromJsonNode(node: JsonNode); override;
     begin
       inherited LoadFromJsonNode(node);
-
       DelphiModule := node["Delphi"]:StringValue;
-      NetModule := node["DotNet"]:StringValue;
+      NetModule := coalesce(node[".NET"]:StringValue, node[".Net"]:StringValue, node["DotNet"]:StringValue);
       ObjCModule := node["ObjC"]:StringValue;
       JavaModule := node["Java"]:StringValue;
       JavaScriptModule := node["JavaScript"]:StringValue;
-      CocoaModule := node["Cocoa"]:StringValue;
-      //backward compatibility
-      if String.IsNullOrEmpty(CocoaModule) then
-        CocoaModule := node["Nougat"]:StringValue;
-      if String.IsNullOrEmpty(CocoaModule) then
-        CocoaModule := node["Toffee"]:StringValue;
+      CocoaModule := coalesce(node["Cocoa"]:StringValue, node["Nougat"]:StringValue, node["Toffee"]:StringValue);
     end;
 
     property DelphiModule: String;
