@@ -2540,28 +2540,28 @@ begin
                                            Condition := cond).AsGlobal());
   end;
 
-  for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(lentity) then Continue;
-    GlobalsConst_GenerateServerGuid(file, &library, lentity);
+  for lEntity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+    if not EntityNeedsCodeGen(lEntity) then Continue;
+    GlobalsConst_GenerateServerGuid(file, &library, lEntity);
   end;
 
-  for lentity : RodlEventSink in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
-    if not EntityNeedsCodeGen(lentity) then Continue;
-    var lname := lentity.Name;
-    file.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lname]), ResolveStdtypes(CGPredefinedTypeReference.String),
+  for lEntity : RodlEventSink in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
+    if not EntityNeedsCodeGen(lEntity) then Continue;
+    var lName := lEntity.Name;
+    file.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeReference.String),
                                 Constant := true,
                                 Visibility := CGMemberVisibilityKind.Public,
-                                Initializer := (lentity.Name).AsLiteralExpression).AsGlobal);
+                                Initializer := (lEntity.Name).AsLiteralExpression).AsGlobal);
   end;
 
-  for lentity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
-    if not EntityNeedsCodeGen(lentity) then Continue;
-    var lname := lentity.Name;
-    if lentity.CustomAttributes_lower.ContainsKey('type') and
-       lentity.CustomAttributes_lower['type']:EqualsIgnoringCaseInvariant('SOAP') then begin
+  for lEntity : RodlService in &library.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
+    if not EntityNeedsCodeGen(lEntity) then Continue;
+    var lName := lEntity.Name;
+    if lEntity.CustomAttributes_lower.ContainsKey('type') and
+       lEntity.CustomAttributes_lower['type']:EqualsIgnoringCaseInvariant('SOAP') then begin
       var loc :='';
-      if lentity.CustomAttributes_lower.ContainsKey('location') then loc := lentity.CustomAttributes_lower['location'];
-      file.Globals.Add(new CGFieldDefinition(String.Format("{0}_EndPointURI",[lname]),ResolveStdtypes(CGPredefinedTypeReference.String),
+      if lEntity.CustomAttributes_lower.ContainsKey('location') then loc := lEntity.CustomAttributes_lower['location'];
+      file.Globals.Add(new CGFieldDefinition(String.Format("{0}_EndPointURI",[lName]),ResolveStdtypes(CGPredefinedTypeReference.String),
                                               Constant := true,
                                               Visibility := CGMemberVisibilityKind.Public,
                                               Initializer := loc.AsLiteralExpression).AsGlobal);
@@ -4559,7 +4559,7 @@ end;
 
 method DelphiRodlCodeGen.isDAProject(library: RodlLibrary): Boolean;
 begin
-  case library.EntityID.ToString.ToUpperInvariant of
+  case caseInsensitive(library.EntityID:ToString) of
     'DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6': exit true; //'DataAbstract4.RODL'
     '367FA81F-09B7-4294-85AD-68C140EF1FA7': exit true; //'DataAbstract-Simple.RODL'
   end;
@@ -4572,13 +4572,12 @@ method DelphiRodlCodeGen.GetRODLName(library: RodlLibrary): String;
 begin
   if not String.IsNullOrWhiteSpace(RodlFileName) then exit RodlFileName;
 
-  case library.EntityID.ToString.ToUpperInvariant of
+  case caseInsensitive(library.EntityID:ToString) of
     //'DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6': exit 'DataAbstract4.RODL';       //Name="DataAbstract4"
     '367FA81F-09B7-4294-85AD-68C140EF1FA7': exit 'DataAbstract-Simple.RODL'; //Name="DataAbstractSimple"
     '943975A3-664A-4F07-AD0F-7357744276BF': exit 'ROServiceDiscovery.rodl';  //Name="ROServerDiscovery"
     //'9EC7C50C-DAC2-48A9-9A0F-CBAA29A11EF7': exit 'uRODataSnap.rodl';         //Name="uRODataSnap"
-  else
-    exit library.Name+'.RODL';
+    else exit library.Name+'.RODL';
   end;
 end;
 

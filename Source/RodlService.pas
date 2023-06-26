@@ -9,7 +9,7 @@ type
       inherited constructor("Interface");
     end;
 
-    property DefaultInterface: RodlInterface read iif(Count>0,Item[0],nil);
+    property DefaultInterface: RodlInterface read if Count > 0 then Item[0];
 
     method LoadFromXmlNode(node: XmlElement); override;
     begin
@@ -18,7 +18,11 @@ type
 
     method LoadFromJsonNode(node: JsonNode); override;
     begin
-      LoadFromJsonNode(node, -> new RodlInterface);
+      inherited LoadFromJsonNode(node);
+      var lDefaultInterface := new RodlInterface;
+      lDefaultInterface.LoadFromJsonNode(node);
+      Items.Add(lDefaultInterface);
+      //LoadFromJsonNode(node, -> new RodlInterface);
     end;
 
   end;
@@ -76,17 +80,17 @@ type
     begin
       inherited LoadFromXmlNode(node);
 
-      DelphiModule := node.Attribute("Delphi"):Value;
-      NetModule := node.Attribute("DotNet"):Value;
-      ObjCModule := node.Attribute("ObjC"):Value;
-      JavaModule := node.Attribute("Java"):Value;
-      JavaScriptModule := node.Attribute("JavaScript"):Value;
-      CocoaModule := node.Attribute("Cocoa"):Value;
+      DelphiModule := node.Attribute["Delphi"]:Value;
+      NetModule := node.Attribute["DotNet"]:Value;
+      ObjCModule := node.Attribute["ObjC"]:Value;
+      JavaModule := node.Attribute["Java"]:Value;
+      JavaScriptModule := node.Attribute["JavaScript"]:Value;
+      CocoaModule := node.Attribute["Cocoa"]:Value;
       //backward compatibility
       if String.IsNullOrEmpty(CocoaModule) then
-        CocoaModule := node.Attribute("Nougat"):Value;
+        CocoaModule := node.Attribute["Nougat"]:Value;
       if String.IsNullOrEmpty(CocoaModule) then
-        CocoaModule := node.Attribute("Tooffee"):Value;
+        CocoaModule := node.Attribute["Toffee"]:Value;
     end;
 
     method LoadFromJsonNode(node: JsonNode); override;
@@ -129,6 +133,7 @@ type
 
     method LoadFromJsonNode(node: JsonNode); override;
     begin
+      inherited LoadFromJsonNode(node);
       LoadFromJsonNode(node, -> new RodlOperation);
     end;
 

@@ -31,7 +31,8 @@ type
     end;
 
   public
-    constructor; override;
+
+    constructor;
     begin
       Includes := nil;
       fStructs := new EntityCollection<RodlStruct>(self, "Struct");
@@ -46,18 +47,19 @@ type
 
     constructor withURL(aURL: Url);
     begin
+      constructor;
       LoadFromUrl(aURL);
     end;
 
     constructor (node: XmlElement);
     begin
-      constructor();
+      constructor;
       LoadFromXmlNode(node, nil);
     end;
 
     constructor (node: JsonNode);
     begin
-      constructor();
+      constructor;
       LoadFromJsonNode(node, nil);
     end;
 

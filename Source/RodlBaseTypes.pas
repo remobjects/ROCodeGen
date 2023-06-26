@@ -70,7 +70,7 @@ type
     method LoadFromJsonNode(node: JsonNode); virtual;
     begin
       Name := node["Name"]:StringValue;
-      EntityID := Guid.TryParse(node["UID"]:StringValue);
+      EntityID := Guid.TryParse(node["ID"]:StringValue);
       FromUsedRodlId := Guid.TryParse(node["FromUsedRodlUID"]:StringValue);
       &Abstract := node["Abstract"]:BooleanValue;
       DontCodegen :=  node["DontCodeGen"]:BooleanValue;
@@ -195,7 +195,7 @@ type
     method LoadFromJsonNode(node: JsonNode; aActivator: block : T);
     begin
       inherited LoadFromJsonNode(node);
-      fItems.LoadFromJsonNode(node, nil, aActivator);
+      fItems.LoadFromJsonNode(node[fItemsNodeName], nil, aActivator);
     end;
 
     method GetInheritedItems: List<T>;
@@ -280,7 +280,7 @@ type
           for entity:T in fItems do begin
             if (entity is RodlParameter) and (lEntity is RodlParameter) and
               (RodlParameter(entity).ParamFlag <> RodlParameter(lEntity).ParamFlag) then Continue;
-            if entity.EntityID.Equals(lEntity.EntityID) then begin
+            if entity.EntityID:Equals(lEntity.EntityID) then begin
               if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
                 lIsNew := false;
                 break;
