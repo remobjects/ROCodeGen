@@ -617,7 +617,7 @@ type
       end;
     end;
 
-    method LoadUsedFibraryFromFile(aFilename: String; use: RodlUse);
+    method LoadUsedLibraryFromFile(aFilename: String; use: RodlUse);
     begin
       LoadFromString(File.ReadText(aFilename), use);
     end;
@@ -784,7 +784,7 @@ type
 
       if (usedRodlFileName.FileExists) then begin
         AbsoluteFileName := usedRodlFileName;
-        OwnerLibrary.LoadUsedFibraryFromFile(usedRodlFileName, self);
+        OwnerLibrary.LoadUsedLibraryFromFile(usedRodlFileName, self);
         Loaded := true;
       end;
 
@@ -834,7 +834,7 @@ type
 
       if (usedRodlFileName.FileExists) then begin
         AbsoluteFileName := usedRodlFileName;
-        OwnerLibrary.LoadUsedFibraryFromFile(usedRodlFileName, self);
+        OwnerLibrary.LoadUsedLibraryFromFile(usedRodlFileName, self);
         Loaded := true;
       end;
 
@@ -876,31 +876,39 @@ type
       PrefixEnumValues := node.Attribute["Prefix"]:Value <> '0';
     end;
 
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      LoadFromJsonNode(node, -> new RodlEnumValue);
+      PrefixEnumValues := valueOrDefault(node["Prefix"]:BooleanValue);
+    end;
+
     property PrefixEnumValues: Boolean;
     property DefaultValueName: String read if Count > 0 then Item[0].Name;
   end;
 
   RodlArray= public class(RodlEntity)
   public
+
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
-      for lElementType in node.Elements do begin
-        if (lElementType.LocalName = "ElementType") then begin
-          if (XmlElement(lElementType).Attribute["DataType"] <> nil) then
-            ElementType := FixLegacyTypes(XmlElement(lElementType).Attribute["DataType"].Value);
-          break;
-        end;
-      end;
+      ElementType := FixLegacyTypes(node.FirstElementWithName("ElementType"):Value);
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      inherited LoadFromJsonNode(node);
+      ElementType := FixLegacyTypes(node["DataType"]:StringValue);
     end;
 
     property ElementType: String;
   end;
 
-  RodlService= public class(RodlServiceEntity)
+  RodlService = public class(RodlServiceEntity)
   private
     fRoles: RodlRoles := new RodlRoles();
   public
+
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
@@ -909,6 +917,16 @@ type
       &Private := node.Attribute["Private"]:Value = "1";
       ImplClass := node.Attribute["ImplClass"]:Value;
       ImplUnit := node.Attribute["ImplUnit"]:Value;
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      inherited LoadFromJsonNode(node);
+      fRoles.Clear;
+      fRoles.LoadFromJsonNode(node);
+      &Private := valueOrDefault(node["Private"]:BooleanValue);
+      ImplClass := node["ImplClass"]:StringValue;
+      ImplUnit := node["ImplUnit"]:StringValue;
     end;
 
     property Roles: RodlRoles read fRoles;
@@ -933,6 +951,11 @@ type
       LoadFromXmlNode(node, ->new RodlOperation);
     end;
 
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      LoadFromJsonNode(node, -> new RodlOperation);
+    end;
+
   end;
 
   RodlRole = public class
@@ -952,6 +975,7 @@ type
   private
     fRoles: List<RodlRole> := new List<RodlRole>;
   public
+
     method LoadFromXmlNode(node: XmlElement);
     begin
       var el := node.FirstElementWithName("Roles") as XmlElement;
@@ -962,6 +986,14 @@ type
         if (lItem.LocalName = "DenyRole") then fRoles.Add(new RodlRole(lItem.ValueOrText, true))
         else if (lItem.LocalName = "AllowRole") then fRoles.Add(new RodlRole(lItem.ValueOrText, false));
       end;
+    end;
+
+    method LoadFromJsonNode(node: JsonNode);
+    begin
+      for each lItem in node['DenyRoles'] as JsonArray do
+        fRoles.Add(new RodlRole(lItem:StringValue, true));
+      for each lItem in node['DenyRoles'] as JsonArray do
+        fRoles.Add(new RodlRole(lItem:StringValue, false));
     end;
 
     method Clear;
@@ -994,26 +1026,47 @@ type
       Items.Remove(self.Result);
     end;
 
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      LoadFromJsonNode(node,->new RodlParameter);
+      fRoles.Clear;
+      fRoles.LoadFromJsonNode(node);
+      ForceAsyncResponse := valueOrDefault(node["ForceAsyncResponse"]:BooleanValue);
+
+      for parameter: RodlParameter in Items do
+        if parameter.ParamFlag = ParamFlags.Result then self.Result := parameter;
+      Items.Remove(self.Result);
+    end;
+
     property Roles: RodlRoles read fRoles;
     property &Result: RodlParameter;
     property ForceAsyncResponse: Boolean := false;
   end;
 
   RodlParameter = public class(RodlTypedEntity)
-  private
-
   public
+
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
-      var ln := node.Attribute["Flag"].Value.ToLowerInvariant;
-      case ln of
+      case caseInsensitive(node.Attribute["Flag"]:Value) of
         'in': ParamFlag:= ParamFlags.In;
         'out': ParamFlag:= ParamFlags.Out;
         'inout': ParamFlag:= ParamFlags.InOut;
         'result': ParamFlag:= ParamFlags.Result;
-      else
-        ParamFlag := ParamFlags.In;
+        else ParamFlag := ParamFlags.In;
+      end;
+    end;
+
+    method LoadFromJsonNode(node: JsonNode); override;
+    begin
+      inherited LoadFromJsonNode(node);
+      case caseInsensitive(node["Flag"]:StringValue) of
+        'in': ParamFlag:= ParamFlags.In;
+        'out': ParamFlag:= ParamFlags.Out;
+        'inout': ParamFlag:= ParamFlags.InOut;
+        'result': ParamFlag:= ParamFlags.Result;
+        else ParamFlag := ParamFlags.In;
       end;
     end;
 
