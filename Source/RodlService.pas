@@ -23,7 +23,7 @@ type
 
   end;
 
-  RodlEventSink= public class(RodlServiceEntity)
+  RodlEventSink = public class(RodlServiceEntity)
   end;
 
   RodlService = public class(RodlServiceEntity)
@@ -62,7 +62,7 @@ type
   //
   //
 
-  RodlInclude= public class(RodlEntity)
+  RodlInclude = public class(RodlEntity)
   private
 
     method LoadAttribute(node:XmlElement; aName:String):String;
