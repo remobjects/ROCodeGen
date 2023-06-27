@@ -16,7 +16,7 @@ type
     method getOwnerLibrary: RodlLibrary;
     begin
       var lOwner: RodlEntity := self;
-      while ((lOwner <> nil) and (not(lOwner is RodlLibrary))) do
+      while ((lOwner ≠ nil) and (not(lOwner is RodlLibrary))) do
          lOwner := lOwner.Owner;
       exit (lOwner as RodlLibrary);
     end;
@@ -79,7 +79,7 @@ type
       var lCustomAttributes := node["CustomAttributes"];
       if assigned(lCustomAttributes) then begin
         for each k in lCustomAttributes.Keys do begin
-          var lValue := lCustomAttributes["Value"]:StringValue;
+          var lValue := lCustomAttributes[k]:StringValue;
           if length(lValue) > 0 then begin
             CustomAttributes[k] := lValue;
             CustomAttributes_lower[k.ToLowerInvariant] := lValue;
@@ -159,7 +159,7 @@ type
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
-      if (node.Attribute["Ancestor"] <> nil) then AncestorName := node.Attribute["Ancestor"].Value;
+      if (node.Attribute["Ancestor"] ≠ nil) then AncestorName := node.Attribute["Ancestor"].Value;
     end;
 
     method LoadFromJsonNode(node: JsonNode); override;
@@ -175,27 +175,34 @@ type
   RodlComplexEntity<T> = public abstract class (RodlEntityWithAncestor)
     where T is RodlEntity;
   private
-    fItemsNodeName: String;
+    fItemsNodeNameXml: nullable String;
+    fItemsNodeNameJson: nullable String;
     fItems: EntityCollection<T>;
+
+    property ItemsNodeNameXml: String read fItemsNodeNameXml;
+    property ItemsNodeNameJson: String read coalesce(fItemsNodeNameJson, ItemsNodeNameXml);
+
   public
     constructor();abstract;
-    constructor(nodeName:String);
+
+    constructor(nodeName:String; aItemsNodeNameXmlJson: nullable String := nil);
     begin
       inherited constructor;
-      fItemsNodeName := nodeName + "s";
+      fItemsNodeNameXml := nodeName + "s";
+      fItemsNodeNameJson := aItemsNodeNameXmlJson;
       fItems := new EntityCollection<T>(self, nodeName);
     end;
 
     method LoadFromXmlNode(node: XmlElement; aActivator: block : T);
     begin
       inherited LoadFromXmlNode(node);
-      fItems.LoadFromXmlNode(node.FirstElementWithName(fItemsNodeName), nil, aActivator);
+      fItems.LoadFromXmlNode(node.FirstElementWithName(ItemsNodeNameXml), nil, aActivator);
     end;
 
     method LoadFromJsonNode(node: JsonNode; aActivator: block : T);
     begin
       inherited LoadFromJsonNode(node);
-      fItems.LoadFromJsonNode(node[fItemsNodeName], nil, aActivator);
+      fItems.LoadFromJsonNode(node[ItemsNodeNameJson], nil, aActivator);
     end;
 
     method GetInheritedItems: List<T>;
@@ -248,7 +255,7 @@ type
           var lIsNew := true;
           for entity:T in fItems do begin
             if (entity is RodlParameter) and (lEntity is RodlParameter) and
-              (RodlParameter(entity).ParamFlag <> RodlParameter(lEntity).ParamFlag) then Continue;
+              (RodlParameter(entity).ParamFlag ≠ RodlParameter(lEntity).ParamFlag) then Continue;
             if entity.EntityID.Equals(lEntity.EntityID) then begin
               if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
                 lIsNew := false;
@@ -279,7 +286,7 @@ type
           var lIsNew := true;
           for entity:T in fItems do begin
             if (entity is RodlParameter) and (lEntity is RodlParameter) and
-              (RodlParameter(entity).ParamFlag <> RodlParameter(lEntity).ParamFlag) then Continue;
+              (RodlParameter(entity).ParamFlag ≠ RodlParameter(lEntity).ParamFlag) then Continue;
             if entity.EntityID:Equals(lEntity.EntityID) then begin
               if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
                 lIsNew := false;

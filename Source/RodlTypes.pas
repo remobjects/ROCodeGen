@@ -5,19 +5,19 @@ type
   public
     constructor;
     begin
-      inherited constructor("EnumValue");
+      inherited constructor("EnumValue", "Values");
     end;
 
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       LoadFromXmlNode(node, -> new RodlEnumValue);
-      PrefixEnumValues := node.Attribute["Prefix"]:Value <> '0';
+      PrefixEnumValues :=  not assigned(node.Attribute["Prefix"]) or (node.Attribute["Prefix"]:Value ≠ '0');
     end;
 
     method LoadFromJsonNode(node: JsonNode); override;
     begin
       LoadFromJsonNode(node, -> new RodlEnumValue);
-      PrefixEnumValues := valueOrDefault(node["Prefix"]:BooleanValue);
+      PrefixEnumValues := not assigned(node["Prefix"]) or node["Prefix"].BooleanValue = true;
     end;
 
     property PrefixEnumValues: Boolean;
@@ -63,14 +63,14 @@ type
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       LoadFromXmlNode(node,-> new RodlField);
-      if (node.Attribute["AutoCreateParams"] <> nil) then
-        AutoCreateProperties := (node.Attribute["AutoCreateParams"].Value = "1");
+      if (node.Attribute["AutoCreateParams"] ≠ nil) then
+        AutoCreateProperties := not assigned(node.Attribute["AutoCreateParams"]) or (node.Attribute["AutoCreateParams"].Value ≠ "0");
     end;
 
     method LoadFromJsonNode(node: JsonNode); override;
     begin
       LoadFromJsonNode(node, -> new RodlField);
-      AutoCreateProperties := valueOrDefault(node["AutoCreateParams"]:BooleanValue);
+      AutoCreateProperties := not assigned(node["AutoCreateProperties"]) or (node["AutoCreateProperties"].BooleanValue = true);
     end;
 
     property AutoCreateProperties: Boolean := False;

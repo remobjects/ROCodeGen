@@ -68,17 +68,17 @@ type
       if use = nil then begin
         fXmlDocument := node.Document; // needs to be kept in scope
         inherited LoadFromXmlNode(node);
-        if (node.Attribute["Namespace"] <> nil) then
+        if (node.Attribute["Namespace"] ≠ nil) then
           &Namespace := node.Attribute["Namespace"].Value;
-        if (node.Attribute["DataSnap"] <> nil) then
+        if (node.Attribute["DataSnap"] ≠ nil) then
           DataSnap := node.Attribute["DataSnap"].Value = "1";
-        if (node.Attribute["ScopedEnums"] <> nil) then
+        if (node.Attribute["ScopedEnums"] ≠ nil) then
           ScopedEnums := node.Attribute["ScopedEnums"].Value = "1";
-        DontApplyCodeGen := ((node.Attribute["SkipCodeGen"] <> nil) and (node.Attribute["SkipCodeGen"].Value = "1")) or
-                            ((node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1"));
+        DontApplyCodeGen := ((node.Attribute["SkipCodeGen"] ≠ nil) and (node.Attribute["SkipCodeGen"].Value = "1")) or
+                            ((node.Attribute["DontCodeGen"] ≠ nil) and (node.Attribute["DontCodeGen"].Value = "1"));
 
         var lInclude := node.FirstElementWithName("Includes");
-        if (lInclude <> nil) then begin
+        if (lInclude ≠ nil) then begin
           Includes := new RodlInclude();
           Includes.LoadFromXmlNode(lInclude);
         end
@@ -90,12 +90,12 @@ type
         use.Name := node.Attribute["Name"]:Value;
         use.UsedRodlId := Guid.TryParse(node.Attribute["UID"].Value);
         use.DontApplyCodeGen := use.DontApplyCodeGen or
-                      (((node.Attribute["SkipCodeGen"] <> nil) and (node.Attribute["SkipCodeGen"].Value = "1")) or
-                       ((node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1")));
-        if (node.Attribute["Namespace"] <> nil) then use.Namespace := node.Attribute["Namespace"].Value;
+                      (((node.Attribute["SkipCodeGen"] ≠ nil) and (node.Attribute["SkipCodeGen"].Value = "1")) or
+                       ((node.Attribute["DontCodeGen"] ≠ nil) and (node.Attribute["DontCodeGen"].Value = "1")));
+        if (node.Attribute["Namespace"] ≠ nil) then use.Namespace := node.Attribute["Namespace"].Value;
 
         var lInclude := node.FirstElementWithName("Includes");
-        if (lInclude <> nil) then begin
+        if (lInclude ≠ nil) then begin
           use.Includes := new RodlInclude();
           use.Includes.LoadFromXmlNode(lInclude);
         end;
@@ -290,25 +290,25 @@ type
         Includes := nil;
       end;
 
-      if (node.Attribute["Rodl"] <> nil) then
+      if (node.Attribute["Rodl"] ≠ nil) then
         FileName := node.Attribute["Rodl"].Value;
 
-      if (node.Attribute["AbsoluteRodl"] <> nil) then
+      if (node.Attribute["AbsoluteRodl"] ≠ nil) then
         AbsoluteRodl := node.Attribute["AbsoluteRodl"].Value;
 
-      if (node.Attribute["UsedRodlUID"] <> nil) then
+      if (node.Attribute["UsedRodlUID"] ≠ nil) then
         UsedRodlId := Guid.TryParse(node.Attribute["UsedRodlUID"].Value);
 
-      DontApplyCodeGen := (node.Attribute["DontCodeGen"] <> nil) and (node.Attribute["DontCodeGen"].Value = "1");
+      DontApplyCodeGen := (node.Attribute["DontCodeGen"] ≠ nil) and (node.Attribute["DontCodeGen"].Value = "1");
 
       var usedRodlFileName: String := Path.GetFullPath(FileName);
       if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
-        if (OwnerLibrary.Filename <> nil) then
+        if (OwnerLibrary.Filename ≠ nil) then
           usedRodlFileName := Path.GetFullPath(Path.Combine(Path.GetFullPath(OwnerLibrary.Filename).ParentDirectory, FileName));
       end;
 
       if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
-        if (FromUsedRodl:AbsoluteFileName <> nil) then
+        if (FromUsedRodl:AbsoluteFileName ≠ nil) then
           usedRodlFileName := Path.GetFullPath(Path.Combine(FromUsedRodl:AbsoluteFileName:ParentDirectory, FileName));
       end;
 
@@ -353,12 +353,12 @@ type
 
       var usedRodlFileName: String := Path.GetFullPath(FileName);
       if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
-        if (OwnerLibrary.Filename <> nil) then
+        if (OwnerLibrary.Filename ≠ nil) then
           usedRodlFileName := Path.GetFullPath(Path.Combine(Path.GetFullPath(OwnerLibrary.Filename).ParentDirectory, FileName));
       end;
 
       if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
-        if (FromUsedRodl:AbsoluteFileName <> nil) then
+        if (FromUsedRodl:AbsoluteFileName ≠ nil) then
           usedRodlFileName := Path.GetFullPath(Path.Combine(FromUsedRodl:AbsoluteFileName:ParentDirectory, FileName));
       end;
 

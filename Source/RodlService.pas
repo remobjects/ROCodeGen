@@ -71,7 +71,7 @@ type
 
     method LoadAttribute(node:XmlElement; aName:String):String;
     begin
-      exit iif(node.Attribute[aName] <> nil, node.Attribute[aName].Value, "");
+      exit iif(node.Attribute[aName] ≠ nil, node.Attribute[aName].Value, "");
     end;
 
   public
@@ -85,6 +85,7 @@ type
       JavaModule := node.Attribute["Java"]:Value;
       JavaScriptModule := node.Attribute["JavaScript"]:Value;
       CocoaModule := coalesce(node.Attribute["Cocoa"]:Value, node.Attribute["Nougat"]:Value, node.Attribute["Toffee"]:Value);
+      SwiftModule := node.Attribute["Swift"]:Value;
     end;
 
     method LoadFromJsonNode(node: JsonNode); override;
@@ -96,6 +97,7 @@ type
       JavaModule := node["Java"]:StringValue;
       JavaScriptModule := node["JavaScript"]:StringValue;
       CocoaModule := coalesce(node["Cocoa"]:StringValue, node["Nougat"]:StringValue, node["Toffee"]:StringValue);
+      SwiftModule := node["Swift"]:StringValue;
     end;
 
     property DelphiModule: String;
@@ -104,6 +106,7 @@ type
     property NetModule: String;
     property CocoaModule: String;
     property ObjCModule: String;
+    property SwiftModule: String;
   end;
 
   RodlInterface = public class(RodlComplexEntity<RodlOperation>)
@@ -141,7 +144,7 @@ type
       LoadFromXmlNode(node,->new RodlParameter);
       fRoles.Clear;
       fRoles.LoadFromXmlNode(node);
-      if (node.Attribute["ForceAsyncResponse"] <> nil) then ForceAsyncResponse := node.Attribute["ForceAsyncResponse"].Value = "1";
+      if (node.Attribute["ForceAsyncResponse"] ≠ nil) then ForceAsyncResponse := node.Attribute["ForceAsyncResponse"].Value = "1";
 
       for parameter: RodlParameter in Items do
         if parameter.ParamFlag = ParamFlags.Result then self.Result := parameter;
