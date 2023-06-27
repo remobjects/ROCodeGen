@@ -6,7 +6,7 @@ uses
   System.ComponentModel,
   System.IO,
   System.Text,
-  RemObjects.CodeGen4,
+  RemObjects.SDK.CodeGen4,
   RemObjects.DataAbstract.Schema;
 
 type
