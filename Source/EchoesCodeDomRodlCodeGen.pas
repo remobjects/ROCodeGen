@@ -118,7 +118,11 @@ begin
           lLookingForCodeDomName := 'Silver';
           result := CodeDomProvider.CreateProvider("Silver");
         end;
-      'vb','visualbasic','visual basic', 'standard-vb': begin
+      'iodide', 'java': begin
+          lLookingForCodeDomName := 'Iodine';
+          result := CodeDomProvider.CreateProvider("Iodine");
+        end;
+      'mercury', 'vb','visualbasic','visual basic', 'standard-vb': begin
           result := new Microsoft.VisualBasic.VBCodeProvider();
         end;
     end;

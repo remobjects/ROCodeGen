@@ -4,7 +4,7 @@ interface
 
 uses
   System.Runtime.InteropServices,
-  RemObjects.CodeGen4;
+  RemObjects.SDK.CodeGen4;
 
 type
   [ComVisible(true)]
@@ -75,19 +75,18 @@ type
     method GenerateImplFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; &params: Dictionary<String,String>; aServiceName: String := nil);
     method GenerateAllImplFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; &params: Dictionary<String,String>);
     method GenerateServerAccess(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String; &params: Dictionary<String,String>;&Platform: Codegen4Platform);
-  protected
   public
-    method Generate(&Platform: Codegen4Platform; Mode: Codegen4Mode; Language:Codegen4Language; aRODLXML: String; AdditionalParameters: String): Codegen4Records;
+    method Generate(&Platform: Codegen4Platform; Mode: Codegen4Mode; Language:Codegen4Language; aRodl: String; AdditionalParameters: String): Codegen4Records;
   end;
 
 implementation
 
-method Codegen4Wrapper.Generate(&Platform: Codegen4Platform; Mode: Codegen4Mode; Language:Codegen4Language; aRODLXML: String; AdditionalParameters: String): Codegen4Records;
+method Codegen4Wrapper.Generate(&Platform: Codegen4Platform; Mode: Codegen4Mode; Language:Codegen4Language; aRodl: String; AdditionalParameters: String): Codegen4Records;
 begin
   if String.IsNullOrEmpty(AdditionalParameters) then AdditionalParameters := '';
-  Result := new Codegen4Records;
-  var rodl := new RodlLibrary;
-  rodl.LoadFromXmlString(aRODLXML);
+  result := new Codegen4Records;
+  var rodl := new RodlLibrary();
+  rodl.LoadFromString(aRodl);
 
   var lparams := new Dictionary<String,String>();
   for each p in AdditionalParameters.Split(';') do begin

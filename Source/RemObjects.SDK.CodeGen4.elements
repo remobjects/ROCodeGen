@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
   <PropertyGroup>
     <ProductVersion>3.5</ProductVersion>
-    <RootNamespace>RemObjects.CodeGen4</RootNamespace>
+    <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
     <ProjectGuid>{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <BinaryName>RemObjects.SDK.CodeGen4</BinaryName>

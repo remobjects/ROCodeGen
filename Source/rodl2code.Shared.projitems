@@ -6,37 +6,41 @@
     <SharedGUID>37995C14-DAB7-4461-B35A-E316BD5F4E02</SharedGUID>
     <Import_RootNamespace>codegen4.Shared</Import_RootNamespace>
     <ProjectGuid>{37995C14-DAB7-4461-B35A-E316BD5F4E02}</ProjectGuid>
+    <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="CG4">
       <Virtual>True</Virtual>
     </Folder>
-    <Folder Include="RODL">
+    <Folder Include="CodeGens">
+      <Virtual>True</Virtual>
+    </Folder>
+    <Folder Include="RodlReader">
       <Virtual>True</Virtual>
     </Folder>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)ResGenerator.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)CocoaRodlCodeGen.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)CPlusPlusBuilderRODLCodegen.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)DelphiRodlCodeGen.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)Helpers.swift" />
     <Compile Include="$(MSBuildThisFileDirectory)JavaRodlCodeGen.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)RodlCodeGen.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)RodlReader.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlService.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)..\..\CodeGen4\CGCodeGenerator.swift">
       <VirtualFolder>CG4</VirtualFolder>
@@ -102,19 +106,31 @@
       <VirtualFolder>CG4</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)JavaScriptRodlCodeGen.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <None Include="$(MSBuildThisFileDirectory)EchoesCodeDomRodlCodeGen.pas">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </None>
     <Compile Include="$(MSBuildThisFileDirectory)ServerAccessCodeGen.swift">
-      <VirtualFolder>RODL</VirtualFolder>
+      <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)..\..\CodeGen4\CGCPlusPlusCPPCodeGenerator.swift">
       <VirtualFolder>CG4</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)..\..\CodeGen4\CGCPlusPlusHCodeGenerator.swift">
       <VirtualFolder>CG4</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlBaseTypes.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlLibrary.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlRoles.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlTypes.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
     </Compile>
   </ItemGroup>
 </Project>
