@@ -21,6 +21,7 @@ type
       inherited LoadFromJsonNode(node);
       var lDefaultInterface := new RodlInterface;
       lDefaultInterface.LoadFromJsonNode(node);
+      lDefaultInterface.Owner := self;
       Items.Add(lDefaultInterface);
       //LoadFromJsonNode(node, -> new RodlInterface);
     end;
