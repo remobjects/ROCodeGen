@@ -4171,7 +4171,7 @@ begin
   IncludeUnitNameForOwnTypes := true;
   targetNamespace := coalesce(GetIncludesNamespace(library), aTargetNamespace, library.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
-
+  lUnit.Namespace := new CGNamespaceReference(targetNamespace);
   if String.IsNullOrEmpty(aUnitName) then
     lUnit.FileName := coalesce(GetIncludesNamespace(library), library.Name, 'Unknown') + '_Invk'
   else
