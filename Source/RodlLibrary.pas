@@ -228,8 +228,7 @@ type
     [ToString]
     method ToString: String;
     begin
-      if assigned(fXmlDocument) then
-        result := fXmlDocument.ToString();
+      result := coalesce(fXmlDocument:ToString, fJsonNode:ToString);
     end;
 
     method FindEntity(aName: String):RodlEntity;
