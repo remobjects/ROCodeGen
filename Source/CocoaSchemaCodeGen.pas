@@ -6,7 +6,6 @@ uses
   System,
   System.Collections.Generic,
   System.Text,
-  RemObjects.CodeGen4,
   RemObjects.SDK.CodeGen4,
   RemObjects.DataAbstract.Schema;
 
@@ -25,9 +24,7 @@ type
     method Generate(schema: Schema;  schemaName: String;  schemaUri: String;  &namespace: String;  skippedTables: ICollection<String>;  includePrivateTables: Boolean): String;
   end;
 
-
 implementation
-
 
 constructor CocoaTableDefinitionsCodeGen(language: String);
 begin
