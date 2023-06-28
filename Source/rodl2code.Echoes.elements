@@ -13,9 +13,9 @@
     <AllowUnsafeCode>False</AllowUnsafeCode>
     <ApplicationIcon>Properties\App.ico</ApplicationIcon>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <DefaultUses>RemObjects.Elements.RTL</DefaultUses>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <TargetFramework>.NETFramework4.8</TargetFramework>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <Optimize>false</Optimize>
@@ -54,8 +54,6 @@
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
     <Reference Include="Silver">
       <Private>True</Private>
     </Reference>
