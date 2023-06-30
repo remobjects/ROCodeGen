@@ -7,9 +7,9 @@ Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Echoes", "rodl2co
 EndProject
 Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Island", "rodl2code.Island.elements", "{554C06A3-E2E1-4B18-8FA5-825365643B91}"
 EndProject
-Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Nougat", "rodl2code.Nougat.elements", "{EAE7DA8A-6033-4785-AF39-D67681B97B95}"
-EndProject
 Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Shared", "..\Shared\rodl2code.Shared.elements", "{37995C14-DAB7-4461-B35A-E316BD5F4E02}"
+EndProject
+Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Toffee", "rodl2code.Toffee.elements", "{EAE7DA8A-6033-4785-AF39-D67681B97B95}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
