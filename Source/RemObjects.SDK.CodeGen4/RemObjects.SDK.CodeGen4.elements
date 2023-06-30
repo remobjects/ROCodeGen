@@ -70,7 +70,6 @@
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="RemObjects.SDK">
-      <HintPath>..\..\..\..\RemObjects SDK for .NET\Bin\RemObjects.SDK.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
