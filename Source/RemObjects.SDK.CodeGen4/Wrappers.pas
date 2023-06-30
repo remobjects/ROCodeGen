@@ -68,13 +68,13 @@ type
     DelphiGenericArrayMode = 'DelphiGenericArrayMode';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
-    method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState:State):State;
-    method GenerateInterfaceFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
-    method GenerateAsyncFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
-    method GenerateInvokerFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
-    method GenerateImplFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; &params: Dictionary<String,String>; aServiceName: String := nil);
-    method GenerateAllImplFiles(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; &params: Dictionary<String,String>);
-    method GenerateServerAccess(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String; &params: Dictionary<String,String>;&Platform: Codegen4Platform);
+    method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
+    method GenerateInterfaceFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
+    method GenerateAsyncFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
+    method GenerateInvokerFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String);
+    method GenerateImplFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl : RodlLibrary; &namespace: String; &params: Dictionary<String,String>; aServiceName: String := nil);
+    method GenerateAllImplFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl : RodlLibrary; &namespace: String; &params: Dictionary<String,String>);
+    method GenerateServerAccess(Res: Codegen4Records; codegen: RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String; &params: Dictionary<String,String>;&Platform: Codegen4Platform);
   public
     method Generate(&Platform: Codegen4Platform; Mode: Codegen4Mode; Language:Codegen4Language; aRodl: String; AdditionalParameters: String): Codegen4Records;
   end;
@@ -96,7 +96,7 @@ begin
 
   var llang := Language.ToString;
   var lfileext:= '';
-  var codegen :RodlCodeGen;
+  var codegen: RodlCodeGen;
   case &Platform of
     Codegen4Platform.Delphi: begin
       codegen := new DelphiRodlCodeGen;
@@ -358,7 +358,7 @@ begin
   end;
 end;
 
-method Codegen4Wrapper.GenerateServerAccess(Res: Codegen4Records; codegen :RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String; &params: Dictionary<String,String>;&Platform: Codegen4Platform);
+method Codegen4Wrapper.GenerateServerAccess(Res: Codegen4Records; codegen: RodlCodeGen; rodl : RodlLibrary; &namespace: String; fileext: String; &params: Dictionary<String,String>;&Platform: Codegen4Platform);
 begin
   var sa : ServerAccessCodeGen;
   case &Platform of

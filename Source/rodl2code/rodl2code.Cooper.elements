@@ -2,7 +2,7 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
   <PropertyGroup>
     <ProductVersion>3.5</ProductVersion>
-    <ProjectGuid>A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E</ProjectGuid>
+    <ProjectGuid>{A2EC4EAF-2A98-4C92-B5E5-ED3C517A379E}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <AllowLegacyCreate>False</AllowLegacyCreate>
@@ -11,10 +11,10 @@
     <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
     <DefaultUses>RemObjects.Elements.RTL</DefaultUses>
     <CrossPlatform>True</CrossPlatform>
+    <OutputPath>..\Bin</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <Optimize>false</Optimize>
-    <OutputPath>.\bin\Debug</OutputPath>
     <DefineConstants>DEBUG;TRACE;</DefineConstants>
     <GenerateDebugInfo>True</GenerateDebugInfo>
     <EnableAsserts>True</EnableAsserts>
@@ -31,7 +31,6 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <Optimize>true</Optimize>
-    <OutputPath>.\bin\Release</OutputPath>
     <GenerateDebugInfo>False</GenerateDebugInfo>
     <EnableAsserts>False</EnableAsserts>
     <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
@@ -61,5 +60,5 @@
     <Compile Include="Program.swift" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.Cooper.targets" />
-  <Import Project="rodl2code.Shared.projitems" Label="Shared" />
+  <Import Project="..\Shared\rodl2code.Shared.projitems" Label="Shared" />
 </Project>

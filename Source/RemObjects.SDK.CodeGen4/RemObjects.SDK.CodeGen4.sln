@@ -3,24 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # RemObjects Fire
 Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "RemObjects.SDK.CodeGen4", "RemObjects.SDK.CodeGen4.elements", "{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}"
 EndProject
-Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Shared", "rodl2code.Shared.elements", "{37995C14-DAB7-4461-B35A-E316BD5F4E02}"
+Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Shared", "..\Shared\rodl2code.Shared.elements", "{37995C14-DAB7-4461-B35A-E316BD5F4E02}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|AnyCPU = Debug|AnyCPU
-		Release|AnyCPU = Release|AnyCPU
 		Licensed|AnyCPU = Licensed|AnyCPU
+		Release|AnyCPU = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
 		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Release|AnyCPU.Build.0 = Release|AnyCPU
 		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Licensed|AnyCPU.ActiveCfg = Licensed|AnyCPU
 		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Licensed|AnyCPU.Build.0 = Licensed|AnyCPU
-		{37995C14-DAB7-4461-B35A-E316BD5F4E02}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
-		{37995C14-DAB7-4461-B35A-E316BD5F4E02}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
-		{37995C14-DAB7-4461-B35A-E316BD5F4E02}.Licensed|AnyCPU.ActiveCfg = Licensed|AnyCPU
+		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Release|AnyCPU.Build.0 = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
