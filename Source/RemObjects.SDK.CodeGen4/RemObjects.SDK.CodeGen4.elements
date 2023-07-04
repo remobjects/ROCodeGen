@@ -70,7 +70,6 @@
   <ItemGroup>
     <Reference Include="mscorlib" />
     <Reference Include="RemObjects.SDK">
-      <HintPath>..\..\..\..\RemObjects SDK for .NET\Bin\RemObjects.SDK.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -85,9 +84,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EchoesCodeDomRodlCodeGen.pas">
-      <Link>EchoesCodeDomRodlCodeGen.pas</Link>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.pas" />
     <Compile Include="Wrappers.pas" />
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -103,7 +99,7 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.Echoes.targets" />
-  <Import Project="rodl2code.Shared.projitems" Label="Shared" />
+  <Import Project="..\Shared\rodl2code.Shared.projitems" Label="Shared" />
   <PropertyGroup>
     <PreBuildEvent />
   </PropertyGroup>

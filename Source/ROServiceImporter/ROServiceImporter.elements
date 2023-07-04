@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" DefaultTargets="Build" ToolsVersion="4.0">
+  <PropertyGroup>
+    <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
+    <ProjectGuid>{91ED24B4-DEA5-428D-BC9B-4E9392732F55}</ProjectGuid>
+    <OutputType>executable</OutputType>
+    <AssemblyName>ROServiceImporter</AssemblyName>
+    <AllowGlobals>False</AllowGlobals>
+    <AllowLegacyWith>False</AllowLegacyWith>
+    <AllowLegacyOutParams>False</AllowLegacyOutParams>
+    <AllowLegacyCreate>False</AllowLegacyCreate>
+    <AllowUnsafeCode>False</AllowUnsafeCode>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <SDK>macOS</SDK>
+    <CreateAppBundle>True</CreateAppBundle>
+    <InfoPListFile>.\Resources\Info.plist</InfoPListFile>
+    <EntitlementsFile>Resources\Entitlements.entitlements</EntitlementsFile>
+    <MacIconFile>.\Resources\App.icns</MacIconFile>
+    <BundleIdentifier>com.remobjects.SDK.ROServiceImporter</BundleIdentifier>
+    <DeploymentTargetVersion>10.10</DeploymentTargetVersion>
+    <BundleVersion>9.0</BundleVersion>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <DefaultUses>RemObjects.Elements.RTL</DefaultUses>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <Optimize>false</Optimize>
+    <OutputPath>.\bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;TRACE;</DefineConstants>
+    <GenerateDebugInfo>True</GenerateDebugInfo>
+    <EnableAsserts>True</EnableAsserts>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <CaptureConsoleOutput>False</CaptureConsoleOutput>
+    <WarnOnCaseMismatch>True</WarnOnCaseMismatch>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>true</Optimize>
+    <OutputPath>.\bin\Release</OutputPath>
+    <GenerateDebugInfo>False</GenerateDebugInfo>
+    <EnableAsserts>False</EnableAsserts>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <CaptureConsoleOutput>False</CaptureConsoleOutput>
+    <WarnOnCaseMismatch>True</WarnOnCaseMismatch>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Foundation" />
+    <Reference Include="rtl" />
+    <Reference Include="libToffee" />
+    <Reference Include="libxml2" />
+    <Reference Include="AppKit" />
+    <Reference Include="libElements" />
+    <Reference Include="libSilver" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AppDelegate.swift" />
+    <Compile Include="MainWindowController.swift" />
+    <None Include="Resources\Entitlements.entitlements" />
+    <Content Include="Resources\Info.plist" />
+    <Content Include="Resources\App.icns" />
+    <Xib Include="MainWindowController.xib">
+      <DependentUpon>MainWindowController.swift</DependentUpon>
+    </Xib>
+    <Xib Include="Resources\MainMenu.xib" />
+    <Compile Include="RodlDocumentWindowController.swift" />
+    <Xib Include="RodlDocumentWindowController.xib" />
+    <Compile Include="RodlDocument.swift" />
+    <Compile Include="RodlDocumentController.swift" />
+    <AppResource Include="..\Dependencies\rodl2code.exe">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="..\Dependencies\Echoes.dll">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="..\Dependencies\Elements.dll">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="..\Dependencies\Silver.dll">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="..\Dependencies\RemObjects.SDK.dll">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="..\Dependencies\DataAbstract-Simple.rodl">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="..\Dependencies\DataAbstract.rodl">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="..\Dependencies\DataAbstrac4t.rodl">
+      <Optional>True</Optional>
+    </AppResource>
+    <AppResource Include="Resources\RODL.icns" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources" />
+  </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.Toffee.targets" />
+  <Import Project="..\Shared\rodl2code.Shared.projitems" Label="Shared" />
+</Project>

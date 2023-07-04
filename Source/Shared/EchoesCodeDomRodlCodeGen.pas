@@ -1,5 +1,7 @@
 ﻿namespace RemObjects.SDK.CodeGen4;
 
+{$IF ECHOES}
+
 interface
 
 uses
@@ -13,12 +15,11 @@ type
 
     method ConvertRodlLibrary(library: RodlLibrary): not nullable RemObjects.SDK.Rodl.RodlLibrary;
     begin
-      var rodl := new RemObjects.SDK.Rodl.RodlLibrary();
-      rodl.LoadFromString(library.ToString());
-      rodl.FileName := library.Filename;
-
-      exit rodl;
+      result := new RemObjects.SDK.Rodl.RodlLibrary();
+      result.LoadFromString(library.ToString());
+      result.FileName := library.Filename;
     end;
+
   protected
     method GetIncludesNamespace(library: RodlLibrary): String; override;
     begin
@@ -160,5 +161,7 @@ begin
     exit lWriter.GetStringBuilder().ToString() as not nullable;
   end;
 end;
+
+{$ENDIF}
 
 end.

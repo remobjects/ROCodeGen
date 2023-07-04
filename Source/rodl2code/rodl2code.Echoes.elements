@@ -16,10 +16,10 @@
     <DefaultUses>RemObjects.Elements.RTL</DefaultUses>
     <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
     <TargetFramework>.NETFramework4.8</TargetFramework>
+    <OutputPath>..\Bin</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <Optimize>false</Optimize>
-    <OutputPath>.\bin\Debug</OutputPath>
     <ConditionalDefines>DEBUG;TRACE;</ConditionalDefines>
     <GeneratePDB>True</GeneratePDB>
     <GenerateMDB>True</GenerateMDB>
@@ -36,7 +36,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <Optimize>true</Optimize>
-    <OutputPath>.\bin\Release</OutputPath>
     <GeneratePDB>False</GeneratePDB>
     <GenerateMDB>False</GenerateMDB>
     <EnableAsserts>False</EnableAsserts>
@@ -79,12 +78,11 @@
     <Compile Include="Properties\AssemblyInfo.pas" />
     <Compile Include="Properties\Resources.Designer.pas" />
     <Compile Include="Properties\Settings.Designer.pas" />
-    <Compile Include="EchoesCodeDomRodlCodeGen.pas" />
     <Compile Include="Program.swift" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.Echoes.targets" />
-  <Import Project="rodl2code.Shared.projitems" Label="Shared" />
+  <Import Project="..\Shared\rodl2code.Shared.projitems" Label="Shared" />
 </Project>
