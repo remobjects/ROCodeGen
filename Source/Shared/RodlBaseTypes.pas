@@ -288,7 +288,6 @@ type
           for entity:T in fItems do begin
             if (entity is RodlParameter) and (lEntity is RodlParameter) and
               (RodlParameter(entity).ParamFlag ≠ RodlParameter(lEntity).ParamFlag) then Continue;
-            if entity.EntityID:&Equals(lEntity.EntityID) then begin
               if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
                 lIsNew := false;
                 break;
@@ -296,7 +295,6 @@ type
               else begin
                 lEntity.EntityID := Guid.NewGuid;
               end;
-            end;
           end;
           if lIsNew then
             AddEntity(lEntity);
