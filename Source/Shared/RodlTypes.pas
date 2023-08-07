@@ -37,7 +37,7 @@ type
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       inherited LoadFromXmlNode(node);
-      ElementType := FixLegacyTypes(node.FirstElementWithName("ElementType"):Value);
+      ElementType := FixLegacyTypes(node.FirstElementWithName("ElementType"):Attribute["DataType"]:Value);
     end;
 
     method LoadFromJsonNode(node: JsonNode); override;
