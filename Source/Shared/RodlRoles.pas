@@ -35,7 +35,7 @@ type
     begin
       for each lItem in node['DenyRoles'] as JsonArray do
         fRoles.Add(new RodlRole(lItem:StringValue, true));
-      for each lItem in node['DenyRoles'] as JsonArray do
+      for each lItem in node['AllowRoles'] as JsonArray do
         fRoles.Add(new RodlRole(lItem:StringValue, false));
     end;
 
