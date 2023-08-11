@@ -11,7 +11,7 @@ type
     property DefaultInterface: RodlInterface read if Count > 0 then Item[0];
   end;
 
-  RodlEventSink = public class(RodlServiceEntity)
+  RodlEventSink = public partial class(RodlServiceEntity)
   end;
 
   RodlService = public partial class(RodlServiceEntity)

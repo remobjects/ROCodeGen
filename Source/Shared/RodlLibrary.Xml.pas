@@ -3,8 +3,6 @@
 type
   RodlLibrary = public partial class (RodlEntity)
   private
-    fXmlDocument: XmlDocument; // only for supporting SaveToFile
-
     method LoadXML(aFile: String): XmlDocument;
     begin
       exit XmlDocument.FromFile(aFile);
@@ -19,7 +17,6 @@ type
     method LoadFromXmlNode(node: XmlElement; use: RodlUse := nil);
     begin
       if use = nil then begin
-        fXmlDocument := node.Document; // needs to be kept in scope
         inherited LoadFromXmlNode(node);
         if (node.Attribute["Namespace"] ≠ nil) then
           &Namespace := node.Attribute["Namespace"].Value;

@@ -104,18 +104,20 @@ type
       LoadFromString(File.ReadText(aFilename), use);
     end;
 
-    method SaveToFile(aFilename: String);
+    method SaveToFile(aFilename: String; flattenUsedRODLs: Boolean = true);
     begin
-      if assigned(fXmlDocument) then
-        fXmlDocument.SaveToFile(aFilename)
-      else if assigned(fJsonNode) then
-        File.WriteText(aFilename, fJsonNode.ToString);
+      //if assigned(fXmlDocument) then
+        //fXmlDocument.SaveToFile(aFilename)
+      //else if assigned(fJsonNode) then
+        //File.WriteText(aFilename, fJsonNode.ToString);
+       SaveToJsonFile(aFilename, flattenUsedRODLs);
     end;
 
     [ToString]
     method ToString: String;
     begin
-      result := coalesce(fXmlDocument:ToString, fJsonNode:ToString);
+      //result := coalesce(fXmlDocument:ToString, fJsonNode:ToString);
+      exit ToJsonString;
     end;
 
     method FindEntity(aName: String):RodlEntity;
@@ -178,7 +180,7 @@ type
   //
   //
 
-  RodlGroup = public class(RodlEntity)
+  RodlGroup = public partial class(RodlEntity)
   end;
 
 end.

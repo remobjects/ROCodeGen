@@ -12,7 +12,7 @@ type
     property DefaultValueName: String read if Count > 0 then Item[0].Name;
   end;
 
-  RodlEnumValue = public class(RodlEntity)
+  RodlEnumValue = public partial class(RodlEntity)
   end;
 
   RodlArray = public partial class(RodlEntity)
@@ -27,7 +27,7 @@ type
       inherited constructor("Element");
     end;
 
-    property AutoCreateProperties: Boolean := False;
+    property AutoCreateProperties: Boolean := true;
   end;
 
   RodlStruct = public class(RodlStructEntity)

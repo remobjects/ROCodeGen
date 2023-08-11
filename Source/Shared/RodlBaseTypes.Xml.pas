@@ -80,7 +80,8 @@ type
           lEntity.FromUsedRodl := usedRodl;
           lEntity.Owner := Owner;
           lEntity.LoadFromXmlNode(XmlElement(lNode));
-
+          if assigned(lEntity.FromUsedRodl) then
+            lEntity.FromUsedRodlId := usedRodl.UsedRodlId;
           var lIsNew := true;
           for entity:T in fItems do begin
             if (entity is RodlParameter) and (lEntity is RodlParameter) and

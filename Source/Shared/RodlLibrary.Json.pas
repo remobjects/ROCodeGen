@@ -3,7 +3,18 @@
 type
   RodlLibrary = public partial class (RodlEntity)
   private
-    fJsonNode: JsonNode; // only for supporting SaveToFile
+     const def_DataSnap: Boolean = false;
+     const def_ScopedEnums: Boolean = false;
+     const CONST_RODL_VERSION_JSON: String = "4.0"; public;
+  private
+
+    method SaveEntityCollectionToJson<T>(node: JsonObject; name: String; Coll: EntityCollection<T>; flattenUsedRODLs: Boolean);
+      where T is RodlEntity;
+    begin
+      if Coll.Count > 0 then
+        Coll.SaveToJson(node, name, flattenUsedRODLs);
+    end;
+
   public
     constructor (node: JsonNode);
     begin
@@ -14,7 +25,6 @@ type
     method LoadFromJsonNode(node: JsonNode; use: RodlUse := nil);
     begin
       if not assigned(use) then begin
-        fJsonNode := node; // needs to be kept in scope
         inherited LoadFromJsonNode(node);
         &Namespace := node["Namespace"]:StringValue;
         DataSnap := valueOrDefault(node["DataSnap"]:BooleanValue);
@@ -38,8 +48,8 @@ type
 
         var lIncludes := coalesce(node["Includes"], node["Platforms"]);
         if assigned(lIncludes) then begin
-          Includes := new RodlInclude();
-          Includes.LoadFromJsonNode(lIncludes);
+          use.Includes := new RodlInclude();
+          use.Includes.LoadFromJsonNode(lIncludes);
         end;
         if isUsedRODLLoaded(use) then exit;
       end;
@@ -52,6 +62,51 @@ type
       fGroups.LoadFromJsonNode(node["Groups"], use, -> new RodlGroup);
       fServices.LoadFromJsonNode(node["Services"], use, -> new RodlService);
       fEventSinks.LoadFromJsonNode(node["EventSinks"], use, -> new RodlEventSink);
+    end;
+
+    method SaveToJson(node: JsonObject; flattenUsedRODLs: Boolean); override;
+    begin
+      SaveStringToJson(node, "Name", Name);
+      SaveStringToJson(node, "Namespace", &Namespace);
+      SaveGuidToJson(node, "ID", EntityID);
+      if DontApplyCodeGen ≠ def_DontCodegen then
+        SaveBooleanToJson(node, "SkipCodeGen", DontApplyCodeGen);
+
+      if DataSnap ≠ def_DataSnap then
+        SaveBooleanToJson(node, "DataSnap", DataSnap);
+
+      if ScopedEnums ≠ def_ScopedEnums then
+        SaveBooleanToJson(node, "ScopedEnums", ScopedEnums);
+
+      SaveStringToJson(node, "Version", CONST_RODL_VERSION_JSON);
+
+      SaveAttributesToJson(node);
+
+      if assigned(Includes) then begin
+        var l_Includes := new JsonObject();
+        Includes.SaveToJson(l_Includes, flattenUsedRODLs);
+        SaveObjectToJson(node, "Includes", l_Includes);
+      end;
+      SaveEntityCollectionToJson(node, "Groups", fGroups, flattenUsedRODLs);
+      SaveEntityCollectionToJson(node, "Services", fServices, flattenUsedRODLs);
+      SaveEntityCollectionToJson(node, "EventSinks", fEventSinks, flattenUsedRODLs);
+      SaveEntityCollectionToJson(node, "Structs", fStructs, flattenUsedRODLs);
+      SaveEntityCollectionToJson(node, "Enums", fEnums, flattenUsedRODLs);
+      SaveEntityCollectionToJson(node, "Arrays", fArrays, flattenUsedRODLs);
+      SaveEntityCollectionToJson(node, "Uses", fUses, flattenUsedRODLs);
+      SaveEntityCollectionToJson(node, "Exceptions", fExceptions, flattenUsedRODLs);
+    end;
+
+    method ToJsonString(flattenUsedRODLs: Boolean := true): String;
+    begin
+      var js := new JsonDocument;
+      SaveToJson(js.Root as JsonObject, flattenUsedRODLs);
+      exit js.ToJson;
+    end;
+
+    method SaveToJsonFile(aFileName: String; flattenUsedRODLs: Boolean);
+    begin
+      File.WriteText(aFileName, ToJsonString(flattenUsedRODLs), Encoding.UTF8);
     end;
   end;
 
@@ -106,6 +161,39 @@ type
       end;
 
     end;
+
+    method SaveToJson(node: JsonObject; flattenUsedRODLs: Boolean); override;
+    begin
+      SaveStringToJson(node, "Name", Name);
+      SaveStringToJson(node, "Rodl", FileName);
+      SaveStringToJson(node, "AbsoluteRodl", AbsoluteRodl);
+      if DontApplyCodeGen ≠ def_DontCodegen then
+        SaveBooleanToJson(node, "DontCodeGen", DontApplyCodeGen);
+
+      if IsMerged and flattenUsedRODLs then
+        SaveBooleanToJson(node, "Merged", true);
+
+      SaveGuidToJson(node, "UsedRodlID", UsedRodlId);
+      if assigned(Includes) then begin
+        var l_Includes := new JsonObject();
+        Includes.SaveToJson(l_Includes, flattenUsedRODLs);
+        SaveObjectToJson(node, "Includes", l_Includes);
+      end;
+    end;
+
+  end;
+
+  RodlGroup = public partial class
+  public
+    method SaveToJson(node: JsonObject; flattenUsedRODLs: Boolean); override;
+    begin
+      SaveStringToJson(node, "Name", Name);
+      SaveGuidToJson(node, "ID", EntityID);
+      if IsFromUsedRodl then
+        SaveGuidToJson(node, "FromUsedRodlID", FromUsedRodlId);
+      SaveAttributesToJson(node);
+    end;
+
   end;
 
 end.
