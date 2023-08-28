@@ -129,7 +129,10 @@ type
       AbsoluteRodl := node["AbsoluteRodl"]:StringValue;
       UsedRodlId := Guid.TryParse(node["UsedRodlID"]:StringValue);
       DontApplyCodeGen := valueOrDefault(node["DontCodeGen"]:BooleanValue);
-
+      if node["Merged"]:BooleanValue then begin
+        Loaded := true;
+        exit;
+      end;
       var usedRodlFileName: String := Path.GetFullPath(FileName);
       if (not usedRodlFileName.FileExists and not FileName.IsAbsolutePath) then begin
         if (OwnerLibrary.Filename ≠ nil) then
