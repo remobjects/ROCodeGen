@@ -34,7 +34,7 @@ type
       Result := assigned(CustomAttributes) and (CustomAttributes:Count >0)
     end;
 
-    property IsFromUsedRodl: Boolean read assigned(FromUsedRodl);
+    property IsFromUsedRodl: Boolean read assigned(FromUsedRodl) or assigned(FromUsedRodlId) ;
     {$region Properties}
     property EntityID: nullable Guid;
     property Name: String;
