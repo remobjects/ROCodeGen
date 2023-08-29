@@ -1,5 +1,8 @@
 ﻿namespace RemObjects.SDK.CodeGen4;
 
+uses
+  RemObjects.Elements.RTL;
+
 type
   RodlLibrary = public class (RodlEntity)
   private

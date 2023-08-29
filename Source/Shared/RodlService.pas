@@ -1,5 +1,8 @@
 ﻿namespace RemObjects.SDK.CodeGen4;
 
+uses
+  RemObjects.Elements.RTL;
+
 type
   RodlServiceEntity = public abstract class (RodlComplexEntity<RodlInterface>)
   public

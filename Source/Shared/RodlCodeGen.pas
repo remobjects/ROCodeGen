@@ -2,6 +2,9 @@
 
 interface
 
+uses
+  RemObjects.Elements.RTL;
+
 type
   RodlCodeGen = public abstract class
   protected
