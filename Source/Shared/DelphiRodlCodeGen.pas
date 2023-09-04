@@ -170,6 +170,7 @@ type
 
     method cpp_pragmalink(file: CGCodeUnit; aUnitName: String); virtual; empty;
     method cpp_ClassId(anExpression: CGExpression): CGExpression; virtual;
+    method cpp_UuidId(anExpression: CGExpression): CGExpression; virtual;
     method GenerateCGImport(aName: String; aCondition: CGConditionalDefine): CGImport;
     method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'): CGImport;virtual;
     method GenerateIsClause(aSource: CGExpression; aType: CGTypeReference):CGExpression;
@@ -2180,7 +2181,7 @@ begin
   var ltype1 := new CGClassTypeDefinition(l_invoker, lancestor,
                                           Visibility := CGTypeVisibilityKind.Public);
   file.Types.Add(ltype1);
-  var IUnknown_typeref := ResolveInterfaceTypeRef(nil, 'IUnknown','');
+  var IUnknown_typeref := ResolveInterfaceTypeRef(nil, 'IInterface','');
 
   for lmem in entity.DefaultInterface.Items do begin
     {$REGION eventsink methods}
@@ -2191,18 +2192,23 @@ begin
     mem.Parameters.Add(new CGParameterDefinition('__Message', IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
     mem.Parameters.Add(new CGParameterDefinition('__Target', IUnknown_typeref, Modifier := CGParameterModifierKind.Const));
 
+    mem.LocalVariables := new List<CGVariableDeclarationStatement>;
+    mem.LocalVariables.Add(new CGVariableDeclarationStatement('__lintf', l_IName_typeref));
+    var lcast := InterfaceCast('__Target'.AsNamedIdentifierExpression,
+                               l_IName.AsNamedIdentifierExpression,
+                               '__lintf'.AsNamedIdentifierExpression);
+    var ltry_10 := new List<CGStatement>;
+    var lfin_10 := new List<CGStatement>;
+    mem.Statements.Add(new CGIfThenElseStatement(
+                  new CGUnaryOperatorExpression(lcast, CGUnaryOperatorKind.Not),
+                  new CGThrowExpression(new CGNewInstanceExpression('EIntfCastError'.AsNamedIdentifierExpression,
+                                              [String.Format('Critical error in {0}.{1}: __Target does not support {2} interface',[l_invoker, mem.Name, l_IName]).AsLiteralExpression.AsCallParameter]))));
+    var lcall := new CGMethodCallExpression('__lintf'.AsNamedIdentifierExpression, lmem.Name, CallSiteKind := CGCallSiteKind.Reference);
 
-    var lcall := new CGMethodCallExpression(new CGTypeCastExpression('__Target'.AsNamedIdentifierExpression,
-                                                                      l_IName_typeref,
-                                                                      ThrowsException := true),
-                                            lmem.Name,
-                                            CallSiteKind := CGCallSiteKind.Reference);
     for lmemparam in lmem.Items do
       lcall.Parameters.Add(('l_'+lmemparam.Name).AsNamedIdentifierExpression.AsCallParameter);
 
     if lmem.Items.Count > 0 then begin
-      mem.LocalVariables := new List<CGVariableDeclarationStatement>;
-
       var lNeedDisposer := false;
       for lmemparam in lmem.Items do begin
         lNeedDisposer := isComplex(library, lmemparam.DataType);
@@ -2210,11 +2216,12 @@ begin
       end;
       var lObjectDisposer := '__lObjectDisposer'.AsNamedIdentifierExpression;
       if lNeedDisposer then
-        mem.LocalVariables:Add(new CGVariableDeclarationStatement('__lObjectDisposer','TROObjectDisposer'.AsTypeReference));
+        mem.LocalVariables.Add(new CGVariableDeclarationStatement('__lObjectDisposer', 'TROObjectDisposer'.AsTypeReference));
 
       for lmemparam in lmem.Items do
-        mem.LocalVariables:Add(new CGVariableDeclarationStatement('l_'+lmemparam.Name,ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name)));
+        mem.LocalVariables.Add(new CGVariableDeclarationStatement('l_'+lmemparam.Name, ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name)));
 
+      mem.Statements.Add(new CGEmptyStatement);
       for lmemparam in lmem.Items do
         if isComplex(library, lmemparam.DataType) then
           mem.Statements.Add(new CGAssignmentStatement(('l_'+lmemparam.Name).AsNamedIdentifierExpression, CGNilExpression.Nil));
@@ -2230,27 +2237,31 @@ begin
                                             GenerateParamAttributes(lmemparam.DataType).AsCallParameter].ToList,
                                             CallSiteKind := CGCallSiteKind.Reference));
       list.Add(lcall);
-      list.Add(new CGEmptyStatement);
       if lNeedDisposer then begin
         var finList := new List<CGStatement>;
         var finList2 := new List<CGStatement>;
         var List2 := new List<CGStatement>;
-        finList.Add(new CGAssignmentStatement(lObjectDisposer,new CGNewInstanceExpression('TROObjectDisposer'.AsTypeReference,['__EventReceiver'.AsNamedIdentifierExpression.AsCallParameter].ToList)));
+        var k := new CGTypeCastExpression('__EventReceiver'.AsNamedIdentifierExpression, 'IROObjectRetainer'.AsTypeReference, ThrowsException := true, CastKind := CGTypeCastKind.Interface);
+        finList.Add(new CGAssignmentStatement(lObjectDisposer,new CGNewInstanceExpression('TROObjectDisposer'.AsTypeReference,[k.AsCallParameter].ToList)));
         for lmemparam in lmem.Items do
           if isComplex(library, lmemparam.DataType) then
             List2.Add(new CGMethodCallExpression(lObjectDisposer,'Add',[('l_'+lmemparam.Name).AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
 
         finList2.Add(GenerateDestroyExpression(lObjectDisposer));
         finList.Add(new CGTryFinallyCatchStatement(List2, FinallyStatements := finList2));
-        mem.Statements.Add(new CGTryFinallyCatchStatement(list, FinallyStatements := finList));
+        ltry_10.Add(list);
+        lfin_10.Add(finList);
       end
       else begin
-        mem.Statements.Add(list);
+        ltry_10.Add(list);
       end;
     end
     else begin
-      mem.Statements.Add(lcall);
+      ltry_10.Add(lcall);
     end;
+    lfin_10.Add(new CGAssignmentStatement('__lintf'.AsNamedIdentifierExpression, CGNilExpression.Nil));
+    mem.Statements.Add(new CGTryFinallyCatchStatement(ltry_10, FinallyStatements := lfin_10));
+
     ltype1.Members.Add(mem);
     {$ENDREGION}
   end;
@@ -2261,7 +2272,7 @@ begin
   {$REGION initialization/finalization}
   file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterEventInvokerClass',
                                                                [l_EID.AsNamedIdentifierExpression.AsCallParameter,
-                                                                l_invoker.AsNamedIdentifierExpression.AsCallParameter].ToList));
+                                                               cpp_ClassId(l_invoker.AsNamedIdentifierExpression).AsCallParameter].ToList));
   file.Finalization:Add(new CGMethodCallExpression(nil,'UnregisterEventInvokerClass',[l_EID.AsNamedIdentifierExpression.AsCallParameter].ToList));
   {$ENDREGION}
 end;
@@ -3051,12 +3062,17 @@ begin
   ltype.InterfaceGuid := entity.DefaultInterface.EntityID;
   file.Types.Add(ltype);
 
+  var l_guidtype: CGTypeReference := new CGNamedTypeReference('TGUID') isClassType(false);
+  if not PureDelphi then begin
+    l_guidtype := new CGPointerTypeReference(l_guidtype) &reference(true);
+  end;
+
   for lmem in entity.DefaultInterface.Items do begin
     {$REGION eventsink methods}
     var mem := new CGMethodDefinition(lmem.Name,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
-    mem.Parameters.Add(new CGParameterDefinition('__Sender', 'TGUID'.AsTypeReference,Modifier := CGParameterModifierKind.Const));
+    mem.Parameters.Add(new CGParameterDefinition('__Sender', l_guidtype, Modifier := CGParameterModifierKind.Const));
     for lmemparam in lmem.Items do begin
       if lmemparam.ParamFlag <> ParamFlags.Result then
         mem.Parameters.Add(new CGParameterDefinition(lmemparam.Name, ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name),Modifier := RODLParamFlagToCodegenFlag(lmemparam.ParamFlag)));
@@ -3083,7 +3099,7 @@ begin
     var mem := new CGMethodDefinition(lmem.Name,
                                       Visibility := CGMemberVisibilityKind.Protected,
                                       CallingConvention := CGCallingConventionKind.Register);
-    mem.Parameters.Add(new CGParameterDefinition('__Sender', 'TGUID'.AsTypeReference, Modifier := CGParameterModifierKind.Const));
+    mem.Parameters.Add(new CGParameterDefinition('__Sender', l_guidtype , Modifier := CGParameterModifierKind.Const));
     for lmemparam in lmem.Items do begin
       if lmemparam.ParamFlag <> ParamFlags.Result then
         mem.Parameters.Add(new CGParameterDefinition(lmemparam.Name, ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name),Modifier := RODLParamFlagToCodegenFlag(lmemparam.ParamFlag)));
@@ -3092,12 +3108,12 @@ begin
     ltype1.Members.Add(mem);
     mem.LocalVariables := new List<CGVariableDeclarationStatement>;
     var lbinarytype := ResolveDataTypeToTypeRefFullQualified(library,'Binary', Intf_name);
-    mem.LocalVariables:Add(new CGVariableDeclarationStatement('__eventdata',lbinarytype));
-    mem.LocalVariables:Add(new CGVariableDeclarationStatement('lMessage',IROMessage_typeref));
+    mem.LocalVariables.Add(new CGVariableDeclarationStatement('__eventdata', lbinarytype, new CGNewInstanceExpression(lbinarytype)));
+    mem.LocalVariables.Add(new CGVariableDeclarationStatement('lMessage', IROMessage_typeref, new CGFieldAccessExpression(nil,'__Message')));
     var l__eventdata  := '__eventdata'.AsNamedIdentifierExpression;
     var lmessage := 'lMessage'.AsNamedIdentifierExpression;
-    mem.Statements.Add(new CGAssignmentStatement(l__eventdata, new CGNewInstanceExpression(lbinarytype)));
-    mem.Statements.Add(new CGAssignmentStatement(lmessage,new CGFieldAccessExpression(nil,'__Message')));
+    //mem.Statements.Add(new CGAssignmentStatement(l__eventdata, new CGNewInstanceExpression(lbinarytype)));
+    //mem.Statements.Add(new CGAssignmentStatement(lmessage,new CGFieldAccessExpression(nil,'__Message')));
     var ltry := new List<CGStatement>;
     var lfin := new List<CGStatement>;
     ltry.Add(new CGMethodCallExpression(lmessage,'InitializeEventMessage',[CGNilExpression.Nil.AsCallParameter,
@@ -3118,16 +3134,34 @@ begin
     ltry.Add(new CGEmptyStatement);
     ltry.Add(new CGMethodCallExpression(lmessage,'WriteToStream',[l__eventdata.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
     ltry.Add(new CGEmptyStatement);
+
+    var l_eventwriter: CGExpression := nil;
+    var l_sender: CGExpression := '__Sender'.AsNamedIdentifierExpression;
+    if not PureDelphi then begin
+      // for c++builder we should use interface
+      ltry.Add(new CGVariableDeclarationStatement('l_writer',
+                                                                ResolveInterfaceTypeRef(nil, 'IROEventWriter','uROClientIntf','', true),
+                                                                new CGTypeCastExpression(new CGSelfExpression,
+                                                                                         'IROEventWriter'.AsTypeReference,
+                                                                                         ThrowsException := true,
+                                                                                         CastKind := CGTypeCastKind.Interface)));
+      l_eventwriter := 'l_writer'.AsNamedIdentifierExpression;
+     // l_sender := new CGPointerDereferenceExpression(l_sender);
+    end;
+
     ltry.Add(new CGMethodCallExpression(new CGFieldAccessExpression(nil,'Repository'),
                                         'StoreEventData',
-                                        ['__Sender'.AsNamedIdentifierExpression.AsCallParameter,
+                                        [l_sender.AsCallParameter,
                                          l__eventdata.AsCallParameter,
-                                         new CGFieldAccessExpression(nil,'ExcludeSender').AsCallParameter,
-                                         new CGFieldAccessExpression(nil,'ExcludeSessionList').AsCallParameter,
-                                         new CGFieldAccessExpression(new CGFieldAccessExpression(nil,'SessionList'),'CommaText',CallSiteKind := CGCallSiteKind.Reference).AsCallParameter,
+                                         new CGFieldAccessExpression(l_eventwriter,'ExcludeSender', CallSiteKind := CGCallSiteKind.Reference).AsCallParameter,
+                                         new CGFieldAccessExpression(l_eventwriter,'ExcludeSessionList', CallSiteKind := CGCallSiteKind.Reference).AsCallParameter,
+                                         new CGFieldAccessExpression(new CGFieldAccessExpression(l_eventwriter,'SessionList', CallSiteKind := CGCallSiteKind.Reference),
+                                                     'CommaText',CallSiteKind := CGCallSiteKind.Reference).AsCallParameter,
                                          l_EID.AsNamedIdentifierExpression.AsCallParameter].ToList,
                                         CallSiteKind := CGCallSiteKind.Reference));
-
+    if not PureDelphi then begin
+      ltry.Add(new CGAssignmentStatement(l_eventwriter, new CGNilExpression));
+    end;
     lfin.Add(GenerateDestroyExpression(l__eventdata));
     lfin.Add(new CGAssignmentStatement(lmessage,CGNilExpression.Nil));
 
@@ -3137,10 +3171,11 @@ begin
   {$ENDREGION}
 
   {$REGION initialization/finalization}
-  file.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterEventWriterClass',
-                                                               [l_IWriter.AsNamedIdentifierExpression.AsCallParameter,
-                                                                l_Twriter.AsNamedIdentifierExpression.AsCallParameter].ToList));
-  file.Finalization:Add(new CGMethodCallExpression(nil,'UnregisterEventWriterClass',[l_IWriter.AsNamedIdentifierExpression.AsCallParameter].ToList));
+  var intf_expr:= cpp_UuidId(ResolveInterfaceTypeRef(library, l_IWriter, Intf_name, l_EntityName).AsExpression);
+  file.Initialization:&Add(new CGMethodCallExpression(nil, 'RegisterEventWriterClass',
+                                                               [intf_expr.AsCallParameter,
+                                                                cpp_ClassId(l_Twriter.AsNamedIdentifierExpression).AsCallParameter].ToList));
+  file.Finalization:&Add(new CGMethodCallExpression(nil,'UnregisterEventWriterClass',[intf_expr.AsCallParameter].ToList));
   {$ENDREGION}
 
 end;
@@ -4630,6 +4665,11 @@ begin
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
   file.Types.Add(LibraryAttributes);
+end;
+
+method DelphiRodlCodeGen.cpp_UuidId(anExpression: CGExpression): CGExpression;
+begin
+  exit anExpression;
 end;
 
 end.

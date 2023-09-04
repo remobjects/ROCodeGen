@@ -17,6 +17,7 @@ type
     method cpp_generateDoLoginNeeded(aType: CGClassTypeDefinition);override;
     method cpp_pragmalink(file: CGCodeUnit; aUnitName: String); override;
     method cpp_ClassId(anExpression: CGExpression): CGExpression; override;
+    method cpp_UuidId(anExpression: CGExpression): CGExpression; override;
     method cpp_Pointer(value: CGExpression): CGExpression;override;
     method cpp_AddressOf(value: CGExpression): CGExpression;override;
     method CapitalizeString(aValue: String):String;override;
@@ -712,6 +713,11 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_GetTROAsyncCallbackMethodType: String;
 begin
   result := inherited cpp_GetTROAsyncCallbackMethodType;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_UuidId(anExpression: CGExpression): CGExpression;
+begin
+  exit new CGMethodCallExpression(nil, '__uuidof',[anExpression.AsCallParameter])
 end;
 
 end.
