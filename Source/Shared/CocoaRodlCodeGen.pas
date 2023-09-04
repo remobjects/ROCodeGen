@@ -70,7 +70,7 @@ begin
   for rodl: RodlUse in library.Uses.Items do begin
     if length(rodl.Includes:CocoaModule) > 0 then
       file.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Includes.CocoaModule)))
-     else if length(rodl.Namespace) > 0 then
+    else if length(rodl.Namespace) > 0 then
       file.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Namespace)))
     else
       file.HeaderComment.Lines.Add(String.Format("Requires RODL file {0} ({1}) in same namespace.", [rodl.Name, rodl.FileName]));
