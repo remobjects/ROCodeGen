@@ -39,6 +39,13 @@ type
       l_init.Add(new CGCommentStatement(l_comment));
 
       l_init.Add(new CGEmptyStatement());
+      l_init.Add(new CGVariableDeclarationStatement('RemObjects',
+                                                    nil,
+                                                    new CGPropertyAccessExpression(
+                                                      new CGMethodCallExpression(nil, 'require', './RemObjectsSDK'.AsLiteralExpression.AsCallParameter),
+                                                      'RemObjects'
+                                                    ),
+                                                    Constant := true));
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
 
@@ -513,6 +520,14 @@ type
                 l_namespace_name
               );
       l_init.Add(l_st);
+    end;
+
+    method DoGenerateInterfaceFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
+    begin
+      result := inherited DoGenerateInterfaceFile(library, aTargetNamespace, aUnitName);
+      result.Initialization.Add(new CGAssignmentStatement(
+                                  new CGPropertyAccessExpression('exports'.AsNamedIdentifierExpression, library.Name),
+                                  '__namespace'.AsNamedIdentifierExpression));
     end;
   public
     constructor;
