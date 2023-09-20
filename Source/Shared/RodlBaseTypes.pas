@@ -6,7 +6,7 @@ uses
 type
   ParamFlags = public enum (&In, &Out, &InOut, &Result);
 
-  RodlEntity = public abstract class
+  RodlEntity = public partial abstract class
   private
     fOriginalName: String;
     method getOriginalName: String;
@@ -32,72 +32,12 @@ type
 
   public
     constructor(); virtual; empty;
-
-    constructor(node: XmlElement);
-    begin
-      LoadFromXmlNode(node);
-    end;
-
-    constructor(node: JsonNode);
-    begin
-      LoadFromJsonNode(node);
-    end;
-
-    method LoadFromXmlNode(node: XmlElement); virtual;
-    begin
-      Name := node.Attribute["Name"]:Value;
-      EntityID := Guid.TryParse(node.Attribute["UID"]:Value);
-      FromUsedRodlId := Guid.TryParse(node.Attribute["FromUsedRodlUID"]:Value);
-      &Abstract := node.Attribute["Abstract"]:Value = "1";
-      DontCodegen :=  node.Attribute["DontCodeGen"]:Value = "1";
-
-      var lDoc := node.FirstElementWithName("Documentation");
-      if (lDoc ≠ nil) and (lDoc.Nodes.Count>0) and (lDoc.Nodes[0] is XmlCData) then begin
-        // FirstChild because data should be enclosed within CDATA
-        Documentation := (lDoc.Nodes[0] as XmlCData).Value;
-      end;
-
-      var lCustomAttributes := node.FirstElementWithName("CustomAttributes");
-      if assigned(lCustomAttributes) then begin
-        for each childNode: XmlElement in lCustomAttributes.Elements do begin
-          var lValue: XmlAttribute := childNode.Attribute["Value"];
-          if assigned(lValue) then begin
-            CustomAttributes[childNode.LocalName] := lValue.Value;
-            CustomAttributes_lower[childNode.LocalName.ToLowerInvariant] := lValue.Value;
-            if childNode.LocalName.ToLowerInvariant = "soapname" then fOriginalName := lValue.Value;
-          end;
-        end;
-      end;
-    end;
-
-    method LoadFromJsonNode(node: JsonNode); virtual;
-    begin
-      Name := node["Name"]:StringValue;
-      EntityID := Guid.TryParse(node["ID"]:StringValue);
-      FromUsedRodlId := Guid.TryParse(node["FromUsedRodlUID"]:StringValue);
-      &Abstract := node["Abstract"]:BooleanValue;
-      DontCodegen :=  node["DontCodeGen"]:BooleanValue;
-      Documentation := node["Documentation"]:StringValue;
-
-      var lCustomAttributes := node["CustomAttributes"];
-      if assigned(lCustomAttributes) then begin
-        for each k in lCustomAttributes.Keys do begin
-          var lValue := lCustomAttributes[k]:StringValue;
-          if length(lValue) > 0 then begin
-            CustomAttributes[k] := lValue;
-            CustomAttributes_lower[k.ToLowerInvariant] := lValue;
-            if k.ToLowerInvariant = "soapname" then fOriginalName := lValue;
-          end;
-        end;
-      end;
-    end;
-
     method HasCustomAttributes: Boolean;
     begin
       Result := assigned(CustomAttributes) and (CustomAttributes:Count >0)
     end;
 
-    property IsFromUsedRodl: Boolean read assigned(FromUsedRodl);
+    property IsFromUsedRodl: Boolean read assigned(FromUsedRodl) or assigned(FromUsedRodlId) ;
     {$region Properties}
     property EntityID: nullable Guid;
     property Name: String;
@@ -123,25 +63,12 @@ type
     {$ENDIF}
   end;
 
-  RodlTypedEntity = public abstract class (RodlEntity)
+  RodlTypedEntity = public partial abstract class (RodlEntity)
   public
-
-    method LoadFromXmlNode(node: XmlElement); override;
-    begin
-      inherited LoadFromXmlNode(node);
-      DataType := FixLegacyTypes(node.Attribute["DataType"].Value);
-    end;
-
-    method LoadFromJsonNode(node: JsonNode); override;
-    begin
-      inherited LoadFromJsonNode(node);
-      DataType := FixLegacyTypes(node["DataType"]:StringValue);
-    end;
-
     property DataType: String;
   end;
 
-  RodlEntityWithAncestor = public abstract class (RodlEntity)
+  RodlEntityWithAncestor = public partial abstract class (RodlEntity)
   private
     method setAncestorEntity(value: RodlEntity);
     begin
@@ -156,35 +83,15 @@ type
 
       exit iif(lRodlLibrary = nil, nil , lRodlLibrary.FindEntity(AncestorName));
     end;
-
   public
-
-    method LoadFromXmlNode(node: XmlElement); override;
-    begin
-      inherited LoadFromXmlNode(node);
-      if (node.Attribute["Ancestor"] ≠ nil) then AncestorName := node.Attribute["Ancestor"].Value;
-    end;
-
-    method LoadFromJsonNode(node: JsonNode); override;
-    begin
-      inherited LoadFromJsonNode(node);
-      AncestorName := node["Ancestor"]:StringValue;
-    end;
-
     property AncestorName: String;
     property AncestorEntity: RodlEntity read getAncestorEntity write setAncestorEntity;
   end;
 
-  RodlComplexEntity<T> = public abstract class (RodlEntityWithAncestor)
+  RodlComplexEntity<T> = public partial abstract class (RodlEntityWithAncestor)
     where T is RodlEntity;
   private
-    fItemsNodeNameXml: nullable String;
-    fItemsNodeNameJson: nullable String;
     fItems: EntityCollection<T>;
-
-    property ItemsNodeNameXml: String read fItemsNodeNameXml;
-    property ItemsNodeNameJson: String read coalesce(fItemsNodeNameJson, ItemsNodeNameXml);
-
   public
     constructor();abstract;
 
@@ -194,18 +101,6 @@ type
       fItemsNodeNameXml := nodeName + "s";
       fItemsNodeNameJson := aItemsNodeNameXmlJson;
       fItems := new EntityCollection<T>(self, nodeName);
-    end;
-
-    method LoadFromXmlNode(node: XmlElement; aActivator: block : T);
-    begin
-      inherited LoadFromXmlNode(node);
-      fItems.LoadFromXmlNode(node.FirstElementWithName(ItemsNodeNameXml), nil, aActivator);
-    end;
-
-    method LoadFromJsonNode(node: JsonNode; aActivator: block : T);
-    begin
-      inherited LoadFromJsonNode(node);
-      fItems.LoadFromJsonNode(node[ItemsNodeNameJson], nil, aActivator);
     end;
 
     method GetInheritedItems: List<T>;
@@ -231,7 +126,7 @@ type
     property Item[index: Integer]: T read fItems[index]; default;
   end;
 
-  EntityCollection<T> = public class
+  EntityCollection<T> = public partial class
     where T is RodlEntity;
   private
     fEntityNodeName: String;
@@ -241,70 +136,6 @@ type
     begin
       fEntityNodeName := nodeName;
       Owner := aOwner;
-    end;
-
-    method LoadFromXmlNode(node: XmlElement; usedRodl: RodlUse; aActivator: block : T);
-    begin
-      if (node = nil) then exit;
-
-      for lNode: XmlNode in node.Elements do begin
-        var lr := (lNode.NodeType = XmlNodeType.Element) and (XmlElement(lNode).LocalName = fEntityNodeName);
-        if lr then begin
-          var lEntity := aActivator();
-          lEntity.FromUsedRodl := usedRodl;
-          lEntity.Owner := Owner;
-          lEntity.LoadFromXmlNode(XmlElement(lNode));
-
-          var lIsNew := true;
-          for entity:T in fItems do begin
-            if (entity is RodlParameter) and (lEntity is RodlParameter) and
-              (RodlParameter(entity).ParamFlag ≠ RodlParameter(lEntity).ParamFlag) then Continue;
-            if entity.EntityID:&Equals(lEntity.EntityID) then begin
-              if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
-                lIsNew := false;
-                break;
-              end
-              else begin
-                lEntity.EntityID := Guid.NewGuid;
-              end;
-            end;
-          end;
-          if lIsNew then
-            AddEntity(lEntity);
-        end;
-      end;
-    end;
-
-    method LoadFromJsonNode(node: JsonNode; usedRodl: RodlUse; aActivator: block : T);
-    begin
-      if (node = nil) then exit;
-
-      for lNode in (node as JsonArray) do begin
-        //var lr := (lNode.NodeType = XmlNodeType.Element) and (XmlElement(lNode).LocalName = fEntityNodeName);
-        //if lr then begin
-          var lEntity := aActivator();
-          lEntity.FromUsedRodl := usedRodl;
-          lEntity.Owner := Owner;
-          lEntity.LoadFromJsonNode(lNode);
-
-          var lIsNew := true;
-          for entity:T in fItems do begin
-            if (entity is RodlParameter) and (lEntity is RodlParameter) and
-              (RodlParameter(entity).ParamFlag ≠ RodlParameter(lEntity).ParamFlag) then Continue;
-            if entity.EntityID:&Equals(lEntity.EntityID) then begin
-              if entity.Name.EqualsIgnoringCaseInvariant(lEntity.Name) then begin
-                lIsNew := false;
-                break;
-              end
-              else begin
-                lEntity.EntityID := Guid.NewGuid;
-              end;
-            end;
-          end;
-          if lIsNew then
-            AddEntity(lEntity);
-        //end;
-      end;
     end;
 
     method AddEntity(entity : T);

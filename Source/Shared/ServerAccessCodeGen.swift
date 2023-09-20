@@ -292,8 +292,10 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		var rodl_namespace: String = "";
 		if length(self.rodl.Includes?.NetModule) > 0 {
 			rodl_namespace = self.rodl.Includes.NetModule;
-		} else {
+		} else if !String.IsNullOrEmpty(self.rodl.Namespace) {
 			rodl_namespace = self.rodl.Namespace;
+		} else {
+			rodl_namespace = self.rodl.Name;
 		}
 		if (length(self.namespace) > 0) && (length(rodl_namespace) > 0) && (self.namespace != rodl_namespace) {
 			unit.Imports.Add(CGImport(rodl_namespace))

@@ -132,5 +132,35 @@
     <Compile Include="$(MSBuildThisFileDirectory)RodlTypes.pas">
       <VirtualFolder>RodlReader</VirtualFolder>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlTypes.Xml.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlTypes.Json.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlService.Xml.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlService.Json.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlRoles.Xml.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlRoles.Json.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlBaseTypes.Xml.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlBaseTypes.Json.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlLibrary.Xml.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)RodlLibrary.Json.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
   </ItemGroup>
 </Project>

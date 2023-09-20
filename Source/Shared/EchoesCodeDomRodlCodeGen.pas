@@ -110,7 +110,7 @@ begin
     case Language:ToLowerInvariant() of
       'oxygene','pas': begin
           lLookingForCodeDomName := 'Oxygene';
-          result := CodeDomProvider.CreateProvider("pas");
+          result := CodeDomProvider.CreateProvider("Oxygene");
         end;
       'hydrogene','cs','c#', 'standard-c#': begin
           result := new Microsoft.CSharp.CSharpCodeProvider();

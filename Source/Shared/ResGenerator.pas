@@ -90,13 +90,15 @@ type
 
     class method GenerateResFile(aRODLFileName: String; aResFileName: String);
     begin
-      var lBuffer := GenerateResBufferFromFile(aRODLFileName);
-      SaveBufferToFile(lBuffer, aResFileName)
+      // aRODLFileName can be isn't flatten so load RODL and generate flatten version
+      var rodl := new RodlLibrary();
+      rodl.LoadFromFile(aRODLFileName);
+      GenerateResFile(rodl, aResFileName);
     end;
 
     class method GenerateResFile(aRODL: RodlLibrary; aResFileName: String);
     begin
-      var lContent := Encoding.UTF8.GetBytes(aRODL.ToString());
+      var lContent := Encoding.UTF8.GetBytes(aRODL.ToJsonString(true));
       var lBuffer := GenerateResBufferFromBuffer(lContent, NAME_RODLFile);
       SaveBufferToFile(lBuffer, aResFileName)
     end;
