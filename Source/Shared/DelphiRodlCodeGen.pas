@@ -3171,11 +3171,11 @@ begin
   {$ENDREGION}
 
   {$REGION initialization/finalization}
-  var intf_expr:= cpp_UuidId(ResolveInterfaceTypeRef(library, l_IWriter, Intf_name, l_EntityName).AsExpression);
+  var invk_expr:= cpp_UuidId(ResolveInterfaceTypeRef(library, l_IWriter, Invk_name, l_EntityName).AsExpression);
   file.Initialization:&Add(new CGMethodCallExpression(nil, 'RegisterEventWriterClass',
-                                                               [intf_expr.AsCallParameter,
+                                                               [invk_expr.AsCallParameter,
                                                                 cpp_ClassId(l_Twriter.AsNamedIdentifierExpression).AsCallParameter].ToList));
-  file.Finalization:&Add(new CGMethodCallExpression(nil,'UnregisterEventWriterClass',[intf_expr.AsCallParameter].ToList));
+  file.Finalization:&Add(new CGMethodCallExpression(nil,'UnregisterEventWriterClass',[invk_expr.AsCallParameter].ToList));
   {$ENDREGION}
 
 end;
