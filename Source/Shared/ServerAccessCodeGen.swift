@@ -145,11 +145,7 @@ public class CocoaServerAccessCodeGen : ServerAccessCodeGen {
 	}
 
 	override func getPlatformSpecificNamespace(_ reference: RodlUse) -> String! {
-		if length(reference.Includes?.CocoaModule) > 0 {
-			return reference.Includes.CocoaModule;
-		} else {
-			return "";
-		}
+		return coalesce(reference.Includes.CocoaModule, "");
 	}
 
 	override func generateSingletonPattern(_ serverAccess: CGClassTypeDefinition) {
