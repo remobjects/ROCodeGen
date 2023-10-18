@@ -15,12 +15,12 @@ type
         exit aValue;
     end;
   protected
-    method GetGlobalName(library: RodlLibrary): String; override; empty;
+    method GetGlobalName(aLibrary: RodlLibrary): String; override; empty;
 
-    method AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary); override;
+    method AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary); override;
     begin
-      file.Initialization := new List<not nullable CGStatement>;
-      var l_init := file.Initialization;
+      aFile.Initialization := new List<not nullable CGStatement>;
+      var l_init := aFile.Initialization;
 
       var l_comment := new List<String>;
       l_comment.Add('This codegen depends on RemObjectsSDK.js');
@@ -55,7 +55,7 @@ type
                                 );
       l_init.Add(l_st);
 
-      var l_currnamespace := $"__{GetNamespace(library).Replace('.', '_')}__namespace";
+      var l_currnamespace := $"__{GetNamespace(aLibrary).Replace('.', '_')}__namespace";
       var l_currnamespace_ne := l_currnamespace.AsNamedIdentifierExpression;
       l_st := new CGVariableDeclarationStatement(
                   l_currnamespace,
@@ -64,7 +64,7 @@ type
                 );
       l_init.Add(l_st);
 
-      var l_namespace_le := GetNamespace(library).AsLiteralExpression;
+      var l_namespace_le := GetNamespace(aLibrary).AsLiteralExpression;
       var l_parts := 'parts'.AsNamedIdentifierExpression;
       var l_current := 'current'.AsNamedIdentifierExpression;
       var l_ifthen :=  new CGBeginEndBlockStatement();
@@ -133,14 +133,14 @@ type
       l_init.Add(l_st);
     end;
 
-    method GenerateEnum(file: CGCodeUnit; &library: RodlLibrary; entity: RodlEnum); override;
+    method GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum); override;
     begin
-      var l_init := file.Initialization;
+      var l_init := aFile.Initialization;
       l_init.Add(new CGEmptyStatement());
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
 
-      var l_name := SafeIdentifier(entity.Name);
+      var l_name := SafeIdentifier(aEntity.Name);
       var l_namespace_name := new CGPropertyAccessExpression(l_namespace, l_name);
 
       l_init.Add(new CGSingleLineCommentStatement($"Enum: {l_name}"));
@@ -163,7 +163,7 @@ type
       l_init.Add(l_st);
 
       var l_array := new CGArrayLiteralExpression([]);
-      for each item in entity.Items do
+      for each item in aEntity.Items do
         l_array.Elements.Add(item.Name.AsLiteralExpression);
 
       l_st := new CGAssignmentStatement(
@@ -187,18 +187,18 @@ type
       l_init.Add(l_st);
     end;
 
-    method GenerateStruct(file: CGCodeUnit; library: RodlLibrary; entity: RodlStruct); override;
+    method GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct); override;
     begin
-      var l_init := file.Initialization;
+      var l_init := aFile.Initialization;
       l_init.Add(new CGEmptyStatement());
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
 
-      var l_name := SafeIdentifier(entity.Name);
+      var l_name := SafeIdentifier(aEntity.Name);
       var l_namespace_name := new CGPropertyAccessExpression(l_namespace, l_name);
       l_init.Add(new CGSingleLineCommentStatement($"Struct: {l_name}"));
       var l_st_list := new List<CGStatement>;
-      for each item in entity.GetAllItems.OrderBy(b->b.Name) do
+      for each item in aEntity.GetAllItems.OrderBy(b->b.Name) do
         l_st_list.Add(new CGAssignmentStatement(
                           new CGPropertyAccessExpression(new CGSelfExpression(), SafeIdentifier(item.Name)),
                           new CGNewInstanceExpression(new CGNilExpression,
@@ -232,14 +232,14 @@ type
       l_init.Add(l_st);
     end;
 
-    method GenerateArray(file: CGCodeUnit; library: RodlLibrary; entity: RodlArray); override;
+    method GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray); override;
     begin
-      var l_init := file.Initialization;
+      var l_init := aFile.Initialization;
       l_init.Add(new CGEmptyStatement());
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
 
-      var l_name := SafeIdentifier(entity.Name);
+      var l_name := SafeIdentifier(aEntity.Name);
       var l_namespace_name := new CGPropertyAccessExpression(l_namespace, l_name);
       l_init.Add(new CGSingleLineCommentStatement($"Array: {l_name}"));
 
@@ -253,7 +253,7 @@ type
                         ),
                         new CGAssignmentStatement(
                           new CGPropertyAccessExpression(new CGSelfExpression, 'elementType'),
-                          entity.ElementType.AsLiteralExpression)
+                          aEntity.ElementType.AsLiteralExpression)
                       ]));
       l_init.Add(l_st);
       var l_prototype := new CGPropertyAccessExpression(l_namespace_name, 'prototype');
@@ -279,14 +279,14 @@ type
       l_init.Add(l_st);
     end;
 
-    method GenerateException(file: CGCodeUnit; library: RodlLibrary; entity: RodlException); override;
+    method GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException); override;
     begin
-      var l_init := file.Initialization;
+      var l_init := aFile.Initialization;
       l_init.Add(new CGEmptyStatement());
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
 
-      var l_name := SafeIdentifier(entity.Name);
+      var l_name := SafeIdentifier(aEntity.Name);
       var l_namespace_name := new CGPropertyAccessExpression(l_namespace, l_name);
       l_init.Add(new CGSingleLineCommentStatement($"Exception: {l_name}"));
       var l_st_list := new List<CGStatement>;
@@ -296,7 +296,7 @@ type
                           [(new CGSelfExpression).AsCallParameter,
                            'e'.AsNamedIdentifierExpression.AsCallParameter]
                         ));
-      for each item in entity.Items do
+      for each item in aEntity.Items do
         l_st_list.Add(new CGAssignmentStatement(
                           new CGPropertyAccessExpression(
                             new CGPropertyAccessExpression(new CGSelfExpression(), 'fields'),
@@ -328,14 +328,14 @@ type
 
     end;
 
-    method GenerateService(file: CGCodeUnit; library: RodlLibrary; entity: RodlService); override;
+    method GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService); override;
     begin
-      var l_init := file.Initialization;
+      var l_init := aFile.Initialization;
       l_init.Add(new CGEmptyStatement());
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
 
-      var l_name := SafeIdentifier(entity.Name);
+      var l_name := SafeIdentifier(aEntity.Name);
       var l_namespace_name := new CGPropertyAccessExpression(l_namespace, l_name);
       l_init.Add(new CGSingleLineCommentStatement($"Service: {l_name}"));
       var l_serviceName := new CGPropertyAccessExpression(new CGSelfExpression, 'fServiceName');
@@ -368,11 +368,11 @@ type
       l_init.Add(l_st);
       var l_prototype := new CGPropertyAccessExpression(l_namespace_name, 'prototype');
 
-      if assigned(entity.AncestorEntity) then begin
+      if assigned(aEntity.AncestorEntity) then begin
         var l_AncestorNS := '';
-        if (entity.AncestorEntity <> nil) then begin
-          if (entity.AncestorEntity.IsFromUsedRodl) and not String.IsNullOrEmpty(entity.AncestorEntity.FromUsedRodl.Includes.JavaScriptModule) then
-            l_AncestorNS := entity.AncestorEntity.FromUsedRodl.Includes.JavaScriptModule;
+        if (aEntity.AncestorEntity <> nil) then begin
+          if (aEntity.AncestorEntity.IsFromUsedRodl) and not String.IsNullOrEmpty(aEntity.AncestorEntity.FromUsedRodl.Includes.JavaScriptModule) then
+            l_AncestorNS := aEntity.AncestorEntity.FromUsedRodl.Includes.JavaScriptModule;
           if not String.IsNullOrEmpty(l_AncestorNS) then
             l_AncestorNS := l_AncestorNS.Replace('.', '_') + '__';
         end;
@@ -382,12 +382,12 @@ type
         l_st := new CGAssignmentStatement(
                   l_prototype,
                   new CGNewInstanceExpression(
-                    new CGNamedTypeReference(SafeIdentifier(entity.AncestorName)) &namespace(new CGNamespaceReference(l_AncestorNS))
+                    new CGNamedTypeReference(SafeIdentifier(aEntity.AncestorName)) &namespace(new CGNamespaceReference(l_AncestorNS))
                   )
                 );
         l_init.Add(l_st);
       end;
-      for each op in entity.DefaultInterface.Items do begin
+      for each op in aEntity.DefaultInterface.Items do begin
         var l_parameters := new List<CGParameterDefinition>;
 
         for each &param in op.Items.Where(b->b.ParamFlag in [ParamFlags.In, ParamFlags.InOut]) do
@@ -463,14 +463,14 @@ type
       end;
     end;
 
-    method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; entity: RodlEventSink); override;
+    method GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink); override;
     begin
-      var l_init := file.Initialization;
+      var l_init := aFile.Initialization;
       l_init.Add(new CGEmptyStatement());
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
 
-      var l_name := SafeIdentifier(entity.Name);
+      var l_name := SafeIdentifier(aEntity.Name);
       var l_namespace_name := new CGPropertyAccessExpression(l_namespace, l_name);
       l_init.Add(new CGSingleLineCommentStatement($"Event sink: {l_name}"));
 
@@ -478,7 +478,7 @@ type
 
 
       var l_methodst :=new List<CGStatement>;
-      for each op in entity.DefaultInterface.Items do begin
+      for each op in aEntity.DefaultInterface.Items do begin
         var l_method_p :=new List<CGCallParameter>;
         for each &param in op.Items do begin
           var l_params := new List<CGCallParameter>;
@@ -496,7 +496,7 @@ type
 
       l_st := new CGAssignmentStatement(
                 l_namespace_name,
-                new CGLocalMethodStatement(entity.Name, l_methodst ));
+                new CGLocalMethodStatement(aEntity.Name, l_methodst ));
       l_init.Add(l_st);
 
       var l_prototype := new CGPropertyAccessExpression(l_namespace_name, 'prototype');
@@ -522,11 +522,11 @@ type
       l_init.Add(l_st);
     end;
 
-    method DoGenerateInterfaceFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
+    method DoGenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     begin
-      result := inherited DoGenerateInterfaceFile(library, aTargetNamespace, aUnitName);
+      result := inherited DoGenerateInterfaceFile(aLibrary, aTargetNamespace, aUnitName);
       result.Initialization.Add(new CGAssignmentStatement(
-                                  new CGPropertyAccessExpression('exports'.AsNamedIdentifierExpression, library.Name),
+                                  new CGPropertyAccessExpression('exports'.AsNamedIdentifierExpression, aLibrary.Name),
                                   '__namespace'.AsNamedIdentifierExpression));
     end;
   public

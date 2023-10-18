@@ -85,7 +85,7 @@ type
           if assigned(lEntity.FromUsedRodlId) then
             lEntity.FromUsedRodl := Owner.OwnerLibrary.Uses.Items.Where(b->b.UsedRodlId = lEntity.FromUsedRodlId).FirstOrDefault;
           var lIsNew := true;
-          for entity:T in fItems do begin
+          for entity: T in fItems do begin
             if (entity is RodlParameter) and (lEntity is RodlParameter) and
               (RodlParameter(entity).ParamFlag ≠ RodlParameter(lEntity).ParamFlag) then Continue;
             if entity.EntityID:&Equals(lEntity.EntityID) then begin

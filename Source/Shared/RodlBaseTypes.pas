@@ -138,14 +138,14 @@ type
       Owner := aOwner;
     end;
 
-    method AddEntity(entity : T);
+    method AddEntity(aEntity : T);
     begin
-      fItems.Add(entity);
+      fItems.Add(aEntity);
     end;
 
-    method RemoveEntity(entity: T);
+    method RemoveEntity(aEntity: T);
     begin
-      fItems.Remove(entity);
+      fItems.Remove(aEntity);
     end;
 
     method RemoveEntity(index: Int32);

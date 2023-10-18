@@ -13,18 +13,18 @@ type
   private
     method GenerateCodeFromCompileUnit(aUnit: CodeCompileUnit): not nullable String;
 
-    method ConvertRodlLibrary(library: RodlLibrary): not nullable RemObjects.SDK.Rodl.RodlLibrary;
+    method ConvertRodlLibrary(aLibrary: RodlLibrary): not nullable RemObjects.SDK.Rodl.RodlLibrary;
     begin
       result := new RemObjects.SDK.Rodl.RodlLibrary();
-      result.LoadFromString(library.ToString());
-      result.FileName := library.Filename;
+      result.LoadFromString(aLibrary.ToString());
+      result.FileName := aLibrary.Filename;
     end;
 
   protected
-    method GetIncludesNamespace(library: RodlLibrary): String; override;
+    method GetIncludesNamespace(aLibrary: RodlLibrary): String; override;
     begin
-      if assigned(library.Includes) then exit library.Includes.NetModule;
-      exit inherited GetIncludesNamespace(library);
+      if assigned(aLibrary.Includes) then exit aLibrary.Includes.NetModule;
+      exit inherited GetIncludesNamespace(aLibrary);
     end;
   public
     constructor;
@@ -36,11 +36,11 @@ type
 
     method GetCodeDomProviderForLanguage: nullable CodeDomProvider;
 
-    method GetGlobalName(library: RodlLibrary): String; override;
-    method GenerateInterfaceFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
-    method GenerateInvokerFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
-    method GenerateLegacyEventsFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
-    method GenerateImplementationFiles(library: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>; override;
+    method GetGlobalName(aLibrary: RodlLibrary): String; override;
+    method GenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
+    method GenerateInvokerFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
+    method GenerateLegacyEventsFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
+    method GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>; override;
   end;
 
 implementation
@@ -53,47 +53,47 @@ constructor EchoesCodeDomRodlCodeGen;
 begin
 end;
 
-method EchoesCodeDomRodlCodeGen.GetGlobalName(library: RodlLibrary): String;
+method EchoesCodeDomRodlCodeGen.GetGlobalName(aLibrary: RodlLibrary): String;
 begin
-  exit library.Name+"_Defines";
+  exit aLibrary.Name+"_Defines";
 end;
 
-method EchoesCodeDomRodlCodeGen.GenerateInterfaceFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
+method EchoesCodeDomRodlCodeGen.GenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
   var lCodegen := new CodeGen_Intf();
 
-  var lRodl := self.ConvertRodlLibrary(library);
+  var lRodl := self.ConvertRodlLibrary(aLibrary);
 
-  var lUnit := lCodegen.GenerateCompileUnit(lRodl, coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library)), FullFramework, AsyncSupport, false);
+  var lUnit := lCodegen.GenerateCompileUnit(lRodl, coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, GetNamespace(aLibrary)), FullFramework, AsyncSupport, false);
 
   result := GenerateCodeFromCompileUnit(lUnit);
 end;
 
-method EchoesCodeDomRodlCodeGen.GenerateInvokerFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String): not nullable String;
+method EchoesCodeDomRodlCodeGen.GenerateInvokerFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String): not nullable String;
 begin
   var lCodegen := new CodeGen_Invk();
 
-  var lRodl := self.ConvertRodlLibrary(library);
+  var lRodl := self.ConvertRodlLibrary(aLibrary);
 
-  var lUnit := lCodegen.GenerateCompileUnit(lRodl, coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library)), FullFramework, AsyncSupport);
+  var lUnit := lCodegen.GenerateCompileUnit(lRodl, coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, GetNamespace(aLibrary)), FullFramework, AsyncSupport);
 
   result := GenerateCodeFromCompileUnit(lUnit);
 end;
 
-method EchoesCodeDomRodlCodeGen.GenerateLegacyEventsFile(library: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
+method EchoesCodeDomRodlCodeGen.GenerateLegacyEventsFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
   result := '';
 end;
 
-method EchoesCodeDomRodlCodeGen.GenerateImplementationFiles(library: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>;
+method EchoesCodeDomRodlCodeGen.GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>;
 begin
   var lCodegen := new CodeGen_Impl();
 
-  var lRodl := self.ConvertRodlLibrary(library);
+  var lRodl := self.ConvertRodlLibrary(aLibrary);
   var lService := RemObjects.SDK.Rodl.RodlService(lRodl.Services.FindEntity(aServiceName));
   var lUnit: CodeCompileUnit;
   if assigned(lService) then
-    lUnit := lCodegen.GenerateCompileUnit(lService, coalesce(GetIncludesNamespace(library), aTargetNamespace, GetNamespace(library)), FullFramework)
+    lUnit := lCodegen.GenerateCompileUnit(lService, coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, GetNamespace(aLibrary)), FullFramework)
   else
     lUnit := lCodegen.GenerateCompileUnit(lRodl, aTargetNamespace, FullFramework, AsyncSupport);
 

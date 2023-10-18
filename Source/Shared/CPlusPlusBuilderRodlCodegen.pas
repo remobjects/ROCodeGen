@@ -6,23 +6,23 @@ type
   CPlusPlusBuilderRodlCodeGen = public class(DelphiRodlCodeGen)
   protected
     method _SetLegacyStrings(value: Boolean); override;
-    method Add_RemObjects_Inc(file: CGCodeUnit; library: RodlLibrary); empty;override;
-    method cpp_GenerateAsyncAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); override;
-    method cpp_GenerateAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition; aMode: ModeKind); override;
-    method cpp_IUnknownSupport(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); override;
-    method cpp_Impl_constructor(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); override;
+    method Add_RemObjects_Inc(aFile: CGCodeUnit; aLibrary: RodlLibrary); empty;override;
+    method cpp_GenerateAsyncAncestorMethodCalls(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition); override;
+    method cpp_GenerateAncestorMethodCalls(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition; aMode: ModeKind); override;
+    method cpp_IUnknownSupport(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition); override;
+    method cpp_Impl_constructor(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition); override;
     method cppGenerateProxyCast(aProxy: CGNewInstanceExpression; aInterface: CGNamedTypeReference):List<CGStatement>;override;
-    method cpp_GenerateProxyConstructors(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition); override;
+    method cpp_GenerateProxyConstructors(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition); override;
     method cpp_generateInheritedBody(aMethod: CGMethodDefinition);
     method cpp_generateDoLoginNeeded(aType: CGClassTypeDefinition);override;
-    method cpp_pragmalink(file: CGCodeUnit; aUnitName: String); override;
+    method cpp_pragmalink(aFile: CGCodeUnit; aUnitName: String); override;
     method cpp_ClassId(anExpression: CGExpression): CGExpression; override;
     method cpp_UuidId(anExpression: CGExpression): CGExpression; override;
     method cpp_Pointer(value: CGExpression): CGExpression;override;
     method cpp_AddressOf(value: CGExpression): CGExpression;override;
     method CapitalizeString(aValue: String):String;override;
     method cpp_GenerateArrayDestructor(anArray: CGTypeDefinition); override;
-    method cpp_smartInit(file: CGCodeUnit); override;
+    method cpp_smartInit(aFile: CGCodeUnit); override;
     method cpp_DefaultNamespace:CGExpression; override;
     method cpp_GetNamespaceForUses(aUse: RodlUse):String;override;
     method cpp_GlobalCondition_ns:CGConditionalDefine;override;
@@ -35,15 +35,15 @@ type
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
     method Array_GetLength(anArray: CGExpression): CGExpression; override;
     method RaiseError(aMessage:CGExpression; aParams:List<CGExpression>): CGExpression;override;
-    method ResolveDataTypeToTypeRefFullQualified(library: RodlLibrary; dataType: String; aDefaultUnitName: String; aOrigDataType: String := '';aCapitalize: Boolean := True): CGTypeReference; override;
-    method ResolveInterfaceTypeRef(library: RodlLibrary; dataType: String; aDefaultUnitName: String; aOrigDataType: String := ''; aCapitalize: Boolean := True): CGNamedTypeReference; override;
+    method ResolveDataTypeToTypeRefFullQualified(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String := '';aCapitalize: Boolean := True): CGTypeReference; override;
+    method ResolveInterfaceTypeRef(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String := ''; aCapitalize: Boolean := True): CGNamedTypeReference; override;
     method InterfaceCast(aSource, aType, aDest: CGExpression): CGExpression; override;
-    method GenerateTypeInfoCall(library: RodlLibrary; aTypeInfo: CGTypeReference): CGExpression; override;
-    method cppGenerateEnumTypeInfo(file: CGCodeUnit; library: RodlLibrary; entity: RodlEnum); override;
-    method GlobalsConst_GenerateServerGuid(file: CGCodeUnit; library: RodlLibrary; entity: RodlService); override;
+    method GenerateTypeInfoCall(aLibrary: RodlLibrary; aTypeInfo: CGTypeReference): CGExpression; override;
+    method cppGenerateEnumTypeInfo(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum); override;
+    method GlobalsConst_GenerateServerGuid(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService); override;
     method AddMessageDirective(aMessage: String): CGStatement; override;
-    method Impl_GenerateDFMInclude(file: CGCodeUnit);override;
-    method Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;override;
+    method Impl_GenerateDFMInclude(aFile: CGCodeUnit);override;
+    method Impl_CreateClassFactory(aLibrary: RodlLibrary; aEntity: RodlService; lvar: CGExpression): List<CGStatement>;override;
     method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);override;
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
     method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'):CGImport; override;
@@ -130,14 +130,14 @@ begin
 end;
 
 
-method CPlusPlusBuilderRodlCodeGen.cpp_GenerateAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition; aMode: ModeKind);
+method CPlusPlusBuilderRodlCodeGen.cpp_GenerateAncestorMethodCalls(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition; aMode: ModeKind);
 begin
-  if not assigned(entity.AncestorEntity) then exit;
-  if not (entity.AncestorEntity is RodlService) then exit;
-  var lentity := RodlService(entity.AncestorEntity);
+  if not assigned(aEntity.AncestorEntity) then exit;
+  if not (aEntity.AncestorEntity is RodlService) then exit;
+  var laEntity := RodlService(aEntity.AncestorEntity);
   case aMode of
     ModeKind.Plain: begin
-      for lmem in lentity.DefaultInterface.Items do begin
+      for lmem in laEntity.DefaultInterface.Items do begin
         {$REGION service methods}
         var mem := new CGMethodDefinition(lmem.Name,
                                           Virtuality := CGMemberVirtualityKind.Override,
@@ -146,8 +146,8 @@ begin
         for lmemparam in lmem.Items do begin
           if lmemparam.ParamFlag <> ParamFlags.Result then begin
             var lparam := new CGParameterDefinition(lmemparam.Name,
-                                                    ResolveDataTypeToTypeRefFullQualified(library,lmemparam.DataType, Intf_name));
-            if isComplex(library, lmemparam.DataType) and (lmemparam.ParamFlag = ParamFlags.In) then
+                                                    ResolveDataTypeToTypeRefFullQualified(aLibrary,lmemparam.DataType, Intf_name));
+            if isComplex(aLibrary, lmemparam.DataType) and (lmemparam.ParamFlag = ParamFlags.In) then
               lparam.Type := new CGConstantTypeReference(lparam.Type)
             else
               lparam.Modifier := RODLParamFlagToCodegenFlag(lmemparam.ParamFlag);
@@ -156,7 +156,7 @@ begin
           end;
         end;
 
-        if assigned(lmem.Result) then mem.ReturnType := ResolveDataTypeToTypeRefFullQualified(library,lmem.Result.DataType, Intf_name);
+        if assigned(lmem.Result) then mem.ReturnType := ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType, Intf_name);
         cpp_generateInheritedBody(mem);
         service.Members.Add(mem);
         {$ENDREGION}
@@ -164,8 +164,8 @@ begin
     end;
     ModeKind.Async: begin
       {$REGION Invoke_%service_method%}
-      for lmem in lentity.DefaultInterface.Items do begin
-          var lm := Intf_GenerateAsyncInvoke(library, lentity, lmem, false);
+      for lmem in laEntity.DefaultInterface.Items do begin
+          var lm := Intf_GenerateAsyncInvoke(aLibrary, laEntity, lmem, false);
           lm.Virtuality := CGMemberVirtualityKind.Override;
 
           cpp_generateInheritedBody(lm);
@@ -173,9 +173,9 @@ begin
         end;
       {$ENDREGION}
       {$REGION Retrieve_%service_method%}
-      for lmem in lentity.DefaultInterface.Items do
+      for lmem in laEntity.DefaultInterface.Items do
         if NeedsAsyncRetrieveOperationDefinition(lmem) then begin
-          var lm := Intf_GenerateAsyncRetrieve(library, lentity, lmem, false);
+          var lm := Intf_GenerateAsyncRetrieve(aLibrary, laEntity, lmem, false);
           lm.Virtuality := CGMemberVirtualityKind.Override;
           cpp_generateInheritedBody(lm);
           service.Members.Add(lm);
@@ -184,14 +184,14 @@ begin
     end;
     ModeKind.AsyncEx: begin
       {$REGION Begin%service_method%}
-      for lmem in lentity.DefaultInterface.Items do begin
-        var lm := Intf_GenerateAsyncExBegin(library, lentity, lmem, false, false);
+      for lmem in laEntity.DefaultInterface.Items do begin
+        var lm := Intf_GenerateAsyncExBegin(aLibrary, laEntity, lmem, false, false);
         lm.Virtuality := CGMemberVirtualityKind.Override;
 
         cpp_generateInheritedBody(lm);
         service.Members.Add(lm);
 
-        lm := Intf_GenerateAsyncExBegin(library, lentity, lmem, false, true);
+        lm := Intf_GenerateAsyncExBegin(aLibrary, laEntity, lmem, false, true);
         lm.Virtuality := CGMemberVirtualityKind.Override;
 
         cpp_generateInheritedBody(lm);
@@ -200,8 +200,8 @@ begin
       {$ENDREGION}
 
       {$REGION End%service_method%}
-      for lmem in lentity.DefaultInterface.Items do begin
-        var lm := Intf_GenerateAsyncExEnd(library, lentity, lmem, false);
+      for lmem in laEntity.DefaultInterface.Items do begin
+        var lm := Intf_GenerateAsyncExEnd(aLibrary, laEntity, lmem, false);
         lm.Virtuality := CGMemberVirtualityKind.Override;
         cpp_generateInheritedBody(lm);
         service.Members.Add(lm);
@@ -209,10 +209,10 @@ begin
       {$ENDREGION}
     end;
   end;
-  cpp_GenerateAncestorMethodCalls(library, lentity, service, aMode);
+  cpp_GenerateAncestorMethodCalls(aLibrary, laEntity, service, aMode);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.cpp_IUnknownSupport(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition);
+method CPlusPlusBuilderRodlCodeGen.cpp_IUnknownSupport(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition);
 begin
 
   var lm := new CGMethodDefinition('QueryInterface',
@@ -250,7 +250,7 @@ begin
   service.Members.Add(lm);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.cpp_Impl_constructor(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition);
+method CPlusPlusBuilderRodlCodeGen.cpp_Impl_constructor(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition);
 begin
   var ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public,
                                           CallingConvention := CGCallingConventionKind.Register);
@@ -259,27 +259,27 @@ begin
   service.Members.Add(ctor);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.ResolveInterfaceTypeRef(library: RodlLibrary; dataType: String; aDefaultUnitName: String; aOrigDataType: String; aCapitalize: Boolean): CGNamedTypeReference;
+method CPlusPlusBuilderRodlCodeGen.ResolveInterfaceTypeRef(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String; aCapitalize: Boolean): CGNamedTypeReference;
 begin
-  var lLower := dataType.ToLowerInvariant();
+  var lLower := aDataType.ToLowerInvariant();
   if CodeGenTypes.ContainsKey(lLower) then
     exit CGNamedTypeReference(CodeGenTypes[lLower]) // hack, only possibly type is IXMLNode
   else begin
-    if assigned(library) then begin
-      var namesp := ResolveNamespace(library,dataType,aDefaultUnitName,aOrigDataType);
+    if assigned(aLibrary) then begin
+      var namesp := ResolveNamespace(aLibrary,aDataType,aDefaultUnitName,aOrigDataType);
       if String.IsNullOrEmpty(namesp) then
-        exit new CGNamedTypeReference('_di_'+dataType) isClassType(false)
+        exit new CGNamedTypeReference('_di_'+aDataType) isClassType(false)
       else
-        exit new CGNamedTypeReference('_di_'+dataType)
+        exit new CGNamedTypeReference('_di_'+aDataType)
                                       &namespace(new CGNamespaceReference(namesp))
                                       isClassType(false);
     end
     else begin
       if String.IsNullOrEmpty(aDefaultUnitName) then
-        exit new CGNamedTypeReference('_di_'+dataType) isClassType(false)
+        exit new CGNamedTypeReference('_di_'+aDataType) isClassType(false)
       else begin
         var lns := iif(aCapitalize and (aDefaultUnitName <> targetNamespace) ,CapitalizeString(aDefaultUnitName), aDefaultUnitName);
-        exit new CGNamedTypeReference('_di_'+dataType)
+        exit new CGNamedTypeReference('_di_'+aDataType)
                                       &namespace(new CGNamespaceReference(lns))
                                       isClassType(false);
       end;
@@ -293,7 +293,7 @@ begin
   exit new CGMethodCallExpression(aSource,'Supports',[aDest.AsCallParameter], CallSiteKind := CGCallSiteKind.Reference);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.GenerateTypeInfoCall(library: RodlLibrary; aTypeInfo: CGTypeReference): CGExpression;
+method CPlusPlusBuilderRodlCodeGen.GenerateTypeInfoCall(aLibrary: RodlLibrary; aTypeInfo: CGTypeReference): CGExpression;
 begin
   if aTypeInfo is CGPredefinedTypeReference then begin
     var l_method: String;
@@ -326,9 +326,9 @@ begin
     end;
     if not String.IsNullOrEmpty(l_method) then
       exit new CGMethodCallExpression('Urotypes'.AsNamedIdentifierExpression, l_method, CallSiteKind := CGCallSiteKind.Static);
-    if isComplex(library, l_name) then
+    if isComplex(aLibrary, l_name) then
       exit new CGMethodCallExpression(nil,'__typeinfo',[l_name.AsNamedIdentifierExpression.AsCallParameter]);
-    if isEnum(library, l_name) then begin
+    if isEnum(aLibrary, l_name) then begin
       var lnamespace: CGExpression := nil;
       if assigned(CGNamedTypeReference(aTypeInfo).Namespace)then lnamespace := CGNamedTypeReference(aTypeInfo).Namespace.Name.AsNamedIdentifierExpression;
       exit new CGMethodCallExpression(lnamespace, 'GetTypeInfo_'+l_name, CallSiteKind := CGCallSiteKind.Static);
@@ -338,10 +338,10 @@ begin
   raise new Exception(String.Format('GenerateTypeInfoCall: Unsupported type reference: {0}',[aTypeInfo.ToString]));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.cppGenerateEnumTypeInfo(file: CGCodeUnit; library: RodlLibrary; entity: RodlEnum);
+method CPlusPlusBuilderRodlCodeGen.cppGenerateEnumTypeInfo(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum);
 begin
-  var lenum_typeref := new CGNamedTypeReference(entity.Name) isclasstype(false);
-  var lenum := new CGClassTypeDefinition(entity.Name+'TypeHolder','TPersistent'.AsTypeReference,
+  var lenum_typeref := new CGNamedTypeReference(aEntity.Name) isclasstype(false);
+  var lenum := new CGClassTypeDefinition(aEntity.Name+'TypeHolder','TPersistent'.AsTypeReference,
                                          Visibility := CGTypeVisibilityKind.Public);
   lenum.Members.Add(new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public,
                                                 CallingConvention := CGCallingConventionKind.Register));
@@ -351,9 +351,9 @@ begin
                                              Visibility := CGMemberVisibilityKind.Published,
                                              GetExpression := 'fHolderField'.AsNamedIdentifierExpression,
                                              SetExpression := 'fHolderField'.AsNamedIdentifierExpression));
-  file.Types.Add(lenum);
+  aFile.Types.Add(lenum);
 
-  file.Globals.Add(new CGMethodDefinition('GetTypeInfo_'+entity.Name,
+  aFile.Globals.Add(new CGMethodDefinition('GetTypeInfo_'+aEntity.Name,
                                             [new CGPointerDereferenceExpression(new CGFieldAccessExpression(
                                                   new CGMethodCallExpression(nil, 'GetPropInfo',
                                                                             [new CGMethodCallExpression(nil, '__typeinfo',[lenum.Name.AsNamedIdentifierExpression.AsCallParameter]).AsCallParameter,
@@ -367,17 +367,17 @@ begin
                                             ).AsGlobal);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.GlobalsConst_GenerateServerGuid(file: CGCodeUnit; library: RodlLibrary; entity: RodlService);
+method CPlusPlusBuilderRodlCodeGen.GlobalsConst_GenerateServerGuid(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
-  var lname := entity.Name;
-  file.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]),
+  var lname := aEntity.Name;
+  aFile.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]),
                                          new CGNamedTypeReference('GUID') isClasstype(false),
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Initializer := new CGMethodCallExpression(
                                                               'Sysutils'.AsNamedIdentifierExpression,
                                                               'StringToGUID',
-                                                              [('{'+String(entity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
+                                                              [('{'+String(aEntity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
                                                               CallSiteKind := CGCallSiteKind.Static)
                                        ).AsGlobal);
 end;
@@ -413,7 +413,7 @@ begin
 
 end;
 
-method CPlusPlusBuilderRodlCodeGen.cpp_GenerateProxyConstructors(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition);
+method CPlusPlusBuilderRodlCodeGen.cpp_GenerateProxyConstructors(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition);
 begin
 
   {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%; overload;}
@@ -463,15 +463,15 @@ begin
   exit new CGRawStatement('#pragma message("'+aMessage+'")');
 end;
 
-method CPlusPlusBuilderRodlCodeGen.Impl_GenerateDFMInclude(file: CGCodeUnit);
+method CPlusPlusBuilderRodlCodeGen.Impl_GenerateDFMInclude(aFile: CGCodeUnit);
 begin
-  file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma resource "*.dfm"'));
+  aFile.ImplementationDirectives.Add(new CGCompilerDirective('#pragma resource "*.dfm"'));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.Impl_CreateClassFactory(&library: RodlLibrary; entity: RodlService; lvar: CGExpression): List<CGStatement>;
+method CPlusPlusBuilderRodlCodeGen.Impl_CreateClassFactory(aLibrary: RodlLibrary; aEntity: RodlService; lvar: CGExpression): List<CGStatement>;
 begin
   var r := new List<CGStatement>;
-  var l_EntityName := entity.Name;
+  var l_EntityName := aEntity.Name;
   var l_TInvoker := 'T'+l_EntityName+'_Invoker';
   var l_methodName := 'Create_'+l_EntityName;
 
@@ -496,9 +496,9 @@ begin
 
 end;
 
-method CPlusPlusBuilderRodlCodeGen.cpp_pragmalink(file: CGCodeUnit; aUnitName: String);
+method CPlusPlusBuilderRodlCodeGen.cpp_pragmalink(aFile: CGCodeUnit; aUnitName: String);
 begin
-  file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma link "'+aUnitName+'"'));
+  aFile.ImplementationDirectives.Add(new CGCompilerDirective('#pragma link "'+aUnitName+'"'));
 end;
 
 method CPlusPlusBuilderRodlCodeGen.AddDynamicArrayParameter(aMethod: CGMethodCallExpression; aDynamicArrayParam: CGExpression);
@@ -507,9 +507,9 @@ begin
   aMethod.Parameters.Add(new CGFieldAccessExpression(aDynamicArrayParam,'Length', CallSiteKind := CGCallSiteKind.Instance).AsCallParameter);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.ResolveDataTypeToTypeRefFullQualified(library: RodlLibrary; dataType: String; aDefaultUnitName: String; aOrigDataType: String; aCapitalize: Boolean): CGTypeReference;
+method CPlusPlusBuilderRodlCodeGen.ResolveDataTypeToTypeRefFullQualified(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String; aCapitalize: Boolean): CGTypeReference;
 begin
-  exit inherited ResolveDataTypeToTypeRefFullQualified(library, dataType, aDefaultUnitName, aOrigDataType, aCapitalize and (aDefaultUnitName <> targetNamespace));
+  exit inherited ResolveDataTypeToTypeRefFullQualified(aLibrary, aDataType, aDefaultUnitName, aOrigDataType, aCapitalize and (aDefaultUnitName <> targetNamespace));
 end;
 
 method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
@@ -602,7 +602,7 @@ begin
   exit new CGUnaryOperatorExpression(value, CGUnaryOperatorKind.AddressOf);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.cpp_GenerateAsyncAncestorMethodCalls(library: RodlLibrary; entity: RodlService; service: CGTypeDefinition);
+method CPlusPlusBuilderRodlCodeGen.cpp_GenerateAsyncAncestorMethodCalls(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition);
 begin
       //bool __fastcall GetBusy(void);
       service.Members.Add(new CGMethodDefinition('GetBusy',
@@ -660,9 +660,9 @@ begin
                                                  CallingConvention := CGCallingConventionKind.Register));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.cpp_smartInit(file: CGCodeUnit);
+method CPlusPlusBuilderRodlCodeGen.cpp_smartInit(aFile: CGCodeUnit);
 begin
-  file.ImplementationDirectives.Add(new CGCompilerDirective('#pragma package(smart_init)'));
+  aFile.ImplementationDirectives.Add(new CGCompilerDirective('#pragma package(smart_init)'));
 end;
 
 method CPlusPlusBuilderRodlCodeGen._SetLegacyStrings(value: Boolean);

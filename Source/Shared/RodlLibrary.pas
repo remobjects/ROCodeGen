@@ -45,12 +45,12 @@ type
       LoadFromUrl(aURL);
     end;
 
-    method LoadFromString(aString: String; use: RodlUse := nil);
+    method LoadFromString(aString: String; aUse: RodlUse := nil);
     begin
       if length(aString) > 0 then begin
         case aString[0] of
-          '<': LoadFromXmlNode(XmlDocument.FromString(aString).Root, use);
-          '{': LoadFromJsonNode(JsonDocument.FromString(aString).Root, use);
+          '<': LoadFromXmlNode(XmlDocument.FromString(aString).Root, aUse);
+          '{': LoadFromJsonNode(JsonDocument.FromString(aString).Root, aUse);
           else raise new Exception("Unexpected file format for rodl.");
         end;
       end;
@@ -102,9 +102,9 @@ type
       end;
     end;
 
-    method LoadUsedLibraryFromFile(aFilename: String; use: RodlUse);
+    method LoadUsedLibraryFromFile(aFilename: String; aUse: RodlUse);
     begin
-      LoadFromString(File.ReadText(aFilename), use);
+      LoadFromString(File.ReadText(aFilename), aUse);
     end;
 
     method SaveToFile(aFilename: String; flattenUsedRODLs: Boolean = true);

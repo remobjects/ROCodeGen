@@ -61,7 +61,7 @@ public __abstract class ServerAccessCodeGen {
 
 		generateSingletonPattern(serverAccess)
 		generateBasics(serverAccess)
-		generateServices(serverAccess, library: rodl)
+		generateServices(serverAccess, aLibrary: rodl)
 
 		return unit
 	}
@@ -100,7 +100,7 @@ public __abstract class ServerAccessCodeGen {
 		return serverAccess
 	}
 
-	/*fileprivate*/internal func generateServices(_ serverAccess: CGClassTypeDefinition,  library: RodlLibrary) {
+	/*fileprivate*/internal func generateServices(_ serverAccess: CGClassTypeDefinition,  aLibrary: RodlLibrary) {
 		for i in 0 ..< rodl.Services.Count {
 			let service = rodl.Services[i]
 			if isCodeGenerationRequired(service) {
@@ -426,7 +426,7 @@ public class JavaServerAccessCodeGen : ServerAccessCodeGen {
 
 	func generateFiles(_ generator: CGCodeGenerator) -> Dictionary<String,String> {
 		let result = Dictionary<String,String>()
-		//var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), library.Namespace,aTargetNamespace);
+		//var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), aLibrary.Namespace,aTargetNamespace);
 		let unit = generateCodeUnit()
 		for k in unit.Types {
 			result.Add(Path.ChangeExtension(k.Name, generator.defaultFileExtension), generator.GenerateUnitForSingleType(k, unit: unit))

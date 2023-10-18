@@ -14,43 +14,43 @@ type
     property NSUIntegerType: CGTypeReference read (if IsAppleSwift then "UInt"     else "NSUInteger").AsTypeReference(false);
     property SELType:        CGTypeReference read (if IsAppleSwift then "Selector" else "SEL").AsTypeReference(false);
 
-    method GetNumberFN(dataType: String):String;
-    method GetReaderStatement(library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGStatement;
-    method GetReaderExpression(library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGExpression;
-    method GetWriterStatement(library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"; isMethod: Boolean; aInOnly: Boolean := false): CGStatement;
+    method GetNumberFN(aDataType: String):String;
+    method GetReaderStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGStatement;
+    method GetReaderExpression(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGExpression;
+    method GetWriterStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"; isMethod: Boolean; aInOnly: Boolean := false): CGStatement;
 
-    method WriteToMessage_Method(library: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
-    method ReadFromMessage_Method(library: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
+    method WriteToMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
+    method ReadFromMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
 
-    method GenerateServiceProxyMethod(library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceProxyMethodDeclaration(library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyBeginMethod_Body(library: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
-    method GenerateServiceAsyncProxyBeginMethod(library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyBeginMethod_start(library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyBeginMethod_startWithBlock(library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyBeginMethodDeclaration(library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyEndMethod(library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceProxyMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceProxyMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyBeginMethod_Body(aLibrary: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
+    method GenerateServiceAsyncProxyBeginMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyBeginMethod_start(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 
-    method GenerateOperationAttribute(library: RodlLibrary; aEntity: RodlOperation;Statements: List<CGStatement>);
-    method GenerateServiceMethods(library: RodlLibrary; aEntity: RodlService; service:CGClassTypeDefinition);
+    method GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity: RodlOperation;Statements: List<CGStatement>);
+    method GenerateServiceMethods(aLibrary: RodlLibrary; aEntity: RodlService; service:CGClassTypeDefinition);
 
-    method HandleAtributes_private(library: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
-    method HandleAtributes_public(library: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
+    method HandleAtributes_private(aLibrary: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
+    method HandleAtributes_public(aLibrary: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
     method ApplyParamDirection(paramFlag: ParamFlags; aInOnly: Boolean := false): CGParameterModifierKind;
     method ApplyParamDirectionExpression(aExpr: CGExpression; paramFlag: ParamFlags; aInOnly: Boolean := false): CGExpression;
   protected
-    method isClassType(library: RodlLibrary; dataType: String): Boolean;
-    method AddUsedNamespaces(file: CGCodeUnit; library: RodlLibrary); override;
-    method AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary);override;
-    method GenerateEnum(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlEnum); override;
-    method GenerateStruct(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlStruct); override;
-    method GenerateArray(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlArray); override;
-    method GenerateOldStyleArray(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlArray);
-    method GenerateException(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlException); override;
-    method GenerateService(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlService); override;
-    method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; aEntity: RodlEventSink); override;
-    method GetIncludesNamespace(library: RodlLibrary): String; override;
-    method GetGlobalName(library: RodlLibrary): String; override;
+    method isClassType(aLibrary: RodlLibrary; aDataType: String): Boolean;
+    method AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary); override;
+    method AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary);override;
+    method GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum); override;
+    method GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct); override;
+    method GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray); override;
+    method GenerateOldStyleArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
+    method GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException); override;
+    method GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService); override;
+    method GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink); override;
+    method GetIncludesNamespace(aLibrary: RodlLibrary): String; override;
+    method GetGlobalName(aLibrary: RodlLibrary): String; override;
 
     property EnumBaseType: CGTypeReference read NSUIntegerType; override;
   public
@@ -63,27 +63,27 @@ type
 
 implementation
 
-method CocoaRodlCodeGen.AddUsedNamespaces(file: CGCodeUnit; &library: RodlLibrary);
+method CocoaRodlCodeGen.AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  file.Imports.Add(new CGImport(new CGNamespaceReference("Foundation")));
-  file.Imports.Add(new CGImport(new CGNamespaceReference("RemObjectsSDK")));
-  for rodl: RodlUse in library.Uses.Items do begin
+  aFile.Imports.Add(new CGImport(new CGNamespaceReference("Foundation")));
+  aFile.Imports.Add(new CGImport(new CGNamespaceReference("RemObjectsSDK")));
+  for rodl: RodlUse in aLibrary.Uses.Items do begin
     if length(rodl.Includes:CocoaModule) > 0 then
-      file.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Includes.CocoaModule)))
+      aFile.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Includes.CocoaModule)))
     else if length(rodl.Namespace) > 0 then
-      file.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Namespace)))
+      aFile.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Namespace)))
     else
-      file.HeaderComment.Lines.Add(String.Format("Requires RODL file {0} ({1}) in same namespace.", [rodl.Name, rodl.FileName]));
+      aFile.HeaderComment.Lines.Add(String.Format("Requires RODL aFile {0} ({1}) in same namespace.", [rodl.Name, rodl.FileName]));
   end;
 end;
 
-method CocoaRodlCodeGen.GenerateEnum(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlEnum);
+method CocoaRodlCodeGen.GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum);
 begin
-  inherited GenerateEnum(file, &library, aEntity);
+  inherited GenerateEnum(aFile, aLibrary, aEntity);
   var lname := SafeIdentifier(aEntity.Name);
   var lenum := new CGClassTypeDefinition(lname+"__EnumMetaData", "ROEnumMetaData".AsTypeReference,
                                          Visibility := CGTypeVisibilityKind.Public);
-  file.Types.Add(lenum);
+  aFile.Types.Add(lenum);
 
   var linst :=  lname+"__EnumMetaDataInstance";
   lenum.Members.Add(new CGFieldDefinition(linst,
@@ -128,7 +128,7 @@ begin
     {$REGION method stringFromValue(aValue: Integer): NSString;}
     var lcases := new List<CGSwitchStatementCase>;
     for enummember: RodlEnumValue in aEntity.Items index i do begin
-      var lmName := GenerateEnumMemberName(library, aEntity, enummember);
+      var lmName := GenerateEnumMemberName(aLibrary, aEntity, enummember);
       lcases.Add(new CGSwitchStatementCase(i.AsLiteralExpression, [CGStatement(lmName.AsLiteralExpression.AsReturnStatement)].ToList));
     end;
     var sw: CGStatement := new CGSwitchStatement("aValue".AsNamedIdentifierExpression,
@@ -145,7 +145,7 @@ begin
     {$REGION method valueFromString(aValue: NSString): Integer; override;}
     var lArgs := new List<CGCallParameter>;
     for enummember: RodlEnumValue in aEntity.Items do begin
-      var lmName := GenerateEnumMemberName(library, aEntity, enummember);
+      var lmName := GenerateEnumMemberName(aLibrary, aEntity, enummember);
       var lParameter := new CGTypeCastExpression(new CGEnumValueAccessExpression(lname.AsTypeReference,lmName), NSUIntegerType, ThrowsException := true);
       lArgs.Add(if IsSwift then new CGNewInstanceExpression("NSNumber".AsTypeReferenceExpression, [lParameter.AsCallParameter("unsignedInt")]).AsCallParameter
                 else new CGMethodCallExpression("NSNumber".AsTypeReferenceExpression, "numberWithInt", [lParameter.AsCallParameter].ToList).AsEllipsisCallParameter);
@@ -219,7 +219,7 @@ begin
 
 end;
 
-method CocoaRodlCodeGen.GenerateStruct(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlStruct);
+method CocoaRodlCodeGen.GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);
 begin
   var lAncestorName := aEntity.AncestorName;
   if String.IsNullOrEmpty(lAncestorName) then lAncestorName := "ROComplexType";
@@ -228,22 +228,22 @@ begin
                                            Visibility := CGTypeVisibilityKind.Public,
                                            Comment := GenerateDocumentation(aEntity));
   lStruct.Attributes.Add(new CGAttribute("objc".AsTypeReference, SafeIdentifier(aEntity.Name).AsNamedIdentifierExpression.AsCallParameter));
-  file.Types.Add(lStruct);
+  aFile.Types.Add(lStruct);
   {$REGION private class class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lStruct.Members.Add(HandleAtributes_private(&library,aEntity));
+    lStruct.Members.Add(HandleAtributes_private(aLibrary,aEntity));
   {$ENDREGION}
   {$REGION public class method getAttributeValue(aName: NSString): NSString;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lStruct.Members.Add(HandleAtributes_public(&library,aEntity));
+    lStruct.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
   {$REGION public property %fldname%: %fldtype%}
   for m: RodlTypedEntity in aEntity.Items do begin
-    var lType := ResolveDataTypeToTypeRef(&library, m.DataType);
+    var lType := ResolveDataTypeToTypeRef(aLibrary, m.DataType);
     var p := new CGPropertyDefinition(m.Name, lType,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       Comment := GenerateDocumentation(m));
-    var lEnumDefault := FindEnum(library, m.DataType):DefaultValueName;
+    var lEnumDefault := FindEnum(aLibrary, m.DataType):DefaultValueName;
     if assigned(lEnumDefault) then
       p.Initializer := new CGEnumValueAccessExpression(lType, lEnumDefault);
     lStruct.Members.Add(p);
@@ -260,39 +260,39 @@ begin
 
   if aEntity.Items.Count >0 then begin
     {$REGION public method writeToMessage(aMessage: ROMessage) withName(aName: NSString); override;}
-    lStruct.Members.Add(WriteToMessage_Method(&library,aEntity));
+    lStruct.Members.Add(WriteToMessage_Method(aLibrary,aEntity));
     {$ENDREGION}
     {$REGION public method readFromMessage(aMessage: ROMessage) withName(aName: NSString); override;}
-    lStruct.Members.Add(ReadFromMessage_Method(&library,aEntity));
+    lStruct.Members.Add(ReadFromMessage_Method(aLibrary,aEntity));
     {$ENDREGION}
   end;
 end;
 
-method CocoaRodlCodeGen.GenerateArray(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlArray);
+method CocoaRodlCodeGen.GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
 begin
   var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), "ROMutableArray".AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
                                           Comment := GenerateDocumentation(aEntity));
-  file.Types.Add(lArray);
+  aFile.Types.Add(lArray);
 
   {$REGION private class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lArray.Members.Add(HandleAtributes_private(&library,aEntity));
+    lArray.Members.Add(HandleAtributes_private(aLibrary,aEntity));
   {$ENDREGION}
   {$REGION public class method getAttributeValue(aName: NSString): NSString;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lArray.Members.Add(HandleAtributes_public(&library,aEntity));
+    lArray.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
 
-  var lElementType:= ResolveDataTypeToTypeRef(&library, SafeIdentifier(aEntity.ElementType));
-  var lIsEnum := isEnum(&library,aEntity.ElementType);
-  var lIsComplex := isComplex(&library, aEntity.ElementType);
-  var lIsArray := isArray(&library, aEntity.ElementType);
+  var lElementType:= ResolveDataTypeToTypeRef(aLibrary, SafeIdentifier(aEntity.ElementType));
+  var lIsEnum := isEnum(aLibrary,aEntity.ElementType);
+  var lIsComplex := isComplex(aLibrary, aEntity.ElementType);
+  var lIsArray := isArray(aLibrary, aEntity.ElementType);
   var lIsSimple := not (lIsEnum or lIsComplex);
 
   {$REGION method itemClass: &Class; override;}
   if lIsComplex then begin
-    var l_elementType2 := ResolveDataTypeToTypeRef(&library,SafeIdentifier(aEntity.ElementType)).NotNullable;
+    var l_elementType2 := ResolveDataTypeToTypeRef(aLibrary,SafeIdentifier(aEntity.ElementType)).NotNullable;
     lArray.Members.Add(
       new CGPropertyDefinition(
         "itemClass", CGPredefinedTypeReference.Class.NotNullable,
@@ -336,10 +336,10 @@ begin
   if ReaderFunctions.ContainsKey(lLower) then begin
     lMethodName := ReaderFunctions[lLower];
   end
-  else if isArray(&library, aEntity.ElementType) then begin
+  else if isArray(aLibrary, aEntity.ElementType) then begin
     lMethodName := "MutableArray";
   end
-  else if isStruct(&library, aEntity.ElementType) then begin
+  else if isStruct(aLibrary, aEntity.ElementType) then begin
     lMethodName := "Complex";
   end
   else if lIsEnum then begin
@@ -404,24 +404,24 @@ begin
   {$ENDREGION}
 end;
 
-method CocoaRodlCodeGen.GenerateOldStyleArray(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlArray);
+method CocoaRodlCodeGen.GenerateOldStyleArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
 begin
   var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), "ROArray".AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
                                           Comment := GenerateDocumentation(aEntity));
-  file.Types.Add(lArray);
+  aFile.Types.Add(lArray);
   {$REGION private class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lArray.Members.Add(HandleAtributes_private(&library,aEntity));
+    lArray.Members.Add(HandleAtributes_private(aLibrary,aEntity));
   {$ENDREGION}
   {$REGION public class method getAttributeValue(aName: NSString): NSString;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lArray.Members.Add(HandleAtributes_public(&library,aEntity));
+    lArray.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
 
-  var lElementType:= ResolveDataTypeToTypeRef(&library,SafeIdentifier(aEntity.ElementType));
-  var lIsEnum := isEnum(&library,aEntity.ElementType);
-  var lIsComplex := iif(not lIsEnum,isComplex(&library,aEntity.ElementType), false) ;
+  var lElementType:= ResolveDataTypeToTypeRef(aLibrary,SafeIdentifier(aEntity.ElementType));
+  var lIsEnum := isEnum(aLibrary,aEntity.ElementType);
+  var lIsComplex := iif(not lIsEnum,isComplex(aLibrary,aEntity.ElementType), false) ;
   var lIsSimple := not (lIsEnum or lIsComplex);
 
   {$REGION method add: %ARRAY_TYPE%;}
@@ -526,7 +526,7 @@ begin
 
   {$REGION method itemClass: &Class; override;}
   if lIsComplex then begin
-    var l_elementType2 := ResolveDataTypeToTypeRef(&library,SafeIdentifier(aEntity.ElementType)).NotNullable;
+    var l_elementType2 := ResolveDataTypeToTypeRef(aLibrary,SafeIdentifier(aEntity.ElementType)).NotNullable;
     lArray.Members.Add(
       new CGPropertyDefinition(
         "itemClass", CGPredefinedTypeReference.Class,
@@ -555,10 +555,10 @@ begin
   if ReaderFunctions.ContainsKey(lLower) then begin
     lMethodName := ReaderFunctions[lLower];
   end
-  else if isArray(&library, aEntity.ElementType) then begin
+  else if isArray(aLibrary, aEntity.ElementType) then begin
     lMethodName := "MutableArray";
   end
-  else if isStruct(&library, aEntity.ElementType) then begin
+  else if isStruct(aLibrary, aEntity.ElementType) then begin
     lMethodName := "Complex";
   end
   else if lIsEnum then begin
@@ -612,29 +612,29 @@ begin
   {$ENDREGION}
 end;
 
-method CocoaRodlCodeGen.GenerateException(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlException);
+method CocoaRodlCodeGen.GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException);
 begin
   var lAncestorName := aEntity.AncestorName;
   if String.IsNullOrEmpty(lAncestorName) then lAncestorName := "ROException";
   var lException := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestorName.AsTypeReference,
                                               Visibility := CGTypeVisibilityKind.Public,
                                               Comment := GenerateDocumentation(aEntity));
-  file.Types.Add(lException);
+  aFile.Types.Add(lException);
 
   {$REGION private class class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lException.Members.Add(HandleAtributes_private(&library,aEntity));
+    lException.Members.Add(HandleAtributes_private(aLibrary,aEntity));
   {$ENDREGION}
 
   {$REGION public class method getAttributeValue(aName: NSString): NSString;}
   if (aEntity.CustomAttributes.Count > 0) then
-    lException.Members.Add(HandleAtributes_public(&library,aEntity));
+    lException.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
 
   {$REGION public property %fldname%: %fldtype%}
   for m: RodlTypedEntity in aEntity.Items do
     lException.Members.Add(new CGPropertyDefinition(m.Name,
-                                                    ResolveDataTypeToTypeRef(&library,m.DataType),
+                                                    ResolveDataTypeToTypeRef(aLibrary,m.DataType),
                                                     Visibility:= CGMemberVisibilityKind.Public,
                                                     Comment := GenerateDocumentation(m)));
   {$ENDREGION}
@@ -676,23 +676,23 @@ begin
 
   if aEntity.Items.Count >0 then begin
     {$REGION public method writeToMessage(aMessage: ROMessage) withName(aName: NSString); override;}
-    lException.Members.Add(WriteToMessage_Method(&library,aEntity));
+    lException.Members.Add(WriteToMessage_Method(aLibrary,aEntity));
     {$ENDREGION}
     {$REGION public method readFromMessage(aMessage: ROMessage) withName(aName: NSString); override;}
-    lException.Members.Add(ReadFromMessage_Method(&library,aEntity));
+    lException.Members.Add(ReadFromMessage_Method(aLibrary,aEntity));
     {$ENDREGION}
   end;
 end;
 
-method CocoaRodlCodeGen.GenerateService(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlService);
+method CocoaRodlCodeGen.GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
   {$REGION I%SERVICE_NAME%}
   var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name),
                                                  Visibility := CGTypeVisibilityKind.Public,
                                                  Comment := GenerateDocumentation(aEntity));
-  file.Types.Add(lIService);
+  aFile.Types.Add(lIService);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
-    var m := GenerateServiceProxyMethodDeclaration(&library, lop);
+    var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
     m.Comment := GenerateDocumentation(lop, true);
     lIService.Members.Add(m);
   end;
@@ -703,12 +703,12 @@ begin
   var lIServiceAsync := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async"),
                                                       Visibility := CGTypeVisibilityKind.Public,
                                                       Comment := GenerateDocumentation(aEntity));
-  file.Types.Add(lIServiceAsync);
+  aFile.Types.Add(lIServiceAsync);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod(&library, lop));
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_start(&library, lop));
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(&library, lop));
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethod(&library, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_start(aLibrary, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethod(aLibrary, lop));
   end;
 
   {$ENDREGION}
@@ -723,12 +723,12 @@ begin
                                                  [lAncestorName.AsTypeReference].ToList,
                                                  [lIService.Name.AsTypeReference].ToList,
                                                  Visibility := CGTypeVisibilityKind.Public);
-  file.Types.Add(lServiceProxy);
+  aFile.Types.Add(lServiceProxy);
 
-  GenerateServiceMethods(&library,aEntity, lServiceProxy);
+  GenerateServiceMethods(aLibrary,aEntity, lServiceProxy);
 
   for lop : RodlOperation in aEntity.DefaultInterface:Items do
-    lServiceProxy.Members.Add(GenerateServiceProxyMethod(&library,lop));
+    lServiceProxy.Members.Add(GenerateServiceProxyMethod(aLibrary,lop));
   {$ENDREGION}
 
   {$REGION %SERVICE_NAME%_AsyncProxy}
@@ -741,29 +741,29 @@ begin
   var lServiceAsyncProxy := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name+"_AsyncProxy"),lAncestorName.AsTypeReference,
                                                       [lIServiceAsync.Name.AsTypeReference].ToList,
                                                       Visibility := CGTypeVisibilityKind.Public);
-  file.Types.Add(lServiceAsyncProxy);
-  GenerateServiceMethods(&library,aEntity,lServiceAsyncProxy);
+  aFile.Types.Add(lServiceAsyncProxy);
+  GenerateServiceMethods(aLibrary,aEntity,lServiceAsyncProxy);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
-    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod(&library, lop));
-    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod_start(&library, lop));
-    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(&library, lop));
-    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyEndMethod(&library, lop));
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod_start(aLibrary, lop));
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary, lop));
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyEndMethod(aLibrary, lop));
   end;
   {$ENDREGION}
 end;
 
-method CocoaRodlCodeGen.GenerateEventSink(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlEventSink);
+method CocoaRodlCodeGen.GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink);
 begin
   var lIEvent := new CGInterfaceTypeDefinition("I"+aEntity.Name,
                                               Visibility := CGTypeVisibilityKind.Public,
                                               Comment:= GenerateDocumentation(aEntity));
-  file.Types.Add(lIEvent);
+  aFile.Types.Add(lIEvent);
 
   var lEventInvoker := new CGClassTypeDefinition(aEntity.Name+"_EventInvoker", "ROEventInvoker".AsTypeReference,
                             Visibility := CGTypeVisibilityKind.Public
                             );
   lEventInvoker.Attributes.Add(new CGAttribute("objc".AsTypeReference, SafeIdentifier(aEntity.Name+"_EventInvoker").AsNamedIdentifierExpression.AsCallParameter));
-  file.Types.Add(lEventInvoker);
+  aFile.Types.Add(lEventInvoker);
 
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
 
@@ -773,7 +773,7 @@ begin
     lIEvent.Members.Add(lievent_method);
     var lInParam:=new List<RodlParameter>;
     for m: RodlParameter in lop.Items do begin
-      lievent_method.Parameters.Add(new CGParameterDefinition(SafeIdentifier(m.Name),ResolveDataTypeToTypeRef(library,m.DataType), Modifier := ApplyParamDirection(m.ParamFlag)));
+      lievent_method.Parameters.Add(new CGParameterDefinition(SafeIdentifier(m.Name),ResolveDataTypeToTypeRef(aLibrary,m.DataType), Modifier := ApplyParamDirection(m.ParamFlag)));
       if m.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then lInParam.Add(m);
     end;
 
@@ -840,7 +840,7 @@ begin
     var linc := 2;
     for m: RodlParameter in lInParam do begin
       var lm_name:= "___"+SafeIdentifier(m.Name);
-      if_true.Statements.Add(new CGVariableDeclarationStatement(lm_name,ResolveDataTypeToTypeRef(library,m.DataType),GetReaderExpression(&library,m)));
+      if_true.Statements.Add(new CGVariableDeclarationStatement(lm_name,ResolveDataTypeToTypeRef(aLibrary,m.DataType),GetReaderExpression(aLibrary,m)));
       if_true.Statements.Add(new CGMethodCallExpression("___invocation".AsNamedIdentifierExpression,
                                                         "setArgument",
                                                         [new CGCallParameter(new CGUnaryOperatorExpression(lm_name.AsNamedIdentifierExpression, CGUnaryOperatorKind.AddressOf)),
@@ -926,7 +926,7 @@ begin
   CodeGenTypes.Add("xsdatetime", "Date".AsTypeReference);
 end;
 
-method CocoaRodlCodeGen.HandleAtributes_private(&library: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
+method CocoaRodlCodeGen.HandleAtributes_private(aLibrary: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
 begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
   if (aEntity.CustomAttributes.Count = 0) then exit;
@@ -937,7 +937,7 @@ begin
                   Visibility := CGMemberVisibilityKind.Private);
 end;
 
-method CocoaRodlCodeGen.HandleAtributes_public(&library: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
+method CocoaRodlCodeGen.HandleAtributes_public(aLibrary: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
 begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
   if (aEntity.CustomAttributes.Count = 0) then exit;
@@ -968,7 +968,7 @@ begin
                                                    [new CGMethodCallExpression("aName".AsNamedIdentifierExpression, "lowercaseString").AsCallParameter].ToList).AsReturnStatement);
 end;
 
-method CocoaRodlCodeGen.WriteToMessage_Method(&library: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
+method CocoaRodlCodeGen.WriteToMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
 begin
   //method writeToMessage(aMessage: ROMessage) withName(aName: NSString); override;
   result := new CGMethodDefinition(if IsSwift then "write" else "writeToMessage",
@@ -1006,14 +1006,14 @@ begin
   for field: RodlField in aEntity.Items do
     if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
       lSortedFields.Add(field.Name.ToLowerInvariant, field);
-      lIfRecordStrictOrder_True.Statements.Add(GetWriterStatement(library, field, false));
+      lIfRecordStrictOrder_True.Statements.Add(GetWriterStatement(aLibrary, field, false));
     end;
 
   for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
-    lIfRecordStrictOrder_False.Statements.Add(GetWriterStatement(library, lSortedFields.Item[lvalue], false));
+    lIfRecordStrictOrder_False.Statements.Add(GetWriterStatement(aLibrary, lSortedFields.Item[lvalue], false));
 end;
 
-method CocoaRodlCodeGen.ReadFromMessage_Method(&library: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
+method CocoaRodlCodeGen.ReadFromMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
 begin
   //method readFromMessage(aMessage: ROMessage) withName(aName: NSString); override;
   result := new CGMethodDefinition(if IsSwift then "read" else "readFromMessage",
@@ -1051,25 +1051,25 @@ begin
   for field: RodlField in aEntity.Items do
     if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
       lSortedFields.Add(field.Name.ToLowerInvariant, field);
-      lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
+      lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(aLibrary, field));
     end;
 
   for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
-    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lSortedFields.Item[lvalue]));
+    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(aLibrary, lSortedFields.Item[lvalue]));
 
 end;
 
-method CocoaRodlCodeGen.GetWriterStatement(&library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"; isMethod: Boolean; aInOnly: Boolean := false): CGStatement;
+method CocoaRodlCodeGen.GetWriterStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"; isMethod: Boolean; aInOnly: Boolean := false): CGStatement;
 begin
   var lLower: String  := aEntity.DataType.ToLowerInvariant();
   var lMethodName: String;
-  var lIsEnum := isEnum(&library,aEntity.DataType);
-  var lIsComplex := iif(not lIsEnum,isComplex(&library,aEntity.DataType), false);
+  var lIsEnum := isEnum(aLibrary,aEntity.DataType);
+  var lIsComplex := iif(not lIsEnum,isComplex(aLibrary,aEntity.DataType), false);
   var lIsSimple := not (lIsEnum or lIsComplex);
 
   if lIsEnum then lMethodName := "Enum"
-  else if isArray(&library, aEntity.DataType) then  lMethodName := "MutableArray"
-  else if isStruct(&library, aEntity.DataType) then lMethodName := "Complex"
+  else if isArray(aLibrary, aEntity.DataType) then  lMethodName := "MutableArray"
+  else if isStruct(aLibrary, aEntity.DataType) then lMethodName := "Complex"
   else if ReaderFunctions.ContainsKey(lLower) then lMethodName := ReaderFunctions[lLower]
   else lMethodName := "UnknownType";
 
@@ -1099,19 +1099,19 @@ begin
   end;
 end;
 
-method CocoaRodlCodeGen.GetReaderStatement(&library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGStatement;
+method CocoaRodlCodeGen.GetReaderStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGStatement;
 begin
-  exit new CGAssignmentStatement(new CGPropertyAccessExpression(nil, SafeIdentifier(aEntity.Name)), GetReaderExpression(&library,aEntity,aVariableName));
+  exit new CGAssignmentStatement(new CGPropertyAccessExpression(nil, SafeIdentifier(aEntity.Name)), GetReaderExpression(aLibrary,aEntity,aVariableName));
 end;
 
-method CocoaRodlCodeGen.GetReaderExpression(&library: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGExpression;
+method CocoaRodlCodeGen.GetReaderExpression(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; aVariableName: String := "aMessage"): CGExpression;
 begin
   var lLower: String  := aEntity.DataType.ToLowerInvariant();
   var lMethodName: String;
-  var lIsEnum := isEnum(&library,aEntity.DataType);
-  var lIsComplex := iif(not lIsEnum,isComplex(&library,aEntity.DataType), false);
-  var lIsArray := isArray(&library, aEntity.DataType);
-  var lIsStruct := isStruct(&library, aEntity.DataType);
+  var lIsEnum := isEnum(aLibrary,aEntity.DataType);
+  var lIsComplex := iif(not lIsEnum,isComplex(aLibrary,aEntity.DataType), false);
+  var lIsArray := isArray(aLibrary, aEntity.DataType);
+  var lIsStruct := isStruct(aLibrary, aEntity.DataType);
   var lIsSimple := not (lIsEnum or lIsComplex);
 
   if lIsEnum then lMethodName := "Enum"
@@ -1121,11 +1121,11 @@ begin
   else lMethodName := "UnknownType";
 
   var lNameString := CleanedWsdlName(aEntity.Name).AsLiteralExpression.AsCallParameter(if IsSwift then "withName");
-  if isClassType(library, aEntity.DataType) then begin
+  if isClassType(aLibrary, aEntity.DataType) then begin
     // %FIELD_NAME% := aMessage.read%FIELD_READER_WRITER%WithName("%FIELD_NAME_UNSAFE%") asClass(%FIELD_TYPE_NAME%.class) as %FIELD_TYPE_NAME%;
-    var lType := ResolveDataTypeToTypeRef(&library, aEntity.DataType);//.NotNullabeCopy;
+    var lType := ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);//.NotNullabeCopy;
     if lIsComplex or lIsArray then begin
-      //var l_type1:= ResolveDataTypeToTypeRef(&library, aEntity.DataType).NotNullable;
+      //var l_type1:= ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType).NotNullable;
       var lArgument1 := new CGCallParameter(new CGTypeOfExpression(lType.AsExpression), if IsSwift then "as" else "asClass");
       var l_methodCall := new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
                                      if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
@@ -1141,7 +1141,7 @@ begin
   end
   else if lIsEnum then begin
     // %FIELD_NAME% := %FIELD_TYPE_RAW%(aMessage.read%FIELD_READER_WRITER%WithName("%FIELD_NAME_UNSAFE%") asEnum(%FIELD_TYPE_RAW%__EnumMetaData.instance));
-    var lType := ResolveDataTypeToTypeRef(&library, aEntity.DataType);
+    var lType := ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);
     var lArgument1 := new CGCallParameter(new CGMethodCallExpression((SafeIdentifier(aEntity.DataType)+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum");
     var lMethodCall :=         new CGMethodCallExpression(aVariableName.AsNamedIdentifierExpression,
                                    if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
@@ -1161,14 +1161,14 @@ begin
   end;
 end;
 
-method CocoaRodlCodeGen.isClassType(&library: RodlLibrary; dataType: String): Boolean;
+method CocoaRodlCodeGen.isClassType(aLibrary: RodlLibrary; aDataType: String): Boolean;
 begin
-  exit not (fCachedNumberFN.ContainsKey(dataType.ToLowerInvariant) or isEnum(&library,dataType));
+  exit not (fCachedNumberFN.ContainsKey(aDataType.ToLowerInvariant) or isEnum(aLibrary,aDataType));
 end;
 
-method CocoaRodlCodeGen.GetNumberFN(dataType: String): String;
+method CocoaRodlCodeGen.GetNumberFN(aDataType: String): String;
 begin
-  var ln := dataType.ToLowerInvariant;
+  var ln := aDataType.ToLowerInvariant;
   if fCachedNumberFN.ContainsKey(ln) then
     exit fCachedNumberFN[ln]
   else
@@ -1185,9 +1185,9 @@ begin
   end;
 end;
 
-method CocoaRodlCodeGen.GenerateServiceProxyMethod(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+method CocoaRodlCodeGen.GenerateServiceProxyMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceProxyMethodDeclaration(&library,aEntity);
+  result := GenerateServiceProxyMethodDeclaration(aLibrary,aEntity);
   var lInParameters := new List<RodlParameter>;
   var lOutParameters := new List<RodlParameter>;
   for p: RodlParameter in aEntity.Items do begin
@@ -1205,11 +1205,11 @@ begin
                                                            new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "___message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
                                                            &ReadOnly := true));
 
-  GenerateOperationAttribute(&library,aEntity,result.Statements);
+  GenerateOperationAttribute(aLibrary,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression,
                                                    if IsAppleSwift then "initialize" else "initializeAsRequestMessage",
                                                    [new CGPropertyAccessExpression(new CGSelfExpression, "___clientChannel").AsCallParameter(if IsAppleSwift then "asRequest"),
-                                                   new CGCallParameter(library.Name.AsLiteralExpression, "libraryName"),
+                                                   new CGCallParameter(aLibrary.Name.AsLiteralExpression, "libraryName"),
                                                    new CGCallParameter(new CGMethodCallExpression(new CGSelfExpression(), "__getActiveInterfaceName"), "interfaceName"),
                                                    new CGCallParameter(SafeIdentifier(aEntity.Name).AsLiteralExpression, "messageName")].ToList
     ));
@@ -1219,19 +1219,19 @@ begin
   var lFinallyStatements := if SwiftDialect = CGSwiftCodeGeneratorDialect.Silver then new List<CGStatement> else lTryStatements;
 
   for p: RodlParameter in lInParameters do
-    lTryStatements.Add(GetWriterStatement(&library, p, "___localMessage", true));
+    lTryStatements.Add(GetWriterStatement(aLibrary, p, "___localMessage", true));
   lTryStatements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
   lTryStatements.Add(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression, "___clientChannel"),
                                                  "dispatch",
                                                  ["___localMessage".AsNamedIdentifierExpression.AsCallParameter].ToList));
   if assigned(aEntity.Result) then
     lTryStatements.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression,
-                                                  GetReaderExpression(&library,aEntity.Result,"___localMessage")));
+                                                  GetReaderExpression(aLibrary,aEntity.Result,"___localMessage")));
 
   for p: RodlParameter in lOutParameters do
     lTryStatements.Add(new CGAssignmentStatement(
                             ApplyParamDirectionExpression(p.Name.AsNamedIdentifierExpression, p.ParamFlag),
-                            GetReaderExpression(&library, p ,"___localMessage")
+                            GetReaderExpression(aLibrary, p ,"___localMessage")
                             ));
 
   var lSelfMessage := new CGPropertyAccessExpression(new CGSelfExpression, "___message");
@@ -1251,22 +1251,22 @@ begin
     result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
 end;
 
-method CocoaRodlCodeGen.GenerateServiceProxyMethodDeclaration(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+method CocoaRodlCodeGen.GenerateServiceProxyMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
   result:= new CGMethodDefinition(SafeIdentifier(aEntity.Name),
                                   Visibility := CGMemberVisibilityKind.Public);
   for p: RodlParameter in aEntity.Items do begin
     if p.ParamFlag in [ParamFlags.In, ParamFlags.InOut, ParamFlags.Out] then
-      result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(&library, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag)));
+      result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag)));
   end;
   if assigned(aEntity.Result) then
-    result.ReturnType := ResolveDataTypeToTypeRef(&library, aEntity.Result.DataType);
+    result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
 end;
 
-method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library ,aEntity);
-  GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
+  result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary ,aEntity);
+  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary,aEntity,result.Statements);
   // exit self.___clientChannel.asyncDispatch(___localMessage) withProxy(self) start(true);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression,"___clientChannel"),
                                                     "asyncDispatch",
@@ -1276,7 +1276,7 @@ begin
                           ).AsReturnStatement);
 end;
 
-method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
   result := new CGMethodDefinition("end" + PascalCase(aEntity.Name), Visibility := CGMemberVisibilityKind.Public);
   result.Parameters.Add(new CGParameterDefinition("___asyncRequest", "ROAsyncRequest".AsTypeReference));
@@ -1284,25 +1284,25 @@ begin
   for p: RodlParameter in aEntity.Items do begin
     if p.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then begin
       lOutParameters.Add(p);
-      result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(&library, p.DataType), Modifier := CGParameterModifierKind.Out)); // end* metbods are always "out"
+      result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := CGParameterModifierKind.Out)); // end* metbods are always "out"
     end;
   end;
 
   if assigned(aEntity.Result) then begin
-    result.ReturnType := ResolveDataTypeToTypeRef(&library, aEntity.Result.DataType);
+    result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
   end;
 
   if assigned(aEntity.Result) then
     result.Statements.Add(new CGVariableDeclarationStatement("___result", result.ReturnType) );
   result.Statements.Add(new CGVariableDeclarationStatement("___localMessage", "ROMessage".AsTypeReference, new CGPropertyAccessExpression("___asyncRequest".AsNamedIdentifierExpression, "responseMessage"), &ReadOnly := true));
-  GenerateOperationAttribute(&library,aEntity,Result.Statements);
+  GenerateOperationAttribute(aLibrary,aEntity,Result.Statements);
   if assigned(aEntity.Result) then
-    result.Statements.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression, GetReaderExpression(&library,aEntity.Result,"___localMessage")));
+    result.Statements.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression, GetReaderExpression(aLibrary,aEntity.Result,"___localMessage")));
 
   for p: RodlParameter in lOutParameters do
     result.Statements.Add(new CGAssignmentStatement(
                                     ApplyParamDirectionExpression(p.Name.AsNamedIdentifierExpression,p.ParamFlag),
-                                    GetReaderExpression(&library,p,"___localMessage")
+                                    GetReaderExpression(aLibrary,p,"___localMessage")
                                     ));
 
   var lSelfMessage := new CGPropertyAccessExpression(new CGSelfExpression, "___message");
@@ -1314,7 +1314,7 @@ begin
     result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
 end;
 
-method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
   result := new CGMethodDefinition("begin" + PascalCase(aEntity.Name),
                                    Visibility := CGMemberVisibilityKind.Public,
@@ -1324,13 +1324,13 @@ begin
 
   for p: RodlParameter in aEntity.Items do begin
     if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-      result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(&library, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag, true)));
+      result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag, true)));
   end;
 end;
 
-method CocoaRodlCodeGen.GenerateOperationAttribute(&library: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
+method CocoaRodlCodeGen.GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
 begin
-  var ld := Operation_GetAttributes(&library, aEntity);
+  var ld := Operation_GetAttributes(aLibrary, aEntity);
   if ld.Count > 0  then begin
     var list:= new List<CGCallParameter>;
     list.Add(new CGBooleanLiteralExpression(False).AsCallParameter);
@@ -1346,7 +1346,7 @@ begin
   end;
 end;
 
-method CocoaRodlCodeGen.GenerateServiceMethods(&library: RodlLibrary; aEntity: RodlService; service: CGClassTypeDefinition);
+method CocoaRodlCodeGen.GenerateServiceMethods(aLibrary: RodlLibrary; aEntity: RodlService; service: CGClassTypeDefinition);
 begin
   {$REGION method __getInterfaceName: NSString; override;}
   service.Members.Add(
@@ -1360,13 +1360,13 @@ begin
   {$ENDREGION}
 end;
 
-method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_start(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_start(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library, aEntity);
+  result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__start";
   result.Parameters.Add(new CGParameterDefinition("___start", ResolveStdtypes(CGPredefinedTypeReference.Boolean), ExternalName := if result.Parameters.Count > 0 then "start"));
-  GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
+  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
                                                   ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
@@ -1375,14 +1375,14 @@ begin
                                                   ).AsReturnStatement);
 end;
 
-method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_startWithBlock(&library: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library, aEntity);
+  result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__startWithBlock";
   var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
   result.Parameters.Add(new CGParameterDefinition("___block", bl, ExternalName := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
-  GenerateServiceAsyncProxyBeginMethod_Body(&library,aEntity,result.Statements);
+  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary,aEntity,result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
                                                   ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
@@ -1405,53 +1405,53 @@ begin
     exit aExpr;
 end;
 
-method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_Body(&library: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_Body(aLibrary: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
 begin
   Statements.Add(new CGVariableDeclarationStatement("___localMessage",
                                                     "ROMessage".AsTypeReference,
                                                     new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "___message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
                                                     &ReadOnly := true));
-  GenerateOperationAttribute(&library,aEntity,Statements);
+  GenerateOperationAttribute(aLibrary,aEntity,Statements);
   Statements.Add(
     new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression,
                                if IsAppleSwift then "initialize" else "initializeAsRequestMessage",
                                [new CGCallParameter(new CGPropertyAccessExpression(new CGSelfExpression,"___clientChannel"), Name := if IsAppleSwift then "asRequest"),
-                                new CGCallParameter(library.Name.AsLiteralExpression, "libraryName"),
+                                new CGCallParameter(aLibrary.Name.AsLiteralExpression, "libraryName"),
                                 new CGCallParameter(new CGMethodCallExpression(new CGSelfExpression(), "__getActiveInterfaceName"), "interfaceName"),
                                 new CGCallParameter(SafeIdentifier(aEntity.Name).AsLiteralExpression, "messageName")].ToList));
   for p: RodlParameter in aEntity.Items do
     if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-      Statements.Add(GetWriterStatement(&library,p,"___localMessage", true, true));
+      Statements.Add(GetWriterStatement(aLibrary,p,"___localMessage", true, true));
   Statements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression, "finalizeMessage"));
 end;
 
-method CocoaRodlCodeGen.GetIncludesNamespace(library: RodlLibrary): String;
+method CocoaRodlCodeGen.GetIncludesNamespace(aLibrary: RodlLibrary): String;
 begin
-  if assigned(library.Includes) then begin
+  if assigned(aLibrary.Includes) then begin
     if IsObjC then
-      exit library.Includes.ObjCModule
+      exit aLibrary.Includes.ObjCModule
     else
-      exit library.Includes.CocoaModule;
+      exit aLibrary.Includes.CocoaModule;
   end;
-  exit inherited GetIncludesNamespace(library);
+  exit inherited GetIncludesNamespace(aLibrary);
 end;
 
-method CocoaRodlCodeGen.GetGlobalName(library: RodlLibrary): String;
+method CocoaRodlCodeGen.GetGlobalName(aLibrary: RodlLibrary): String;
 begin
-  exit library.Name+"_Defines";
+  exit aLibrary.Name+"_Defines";
 end;
 
-method CocoaRodlCodeGen.AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary);
+method CocoaRodlCodeGen.AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  file.Globals.Add(new CGFieldDefinition("TargetNamespace", CGPredefinedTypeReference.String.NotNullable,
+  aFile.Globals.Add(new CGFieldDefinition("TargetNamespace", CGPredefinedTypeReference.String.NotNullable,
                   Constant := true,
                   Visibility := CGMemberVisibilityKind.Public,
                   Initializer := if assigned(targetNamespace) then targetNamespace.AsLiteralExpression).AsGlobal());
 
-  for lentity: RodlEntity in &library.EventSinks.Items do begin
-    if not EntityNeedsCodeGen(lentity) then Continue;
-    var lName := lentity.Name;
-    file.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), CGPredefinedTypeReference.String.NotNullable,
+  for lEntity: RodlEntity in aLibrary.EventSinks.Items do begin
+    if not EntityNeedsCodeGen(lEntity) then Continue;
+    var lName := lEntity.Name;
+    aFile.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), CGPredefinedTypeReference.String.NotNullable,
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Initializer := lName.AsLiteralExpression).AsGlobal);

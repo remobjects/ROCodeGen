@@ -5,44 +5,44 @@ interface
 type
   JavaRodlCodeGen = public class (RodlCodeGen)
   private
-    method isPrimitive(&type: String):Boolean;
+    method isPrimitive(aType: String):Boolean;
     method GenerateROSDKType(aName: String): String;
     method GenerateGetProperty(aParent:CGExpression;Name:String): CGExpression;
     method GenerateSetProperty(aParent:CGExpression;Name:String; aValue:CGExpression): CGStatement;
-    method GenerateOperationAttribute(library: RodlLibrary; entity: RodlOperation;Statements: List<CGStatement>);
-    method GetReaderStatement(library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"): CGStatement;
-    method GetReaderExpression(library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"): CGExpression;
-    method GetWriterStatement(library: RodlLibrary; entity: RodlTypedEntity; useGetter: Boolean := True; variableName: String := "aMessage"): CGStatement;
-    method GetWriterStatement_DefaultValues(library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"): CGStatement;
+    method GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity: RodlOperation;Statements: List<CGStatement>);
+    method GetReaderStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; variableName: String := "aMessage"): CGStatement;
+    method GetReaderExpression(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; variableName: String := "aMessage"): CGExpression;
+    method GetWriterStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; useGetter: Boolean := True; variableName: String := "aMessage"): CGStatement;
+    method GetWriterStatement_DefaultValues(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; variableName: String := "aMessage"): CGStatement;
 
-    method WriteToMessage_Method(library: RodlLibrary; entity: RodlStructEntity;useDefaultValues:Boolean): CGMethodDefinition;
-    method ReadFromMessage_Method(library: RodlLibrary; entity: RodlStructEntity): CGMethodDefinition;
-    method GenerateServiceProxyMethod(library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceProxyMethodDeclaration(library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyBeginMethod(library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyEndMethod(library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyBeginMethodDeclaration(library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyEndMethodDeclaration(library: RodlLibrary; entity: RodlOperation;&locked:Boolean): CGMethodDefinition;
-    method GenerateServiceConstructors(library: RodlLibrary; entity: RodlService; service:CGClassTypeDefinition);
+    method WriteToMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity;useDefaultValues:Boolean): CGMethodDefinition;
+    method ReadFromMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
+    method GenerateServiceProxyMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceProxyMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyBeginMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation;&locked:Boolean): CGMethodDefinition;
+    method GenerateServiceConstructors(aLibrary: RodlLibrary; aEntity: RodlService; aService:CGClassTypeDefinition);
 
-    method HandleAtributes_private(library: RodlLibrary; entity: RodlEntity): CGFieldDefinition;
-    method HandleAtributes_public(library: RodlLibrary; entity: RodlEntity): CGMethodDefinition;
+    method HandleAtributes_private(aLibrary: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
+    method HandleAtributes_public(aLibrary: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
   protected
-    method AddUsedNamespaces(file: CGCodeUnit; library: RodlLibrary);override;
-    method AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary);override;
-    method GenerateEnum(file: CGCodeUnit; library: RodlLibrary; entity: RodlEnum); override;
-    method GenerateStruct(file: CGCodeUnit; library: RodlLibrary; entity: RodlStruct);override;
-    method GenerateArray(file: CGCodeUnit; library: RodlLibrary; entity: RodlArray);override;
-    method GenerateException(file: CGCodeUnit; library: RodlLibrary; entity: RodlException);override;
-    method GenerateService(file: CGCodeUnit; library: RodlLibrary; entity: RodlService);override;
-    method GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; entity: RodlEventSink);override;
-    method GetGlobalName(library: RodlLibrary): String;override;
-    method GetIncludesNamespace(library: RodlLibrary): String; override;
+    method AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary);override;
+    method AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary);override;
+    method GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum); override;
+    method GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);override;
+    method GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);override;
+    method GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException);override;
+    method GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);override;
+    method GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink);override;
+    method GetGlobalName(aLibrary: RodlLibrary): String;override;
+    method GetIncludesNamespace(aLibrary: RodlLibrary): String; override;
   public
     constructor;
     property addROSDKPrefix: Boolean := True;
     property isCooperMode: Boolean := True;
-    method GenerateInterfaceFiles(library: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; override;
+    method GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; override;
   end;
 
 implementation
@@ -93,7 +93,7 @@ begin
     "unsafe", "uses", "using", "var", "virtual", "where", "while", "with", "write", "xor", "yield"]);
 end;
 
-method  JavaRodlCodeGen.WriteToMessage_Method(&library: RodlLibrary; entity: RodlStructEntity;useDefaultValues:Boolean): CGMethodDefinition;
+method  JavaRodlCodeGen.WriteToMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity;useDefaultValues:Boolean): CGMethodDefinition;
 begin
   Result := new CGMethodDefinition("writeToMessage",
                         Parameters := [new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeReference.String)),
@@ -109,7 +109,7 @@ begin
   );
   Result.Statements.Add(lIfRecordStrictOrder);
 
-  if assigned(entity.AncestorEntity) then begin
+  if assigned(aEntity.AncestorEntity) then begin
     lIfRecordStrictOrder_True.Statements.Add(
       new CGMethodCallExpression(CGInheritedExpression.Inherited, "writeToMessage",
                                   ["aName".AsNamedIdentifierExpression.AsCallParameter,
@@ -119,7 +119,7 @@ begin
 
   var lSortedFields := new Dictionary<String,RodlField>;
 
-  var lAncestorEntity := entity.AncestorEntity as RodlStructEntity;
+  var lAncestorEntity := aEntity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
     for field: RodlField in lAncestorEntity.Items do
       lSortedFields.Add(field.Name.ToLowerInvariant, field);
@@ -127,81 +127,81 @@ begin
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
-  for field: RodlField in entity.Items do
+  for field: RodlField in aEntity.Items do
     if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
       lSortedFields.Add(field.Name.ToLowerInvariant, field);
       lIfRecordStrictOrder_True.Statements.Add(
-        iif(useDefaultValues, GetWriterStatement_DefaultValues(library, field),GetWriterStatement(library, field))
+        iif(useDefaultValues, GetWriterStatement_DefaultValues(aLibrary, field),GetWriterStatement(aLibrary, field))
       );
     end;
 
   for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
     lIfRecordStrictOrder_False.Statements.Add(
-      iif(useDefaultValues, GetWriterStatement_DefaultValues(library, lSortedFields.Item[lvalue]),GetWriterStatement(library, lSortedFields.Item[lvalue]))
+      iif(useDefaultValues, GetWriterStatement_DefaultValues(aLibrary, lSortedFields.Item[lvalue]),GetWriterStatement(aLibrary, lSortedFields.Item[lvalue]))
     );
 end;
 
 
-method  JavaRodlCodeGen.AddUsedNamespaces(file: CGCodeUnit; &library: RodlLibrary);
+method  JavaRodlCodeGen.AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  for Rodl: RodlUse in library.Uses.Items do begin
+  for Rodl: RodlUse in aLibrary.Uses.Items do begin
     if length(Rodl.Includes:JavaModule) > 0 then
-      file.Imports.Add(new CGImport(Rodl.Includes:JavaModule))
+      aFile.Imports.Add(new CGImport(Rodl.Includes:JavaModule))
      else if not String.IsNullOrEmpty(Rodl.Namespace) then
-      file.Imports.Add(new CGImport(Rodl.Namespace));
+      aFile.Imports.Add(new CGImport(Rodl.Namespace));
   end;
   if not addROSDKPrefix then
-    file.Imports.Add(new CGImport("com.remobjects.sdk"));
+    aFile.Imports.Add(new CGImport("com.remobjects.sdk"));
 {
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("java.net.URI")));
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("java.util.Collection")));
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ClientChannel")));
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.Message")));
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ReferenceType")));
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.TypeManager")));
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncRequest")));
-  file.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncProxy")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("java.net.URI")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("java.util.Collection")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ClientChannel")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.Message")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ReferenceType")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.TypeManager")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncRequest")));
+  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncProxy")));
 }
 end;
 
-method JavaRodlCodeGen.GenerateStruct(file: CGCodeUnit; library: RodlLibrary; entity: RodlStruct);
+method JavaRodlCodeGen.GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);
 begin
-  var lancestorName := entity.AncestorName;
-  if String.IsNullOrEmpty(lancestorName) then lancestorName := GenerateROSDKType("ComplexType");
+  var lAncestorName := aEntity.AncestorName;
+  if String.IsNullOrEmpty(lAncestorName) then lAncestorName := GenerateROSDKType("ComplexType");
 
-  var lstruct := new CGClassTypeDefinition(SafeIdentifier(entity.Name), lancestorName.AsTypeReference,
+  var lstruct := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestorName.AsTypeReference,
                             &Partial := true,
                             Visibility := CGTypeVisibilityKind.Public
                             );
-  lstruct.Comment := GenerateDocumentation(entity);
-  file.Types.Add(lstruct);
+  lstruct.Comment := GenerateDocumentation(aEntity);
+  aFile.Types.Add(lstruct);
   {$REGION private class _attributes: HashMap<String, String>;}
-  if (entity.CustomAttributes.Count > 0) then
-    lstruct.Members.Add(HandleAtributes_private(&library,entity));
+  if (aEntity.CustomAttributes.Count > 0) then
+    lstruct.Members.Add(HandleAtributes_private(aLibrary,aEntity));
   {$ENDREGION}
   {$REGION protected class var s_%fldname%: %fldtype%}
-  for lm :RodlTypedEntity in entity.Items do begin
+  for lm :RodlTypedEntity in aEntity.Items do begin
     lstruct.Members.Add(
-                        new CGFieldDefinition("s_"+lm.Name, ResolveDataTypeToTypeRef(&library,lm.DataType),
+                        new CGFieldDefinition("s_"+lm.Name, ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
                                               &Static := true,
                                               Visibility := CGMemberVisibilityKind.Protected
                                               ));
   end;
   {$ENDREGION}
   {$REGION public class method getAttributeValue(aName: String): String; override;}
-  if (entity.CustomAttributes.Count > 0) then
-    lstruct.Members.Add(HandleAtributes_public(&library,entity));
+  if (aEntity.CustomAttributes.Count > 0) then
+    lstruct.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
-  if entity.Items.Count >0 then begin
+  if aEntity.Items.Count >0 then begin
     {$REGION public class method setDefaultValues(p_%fldname%: %fldtype%)}
     var lsetDefaultValues := new CGMethodDefinition("setDefaultValues",
                                 Visibility := CGMemberVisibilityKind.Public,
                                 &Static := true
                                 );
     lstruct.Members.Add(lsetDefaultValues);
-    for lm: RodlTypedEntity in entity.Items do begin
+    for lm: RodlTypedEntity in aEntity.Items do begin
       lsetDefaultValues.Parameters.Add(
-        new CGParameterDefinition("p_"+lm.Name, ResolveDataTypeToTypeRef(&library,lm.DataType)));
+        new CGParameterDefinition("p_"+lm.Name, ResolveDataTypeToTypeRef(aLibrary,lm.DataType)));
       lsetDefaultValues.Statements.Add(
           new CGAssignmentStatement(
                 ("s_"+lm.Name).AsNamedIdentifierExpression,
@@ -211,8 +211,8 @@ begin
     end;
     {$ENDREGION}
     {$REGION private %f_fldname%: %fldtype% + public getter/setter}
-    for lm :RodlTypedEntity in entity.Items do begin
-      var ltype := ResolveDataTypeToTypeRef(&library,lm.DataType);
+    for lm :RodlTypedEntity in aEntity.Items do begin
+      var ltype := ResolveDataTypeToTypeRef(aLibrary,lm.DataType);
       var f_name :='f_'+lm.Name;
       var s_name :='s_'+lm.Name;
       lstruct.Members.Add(new CGFieldDefinition(f_name,
@@ -235,14 +235,14 @@ begin
     end;
     {$ENDREGION}
     {$REGION public method writeToMessage(aName: String; aMessage: Message); override;}
-    lstruct.Members.Add(WriteToMessage_Method(&library,entity,true));
+    lstruct.Members.Add(WriteToMessage_Method(aLibrary,aEntity,true));
     {$ENDREGION}
     {$REGION method ReadFromMessage_Method(aName: String; aMessage: Message); override;}
-    lstruct.Members.Add(ReadFromMessage_Method(&library,entity));
+    lstruct.Members.Add(ReadFromMessage_Method(aLibrary,aEntity));
     {$ENDREGION}
     {$REGION public property %fldname%: %fldtype%}
     if isCooperMode then begin
-      for lm :RodlTypedEntity in entity.Items do begin
+      for lm :RodlTypedEntity in aEntity.Items do begin
         var f_name :='f_'+lm.Name;
         var s_name :='s_'+lm.Name;
         var st1: CGStatement :=new CGIfThenElseStatement(new CGBinaryOperatorExpression(f_name.AsNamedIdentifierExpression, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
@@ -250,7 +250,7 @@ begin
                                                           s_name.AsNamedIdentifierExpression.AsReturnStatement);
         //var st2: CGStatement :=new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,CGPropertyDefinition.MAGIC_VALUE_PARAMETER_NAME.AsNamedIdentifierExpression);
         lstruct.Members.Add(new CGPropertyDefinition(lm.Name,
-                            ResolveDataTypeToTypeRef(&library,lm.DataType),
+                            ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
                             [st1].ToList,
                             SetExpression := f_name.AsNamedIdentifierExpression,
                             Visibility := CGMemberVisibilityKind.Public,
@@ -261,21 +261,21 @@ begin
   end;
 end;
 
-method JavaRodlCodeGen.GenerateArray(file: CGCodeUnit; library: RodlLibrary; entity: RodlArray);
+method JavaRodlCodeGen.GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
 begin
-  var lElementType: CGTypeReference := ResolveDataTypeToTypeRef(&library, SafeIdentifier(entity.ElementType));
-  var lElementTypeName: String  := entity.ElementType.ToLowerInvariant();
+  var lElementType: CGTypeReference := ResolveDataTypeToTypeRef(aLibrary, SafeIdentifier(aEntity.ElementType));
+  var lElementTypeName: String  := aEntity.ElementType.ToLowerInvariant();
   var lIsStandardType: Boolean := ReaderFunctions.ContainsKey(lElementTypeName);
-  var lIsEnum: Boolean := isEnum(&library, entity.ElementType);
-  var lIsArray: Boolean := isArray(&library, entity.ElementType);
-  var lIsStruct: Boolean := isStruct(&library, entity.ElementType);
+  var lIsEnum: Boolean := isEnum(aLibrary, aEntity.ElementType);
+  var lIsArray: Boolean := isArray(aLibrary, aEntity.ElementType);
+  var lIsStruct: Boolean := isStruct(aLibrary, aEntity.ElementType);
 
-  var lArray := new CGClassTypeDefinition(SafeIdentifier(entity.Name), GenerateROSDKType("ArrayType").AsTypeReference,
+  var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), GenerateROSDKType("ArrayType").AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
                                           &Partial := true
                                           );
-  lArray.Comment := GenerateDocumentation(entity);
-  file.Types.Add(lArray);
+  lArray.Comment := GenerateDocumentation(aEntity);
+  aFile.Types.Add(lArray);
 
   if not isCooperMode then begin
     lArray.Attributes.Add(new CGAttribute("SuppressWarnings".AsTypeReference,
@@ -283,8 +283,8 @@ begin
   end;
 
   {$REGION Private class _attributes: HashMap<String, String>;}
-  if (entity.CustomAttributes.Count > 0) then begin
-    lArray.Members.Add(HandleAtributes_private(&library,entity));
+  if (aEntity.CustomAttributes.Count > 0) then begin
+    lArray.Members.Add(HandleAtributes_private(aLibrary,aEntity));
   end;
   {$ENDREGION}
 
@@ -372,7 +372,7 @@ begin
   {$ENDREGION}
 
   {$REGION method add: %ARRAY_TYPE%;}
-  if isComplex(&library,entity.ElementType) then
+  if isComplex(aLibrary,aEntity.ElementType) then
     lArray.Members.Add(
       new CGMethodDefinition("add",
         Visibility := CGMemberVisibilityKind.Public,
@@ -388,8 +388,8 @@ begin
   {$ENDREGION}
 
   {$REGION public class method getAttributeValue(aName: String): String; override;}
-  if (entity.CustomAttributes.Count > 0) then
-    lArray.Members.Add(HandleAtributes_public(&library,entity));
+  if (aEntity.CustomAttributes.Count > 0) then
+    lArray.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
 
   {$REGION method addItem(anItem: %ARRAY_TYPE%)}
@@ -456,7 +456,7 @@ begin
   {$REGION method itemTypeName: String;}
   lArray.Members.Add(
     new CGMethodDefinition("itemTypeName",
-                           [SafeIdentifier(entity.ElementType).AsLiteralExpression.AsReturnStatement],
+                           [SafeIdentifier(aEntity.ElementType).AsLiteralExpression.AsReturnStatement],
                             ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                             Visibility := CGMemberVisibilityKind.Public
       )
@@ -543,33 +543,33 @@ begin
   {$ENDREGION}
 end;
 
-method JavaRodlCodeGen.GenerateException(file: CGCodeUnit; library: RodlLibrary; entity: RodlException);
+method JavaRodlCodeGen.GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException);
 begin
-  var lexception := new CGClassTypeDefinition(SafeIdentifier(entity.Name),
+  var lexception := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name),
                                               GenerateROSDKType("ExceptionType").AsTypeReference,
                                               Visibility := CGTypeVisibilityKind.Public,
                                               &Partial := true
                                               );
-  lexception.Comment := GenerateDocumentation(entity);
-  file.Types.Add(lexception);
+  lexception.Comment := GenerateDocumentation(aEntity);
+  aFile.Types.Add(lexception);
   if not isCooperMode then
     lexception.Attributes.Add(new CGAttribute("SuppressWarnings".AsTypeReference,
                                              ["serial".AsLiteralExpression.AsCallParameter].ToList));
 
   {$REGION private class _attributes: HashMap<String, String>;}
-  if (entity.CustomAttributes.Count > 0) then
-    lexception.Members.Add(HandleAtributes_private(&library,entity));
+  if (aEntity.CustomAttributes.Count > 0) then
+    lexception.Members.Add(HandleAtributes_private(aLibrary,aEntity));
   {$ENDREGION}
 
   {$REGION public class method getAttributeValue(aName: String): String; override;}
-  if (entity.CustomAttributes.Count > 0) then
-    lexception.Members.Add(HandleAtributes_public(&library,entity));
+  if (aEntity.CustomAttributes.Count > 0) then
+    lexception.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
 
   if not isCooperMode then begin
   {$REGION private property %f_fldname%: %fldtype% + public getter/setter}
-    for lm :RodlTypedEntity in entity.Items do begin
-      var ltype := ResolveDataTypeToTypeRef(&library,lm.DataType);
+    for lm :RodlTypedEntity in aEntity.Items do begin
+      var ltype := ResolveDataTypeToTypeRef(aLibrary,lm.DataType);
       var f_name :='f_'+lm.Name;
       lexception.Members.Add(new CGFieldDefinition(f_name,
                                                    ltype,
@@ -613,36 +613,36 @@ begin
                                                                         ));
   {$ENDREGION}
 
-  if entity.Items.Count >0 then begin
+  if aEntity.Items.Count >0 then begin
     {$REGION public method writeToMessage(aName: String; aMessage: Message); override;}
-    lexception.Members.Add(WriteToMessage_Method(&library,entity,false));
+    lexception.Members.Add(WriteToMessage_Method(aLibrary,aEntity,false));
     {$ENDREGION}
     {$REGION method ReadFromMessage_Method(aName: String; aMessage: Message); override;}
-    lexception.Members.Add(ReadFromMessage_Method(&library,entity));
+    lexception.Members.Add(ReadFromMessage_Method(aLibrary,aEntity));
     {$ENDREGION}
   end;
 
   {$REGION public property %fldname%: %fldtype%}
   if isCooperMode then begin
-    for lm :RodlTypedEntity in entity.Items do
+    for lm :RodlTypedEntity in aEntity.Items do
       lexception.Members.Add(new CGPropertyDefinition(
       lm.Name,
-      ResolveDataTypeToTypeRef(&library,lm.DataType),
+      ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
       Visibility := CGMemberVisibilityKind.Public,
       Comment := GenerateDocumentation(lm)));
   end;
   {$ENDREGION}
 end;
 
-method JavaRodlCodeGen.GenerateService(file: CGCodeUnit; library: RodlLibrary; entity: RodlService);
+method JavaRodlCodeGen.GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
   {$REGION I%SERVICE_NAME%}
-  var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+entity.Name),
+  var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name),
                                                  Visibility := CGTypeVisibilityKind.Public);
-  lIService.Comment := GenerateDocumentation(entity);
-  file.Types.Add(lIService);
-  for lop : RodlOperation in entity.DefaultInterface:Items do begin
-    var m := GenerateServiceProxyMethodDeclaration(&library, lop);
+  lIService.Comment := GenerateDocumentation(aEntity);
+  aFile.Types.Add(lIService);
+  for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
+    var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
     m.Comment := GenerateDocumentation(lop,true);
     lIService.Members.Add(m);
   end;
@@ -650,62 +650,62 @@ begin
   {$ENDREGION}
 
   {$REGION I%SERVICE_NAME%_Async}
-  var lIServiceAsync := new CGInterfaceTypeDefinition(SafeIdentifier("I"+entity.Name+"_Async"),
+  var lIServiceAsync := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async"),
                                                       Visibility := CGTypeVisibilityKind.Public
                                                       );
-  file.Types.Add(lIServiceAsync);
-  for lop : RodlOperation in entity.DefaultInterface:Items do begin
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethodDeclaration(&library, lop));
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethodDeclaration(&library, lop,false));
+  aFile.Types.Add(lIServiceAsync);
+  for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary, lop,false));
   end;
   {$ENDREGION}
 
   {$REGION %SERVICE_NAME%_Proxy}
-  var lancestorName := entity.AncestorName;
-  if String.IsNullOrEmpty(lancestorName) then
-    lancestorName := GenerateROSDKType("Proxy")
+  var lAncestorName := aEntity.AncestorName;
+  if String.IsNullOrEmpty(lAncestorName) then
+    lAncestorName := GenerateROSDKType("Proxy")
   else
-    lancestorName := lancestorName+"_Proxy";
-  var lServiceProxy := new CGClassTypeDefinition(SafeIdentifier(entity.Name+"_Proxy"),
-                                                [lancestorName.AsTypeReference].ToList,
+    lAncestorName := lAncestorName+"_Proxy";
+  var lServiceProxy := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name+"_Proxy"),
+                                                [lAncestorName.AsTypeReference].ToList,
                                                 [lIService.Name.AsTypeReference].ToList,
                                                   Visibility := CGTypeVisibilityKind.Public,
                                                   &Partial := true
                                                   );
-  file.Types.Add(lServiceProxy);
+  aFile.Types.Add(lServiceProxy);
 
-  GenerateServiceConstructors(&library,entity, lServiceProxy);
+  GenerateServiceConstructors(aLibrary,aEntity, lServiceProxy);
 
-  for lop : RodlOperation in entity.DefaultInterface:Items do
-    lServiceProxy.Members.Add(GenerateServiceProxyMethod(&library,lop));
+  for lop : RodlOperation in aEntity.DefaultInterface:Items do
+    lServiceProxy.Members.Add(GenerateServiceProxyMethod(aLibrary,lop));
   {$ENDREGION}
 
   {$REGION %SERVICE_NAME%_AsyncProxy}
-  var lServiceAsyncProxy := new CGClassTypeDefinition(SafeIdentifier(entity.Name+"_AsyncProxy"),
+  var lServiceAsyncProxy := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name+"_AsyncProxy"),
                                                       [GenerateROSDKType("AsyncProxy").AsTypeReference].ToList,
                                                       [lIServiceAsync.Name.AsTypeReference].ToList,
                                                       Visibility := CGTypeVisibilityKind.Public,
                                                       &Partial := true);
-  file.Types.Add(lServiceAsyncProxy);
-  GenerateServiceConstructors(&library,entity,lServiceAsyncProxy);
-  for lop : RodlOperation in entity.DefaultInterface:Items do begin
-    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod(&library, lop));
-    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyEndMethod(&library, lop));
+  aFile.Types.Add(lServiceAsyncProxy);
+  GenerateServiceConstructors(aLibrary,aEntity,lServiceAsyncProxy);
+  for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyEndMethod(aLibrary, lop));
   end;
   {$ENDREGION}
 end;
 
 
-method JavaRodlCodeGen.GenerateEventSink(file: CGCodeUnit; library: RodlLibrary; entity: RodlEventSink);
+method JavaRodlCodeGen.GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink);
 begin
-  var i_name := 'I'+entity.Name;
+  var i_name := 'I'+aEntity.Name;
   var i_adaptername := i_name+'_Adapter';
   var lIEvent := new CGInterfaceTypeDefinition(i_name,GenerateROSDKType("IEvents").AsTypeReference,
                             Visibility := CGTypeVisibilityKind.Public);
-  lIEvent.Comment := GenerateDocumentation(entity);
-  file.Types.Add(lIEvent);
+  lIEvent.Comment := GenerateDocumentation(aEntity);
+  aFile.Types.Add(lIEvent);
 
-  for lop : RodlOperation in entity.DefaultInterface:Items do begin
+  for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     {$REGION %event_sink%Event}
     var lOperation := new CGClassTypeDefinition(SafeIdentifier(lop.Name+"Event"),GenerateROSDKType("EventType").AsTypeReference,
                                                 Visibility := CGTypeVisibilityKind.Public,
@@ -713,7 +713,7 @@ begin
                                                 );
     if not isCooperMode then begin
       for lm :RodlParameter in lop.Items do begin
-        var ltype := ResolveDataTypeToTypeRef(&library,lm.DataType);
+        var ltype := ResolveDataTypeToTypeRef(aLibrary,lm.DataType);
         var f_name :='f_'+lm.Name;
         lOperation.Members.Add(new CGFieldDefinition(f_name,
                                                      ltype,
@@ -740,14 +740,14 @@ begin
       if isCooperMode then begin
         lOperation.Members.Add(new CGPropertyDefinition(
                                                         lm.Name,
-                                                        ResolveDataTypeToTypeRef(&library,lm.DataType),
+                                                        ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         Comment:= GenerateDocumentation(lm)));
       end;
-      lop_method.Statements.Add(GetReaderStatement(&library,lm,"aBuffer"));
+      lop_method.Statements.Add(GetReaderStatement(aLibrary,lm,"aBuffer"));
     end;
 
-    file.Types.Add(lOperation);
+    aFile.Types.Add(lOperation);
     {$ENDREGION}
     lIEvent.Members.Add(new CGMethodDefinition(SafeIdentifier(lop.Name),
                                                Parameters := [new CGParameterDefinition("aEvent", lOperation.Name.AsTypeReference)].ToList,
@@ -760,8 +760,8 @@ begin
                               ImplementedInterfaces := [i_name.AsTypeReference].ToList,
                               Visibility := CGTypeVisibilityKind.Public);
 
-    file.Types.Add(lIEventAdapter);
-    for lop : RodlOperation in entity.DefaultInterface:Items do begin
+    aFile.Types.Add(lIEventAdapter);
+    for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
       lIEventAdapter.Members.Add(new CGMethodDefinition(SafeIdentifier(lop.Name),
                                                        Parameters := [new CGParameterDefinition("aEvent", SafeIdentifier(lop.Name+"Event").AsTypeReference)].ToList,
                                                        Visibility := CGMemberVisibilityKind.Public,
@@ -776,10 +776,10 @@ begin
   end;
 end;
 
-method JavaRodlCodeGen.GetWriterStatement_DefaultValues(&library: RodlLibrary; entity: RodlTypedEntity;variableName: String): CGStatement;
+method JavaRodlCodeGen.GetWriterStatement_DefaultValues(aLibrary: RodlLibrary; aEntity: RodlTypedEntity;variableName: String): CGStatement;
 begin
-  var lentityname := entity.Name;
-  var lLower: String  := entity.DataType.ToLowerInvariant();
+  var lentityname := aEntity.Name;
+  var lLower: String  := aEntity.DataType.ToLowerInvariant();
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
@@ -788,15 +788,15 @@ begin
   if l_isStandard then begin
     l_methodName := ReaderFunctions[lLower];
   end
-  else if isArray(&library, entity.DataType) then begin
+  else if isArray(aLibrary, aEntity.DataType) then begin
     l_methodName := "Array";
     l_isArray := True;
   end
-  else if isStruct(&library, entity.DataType) then begin
+  else if isStruct(aLibrary, aEntity.DataType) then begin
     l_methodName := "Complex";
     l_isStruct :=True;
   end
-  else if isEnum(&library, entity.DataType) then begin
+  else if isEnum(aLibrary, aEntity.DataType) then begin
     l_methodName := "Enum";
     l_isEnum := True;
   end;
@@ -829,11 +829,11 @@ begin
         );
   end
   else begin
-    raise new Exception(String.Format("unknown type: {0}",[entity.DataType]));
+    raise new Exception(String.Format("unknown type: {0}",[aEntity.DataType]));
   end;
 end;
 
-method JavaRodlCodeGen.ReadFromMessage_Method(&library: RodlLibrary; entity: RodlStructEntity): CGMethodDefinition;
+method JavaRodlCodeGen.ReadFromMessage_Method(aLibrary: RodlLibrary; aEntity: RodlStructEntity): CGMethodDefinition;
 begin
   Result := new CGMethodDefinition("readFromMessage",
                         Parameters := [new CGParameterDefinition("aName",   ResolveStdtypes(CGPredefinedTypeReference.String)),
@@ -848,7 +848,7 @@ begin
   );
   Result.Statements.Add(lIfRecordStrictOrder);
 
-  if assigned(entity.AncestorEntity) then begin
+  if assigned(aEntity.AncestorEntity) then begin
     lIfRecordStrictOrder_True.Statements.Add(
                       new CGMethodCallExpression(CGInheritedExpression.Inherited,"readFromMessage",
                                                 ["aName".AsNamedIdentifierExpression.AsCallParameter,
@@ -858,7 +858,7 @@ begin
 
   var lSortedFields := new Dictionary<String,RodlField>;
 
-  var lAncestorEntity := entity.AncestorEntity as RodlStructEntity;
+  var lAncestorEntity := aEntity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
     for field: RodlField in lAncestorEntity.Items do
       lSortedFields.Add(field.Name.ToLowerInvariant, field);
@@ -866,37 +866,37 @@ begin
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
-  for field: RodlField in entity.Items do
+  for field: RodlField in aEntity.Items do
     if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
       lSortedFields.Add(field.Name.ToLowerInvariant, field);
-      lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(library, field));
+      lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(aLibrary, field));
     end;
 
   for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
-    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(library, lSortedFields.Item[lvalue]));
+    lIfRecordStrictOrder_False.Statements.Add(GetReaderStatement(aLibrary, lSortedFields.Item[lvalue]));
 
 end;
 
-method JavaRodlCodeGen.GetReaderStatement(&library: RodlLibrary; entity: RodlTypedEntity; variableName: String): CGStatement;
+method JavaRodlCodeGen.GetReaderStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; variableName: String): CGStatement;
 begin
-  var lreader := GetReaderExpression(&library,entity,variableName);
-  exit GenerateSetProperty(CGSelfExpression.Self,entity.Name, lreader);
+  var lreader := GetReaderExpression(aLibrary,aEntity,variableName);
+  exit GenerateSetProperty(CGSelfExpression.Self,aEntity.Name, lreader);
 end;
 
-method JavaRodlCodeGen.HandleAtributes_private(&library: RodlLibrary; entity: RodlEntity): CGFieldDefinition;
+method JavaRodlCodeGen.HandleAtributes_private(aLibrary: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
 begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
-  if (entity.CustomAttributes.Count = 0) then exit;
+  if (aEntity.CustomAttributes.Count = 0) then exit;
   exit new CGFieldDefinition("_attributes",
                              new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList),
                             &Static := true,
                             Visibility := CGMemberVisibilityKind.Private);
 end;
 
-method JavaRodlCodeGen.HandleAtributes_public(&library: RodlLibrary; entity: RodlEntity): CGMethodDefinition;
+method JavaRodlCodeGen.HandleAtributes_public(aLibrary: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
 begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
-  if (entity.CustomAttributes.Count = 0) then exit;
+  if (aEntity.CustomAttributes.Count = 0) then exit;
   Result := new CGMethodDefinition("getAttributeValue",
                                   Parameters:=[new CGParameterDefinition("aName", ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
                                   ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -916,20 +916,20 @@ begin
                             new CGNewInstanceExpression(new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList)))
   );
 
-  for l_key: String in entity.CustomAttributes.Keys do begin
+  for l_key: String in aEntity.CustomAttributes.Keys do begin
     l_if_true.Statements.Add(
       new CGMethodCallExpression(l_attributes,"put",
                                 [EscapeString(l_key.ToLowerInvariant).AsLiteralExpression.AsCallParameter,
-                              EscapeString(entity.CustomAttributes[l_key]).AsLiteralExpression.AsCallParameter].ToList
+                              EscapeString(aEntity.CustomAttributes[l_key]).AsLiteralExpression.AsCallParameter].ToList
         ));
   end;
   Result.Statements.Add(new CGMethodCallExpression(l_attributes,"get", [new CGMethodCallExpression("aName".AsNamedIdentifierExpression,"toLowerCase").AsCallParameter].ToList).AsReturnStatement);
 end;
 
-method JavaRodlCodeGen.GetWriterStatement(&library: RodlLibrary; entity: RodlTypedEntity; useGetter: Boolean := True; variableName: String := "aMessage"): CGStatement;
+method JavaRodlCodeGen.GetWriterStatement(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; useGetter: Boolean := True; variableName: String := "aMessage"): CGStatement;
 begin
-  var lentityname := entity.Name;
-  var lLower: String  := entity.DataType.ToLowerInvariant();
+  var lentityname := aEntity.Name;
+  var lLower: String  := aEntity.DataType.ToLowerInvariant();
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
@@ -938,15 +938,15 @@ begin
   if l_isStandard then begin
     l_methodName := ReaderFunctions[lLower];
   end
-  else if isArray(&library, entity.DataType) then begin
+  else if isArray(aLibrary, aEntity.DataType) then begin
     l_methodName := "Array";
     l_isArray := True;
   end
-  else if isStruct(&library, entity.DataType) then begin
+  else if isStruct(aLibrary, aEntity.DataType) then begin
     l_methodName := "Complex";
     l_isStruct :=True;
   end
-  else if isEnum(&library, entity.DataType) then begin
+  else if isEnum(aLibrary, aEntity.DataType) then begin
     l_methodName := "Enum";
     l_isEnum := True;
   end;
@@ -965,13 +965,13 @@ begin
     exit new CGMethodCallExpression(variableName_ID,writer_name,[l_arg0, new CGMethodCallExpression(entity_ID,"ordinal").AsCallParameter].ToList);
   end
   else begin
-    raise new Exception(String.Format("unknown type: {0}",[entity.DataType]));
+    raise new Exception(String.Format("unknown type: {0}",[aEntity.DataType]));
   end;
 end;
 
-method JavaRodlCodeGen.GetReaderExpression(&library: RodlLibrary; entity: RodlTypedEntity; variableName: String := "aMessage"): CGExpression;
+method JavaRodlCodeGen.GetReaderExpression(aLibrary: RodlLibrary; aEntity: RodlTypedEntity; variableName: String := "aMessage"): CGExpression;
 begin
-  var lLower: String  := entity.DataType.ToLowerInvariant();
+  var lLower: String  := aEntity.DataType.ToLowerInvariant();
   var l_isStandard := ReaderFunctions.ContainsKey(lLower);
   var l_isArray := False;
   var l_isStruct := False;
@@ -980,15 +980,15 @@ begin
   if l_isStandard then begin
     l_methodName := ReaderFunctions[lLower];
   end
-  else if isArray(&library, entity.DataType) then begin
+  else if isArray(aLibrary, aEntity.DataType) then begin
     l_methodName := "Array";
     l_isArray := True;
   end
-  else if isStruct(&library, entity.DataType) then begin
+  else if isStruct(aLibrary, aEntity.DataType) then begin
     l_methodName := "Complex";
     l_isStruct :=True;
   end
-  else if isEnum(&library, entity.DataType) then begin
+  else if isEnum(aLibrary, aEntity.DataType) then begin
     l_methodName := "Enum";
     l_isEnum := True;
   end;
@@ -996,13 +996,13 @@ begin
   var varname_ID := variableName.AsNamedIdentifierExpression;
   var reader_name := "read" +  l_methodName;
 //  var l_reader := new CGIdentifierExpression("read" +  l_methodName, variableName);
-  var l_arg0 : CGCallParameter := entity.Name.AsLiteralExpression.AsCallParameter;
-  var l_type := ResolveDataTypeToTypeRef(&library,entity.DataType);
+  var l_arg0 : CGCallParameter := aEntity.Name.AsLiteralExpression.AsCallParameter;
+  var l_type := ResolveDataTypeToTypeRef(aLibrary,aEntity.DataType);
 
 
   if l_isStandard then begin
     var temp := new CGMethodCallExpression(varname_ID,reader_name,[l_arg0].ToList);
-    if isPrimitive(entity.DataType) then
+    if isPrimitive(aEntity.DataType) then
       exit temp
     else
       exit new CGTypeCastExpression(temp,
@@ -1022,17 +1022,17 @@ begin
       );
   end
   else begin
-    raise new Exception(String.Format("unknown type: {0}",[entity.DataType]));
+    raise new Exception(String.Format("unknown type: {0}",[aEntity.DataType]));
   end;
 
 end;
 
-method JavaRodlCodeGen.GenerateServiceProxyMethod(&library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
+method JavaRodlCodeGen.GenerateServiceProxyMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceProxyMethodDeclaration(&library,entity);
+  result := GenerateServiceProxyMethodDeclaration(aLibrary,aEntity);
   var l_in:= new List<RodlParameter>;
   var l_out:= new List<RodlParameter>;
-  for lp: RodlParameter in entity.Items do begin
+  for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
       l_in.Add(lp);
     if lp.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
@@ -1049,32 +1049,32 @@ begin
                                                                               "clone"),
                                                                     GenerateROSDKType("Message").AsTypeReference,
                                                                     ThrowsException:=True)));
-  GenerateOperationAttribute(&library,entity,Result.Statements);
+  GenerateOperationAttribute(aLibrary,aEntity,Result.Statements);
   Result.Statements.Add(
     new CGMethodCallExpression(llocalmessage,"initializeAsRequestMessage",
-                                [entity.OwnerLibrary.Name.AsLiteralExpression.AsCallParameter,
+                                [aEntity.OwnerLibrary.Name.AsLiteralExpression.AsCallParameter,
                                 new CGMethodCallExpression(CGSelfExpression.Self, "_getActiveInterfaceName").AsCallParameter,
-                                entity.Name.AsLiteralExpression.AsCallParameter].ToList
+                                aEntity.Name.AsLiteralExpression.AsCallParameter].ToList
       ));
   var ltry := new List<CGStatement>;
   var lfinally := new List<CGStatement>;
 
 
   for lp: RodlParameter in l_in do
-    ltry.Add(GetWriterStatement(&library,lp,false, llocalmessage.Name));
+    ltry.Add(GetWriterStatement(aLibrary,lp,false, llocalmessage.Name));
   ltry.Add(new CGMethodCallExpression(llocalmessage, "finalizeMessage"));
   ltry.Add(new CGMethodCallExpression(GenerateGetProperty(CGSelfExpression.Self, "ProxyClientChannel"),
                                       "dispatch",
                                       [llocalmessage.AsCallParameter].ToList));
 
-  if assigned(entity.Result) then begin
-    ltry.Add(new CGVariableDeclarationStatement("lResult",Result.ReturnType,GetReaderExpression(&library,entity.Result,llocalmessage.Name)));
+  if assigned(aEntity.Result) then begin
+    ltry.Add(new CGVariableDeclarationStatement("lResult",Result.ReturnType,GetReaderExpression(aLibrary,aEntity.Result,llocalmessage.Name)));
   end;
   for lp: RodlParameter in l_out do
     ltry.Add(GenerateSetProperty(("_"+lp.Name).AsNamedIdentifierExpression,
                                  "Value",
-                                 GetReaderExpression(&library,lp,llocalmessage.Name)                            ));
-  if assigned(entity.Result) then
+                                 GetReaderExpression(aLibrary,lp,llocalmessage.Name)                            ));
+  if assigned(aEntity.Result) then
     ltry.Add("lResult".AsNamedIdentifierExpression.AsReturnStatement);
   lfinally.Add(GenerateSetProperty(GenerateGetProperty(CGSelfExpression.Self,"ProxyMessage"),
                                    "ClientID",
@@ -1083,55 +1083,55 @@ begin
   Result.Statements.Add(new CGTryFinallyCatchStatement(ltry, &FinallyStatements:= lfinally as not nullable));
 end;
 
-method JavaRodlCodeGen.GenerateServiceProxyMethodDeclaration(&library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
+method JavaRodlCodeGen.GenerateServiceProxyMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  Result:= new CGMethodDefinition(SafeIdentifier(entity.Name),
+  Result:= new CGMethodDefinition(SafeIdentifier(aEntity.Name),
                                   Visibility := CGMemberVisibilityKind.Public);
-  for lp: RodlParameter in entity.Items do begin
+  for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-      Result.Parameters.Add(new CGParameterDefinition(lp.Name, ResolveDataTypeToTypeRef(&library, lp.DataType)));
+      Result.Parameters.Add(new CGParameterDefinition(lp.Name, ResolveDataTypeToTypeRef(aLibrary, lp.DataType)));
   end;
-  if assigned(entity.Result) then Result.ReturnType := ResolveDataTypeToTypeRef(&library, entity.Result.DataType);
-  for lp: RodlParameter in entity.Items do begin
+  if assigned(aEntity.Result) then Result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
+  for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
-      Result.Parameters.Add(new CGParameterDefinition("_"+lp.Name, new CGNamedTypeReference(GenerateROSDKType("ReferenceType"), GenericArguments:=[ResolveDataTypeToTypeRef(&library, lp.DataType)].ToList)));
+      Result.Parameters.Add(new CGParameterDefinition("_"+lp.Name, new CGNamedTypeReference(GenerateROSDKType("ReferenceType"), GenericArguments:=[ResolveDataTypeToTypeRef(aLibrary, lp.DataType)].ToList)));
   end;
 end;
 
-method JavaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(&library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
+method JavaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  Result:= new CGMethodDefinition("begin" + PascalCase(entity.Name),
+  Result:= new CGMethodDefinition("begin" + PascalCase(aEntity.Name),
                                   ReturnType := GenerateROSDKType("AsyncRequest").AsTypeReference,
                                   Visibility := CGMemberVisibilityKind.Public);
-  for lp: RodlParameter in entity.Items do begin
+  for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-      Result.Parameters.Add(new CGParameterDefinition(lp.Name, ResolveDataTypeToTypeRef(&library, lp.DataType)));
+      Result.Parameters.Add(new CGParameterDefinition(lp.Name, ResolveDataTypeToTypeRef(aLibrary, lp.DataType)));
   end;
   result.Parameters.Add(new CGParameterDefinition("start", ResolveStdtypes(CGPredefinedTypeReference.Boolean)));
   result.Parameters.Add(new CGParameterDefinition("callback", GenerateROSDKType("AsyncRequest.IAsyncRequestCallback").AsTypeReference));
 end;
 
-method JavaRodlCodeGen.GenerateServiceAsyncProxyEndMethodDeclaration(&library: RodlLibrary; entity: RodlOperation;&locked:Boolean): CGMethodDefinition;
+method JavaRodlCodeGen.GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation;&locked:Boolean): CGMethodDefinition;
 begin
-  Result:= new CGMethodDefinition("end" + PascalCase(entity.Name),
+  Result:= new CGMethodDefinition("end" + PascalCase(aEntity.Name),
       Visibility := CGMemberVisibilityKind.Public);
-  for lp: RodlParameter in entity.Items do begin
+  for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
-      Result.Parameters.Add(new CGParameterDefinition(lp.Name, new CGNamedTypeReference(GenerateROSDKType("ReferenceType"), GenericArguments :=[ResolveDataTypeToTypeRef(&library, lp.DataType)].ToList)));
+      Result.Parameters.Add(new CGParameterDefinition(lp.Name, new CGNamedTypeReference(GenerateROSDKType("ReferenceType"), GenericArguments :=[ResolveDataTypeToTypeRef(aLibrary, lp.DataType)].ToList)));
   end;
-  if assigned(entity.Result) then
-    result.ReturnType := ResolveDataTypeToTypeRef(library, entity.Result.DataType);
+  if assigned(aEntity.Result) then
+    result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
 
   result.Parameters.Add(new CGParameterDefinition("aAsyncRequest", GenerateROSDKType("AsyncRequest").AsTypeReference));
   result.Locked := &locked;
 end;
 
 
-method JavaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod(&library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
+method JavaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceAsyncProxyBeginMethodDeclaration(&library,entity);
+  result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary,aEntity);
   var l_in:= new List<RodlParameter>;
-  for lp: RodlParameter in entity.Items do begin
+  for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
       l_in.Add(lp);
   end;
@@ -1147,17 +1147,17 @@ begin
                                                                               ThrowsException:=True)
                                                 ));
 
-  GenerateOperationAttribute(&library,entity,Result.Statements);
+  GenerateOperationAttribute(aLibrary,aEntity,Result.Statements);
 
   Result.Statements.Add(
     new CGMethodCallExpression(llocalmessage,"initializeAsRequestMessage",
-                              [entity.OwnerLibrary.Name.AsLiteralExpression.AsCallParameter,
+                              [aEntity.OwnerLibrary.Name.AsLiteralExpression.AsCallParameter,
                               new CGMethodCallExpression(CGSelfExpression.Self, "_getActiveInterfaceName").AsCallParameter,
-                              entity.Name.AsLiteralExpression.AsCallParameter].ToList
+                              aEntity.Name.AsLiteralExpression.AsCallParameter].ToList
     ));
 
   for lp: RodlParameter in l_in do
-    Result.Statements.Add(GetWriterStatement(&library,lp,false,llocalmessage.Name));
+    Result.Statements.Add(GetWriterStatement(aLibrary,lp,false,llocalmessage.Name));
   Result.Statements.Add(new CGMethodCallExpression(llocalmessage, "finalizeMessage"));
   Result.Statements.Add(new CGMethodCallExpression(GenerateGetProperty(CGSelfExpression.Self,"ProxyClientChannel"),
                                                    "asyncDispatch",
@@ -1168,12 +1168,12 @@ begin
   );
 end;
 
-method JavaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(&library: RodlLibrary; entity: RodlOperation): CGMethodDefinition;
+method JavaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceAsyncProxyEndMethodDeclaration(&library,entity,true);
+  result := GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary,aEntity,true);
 
   var l_out:= new List<RodlParameter>;
-  for lp: RodlParameter in entity.Items do begin
+  for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
       l_out.Add(lp);
   end;
@@ -1183,27 +1183,27 @@ begin
                                                            GenerateROSDKType("Message").AsTypeReference,
                                                            GenerateGetProperty("aAsyncRequest".AsNamedIdentifierExpression,"ProcessMessage")));
 
-  GenerateOperationAttribute(&library,entity,Result.Statements);
+  GenerateOperationAttribute(aLibrary,aEntity,Result.Statements);
 
-  if assigned(entity.Result) then begin
-    Result.Statements.Add(new CGVariableDeclarationStatement("lResult",Result.ReturnType,GetReaderExpression(&library,entity.Result,llocalmessage.Name)));
+  if assigned(aEntity.Result) then begin
+    Result.Statements.Add(new CGVariableDeclarationStatement("lResult",Result.ReturnType,GetReaderExpression(aLibrary,aEntity.Result,llocalmessage.Name)));
   end;
   for lp: RodlParameter in l_out do
     Result.Statements.Add(GenerateSetProperty(lp.Name.AsNamedIdentifierExpression,
                                               "Value",
-                                              GetReaderExpression(&library,lp,llocalmessage.Name)));
+                                              GetReaderExpression(aLibrary,lp,llocalmessage.Name)));
   var mess := GenerateGetProperty(new CGSelfExpression,"ProxyMessage");
   Result.Statements.Add(GenerateSetProperty(mess,"ClientID",GenerateGetProperty(llocalmessage,"ClientID")));
   Result.Statements.Add(new CGMethodCallExpression(llocalmessage,"clear"));
-  if assigned(entity.Result) then
+  if assigned(aEntity.Result) then
     Result.Statements.Add("lResult".AsNamedIdentifierExpression.AsReturnStatement);
 end;
 
-method JavaRodlCodeGen.GenerateServiceConstructors(&library: RodlLibrary; entity: RodlService; service: CGClassTypeDefinition);
+method JavaRodlCodeGen.GenerateServiceConstructors(aLibrary: RodlLibrary; aEntity: RodlService; aService: CGClassTypeDefinition);
 begin
   {$REGION .ctor}
   var l_Setpackage := new CGMethodCallExpression(GenerateROSDKType("TypeManager").AsNamedIdentifierExpression,"setPackage",[targetNamespace.AsLiteralExpression.AsCallParameter].ToList);
-  service.Members.Add(
+  aService.Members.Add(
     new CGConstructorDefinition(
       Visibility := CGMemberVisibilityKind.Public,
       Statements:= [
@@ -1214,7 +1214,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor(aMessage: Message; aClientChannel: ClientChannel)}
-  service.Members.Add(
+  aService.Members.Add(
     new CGConstructorDefinition(
       Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
                      new CGParameterDefinition("aClientChannel", GenerateROSDKType("ClientChannel").AsTypeReference)].ToList,
@@ -1230,7 +1230,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor(aMessage: Message; aClientChannel: ClientChannel; aOverrideInterfaceName: String)}
-  service.Members.Add(
+  aService.Members.Add(
     new CGConstructorDefinition(
      Parameters := [new CGParameterDefinition("aMessage", GenerateROSDKType("Message").AsTypeReference),
                     new CGParameterDefinition("aClientChannel", GenerateROSDKType("ClientChannel").AsTypeReference),
@@ -1247,7 +1247,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor(aSchema: URI)}
-  service.Members.Add(
+  aService.Members.Add(
     new CGConstructorDefinition(
       Parameters := [new CGParameterDefinition("aSchema", "java.net.URI".AsTypeReference)].ToList,
       Visibility := CGMemberVisibilityKind.Public,
@@ -1259,7 +1259,7 @@ begin
   {$ENDREGION}
 
   {$REGION .ctor(aSchema: URI; aOverrideInterfaceName: String)}
-  service.Members.Add(
+  aService.Members.Add(
     new CGConstructorDefinition(
      Parameters:=[new CGParameterDefinition("aSchema", "java.net.URI".AsTypeReference),
                   new CGParameterDefinition("aOverrideInterfaceName", ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
@@ -1274,9 +1274,9 @@ begin
   {$ENDREGION}
 
   {$REGION method _getInterfaceName: String; override;}
-  service.Members.Add(
+  aService.Members.Add(
     new CGMethodDefinition("_getInterfaceName",
-                          [SafeIdentifier(entity.Name).AsLiteralExpression.AsReturnStatement],
+                          [SafeIdentifier(aEntity.Name).AsLiteralExpression.AsReturnStatement],
                           ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                           Virtuality := CGMemberVirtualityKind.Override,
                           Visibility := CGMemberVisibilityKind.Public)
@@ -1284,9 +1284,9 @@ begin
   {$ENDREGION}
 end;
 
-method JavaRodlCodeGen.GenerateOperationAttribute(&library: RodlLibrary; entity: RodlOperation; Statements: List<CGStatement>);
+method JavaRodlCodeGen.GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
 begin
-  var ld := Operation_GetAttributes(&library, entity);
+  var ld := Operation_GetAttributes(aLibrary, aEntity);
   if ld.Count > 0 then begin
     var lhashmaptype := new CGNamedTypeReference("HashMap",GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList);
     var l_attributes := "lAttributesMap".AsNamedIdentifierExpression;
@@ -1301,23 +1301,23 @@ begin
   end;
 end;
 
-method JavaRodlCodeGen.GetGlobalName(library: RodlLibrary): String;
+method JavaRodlCodeGen.GetGlobalName(aLibrary: RodlLibrary): String;
 begin
   exit 'Defines_' + targetNamespace.Replace('.', '_');
 end;
 
-method JavaRodlCodeGen.GetIncludesNamespace(library: RodlLibrary): String;
+method JavaRodlCodeGen.GetIncludesNamespace(aLibrary: RodlLibrary): String;
 begin
-  if assigned(library.Includes) then exit library.Includes.JavaModule;
-  exit inherited GetIncludesNamespace(library);
+  if assigned(aLibrary.Includes) then exit aLibrary.Includes.JavaModule;
+  exit inherited GetIncludesNamespace(aLibrary);
 end;
 
-method JavaRodlCodeGen.GenerateInterfaceFiles(library: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
+method JavaRodlCodeGen.GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
 begin
   isCooperMode := False;
   result := new Dictionary<String,String>;
-  var lunit := DoGenerateInterfaceFile(library, aTargetNamespace);
-  //var lgn := GetGlobalName(library);
+  var lunit := DoGenerateInterfaceFile(aLibrary, aTargetNamespace);
+  //var lgn := GetGlobalName(aLibrary);
   for k in lunit.Types.OrderBy(b->b.Name) do begin
 {    if (k is CGInterfaceTypeDefinition) and (CGInterfaceTypeDefinition(k).Name = lgn) then
       result.Add(Path.ChangeExtension('Defines', Generator.defaultFileExtension), (Generator.GenerateUnitForSingleType(k) &unit(lunit)))
@@ -1340,32 +1340,32 @@ begin
           new CGMethodCallExpression(aParent, "set"+Name,[aValue.AsCallParameter].ToList));
 end;
 
-method JavaRodlCodeGen.GenerateEnum(file: CGCodeUnit; library: RodlLibrary; entity: RodlEnum);
+method JavaRodlCodeGen.GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum);
 begin
-  var lenum := new CGEnumTypeDefinition(SafeIdentifier(entity.Name),
+  var lenum := new CGEnumTypeDefinition(SafeIdentifier(aEntity.Name),
                                         Visibility := CGTypeVisibilityKind.Public,
                                         BaseType := new CGNamedTypeReference('Enum'));
-  lenum.Comment := GenerateDocumentation(entity);
-  file.Types.Add(lenum);
-  for enummember: RodlEnumValue in entity.Items do begin
-    var lname := GenerateEnumMemberName(library, entity, enummember);
+  lenum.Comment := GenerateDocumentation(aEntity);
+  aFile.Types.Add(lenum);
+  for enummember: RodlEnumValue in aEntity.Items do begin
+    var lname := GenerateEnumMemberName(aLibrary, aEntity, enummember);
     var lenummember := new CGEnumValueDefinition(lname);
     lenummember.Comment := GenerateDocumentation(enummember);
     lenum.Members.Add(lenummember);
   end;
 end;
 
-method JavaRodlCodeGen.AddGlobalConstants(file: CGCodeUnit; library: RodlLibrary);
+method JavaRodlCodeGen.AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
 
   var ltype : CGTypeDefinition;
 
   if isCooperMode then
-    ltype := new CGClassTypeDefinition(GetGlobalName(library), Visibility:= CGTypeVisibilityKind.Public)
+    ltype := new CGClassTypeDefinition(GetGlobalName(aLibrary), Visibility:= CGTypeVisibilityKind.Public)
   else
-    ltype := new CGInterfaceTypeDefinition(GetGlobalName(library), Visibility:= CGTypeVisibilityKind.Public);
+    ltype := new CGInterfaceTypeDefinition(GetGlobalName(aLibrary), Visibility:= CGTypeVisibilityKind.Public);
 
-  file.Types.Add(ltype);
+  aFile.Types.Add(ltype);
 
   ltype.Members.Add(new CGFieldDefinition("TARGET_NAMESPACE", ResolveStdtypes(CGPredefinedTypeReference.String),
                     Constant := true,
@@ -1373,7 +1373,7 @@ begin
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := if assigned(targetNamespace) then targetNamespace.AsLiteralExpression));
 
-  for lentity: RodlEntity in &library.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+  for lentity: RodlEntity in aLibrary.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     if not EntityNeedsCodeGen(lentity) then Continue;
     var lName := lentity.Name;
     ltype.Members.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -1392,13 +1392,13 @@ begin
     exit aName;
 end;
 
-method JavaRodlCodeGen.isPrimitive(&type: String): Boolean;
+method JavaRodlCodeGen.isPrimitive(aType: String): Boolean;
 begin
-  result := not CodeGenTypes.ContainsKey(&type.ToLowerInvariant);
+  result := not CodeGenTypes.ContainsKey(aType.ToLowerInvariant);
   if result then begin
-    var k := CodeGenTypes[&type.ToLowerInvariant];
+    var k := CodeGenTypes[aType.ToLowerInvariant];
     result := (k is CGPredefinedTypeReference) and
-              (CodeGenTypes[&type.ToLowerInvariant].Nullability <> CGTypeNullabilityKind.NullableNotUnwrapped);
+              (CodeGenTypes[aType.ToLowerInvariant].Nullability <> CGTypeNullabilityKind.NullableNotUnwrapped);
   end;
 end;
 
