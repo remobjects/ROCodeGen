@@ -26,7 +26,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)CocoaRodlCodeGen.pas">
       <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)CPlusPlusBuilderRODLCodegen.pas">
+    <Compile Include="$(MSBuildThisFileDirectory)CPlusPlusBuilderRodlCodegen.pas">
       <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)DelphiRodlCodeGen.pas">
