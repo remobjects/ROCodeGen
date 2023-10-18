@@ -125,24 +125,24 @@ begin
             )
     );
 
-      {$REGION method stringFromValue(aValue: Integer): NSString;}
-      var lcases := new List<CGSwitchStatementCase>;
-      for enummember: RodlEnumValue in aEntity.Items index i do begin
-        var lmName := GenerateEnumMemberName(library, aEntity, enummember);
-        lcases.Add(new CGSwitchStatementCase(i.AsLiteralExpression, [CGStatement(lmName.AsLiteralExpression.AsReturnStatement)].ToList));
-      end;
-      var sw: CGStatement := new CGSwitchStatement("aValue".AsNamedIdentifierExpression,
-                                                lcases,
-                                                DefaultCase := [CGStatement("<Invalid Enum Value>".AsLiteralExpression.AsReturnStatement)].ToList);
-      lenum.Members.Add(new CGMethodDefinition(if IsSwift then "string" else "stringFromValue",
-                                              [sw].ToList,
-                                              Parameters := [new CGParameterDefinition("aValue", NSUIntegerType, ExternalName := if IsSwift then "fromValue")].ToList,
-                                              ReturnType:= CGPredefinedTypeReference.String.NotNullable,
-                                              Virtuality := CGMemberVirtualityKind.Override,
-                                              Visibility := CGMemberVisibilityKind.Public));
-      {$ENDREGION}
+    {$REGION method stringFromValue(aValue: Integer): NSString;}
+    var lcases := new List<CGSwitchStatementCase>;
+    for enummember: RodlEnumValue in aEntity.Items index i do begin
+      var lmName := GenerateEnumMemberName(library, aEntity, enummember);
+      lcases.Add(new CGSwitchStatementCase(i.AsLiteralExpression, [CGStatement(lmName.AsLiteralExpression.AsReturnStatement)].ToList));
+    end;
+    var sw: CGStatement := new CGSwitchStatement("aValue".AsNamedIdentifierExpression,
+                                              lcases,
+                                              DefaultCase := [CGStatement("<Invalid Enum Value>".AsLiteralExpression.AsReturnStatement)].ToList);
+    lenum.Members.Add(new CGMethodDefinition(if IsSwift then "string" else "stringFromValue",
+                                            [sw].ToList,
+                                            Parameters := [new CGParameterDefinition("aValue", NSUIntegerType, ExternalName := if IsSwift then "fromValue")].ToList,
+                                            ReturnType:= CGPredefinedTypeReference.String.NotNullable,
+                                            Virtuality := CGMemberVirtualityKind.Override,
+                                            Visibility := CGMemberVisibilityKind.Public));
+    {$ENDREGION}
 
-      {$REGION method valueFromString(aValue: NSString): Integer; override;}
+    {$REGION method valueFromString(aValue: NSString): Integer; override;}
     var lArgs := new List<CGCallParameter>;
     for enummember: RodlEnumValue in aEntity.Items do begin
       var lmName := GenerateEnumMemberName(library, aEntity, enummember);
@@ -221,10 +221,10 @@ end;
 
 method CocoaRodlCodeGen.GenerateStruct(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlStruct);
 begin
-  var lancestorName := aEntity.AncestorName;
-  if String.IsNullOrEmpty(lancestorName) then lancestorName := "ROComplexType";
+  var lAncestorName := aEntity.AncestorName;
+  if String.IsNullOrEmpty(lAncestorName) then lAncestorName := "ROComplexType";
 
-  var lStruct := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lancestorName.AsTypeReference,
+  var lStruct := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestorName.AsTypeReference,
                                            Visibility := CGTypeVisibilityKind.Public,
                                            Comment := GenerateDocumentation(aEntity));
   lStruct.Attributes.Add(new CGAttribute("objc".AsTypeReference, SafeIdentifier(aEntity.Name).AsNamedIdentifierExpression.AsCallParameter));
@@ -614,9 +614,9 @@ end;
 
 method CocoaRodlCodeGen.GenerateException(file: CGCodeUnit; &library: RodlLibrary; aEntity: RodlException);
 begin
-  var lancestorName := aEntity.AncestorName;
-  if String.IsNullOrEmpty(lancestorName) then lancestorName := "ROException";
-  var lException := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lancestorName.AsTypeReference,
+  var lAncestorName := aEntity.AncestorName;
+  if String.IsNullOrEmpty(lAncestorName) then lAncestorName := "ROException";
+  var lException := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestorName.AsTypeReference,
                                               Visibility := CGTypeVisibilityKind.Public,
                                               Comment := GenerateDocumentation(aEntity));
   file.Types.Add(lException);
@@ -699,17 +699,30 @@ begin
 
   {$ENDREGION}
 
+  {$REGION I%SERVICE_NAME%_Async}
+  var lIServiceAsync := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async"),
+                                                      Visibility := CGTypeVisibilityKind.Public,
+                                                      Comment := GenerateDocumentation(aEntity));
+  file.Types.Add(lIServiceAsync);
+  for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod(&library, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_start(&library, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(&library, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethod(&library, lop));
+  end;
+
+  {$ENDREGION}
+
   {$REGION %SERVICE_NAME%_Proxy}
-  var lancestorName := aEntity.AncestorName;
-  if String.IsNullOrEmpty(lancestorName) then
-    lancestorName := "ROProxy"
+  var lAncestorName := aEntity.AncestorName;
+  if String.IsNullOrEmpty(lAncestorName) then
+    lAncestorName := "ROProxy"
   else
-    lancestorName := lancestorName+"_Proxy";
+    lAncestorName := lAncestorName+"_Proxy";
   var lServiceProxy := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name+"_Proxy"),
-                                                 [lancestorName.AsTypeReference].ToList,
+                                                 [lAncestorName.AsTypeReference].ToList,
                                                  [lIService.Name.AsTypeReference].ToList,
-                                                 Visibility := CGTypeVisibilityKind.Public
-                                                 );
+                                                 Visibility := CGTypeVisibilityKind.Public);
   file.Types.Add(lServiceProxy);
 
   GenerateServiceMethods(&library,aEntity, lServiceProxy);
@@ -719,15 +732,15 @@ begin
   {$ENDREGION}
 
   {$REGION %SERVICE_NAME%_AsyncProxy}
-  lancestorName := aEntity.AncestorName;
-  if String.IsNullOrEmpty(lancestorName) then
-    lancestorName := "ROAsyncProxy"
+  lAncestorName := aEntity.AncestorName;
+  if String.IsNullOrEmpty(lAncestorName) then
+    lAncestorName := "ROAsyncProxy"
   else
-    lancestorName := lancestorName+"_AsyncProxy";
+    lAncestorName := lAncestorName+"_AsyncProxy";
 
-  var lServiceAsyncProxy := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name+"_AsyncProxy"),lancestorName.AsTypeReference,
-                            Visibility := CGTypeVisibilityKind.Public
-                            );
+  var lServiceAsyncProxy := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name+"_AsyncProxy"),lAncestorName.AsTypeReference,
+                                                      [lIServiceAsync.Name.AsTypeReference].ToList,
+                                                      Visibility := CGTypeVisibilityKind.Public);
   file.Types.Add(lServiceAsyncProxy);
   GenerateServiceMethods(&library,aEntity,lServiceAsyncProxy);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
