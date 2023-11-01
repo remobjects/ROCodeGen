@@ -53,6 +53,20 @@ type
     method GetGlobalName(aLibrary: RodlLibrary): String; abstract;
 
     property EnumBaseType: CGTypeReference read ResolveStdtypes(CGPredefinedTypeReference.UInt32); virtual;
+
+    method GetInOutParameters(aEntity: RodlOperation): tuple of (List<RodlParameter>, List<RodlParameter>);
+    begin
+      var lInParameters := new List<RodlParameter>;
+      var lOutParameters := new List<RodlParameter>;
+      for p: RodlParameter in aEntity.Items do begin
+        if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
+          lInParameters.Add(p);
+        if p.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
+          lOutParameters.Add(p);
+      end;
+      result := (lInParameters, lOutParameters);
+    end;
+
   public
     class property KnownRODLPaths: Dictionary<String,String> := new Dictionary<String,String>;
     property Generator: CGCodeGenerator; virtual;
