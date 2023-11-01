@@ -29,7 +29,9 @@ type
     method GenerateServiceAsyncProxyBeginMethod_start(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
     method GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
     method GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyStartMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
     method GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyEndMethod_Statements(aLibrary: RodlLibrary; aEntity: RodlOperation; aIsBlock: Boolean): List<not nullable CGStatement>;
 
     method GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity: RodlOperation;Statements: List<CGStatement>);
     method GenerateServiceMethods(aLibrary: RodlLibrary; aEntity: RodlService; service:CGClassTypeDefinition);
@@ -708,7 +710,16 @@ begin
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_start(aLibrary, lop));
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary, lop));
+    //lIServiceAsync.Members.Add(GenerateServiceAsyncProxyStartMethod(aLibrary, lop));
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethod(aLibrary, lop));
+  end;
+
+  var lIServiceAsync2 := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async2"),
+                                                      Visibility := CGTypeVisibilityKind.Public,
+                                                      Comment := GenerateDocumentation(aEntity));
+  aFile.Types.Add(lIServiceAsync2);
+  for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
+    lIServiceAsync2.Members.Add(GenerateServiceAsyncProxyStartMethod(aLibrary, lop));
   end;
 
   {$ENDREGION}
@@ -739,7 +750,7 @@ begin
     lAncestorName := lAncestorName+"_AsyncProxy";
 
   var lServiceAsyncProxy := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name+"_AsyncProxy"),lAncestorName.AsTypeReference,
-                                                      [lIServiceAsync.Name.AsTypeReference].ToList,
+                                                      [lIServiceAsync.Name.AsTypeReference, lIServiceAsync2.Name.AsTypeReference].ToList,
                                                       Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lServiceAsyncProxy);
   GenerateServiceMethods(aLibrary,aEntity,lServiceAsyncProxy);
@@ -747,6 +758,7 @@ begin
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod_start(aLibrary, lop));
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary, lop));
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyStartMethod(aLibrary, lop));
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyEndMethod(aLibrary, lop));
   end;
   {$ENDREGION}
@@ -1188,24 +1200,16 @@ end;
 method CocoaRodlCodeGen.GenerateServiceProxyMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
   result := GenerateServiceProxyMethodDeclaration(aLibrary,aEntity);
-  var lInParameters := new List<RodlParameter>;
-  var lOutParameters := new List<RodlParameter>;
-  for p: RodlParameter in aEntity.Items do begin
-    if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-      lInParameters.Add(p);
-    if p.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
-      lOutParameters.Add(p);
-  end;
-  if assigned(aEntity.Result) then begin
+  var (lInParameters, lOutParameters) := GetInOutParameters(aEntity);
+  if assigned(aEntity.Result) then
     result.Statements.Add(new CGVariableDeclarationStatement("___result",result.ReturnType));
-  end;
 
   result.Statements.Add(new CGVariableDeclarationStatement("___localMessage",
                                                            "ROMessage".AsTypeReference,
                                                            new CGTypeCastExpression(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(), "___message") , "copy"), "ROMessage".AsTypeReference(), ThrowsException := true),
                                                            &ReadOnly := true));
 
-  GenerateOperationAttribute(aLibrary,aEntity,result.Statements);
+  GenerateOperationAttribute(aLibrary, aEntity, result.Statements);
   result.Statements.Add(new CGMethodCallExpression("___localMessage".AsNamedIdentifierExpression,
                                                    if IsAppleSwift then "initialize" else "initializeAsRequestMessage",
                                                    [new CGPropertyAccessExpression(new CGSelfExpression, "___clientChannel").AsCallParameter(if IsAppleSwift then "asRequest"),
@@ -1265,8 +1269,8 @@ end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary ,aEntity);
-  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary,aEntity,result.Statements);
+  result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, aEntity);
+  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary, aEntity, result.Statements);
   // exit self.___clientChannel.asyncDispatch(___localMessage) withProxy(self) start(true);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression,"___clientChannel"),
                                                     "asyncDispatch",
@@ -1280,38 +1284,41 @@ method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary
 begin
   result := new CGMethodDefinition("end" + PascalCase(aEntity.Name), Visibility := CGMemberVisibilityKind.Public);
   result.Parameters.Add(new CGParameterDefinition("___asyncRequest", "ROAsyncRequest".AsTypeReference));
-  var lOutParameters := new List<RodlParameter>;
-  for p: RodlParameter in aEntity.Items do begin
-    if p.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then begin
-      lOutParameters.Add(p);
-      result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := CGParameterModifierKind.Out)); // end* metbods are always "out"
-    end;
-  end;
+  var (nil, lOutParameters) := GetInOutParameters(aEntity);
+  for p in lOutParameters do
+    result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := CGParameterModifierKind.Out)); // end* metbods are always "out"
+
+  result.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, false);
 
   if assigned(aEntity.Result) then begin
     result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
+    result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
   end;
+end;
+
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod_Statements(aLibrary: RodlLibrary; aEntity: RodlOperation; aIsBlock: Boolean): List<not nullable CGStatement>;
+begin
+  result := new List<not nullable CGStatement>;
 
   if assigned(aEntity.Result) then
-    result.Statements.Add(new CGVariableDeclarationStatement("___result", result.ReturnType) );
-  result.Statements.Add(new CGVariableDeclarationStatement("___localMessage", "ROMessage".AsTypeReference, new CGPropertyAccessExpression("___asyncRequest".AsNamedIdentifierExpression, "responseMessage"), &ReadOnly := true));
-  GenerateOperationAttribute(aLibrary,aEntity,Result.Statements);
+    result.Add(new CGVariableDeclarationStatement("___result", ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType)));
+  if not aIsBlock then
+    result.Add(new CGVariableDeclarationStatement("___localMessage", "ROMessage".AsTypeReference, new CGPropertyAccessExpression("___asyncRequest".AsNamedIdentifierExpression, "responseMessage"), &ReadOnly := true));
+  GenerateOperationAttribute(aLibrary, aEntity, result);
   if assigned(aEntity.Result) then
-    result.Statements.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression, GetReaderExpression(aLibrary,aEntity.Result,"___localMessage")));
+    result.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression, GetReaderExpression(aLibrary,aEntity.Result,"___localMessage")));
 
-  for p: RodlParameter in lOutParameters do
-    result.Statements.Add(new CGAssignmentStatement(
+  var (nil, lOutParameters) := GetInOutParameters(aEntity);
+  for p in lOutParameters do
+    result.Add(new CGAssignmentStatement(
                                     ApplyParamDirectionExpression(p.Name.AsNamedIdentifierExpression,p.ParamFlag),
                                     GetReaderExpression(aLibrary,p,"___localMessage")
                                     ));
 
   var lSelfMessage := new CGPropertyAccessExpression(new CGSelfExpression, "___message");
-  result.Statements.Add(new CGMethodCallExpression(nil, "objc_sync_enter", [lSelfMessage.AsCallParameter].ToList));
-  result.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(lSelfMessage,"clientID"), new CGPropertyAccessExpression("___localMessage".AsNamedIdentifierExpression, "clientID")));
-  result.Statements.Add(new CGMethodCallExpression(nil,"objc_sync_exit", [lSelfMessage.AsCallParameter].ToList));
-
-  if assigned(aEntity.Result) then
-    result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
+  result.Add(new CGMethodCallExpression(nil, "objc_sync_enter", [lSelfMessage.AsCallParameter].ToList));
+  result.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(lSelfMessage,"clientID"), new CGPropertyAccessExpression("___localMessage".AsNamedIdentifierExpression, "clientID")));
+  result.Add(new CGMethodCallExpression(nil,"objc_sync_exit", [lSelfMessage.AsCallParameter].ToList));
 end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
@@ -1322,10 +1329,9 @@ begin
   if IsSwift then
     result.Attributes.Add(new CGAttribute("discardableResult".AsTypeReference));
 
-  for p: RodlParameter in aEntity.Items do begin
+  for p: RodlParameter in aEntity.Items do
     if p.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
       result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag, true)));
-  end;
 end;
 
 method CocoaRodlCodeGen.GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity: RodlOperation; Statements: List<CGStatement>);
@@ -1360,13 +1366,15 @@ begin
   {$ENDREGION}
 end;
 
+//
+
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethod_start(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__start";
   result.Parameters.Add(new CGParameterDefinition("___start", ResolveStdtypes(CGPredefinedTypeReference.Boolean), ExternalName := if result.Parameters.Count > 0 then "start"));
-  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary,aEntity,result.Statements);
+  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary, aEntity, result.Statements);
   result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
                                                   ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
@@ -1382,13 +1390,50 @@ begin
     result.Name := result.Name+ "__startWithBlock";
   var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
   result.Parameters.Add(new CGParameterDefinition("___block", bl, ExternalName := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
-  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary,aEntity,result.Statements);
-  result.Statements.Add(new CGMethodCallExpression( new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
+  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary, aEntity, result.Statements);
+  result.Statements.Add(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
-                                                  ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
+                                                   ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
                                                    new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
                                                    new CGCallParameter("___block".AsNamedIdentifierExpression, (if IsAppleSwift then "startWith" else "startWithBlock"))].ToList
                           ).AsReturnStatement);
+end;
+
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyStartMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+begin
+  result := new CGMethodDefinition(aEntity.Name,
+                                   Visibility := CGMemberVisibilityKind.Public);
+
+  var (lInParameters, lOutParameters) := GetInOutParameters(aEntity);
+  for p in lInParameters do
+    result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := ApplyParamDirection(p.ParamFlag, true)));
+
+  var lBlockType := new CGBlockTypeDefinition("", Parameters := new List<CGParameterDefinition>);
+  if assigned(aEntity.Result) then
+    lBlockType.Parameters.Add(new CGParameterDefinition("___result", ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType)));
+  for each p in lOutParameters do
+    lBlockType.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType)));
+  lBlockType.Parameters.Add(new CGParameterDefinition("___request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped)));
+
+  result.Parameters.Add(new CGParameterDefinition("___block", new CGInlineBlockTypeReference(lBlockType)));
+
+  var lEndStatements := new List<CGStatement>;
+  var lCallback := new CGAnonymousMethodExpression([new CGParameterDefinition("___request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))], lEndStatements.ToArray);
+  lCallback.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, true);
+  var lCallbackParameters := new List<CGCallParameter>;
+  if assigned(aEntity.Result) then
+    lCallbackParameters.Add(new CGCallParameter(new CGLocalVariableAccessExpression("___result")));
+  for p in lOutParameters do
+    lCallbackParameters.Add(new CGCallParameter(new CGLocalVariableAccessExpression(p.Name)));
+  lCallbackParameters.Add(new CGCallParameter(new CGLocalVariableAccessExpression("___request")));
+  lCallback.Statements.Add(new CGMethodCallExpression(nil, "___block", lCallbackParameters));
+
+  GenerateServiceAsyncProxyBeginMethod_Body(aLibrary, aEntity, result.Statements);
+  result.Statements.Add(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
+                                                   "asyncDispatch",
+                                                   ["___localMessage".AsNamedIdentifierExpression.AsCallParameter,
+                                                   new CGCallParameter(new CGSelfExpression(), if IsSwift then "with" else "withProxy"),
+                                                   new CGCallParameter(lCallback, (if IsAppleSwift then "startWith" else "startWithBlock"))].ToList));
 end;
 
 method CocoaRodlCodeGen.ApplyParamDirectionExpression(aExpr: CGExpression; paramFlag: ParamFlags; aInOnly: Boolean := false): CGExpression;
