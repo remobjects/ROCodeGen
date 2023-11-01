@@ -1,5 +1,8 @@
 ﻿namespace RemObjects.SDK.CodeGen4;
 
+uses
+  RemObjects.Elements.RTL;
+
 type
   RodlRoles = public partial class
   public
