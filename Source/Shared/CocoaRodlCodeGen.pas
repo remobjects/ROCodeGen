@@ -1233,7 +1233,7 @@ begin
 
   // Apple Swift can't do and doesn't need the try/finally
   var lTryStatements := new List<CGStatement>;
-  var lFinallyStatements := if SwiftDialect = CGSwiftCodeGeneratorDialect.Silver then new List<CGStatement> else lTryStatements;
+  var lFinallyStatements := if IsAppleSwift then lTryStatements else new List<CGStatement>;
 
   for p: RodlParameter in lInParameters do
     lTryStatements.Add(GetWriterStatement(aLibrary, p, "___localMessage", true));
@@ -1257,11 +1257,11 @@ begin
                                          new CGPropertyAccessExpression("___localMessage".AsNamedIdentifierExpression, "clientID")));
   lFinallyStatements.Add(new CGMethodCallExpression(nil,"objc_sync_exit",   [lSelfMessage.AsCallParameter].ToList));
 
-  if SwiftDialect = CGSwiftCodeGeneratorDialect.Silver then begin
-    result.Statements.Add(new CGTryFinallyCatchStatement(lTryStatements, FinallyStatements:= lFinallyStatements as not nullable));
+  if IsAppleSwift then begin
+    result.Statements.Add(lTryStatements);
   end
   else begin
-    result.Statements.Add(lTryStatements);
+    result.Statements.Add(new CGTryFinallyCatchStatement(lTryStatements, FinallyStatements:= lFinallyStatements as not nullable));
   end;
 
   if assigned(aEntity.Result) then
