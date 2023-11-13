@@ -642,8 +642,10 @@ begin
   {$ENDREGION}
 
   {$REGION public method initWithMessage(anExceptionMessage: NSString; a%FIELD_NAME_UNSAFE%: %FIELD_TYPE%);dynamic;}
-  var linitWithMessage := new CGConstructorDefinition("withMessage", Visibility := CGMemberVisibilityKind.Public);
-  lException.Members.Add(linitWithMessage);
+  var lInitWithMessage := new CGConstructorDefinition("withMessage", Visibility := CGMemberVisibilityKind.Public);
+  lInitWithMessage.Virtuality := CGMemberVirtualityKind.Override;
+  lInitWithMessage.Visibility := CGMemberVisibilityKind.Public;
+  lException.Members.Add(lInitWithMessage);
   var lAncestorEntity := aEntity as RodlStructEntity;
   var st:= new CGBeginEndBlockStatement;
   var llist:= new List<CGCallParameter>;
@@ -662,17 +664,28 @@ begin
     end;
 
     for i: Integer := memberlist.Count-1 downto 0 do
-      linitWithMessage.Parameters.Insert(0,memberlist[i]);
+      lInitWithMessage.Parameters.Insert(0,memberlist[i]);
 
     for i: Integer := arlist.Count-1 downto 0 do
       llist.Insert(0,arlist[i]);
 
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
-  linitWithMessage.Parameters.Insert(0,new CGParameterDefinition("anExceptionMessage", CGPredefinedTypeReference.String.NotNullable));
+  lInitWithMessage.Parameters.Insert(0,new CGParameterDefinition("anExceptionMessage", CGPredefinedTypeReference.String.NotNullable));
   llist.Insert(0,"anExceptionMessage".AsNamedIdentifierExpression.AsCallParameter);
-  linitWithMessage.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, llist, ConstructorName := "withMessage"));
-  linitWithMessage.Statements.Add(st.Statements);
+  lInitWithMessage.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, llist, ConstructorName := "withMessage"));
+  lInitWithMessage.Statements.Add(st.Statements);
+
+
+  var lInitWithCoder := new CGConstructorDefinition("withCoder", Visibility := CGMemberVisibilityKind.Public);
+  lInitWithCoder.Virtuality := CGMemberVirtualityKind.Override;
+  lInitWithCoder.Visibility := CGMemberVisibilityKind.Public;
+  lInitWithCoder.Required := true;
+  lInitWithCoder.Failable := true;
+  lInitWithCoder.Parameters := new List<CGParameterDefinition>;;
+  lInitWithCoder.Parameters.Add(new CGParameterDefinition("coder", "NSCoder".AsTypeReference(CGTypeNullabilityKind.NotNullable)));
+  lInitWithCoder.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, new CGLocalVariableAccessExpression("coder").AsCallParameter, ConstructorName := "withCoder"));
+  lException.Members.Add(lInitWithCoder);
 
   {$ENDREGION}
 
@@ -1410,9 +1423,9 @@ begin
 
   var lBlockType := new CGBlockTypeDefinition("", Parameters := new List<CGParameterDefinition>);
   if assigned(aEntity.Result) then
-    lBlockType.Parameters.Add(new CGParameterDefinition("___result", ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType)));
+    lBlockType.Parameters.Add(new CGParameterDefinition("___result", ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType).copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped)));
   for each p in lOutParameters do
-    lBlockType.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType)));
+    lBlockType.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType).copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped)));
   lBlockType.Parameters.Add(new CGParameterDefinition("___request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped)));
 
   result.Parameters.Add(new CGParameterDefinition("___block", new CGInlineBlockTypeReference(lBlockType)));
