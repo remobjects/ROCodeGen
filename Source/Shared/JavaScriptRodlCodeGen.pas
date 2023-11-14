@@ -42,7 +42,7 @@ type
       l_init.Add(new CGVariableDeclarationStatement('RemObjects',
                                                     nil,
                                                     new CGPropertyAccessExpression(
-                                                      new CGMethodCallExpression(nil, 'require', './RemObjectsSDK'.AsLiteralExpression.AsCallParameter),
+                                                      new CGMethodCallExpression(nil, 'require', './RemObjectsSDK.js'.AsLiteralExpression.AsCallParameter),
                                                       'RemObjects'
                                                     ),
                                                     Constant := true));
