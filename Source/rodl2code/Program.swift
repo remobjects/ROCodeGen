@@ -279,7 +279,8 @@ do {
 			}
 			activeRodlCodeGen = JavaRodlCodeGen()
 			activeServerAccessCodeGen = JavaServerAccessCodeGen(rodl: rodlLibrary)
-		case "toffee", "nougat", "cocoa", "xcode": // keep Nougat, undocumdented, for backwards comopatibility
+		case "toffee", "nougat", "cocoa", "xcode", "swift": // keep Nougat, undocumdented, for backwards comopatibility
+			var lAppleSwift = options["platform"]?.ToLowerInvariant() == "swift"
 			options["platform"] = "cocoa"
 			if options["language"]?.ToLowerInvariant() == "swift" && (options["platform"]?.ToLowerInvariant() == "toffee" || options["platform"]?.ToLowerInvariant() == "nougat") {
 					options["language"] = "silver" // force our Swift
@@ -288,7 +289,7 @@ do {
 			activeServerAccessCodeGen = CocoaServerAccessCodeGen(rodl: rodlLibrary, generator: codegen!)
 
 			if let cocoaRodlCodeGen = activeRodlCodeGen as? CocoaRodlCodeGen {
-				if options["language"] == "standard-swift" {
+				if lAppleSwift || options["language"] == "standard-swift" {
 					cocoaRodlCodeGen.SwiftDialect = .Standard
 					cocoaRodlCodeGen.FixUpForAppleSwift()
 				} else {
