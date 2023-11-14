@@ -48,11 +48,7 @@ type
                                                     Constant := true));
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
-
-      var l_st: CGStatement := new CGAssignmentStatement(
-                                  l_namespace,
-                                  new CGSelfExpression()
-                                );
+      var l_st: CGStatement := new CGVariableDeclarationStatement('__namespace', nil, new CGSelfExpression());
       l_init.Add(l_st);
 
       var l_currnamespace := $"__{GetNamespace(aLibrary).Replace('.', '_')}__namespace";
