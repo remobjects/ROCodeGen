@@ -4086,6 +4086,7 @@ begin
   var list := new List<String>;
   var list_use := new List<RodlUse>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
     var s1 := lu.Includes:DelphiModule;
     var lExt := 'hpp';
     if String.IsNullOrEmpty(s1) then begin
@@ -4230,6 +4231,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('uROClientIntf'));
   var list := new List<String>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
     var s1 := lu.Includes:DelphiModule;
     var lext := 'hpp';
     if String.IsNullOrEmpty(s1) then begin
@@ -4247,6 +4249,7 @@ begin
 
   list := new List<String>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
     var s1 := lu.Includes:DelphiModule;
     var lext := 'hpp';
     if String.IsNullOrEmpty(s1) then begin
@@ -4384,6 +4387,7 @@ begin
 
   var list := new List<String>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
     var s1 := lu.Includes:DelphiModule;
     var lext := 'hpp';
     if String.IsNullOrEmpty(s1) then begin
@@ -4410,6 +4414,7 @@ begin
   {$REGION implementation uses}
     list := new List<String>;
     for lu: RodlUse in aLibrary.Uses.Items do begin
+      if not lu.DontCodegen then continue;
       var s1 := lu.Includes:DelphiModule;
       var lext := 'hpp';
       if String.IsNullOrEmpty(s1) then begin
