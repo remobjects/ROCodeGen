@@ -2721,7 +2721,7 @@ begin
     if not assigned(aLibrary) then exit '';
     var aEntity: RodlEntity := aLibrary.FindEntity(aOrigDataType);
     if assigned(aEntity) then begin
-      if aEntity.IsFromUsedRodl and IncludeUnitNameForOtherTypes then begin
+      if not EntityNeedsCodeGen(aEntity) and aEntity.IsFromUsedRodl and IncludeUnitNameForOtherTypes then begin
         var suffix: String;
         case aDefaultUnitName of
           Intf_name: suffix := 'intf';
