@@ -31,7 +31,8 @@ type
     method GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
     method GenerateServiceAsyncProxyStartMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
     method GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
-    method GenerateServiceAsyncProxyEndMethod_Statements(aLibrary: RodlLibrary; aEntity: RodlOperation; aIsBlock: Boolean): List<not nullable CGStatement>;
+    method GenerateServiceAsyncProxyEndMethodWithError(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+    method GenerateServiceAsyncProxyEndMethod_Statements(aLibrary: RodlLibrary; aEntity: RodlOperation; aIsBlock: Boolean; aReturnError: Boolean): List<not nullable CGStatement>;
 
     method GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity: RodlOperation;Statements: List<CGStatement>);
     method GenerateServiceMethods(aLibrary: RodlLibrary; aEntity: RodlService; service:CGClassTypeDefinition);
@@ -677,15 +678,17 @@ begin
   lInitWithMessage.Statements.Add(st.Statements);
 
 
-  var lInitWithCoder := new CGConstructorDefinition("withCoder", Visibility := CGMemberVisibilityKind.Public);
-  lInitWithCoder.Virtuality := CGMemberVirtualityKind.Override;
-  lInitWithCoder.Visibility := CGMemberVisibilityKind.Public;
-  lInitWithCoder.Required := true;
-  lInitWithCoder.Failable := true;
-  lInitWithCoder.Parameters := new List<CGParameterDefinition>;;
-  lInitWithCoder.Parameters.Add(new CGParameterDefinition("coder", "NSCoder".AsTypeReference(CGTypeNullabilityKind.NotNullable)));
-  lInitWithCoder.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, new CGLocalVariableAccessExpression("coder").AsCallParameter, ConstructorName := "withCoder"));
-  lException.Members.Add(lInitWithCoder);
+  if IsAppleSwift then begin
+    var lInitWithCoder := new CGConstructorDefinition("withCoder", Visibility := CGMemberVisibilityKind.Public);
+    lInitWithCoder.Virtuality := CGMemberVirtualityKind.Override;
+    lInitWithCoder.Visibility := CGMemberVisibilityKind.Public;
+    lInitWithCoder.Required := true;
+    lInitWithCoder.Failable := true;
+    lInitWithCoder.Parameters := new List<CGParameterDefinition>;;
+    lInitWithCoder.Parameters.Add(new CGParameterDefinition("coder", "NSCoder".AsTypeReference(CGTypeNullabilityKind.NotNullable)));
+    lInitWithCoder.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, new CGLocalVariableAccessExpression("coder").AsCallParameter, ConstructorName := "withCoder"));
+    lException.Members.Add(lInitWithCoder);
+  end;
 
   {$ENDREGION}
 
@@ -725,6 +728,7 @@ begin
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary, lop));
     //lIServiceAsync.Members.Add(GenerateServiceAsyncProxyStartMethod(aLibrary, lop));
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethod(aLibrary, lop));
+    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethodWithError(aLibrary, lop));
   end;
 
   var lIServiceAsync2 := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async2"),
@@ -773,6 +777,7 @@ begin
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod_startWithBlock(aLibrary, lop));
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyStartMethod(aLibrary, lop));
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyEndMethod(aLibrary, lop));
+    lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyEndMethodWithError(aLibrary, lop));
   end;
   {$ENDREGION}
 end;
@@ -900,6 +905,11 @@ begin
   CodeGenTypes.Add("decimal", "NSDecimalNumber".AsTypeReference().NullableUnwrapped);
   CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeReference.String));
   CodeGenTypes.Add("xsdatetime", "NSDate".AsTypeReference().NullableUnwrapped);
+
+  CodeGenTypeDefaults.Add("integer", 0.AsLiteralExpression);
+  CodeGenTypeDefaults.Add("double", 0.0.AsLiteralExpression);
+  CodeGenTypeDefaults.Add("int64", 0.AsLiteralExpression);
+  CodeGenTypeDefaults.Add("boolean", false.AsLiteralExpression);
 
   ReaderFunctions.Add("integer", "Int32");
   ReaderFunctions.Add("datetime", "DateTime");
@@ -1296,12 +1306,13 @@ end;
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
   result := new CGMethodDefinition("end" + PascalCase(aEntity.Name), Visibility := CGMemberVisibilityKind.Public);
+  //result.Throws := IsAppleSwift;
   result.Parameters.Add(new CGParameterDefinition("___asyncRequest", "ROAsyncRequest".AsTypeReference));
   var (nil, lOutParameters) := GetInOutParameters(aEntity);
   for p in lOutParameters do
     result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := CGParameterModifierKind.Out)); // end* metbods are always "out"
 
-  result.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, false);
+  result.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, false, false);
 
   if assigned(aEntity.Result) then begin
     result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
@@ -1309,7 +1320,26 @@ begin
   end;
 end;
 
-method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod_Statements(aLibrary: RodlLibrary; aEntity: RodlOperation; aIsBlock: Boolean): List<not nullable CGStatement>;
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethodWithError(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
+begin
+  result := new CGMethodDefinition("end" + PascalCase(aEntity.Name), Visibility := CGMemberVisibilityKind.Public);
+  //result.Throws := IsAppleSwift;
+  result.Parameters.Add(new CGParameterDefinition("___asyncRequest", "ROAsyncRequest".AsTypeReference));
+  var (nil, lOutParameters) := GetInOutParameters(aEntity);
+  for p in lOutParameters do
+    result.Parameters.Add(new CGParameterDefinition(p.Name, ResolveDataTypeToTypeRef(aLibrary, p.DataType), Modifier := CGParameterModifierKind.Out)); // end* metbods are always "out"
+
+  result.Parameters.Add(new CGParameterDefinition("___error", "ROError".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped), Modifier := CGParameterModifierKind.Var, ExternalName := "error"));
+
+  result.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, false, true);
+
+  if assigned(aEntity.Result) then begin
+    result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
+    result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
+  end;
+end;
+
+method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod_Statements(aLibrary: RodlLibrary; aEntity: RodlOperation; aIsBlock: Boolean; aReturnError: Boolean): List<not nullable CGStatement>;
 begin
   result := new List<not nullable CGStatement>;
 
@@ -1317,9 +1347,24 @@ begin
     result.Add(new CGVariableDeclarationStatement("___result", ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType)));
   if not aIsBlock then
     result.Add(new CGVariableDeclarationStatement("___localMessage", "ROMessage".AsTypeReference, new CGPropertyAccessExpression("___asyncRequest".AsNamedIdentifierExpression, "responseMessage"), &ReadOnly := true));
+
+  if aReturnError then begin
+    var lIfStatements := new CGBeginEndBlockStatement();
+    result.Add(new CGIfThenElseStatement(new CGAssignedExpression(new CGPropertyAccessExpression(new CGLocalVariableAccessExpression("___localMessage"), "exception")),
+                                         lIfStatements));
+    lIfStatements.Statements.Add(new CGAssignmentStatement(new CGLocalVariableAccessExpression("___error"),
+                                                           new CGNewInstanceExpression("ROError".AsTypeReference,
+                                                           [new CGPropertyAccessExpression(new CGLocalVariableAccessExpression("___localMessage"), "exception").AsCallParameter],
+                                                           ConstructorName := "withException")));
+    if assigned(aEntity.Result) then
+      lIfStatements.Statements.Add(new CGReturnStatement(ResolveDataTypeToDefaultExpression(aLibrary, aEntity.Result.DataType)))
+    else
+      lIfStatements.Statements.Add(new CGReturnStatement);
+  end;
+
   GenerateOperationAttribute(aLibrary, aEntity, result);
   if assigned(aEntity.Result) then
-    result.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression, GetReaderExpression(aLibrary,aEntity.Result,"___localMessage")));
+    result.Add(new CGAssignmentStatement("___result".AsNamedIdentifierExpression, GetReaderExpression(aLibrary, aEntity.Result,"___localMessage")));
 
   var (nil, lOutParameters) := GetInOutParameters(aEntity);
   for p in lOutParameters do
@@ -1401,8 +1446,10 @@ begin
   result := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, aEntity);
   if result.Parameters.Count = 0 then
     result.Name := result.Name+ "__startWithBlock";
-  var bl := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',Parameters := [new CGParameterDefinition("request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
-  result.Parameters.Add(new CGParameterDefinition("___block", bl, ExternalName := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
+  var lCallbackBlock := new CGInlineBlockTypeReference (new CGBlockTypeDefinition('',
+                                                                                  //Throws := IsAppleSwift,
+                                                                                  Parameters := [new CGParameterDefinition("request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))].ToList));
+  result.Parameters.Add(new CGParameterDefinition("___block", lCallbackBlock, ExternalName := if result.Parameters.Count > 0 then (if IsAppleSwift then "startWith" else "startWithBlock")));
   GenerateServiceAsyncProxyBeginMethod_Body(aLibrary, aEntity, result.Statements);
   result.Statements.Add(new CGMethodCallExpression(new CGPropertyAccessExpression(new CGSelfExpression(),"___clientChannel"),
                                                    "asyncDispatch",
@@ -1432,7 +1479,7 @@ begin
 
   var lEndStatements := new List<CGStatement>;
   var lCallback := new CGAnonymousMethodExpression([new CGParameterDefinition("___request", "ROAsyncRequest".AsTypeReference(CGTypeNullabilityKind.NullableNotUnwrapped))], lEndStatements.ToArray);
-  lCallback.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, true);
+  lCallback.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, true, false);
   var lCallbackParameters := new List<CGCallParameter>;
   if assigned(aEntity.Result) then
     lCallbackParameters.Add(new CGCallParameter(new CGLocalVariableAccessExpression("___result")));

@@ -8,7 +8,8 @@ uses
 type
   RodlCodeGen = public abstract class
   protected
-    CodeGenTypes: Dictionary<String, CGTypeReference>:= new Dictionary<String, CGTypeReference>;
+    CodeGenTypes := new Dictionary<String, CGTypeReference>;
+    CodeGenTypeDefaults := new Dictionary<String, CGExpression>;
     ReaderFunctions: Dictionary<String, String>:= new Dictionary<String, String>;
     ReservedWords: List<String> := new List<String>;
     PredefinedTypes: Dictionary<CGPredefinedTypeKind, CGTypeReference>:= new Dictionary<CGPredefinedTypeKind, CGTypeReference>;
@@ -16,6 +17,7 @@ type
 
     {$REGION support methods}
     method ResolveDataTypeToTypeRef(aLibrary: RodlLibrary; aDataType: String): CGTypeReference;
+    method ResolveDataTypeToDefaultExpression(aLibrary: RodlLibrary; aDataType: String): CGExpression;
     method ResolveStdtypes(aType: CGPredefinedTypeReference; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
     method EntityNeedsCodeGen(aEntity: RodlEntity): Boolean;
     method PascalCase(name:String):String;
@@ -227,6 +229,15 @@ begin
     exit CodeGenTypes[lLower]
   else
     exit aDataType.AsTypeReference(not isEnum(aLibrary, aDataType));
+end;
+
+method RodlCodeGen.ResolveDataTypeToDefaultExpression(aLibrary: RodlLibrary; aDataType: String): CGExpression;
+begin
+  var lLower := aDataType.ToLowerInvariant();
+  if CodeGenTypeDefaults.ContainsKey(lLower) then
+    exit CodeGenTypeDefaults[lLower]
+  else
+    exit CGNilExpression.Nil;
 end;
 
 method RodlCodeGen.Operation_GetAttributes(aLibrary: RodlLibrary; aOperation: RodlOperation): Dictionary<String, String>;
