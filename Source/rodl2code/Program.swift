@@ -206,7 +206,7 @@ do {
 	switch options["language"]?.ToLowerInvariant() {
 		case "oxygene", "pas":
 			options["language"] = "oxygene"
-			codegen = CGOxygeneCodeGenerator()
+			codegen = CGOxygeneCodeGenerator(style: .Unified, quoteStyle: .SmartDouble)
 			fileExtension = "pas"
 		case "hydrogene", "csharp", "c#", "cs":
 			options["language"] = "c#"
