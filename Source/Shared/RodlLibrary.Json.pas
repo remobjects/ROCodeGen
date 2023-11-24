@@ -102,9 +102,9 @@ type
 
     method ToJsonString(flattenUsedRODLs: Boolean := true): String;
     begin
-      var js := new JsonDocument;
-      SaveToJson(js.Root as JsonObject, flattenUsedRODLs);
-      exit js.ToJson;
+      var lJson := new JsonObject;
+      SaveToJson(lJson, flattenUsedRODLs);
+      exit lJson.ToString;
     end;
 
     method SaveToJsonFile(aFileName: String; flattenUsedRODLs: Boolean);

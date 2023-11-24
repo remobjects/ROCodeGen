@@ -25,9 +25,9 @@ type
       for each role: RodlRole in fRoles do begin
         var l_role := role.Role;
         if role.Not then
-          l_denyRoles.Add([l_role])
+          l_denyRoles.Add(l_role)
         else
-          l_allowRoles.Add([l_role]);
+          l_allowRoles.Add(l_role);
       end;
 
       if l_allowRoles.Count > 0 then
