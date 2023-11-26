@@ -273,9 +273,26 @@ end;
 
 method CocoaRodlCodeGen.GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
 begin
-  var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), "ROMutableArray".AsTypeReference,
+  var lAncestor := new CGNamedTypeReference("ROMutableArray");
+  var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestor,
                                           Visibility := CGTypeVisibilityKind.Public,
                                           Comment := GenerateDocumentation(aEntity));
+
+  if isComplex(aLibrary, aEntity.ElementType) then begin
+    lAncestor.GenericArguments := new List<CGTypeReference>;
+    lAncestor.GenericArguments.Add(ResolveDataTypeToTypeRef(aLibrary, aEntity.ElementType));
+
+    //var lArrayGetter := new CGPropertyDefinition("array");
+    //var lNSArray := new CGNamedTypeReference("NSArray");
+    //lNSArray.GenericArguments := lAncestor.GenericArguments; // can use same list
+    ////lNSArray.Nullability := CGTypeNullabilityKind.NotNullable;
+    //lArrayGetter.Type := lNSArray;
+    //lArrayGetter.Visibility := CGMemberVisibilityKind.Public;
+    ////lArrayGetter.Reintroduced := true;
+
+    //lArray.Members.add(lArrayGetter);
+  end;
+
   aFile.Types.Add(lArray);
 
   {$REGION private class __attributes: NSDictionary;}
