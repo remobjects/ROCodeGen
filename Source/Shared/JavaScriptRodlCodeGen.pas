@@ -404,9 +404,16 @@ type
                                             SafeIdentifier(op.Name).AsLiteralExpression.AsCallParameter]);
         l_try.Add(l_st);
         for each &param in op.Items.Where(b->b.ParamFlag in [ParamFlags.In, ParamFlags.InOut]) do begin
+          var l_datatype: CGExpression :=
+            if isStruct(aLibrary, &param.DataType) or isArray(aLibrary, &param.DataType) then
+              new CGMethodCallExpression('RemObjects.UTIL'.AsNamedIdentifierExpression,
+                                         'ROGetType',
+                                         [SafeIdentifier(param.Name).AsNamedIdentifierExpression.AsCallParameter])
+            else
+              _FixDataType(&param.DataType).AsLiteralExpression;
           l_st := new CGMethodCallExpression(l_msg, 'write',
                                              [&param.Name.AsLiteralExpression.AsCallParameter,
-                                              _FixDataType(&param.DataType).AsLiteralExpression.AsCallParameter,
+                                              l_datatype.AsCallParameter,
                                               SafeIdentifier(param.Name).AsNamedIdentifierExpression.AsCallParameter ]);
           l_try.Add(l_st);
         end;
