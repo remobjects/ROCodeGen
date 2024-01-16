@@ -53,7 +53,7 @@ type
     property FromUsedRodlId: nullable Guid;
     property Owner: RodlEntity;
     property OwnerLibrary: RodlLibrary read getOwnerLibrary;
-    property DontCodegen: Boolean;
+    property DontCodegen: Boolean; virtual;
     {$endregion}
     {$IFDEF ECHOES}
     method ToString: String; override;

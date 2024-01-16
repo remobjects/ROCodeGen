@@ -83,6 +83,22 @@ implementation
 
 method Codegen4Wrapper.Generate(&Platform: Codegen4Platform; Mode: Codegen4Mode; Language:Codegen4Language; aRodl: String; AdditionalParameters: String): Codegen4Records;
 begin
+  var DADRoot := ExpandVariable("$(Data Abstract for Delphi)");
+  var DANRoot := ExpandVariable("$(Data Abstract for .NET)");
+  var RODRoot := ExpandVariable("$(RemObjects SDK for Delphi)");
+  var HYDRoot := ExpandVariable("$(Hydra for Delphi)");
+
+  RodlCodeGen.KnownRODLPaths["DataAbstract4.RODL".ToLowerInvariant()]        := DADRoot + "/Source/DataAbstract4.RODL";
+  RodlCodeGen.KnownRODLPaths["DataAbstract.RODL".ToLowerInvariant()]         := DANRoot + "/Source/RemObjects.DataAbstract.Server/DataAbstract4.RODL";
+  RodlCodeGen.KnownRODLPaths["ROServiceDiscovery.rodl".ToLowerInvariant()]   := RODRoot + "/Source/ROServiceDiscovery.rodl";
+  RodlCodeGen.KnownRODLPaths["uRODataSnap.rodl".ToLowerInvariant()]          := RODRoot + "/Source/DataSnap/uRODataSnap.rodl";
+  RodlCodeGen.KnownRODLPaths["HydraAutoUpdate.RODL".ToLowerInvariant()]      := HYDRoot + "/Source/HydraAutoUpdate.RODL";
+
+  if Language in [Codegen4Language.Delphi, Codegen4Language.CppBuilder] then
+    RodlCodeGen.KnownRODLPaths["DataAbstract-Simple.RODL".ToLowerInvariant()] := DADRoot + "/Source/DataAbstract-Simple.RODL"
+  else
+    RodlCodeGen.KnownRODLPaths["DataAbstract-Simple.RODL".ToLowerInvariant()] := DANRoot + "/Source/RemObjects.DataAbstract.Server/DataAbstract-Simple.RODL";
+
   if String.IsNullOrEmpty(AdditionalParameters) then AdditionalParameters := '';
   result := new Codegen4Records;
   var rodl := new RodlLibrary();
@@ -446,7 +462,7 @@ end;
 
 method Codegen4Records.Count: Integer;
 begin
- exit fList.Count;
+  exit fList.Count;
 end;
 
 method Codegen4Records.Item(anIndex: Integer): Codegen4Record;

@@ -155,7 +155,7 @@ type
         var lFilename := Path.GetFileName(usedRodlFileName).ToLowerInvariant;
         //writeLn("checking for "+lFilename);
         if RodlCodeGen.KnownRODLPaths.ContainsKey(lFilename) then
-          usedRodlFileName := RodlCodeGen.KnownRODLPaths[lFilename];
+          usedRodlFileName := RodlCodeGen.KnownRODLPaths[lFilename].Replace("/", Path.DirectorySeparatorChar).Replace("\", Path.DirectorySeparatorChar);
       end;
 
       //writeLn("using rodl: "+usedRodlFileName);

@@ -175,6 +175,9 @@ type
     property UsedRodlId: Guid;
     property IsMerged: Boolean read not UsedRodlId.Equals(Guid.Empty);
     property DontApplyCodeGen: Boolean;
+    property DontCodegen: Boolean
+      read inherited DontCodegen or DontApplyCodeGen
+      write begin inherited DontCodegen := value; end; override;
     property Loaded: Boolean;
     property AbsoluteFileName: String;
   end;
