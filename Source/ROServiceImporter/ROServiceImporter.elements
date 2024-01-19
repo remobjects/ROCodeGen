@@ -95,4 +95,5 @@
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.Toffee.targets" />
   <Import Project="..\Shared\rodl2code.Shared.projitems" Label="Shared" />
+  <Import Project="..\Shared\rodl2code.CodeGen4.projitems" Label="Shared" />
 </Project>

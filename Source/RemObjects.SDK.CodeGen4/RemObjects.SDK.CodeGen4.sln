@@ -1,9 +1,11 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # RemObjects Fire
-Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "RemObjects.SDK.CodeGen4", "RemObjects.SDK.CodeGen4.elements", "{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}"
+Project("{656346d9-4656-40da-a068-22d5425d4639}") = "RemObjects.SDK.CodeGen4", "RemObjects.SDK.CodeGen4.elements", "{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}"
 EndProject
-Project("{656346D9-4656-40DA-A068-22D5425D4639}") = "rodl2code.Shared", "..\Shared\rodl2code.Shared.elements", "{37995C14-DAB7-4461-B35A-E316BD5F4E02}"
+Project("{656346d9-4656-40da-a068-22d5425d4639}") = "rodl2code.CodeGen4", "..\Shared\rodl2code.CodeGen4.elements", "{11c27494-ad37-48e9-b3c7-b4f09028bc48}"
+EndProject
+Project("{656346d9-4656-40da-a068-22d5425d4639}") = "rodl2code.Shared", "..\Shared\rodl2code.Shared.elements", "{37995c14-dab7-4461-b35a-e316bd5f4e02}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,12 +14,12 @@ Global
 		Release|AnyCPU = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Licensed|AnyCPU.ActiveCfg = Licensed|AnyCPU
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Licensed|AnyCPU.Build.0 = Licensed|AnyCPU
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
-		{D188C0E1-8020-42F5-8C3C-5B5B5F9925A0}.Release|AnyCPU.Build.0 = Release|AnyCPU
+		{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}.Debug|AnyCPU.ActiveCfg = Debug|AnyCPU
+		{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}.Debug|AnyCPU.Build.0 = Debug|AnyCPU
+		{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}.Licensed|AnyCPU.ActiveCfg = Licensed|AnyCPU
+		{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}.Licensed|AnyCPU.Build.0 = Licensed|AnyCPU
+		{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}.Release|AnyCPU.ActiveCfg = Release|AnyCPU
+		{d188c0e1-8020-42f5-8c3c-5b5b5f9925a0}.Release|AnyCPU.Build.0 = Release|AnyCPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -53,6 +53,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.targets" />
   <Import Project="..\Shared\rodl2code.Shared.projitems" Label="Shared" />
+  <Import Project="..\Shared\rodl2code.CodeGen4.projitems" Label="Shared" />
   <ItemGroup>
     <Compile Include="Program.swift" />
   </ItemGroup>

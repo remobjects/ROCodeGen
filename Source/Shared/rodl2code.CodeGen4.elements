@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0" DefaultTargets="Build">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{11c27494-ad37-48e9-b3c7-b4f09028bc48}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>codegen4.Shared</RootNamespace>
+  </PropertyGroup>
+  <Import Project="rodl2code.CodeGen4.projitems" Label="Shared" />
+  <Import Project="$(MSBuildExtensionsPath)\RemObjects Software\Elements\RemObjects.Elements.SharedProject.targets" />
+</Project>
