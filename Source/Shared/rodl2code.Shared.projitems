@@ -9,9 +9,6 @@
     <RootNamespace>RemObjects.SDK.CodeGen4</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="CG4">
-      <Virtual>True</Virtual>
-    </Folder>
     <Folder Include="CodeGens">
       <Virtual>True</Virtual>
     </Folder>
@@ -50,12 +47,6 @@
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ServerAccessCodeGen.swift">
       <VirtualFolder>CodeGens</VirtualFolder>
-    </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCPlusPlusCPPCodeGenerator.swift">
-      <VirtualFolder>CG4</VirtualFolder>
-    </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCPlusPlusHCodeGenerator.swift">
-      <VirtualFolder>CG4</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)RodlBaseTypes.pas">
       <VirtualFolder>RodlReader</VirtualFolder>
