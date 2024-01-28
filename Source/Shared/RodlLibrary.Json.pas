@@ -32,7 +32,8 @@ type
         &Namespace := node["Namespace"]:StringValue;
         DataSnap := valueOrDefault(node["DataSnap"]:BooleanValue);
         ScopedEnums := valueOrDefault(node["ScopedEnums"]:BooleanValue);
-        DontApplyCodeGen := valueOrDefault(node["SkipCodeGen"]:BooleanValue) or valueOrDefault(node["DontCodeGen"]:BooleanValue);
+        DontApplyCodeGen := valueOrDefault(node["SkipCodeGen"]:BooleanValue) or
+                            valueOrDefault(node["DontCodeGen"]:BooleanValue);
 
         var lIncludes := coalesce(node["Includes"], node["Platforms"]);
         if assigned(lIncludes) then begin
@@ -46,7 +47,9 @@ type
       else begin
         use.Name := node["Name"]:StringValue;
         use.UsedRodlId := Guid.TryParse(node["ID"]:StringValue);
-        use.DontApplyCodeGen := valueOrDefault(node["SkipCodeGen"]:BooleanValue) or valueOrDefault(node["DontCodeGen"]:BooleanValue);
+        use.DontApplyCodeGen := use.DontApplyCodeGen or
+                                valueOrDefault(node["SkipCodeGen"]:BooleanValue) or
+                                valueOrDefault(node["DontCodeGen"]:BooleanValue);
         use.Namespace := node["Namespace"]:StringValue;
 
         var lIncludes := coalesce(node["Includes"], node["Platforms"]);
@@ -132,6 +135,7 @@ type
       AbsoluteRodl := node["AbsoluteRodl"]:StringValue;
       UsedRodlId := Guid.TryParse(node["UsedRodlID"]:StringValue);
       DontApplyCodeGen := valueOrDefault(node["DontCodeGen"]:BooleanValue);
+      DontCodegen := DontApplyCodeGen;
       if node["Merged"]:BooleanValue then begin
         Loaded := true;
         exit;

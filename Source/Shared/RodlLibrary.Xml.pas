@@ -42,6 +42,7 @@ type
         use.DontApplyCodeGen := use.DontApplyCodeGen or
                       (((node.Attribute["SkipCodeGen"] ≠ nil) and (node.Attribute["SkipCodeGen"].Value = "1")) or
                        ((node.Attribute["DontCodeGen"] ≠ nil) and (node.Attribute["DontCodeGen"].Value = "1")));
+        use.DontCodegen := DontApplyCodeGen;
         if (node.Attribute["Namespace"] ≠ nil) then use.Namespace := node.Attribute["Namespace"].Value;
 
         var lInclude := node.FirstElementWithName("Includes");

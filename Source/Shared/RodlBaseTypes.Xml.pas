@@ -82,7 +82,7 @@ type
           lEntity.LoadFromXmlNode(XmlElement(lNode));
           if assigned(lEntity.FromUsedRodl) then
             lEntity.FromUsedRodlId := usedRodl.UsedRodlId;
-          if assigned(lEntity.FromUsedRodlId) then
+          if assigned(lEntity.FromUsedRodlId) and not assigned(lEntity.FromUsedRodl) then
             lEntity.FromUsedRodl := Owner.OwnerLibrary.Uses.Items.Where(b->b.UsedRodlId = lEntity.FromUsedRodlId).FirstOrDefault;
           var lIsNew := true;
           for entity: T in fItems do begin
