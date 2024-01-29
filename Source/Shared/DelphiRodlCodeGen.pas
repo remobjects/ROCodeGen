@@ -4046,7 +4046,7 @@ begin
   ScopedEnums := ScopedEnums or aLibrary.ScopedEnums;
   //special mode, only if aLibrary.ScopedEnums is set
   IncludeUnitNameForOwnTypes := IncludeUnitNameForOwnTypes or aLibrary.ScopedEnums;
-  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, aLibrary.Name, 'Unknown');
+  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, iif(CanUseNameSpace, aLibrary.Namespace,aLibrary.Name), aLibrary.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
   lUnit.Namespace := new CGNamespaceReference(targetNamespace);
 
@@ -4205,7 +4205,7 @@ begin
   CreateCodeFirstAttributes;
   if CodeFirstMode = State.On then exit nil;
   IncludeUnitNameForOwnTypes := true;
-  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, aLibrary.Name, 'Unknown');
+  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, iif(CanUseNameSpace, aLibrary.Namespace,aLibrary.Name), aLibrary.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
   lUnit.Namespace := new CGNamespaceReference(targetNamespace);
   if String.IsNullOrEmpty(aUnitName) then
@@ -4312,7 +4312,7 @@ begin
   if service.IsFromUsedRodl then begin
     aLibrary := service.FromUsedRodl.OwnerLibrary;
   end;
-  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, aLibrary.Name, 'Unknown');
+  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, iif(CanUseNameSpace, aLibrary.Namespace,aLibrary.Name), aLibrary.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
   lUnit.Namespace := new CGNamespaceReference(targetNamespace);
   lUnit.FileName := aServiceName+ '_Impl';
