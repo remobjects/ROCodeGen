@@ -721,10 +721,14 @@ end;
 
 method CocoaRodlCodeGen.GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
+  var lAncestorName := aEntity.AncestorName;
+
   {$REGION I%SERVICE_NAME%}
   var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name),
                                                  Visibility := CGTypeVisibilityKind.Public,
                                                  Comment := GenerateDocumentation(aEntity));
+  if length(lAncestorName) > 0 then
+    lIService.Ancestors := [("I"+lAncestorName).AsTypeReference].ToList;
   aFile.Types.Add(lIService);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
@@ -738,6 +742,8 @@ begin
   var lIServiceAsync := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async"),
                                                       Visibility := CGTypeVisibilityKind.Public,
                                                       Comment := GenerateDocumentation(aEntity));
+  if length(lAncestorName) > 0 then
+    lIServiceAsync.Ancestors := [("I"+lAncestorName+"_Async").AsTypeReference].ToList;
   aFile.Types.Add(lIServiceAsync);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
@@ -749,8 +755,10 @@ begin
   end;
 
   var lIServiceAsync2 := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async2"),
-                                                      Visibility := CGTypeVisibilityKind.Public,
-                                                      Comment := GenerateDocumentation(aEntity));
+                                                       Visibility := CGTypeVisibilityKind.Public,
+                                                       Comment := GenerateDocumentation(aEntity));
+  if length(lAncestorName) > 0 then
+    lIServiceAsync2.Ancestors := [("I"+lAncestorName+"_Async2").AsTypeReference].ToList;
   aFile.Types.Add(lIServiceAsync2);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     lIServiceAsync2.Members.Add(GenerateServiceAsyncProxyStartMethod(aLibrary, lop));
@@ -759,7 +767,6 @@ begin
   {$ENDREGION}
 
   {$REGION %SERVICE_NAME%_Proxy}
-  var lAncestorName := aEntity.AncestorName;
   if String.IsNullOrEmpty(lAncestorName) then
     lAncestorName := "ROProxy"
   else
