@@ -172,7 +172,7 @@ type
     method cpp_ClassId(anExpression: CGExpression): CGExpression; virtual;
     method cpp_UuidId(anExpression: CGExpression): CGExpression; virtual;
     method GenerateCGImport(aName: String; aCondition: CGConditionalDefine): CGImport;
-    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'): CGImport;virtual;
+    method GenerateCGImport(aName: String; aNamespace: String := ''; aExt: String := 'hpp'; aCapitalize: Boolean = true): CGImport; virtual;
     method GenerateIsClause(aSource: CGExpression; aType: CGTypeReference):CGExpression;
   public
     constructor;
@@ -404,7 +404,18 @@ begin
   end;
 
   {$REGION public constructor Create(aCollection : TCollection); override;}
-  if lNeedInitSimpleTypeWithDefaultValues then begin
+  if not PureDelphi then begin // c++builder
+    var lm := new CGConstructorDefinition(
+                            Virtuality := CGMemberVirtualityKind.Override,
+                            Visibility := CGMemberVisibilityKind.Public,
+                            CallingConvention := CGCallingConventionKind.Register
+                            );
+    ltype.Members.Add(lm);
+    lm.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, []));
+  end;
+  {$ENDREGION}
+  {$REGION public constructor Create(aCollection : TCollection); override;}
+  if lNeedInitSimpleTypeWithDefaultValues or not PureDelphi then begin // we need this for C++Builder
     var lm := new CGConstructorDefinition(
                             Parameters :=[new CGParameterDefinition('aCollection','TCollection'.AsTypeReference)].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
@@ -1897,7 +1908,7 @@ begin
   ltype1 := new CGClassTypeDefinition(l_Tname_Proxy,
                                       lancestor,
                                       Visibility := CGTypeVisibilityKind.Public);  //TROProxy or T%service%Proxy
-  ltype1.ImplementedInterfaces.Add(ResolveDataTypeToTypeRefFullQualified(aLibrary, l_IName,Intf_name, l_EntityName));  //I%service%
+  ltype1.ImplementedInterfaces.Add(ResolveDataTypeToTypeRefFullQualified(aLibrary, l_IName, Intf_name, l_EntityName));  //I%service%
   aFile.Types.Add(ltype1);
   {$REGION protected function __GetInterfaceName:string; override;}
   lmember := new CGMethodDefinition('__GetInterfaceName',
@@ -2759,7 +2770,7 @@ begin
     end;
   finally
     // C++ Builder
-    if (CanUseNameSpace) and not String.IsNullOrEmpty(result) and aCapitalize then begin
+    if (CanUseNameSpace) and not String.IsNullOrEmpty(result) and aCapitalize and (result <> targetNamespace) then begin
       result := CapitalizeString(result);
     end;
   end;
@@ -4017,7 +4028,7 @@ begin
   exit new CGImport(new CGNamedTypeReference(aName), Condition := aCondition)
 end;
 
-method DelphiRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
+method DelphiRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String; aCapitalize: Boolean): CGImport;
 begin
   if String.IsNullOrEmpty(aNamespace) then
     exit new CGImport(new CGNamedTypeReference(aName))
@@ -4265,7 +4276,7 @@ begin
       list.Add(s1);
     end;
   end;
-  lUnit.Imports.Add(GenerateCGImport(Intf_name,'','h'));
+  lUnit.Imports.Add(GenerateCGImport(Intf_name,'','h', false));
 
   {$ENDREGION}
 
@@ -4379,10 +4390,14 @@ begin
       var s1 := service.AncestorEntity.FromUsedRodl.Includes:DelphiModule;
       if String.IsNullOrEmpty(s1) then
         lext := 'h';
+    end
+    else begin
+      if service.AncestorEntity.OwnerLibrary = aLibrary then lext := 'h';
     end;
 
-    lUnit.Imports.Add(GenerateCGImport(anc_unit, '', lext));
-    cpp_pragmalink(lUnit,CapitalizeString(anc_unit));
+
+    lUnit.Imports.Add(GenerateCGImport(anc_unit, '', lext, service.AncestorEntity:OwnerLibrary <> aLibrary));
+    cpp_pragmalink(lUnit, CapitalizeString(anc_unit));
   end;
 
   var list := new List<String>;
@@ -4403,7 +4418,7 @@ begin
     end;
   end;
 
-  lUnit.Imports.Add(GenerateCGImport(Intf_name,'','h'));
+  lUnit.Imports.Add(GenerateCGImport(Intf_name,'','h', false));
   {$ENDREGION}
   cpp_smartInit(lUnit);
   cpp_pragmalink(lUnit,CapitalizeString('uRORemoteDataModule'));
@@ -4435,7 +4450,7 @@ begin
     end;
     case CodeFirstMode of
       State.Auto: lUnit.ImplementationImports.Add(GenerateCGImport('{$IFDEF RO_RTTI_Support}uRORTTIServerSupport{$ELSE}'+Invk_name+'{$ENDIF}', nil));
-      State.Off:  lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h'));
+      State.Off:  lUnit.ImplementationImports.Add(GenerateCGImport(Invk_name,'','h', false));
       State.On:   ;
     end;
   {$ENDREGION}
