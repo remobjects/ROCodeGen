@@ -721,10 +721,14 @@ end;
 
 method CocoaRodlCodeGen.GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
+  var lAncestorName := aEntity.AncestorName;
+
   {$REGION I%SERVICE_NAME%}
   var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name),
                                                  Visibility := CGTypeVisibilityKind.Public,
                                                  Comment := GenerateDocumentation(aEntity));
+  if length(lAncestorName) > 0 then
+    lIService.Ancestors := [("I"+lAncestorName).AsTypeReference].ToList;
   aFile.Types.Add(lIService);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
@@ -738,6 +742,8 @@ begin
   var lIServiceAsync := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async"),
                                                       Visibility := CGTypeVisibilityKind.Public,
                                                       Comment := GenerateDocumentation(aEntity));
+  if length(lAncestorName) > 0 then
+    lIServiceAsync.Ancestors := [("I"+lAncestorName+"_Async").AsTypeReference].ToList;
   aFile.Types.Add(lIServiceAsync);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
@@ -749,8 +755,10 @@ begin
   end;
 
   var lIServiceAsync2 := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async2"),
-                                                      Visibility := CGTypeVisibilityKind.Public,
-                                                      Comment := GenerateDocumentation(aEntity));
+                                                       Visibility := CGTypeVisibilityKind.Public,
+                                                       Comment := GenerateDocumentation(aEntity));
+  if length(lAncestorName) > 0 then
+    lIServiceAsync2.Ancestors := [("I"+lAncestorName+"_Async2").AsTypeReference].ToList;
   aFile.Types.Add(lIServiceAsync2);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     lIServiceAsync2.Members.Add(GenerateServiceAsyncProxyStartMethod(aLibrary, lop));
@@ -759,7 +767,6 @@ begin
   {$ENDREGION}
 
   {$REGION %SERVICE_NAME%_Proxy}
-  var lAncestorName := aEntity.AncestorName;
   if String.IsNullOrEmpty(lAncestorName) then
     lAncestorName := "ROProxy"
   else
@@ -1331,10 +1338,8 @@ begin
 
   result.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, false, false);
 
-  if assigned(aEntity.Result) then begin
+  if assigned(aEntity.Result) then
     result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
-    result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
-  end;
 end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethodWithError(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
@@ -1350,10 +1355,8 @@ begin
 
   result.Statements := GenerateServiceAsyncProxyEndMethod_Statements(aLibrary, aEntity, false, true);
 
-  if assigned(aEntity.Result) then begin
+  if assigned(aEntity.Result) then
     result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
-    result.Statements.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
-  end;
 end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyEndMethod_Statements(aLibrary: RodlLibrary; aEntity: RodlOperation; aIsBlock: Boolean; aReturnError: Boolean): List<not nullable CGStatement>;
@@ -1364,20 +1367,6 @@ begin
     result.Add(new CGVariableDeclarationStatement("___result", ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType)));
   if not aIsBlock then
     result.Add(new CGVariableDeclarationStatement("___localMessage", "ROMessage".AsTypeReference, new CGPropertyAccessExpression("___asyncRequest".AsNamedIdentifierExpression, "responseMessage"), &ReadOnly := true));
-
-  if aReturnError then begin
-    var lIfStatements := new CGBeginEndBlockStatement();
-    result.Add(new CGIfThenElseStatement(new CGAssignedExpression(new CGPropertyAccessExpression(new CGLocalVariableAccessExpression("___localMessage"), "exception")),
-                                         lIfStatements));
-    lIfStatements.Statements.Add(new CGAssignmentStatement(new CGLocalVariableAccessExpression("___error"),
-                                                           new CGNewInstanceExpression("ROError".AsTypeReference,
-                                                           [new CGPropertyAccessExpression(new CGLocalVariableAccessExpression("___localMessage"), "exception").AsCallParameter],
-                                                           ConstructorName := "withException")));
-    if assigned(aEntity.Result) then
-      lIfStatements.Statements.Add(new CGReturnStatement(ResolveDataTypeToDefaultExpression(aLibrary, aEntity.Result.DataType)))
-    else
-      lIfStatements.Statements.Add(new CGReturnStatement);
-  end;
 
   GenerateOperationAttribute(aLibrary, aEntity, result);
   if assigned(aEntity.Result) then
@@ -1394,6 +1383,25 @@ begin
   result.Add(new CGMethodCallExpression(nil, "objc_sync_enter", [lSelfMessage.AsCallParameter].ToList));
   result.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(lSelfMessage,"clientID"), new CGPropertyAccessExpression("___localMessage".AsNamedIdentifierExpression, "clientID")));
   result.Add(new CGMethodCallExpression(nil,"objc_sync_exit", [lSelfMessage.AsCallParameter].ToList));
+  if assigned(aEntity.Result) and not aIsBlock then
+    result.Add("___result".AsNamedIdentifierExpression.AsReturnStatement);
+
+  if aReturnError then begin
+    var lTry := new CGTryFinallyCatchStatement;
+    lTry.Statements := result;
+    var lCatchException := new CGCatchBlockStatement("___exception", "Exception".AsTypeReference);
+    lCatchException.Statements.Add(new CGAssignmentStatement(new CGLocalVariableAccessExpression("___error"),
+                                                             new CGNewInstanceExpression("ROError".AsTypeReference,
+                                                                                         [new CGLocalVariableAccessExpression("___exception").AsCallParameter],
+                                                                                         ConstructorName := "withException")));
+    if assigned(aEntity.Result) then
+      lCatchException.Statements.Add(new CGReturnStatement(ResolveDataTypeToDefaultExpression(aLibrary, aEntity.Result.DataType)))
+    else
+      lCatchException.Statements.Add(new CGReturnStatement);
+    lTry.CatchBlocks.Add(lCatchException);
+    result := new List<not nullable CGStatement>(lTry);
+  end;
+
 end;
 
 method CocoaRodlCodeGen.GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;

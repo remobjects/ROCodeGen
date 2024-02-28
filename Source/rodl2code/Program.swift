@@ -482,14 +482,16 @@ do {
 							activeRodlCodeGen?.Generator = CGObjectiveCHCodeGenerator()
 							let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], intf_file)
 							fileExtension = "h";
-							_WriteText(intf_file, sourceH);
-							writeLn("Wrote file \(intf_file)")
+							let intf_fileH = Path.ChangeExtension(intf_file, fileExtension);
+							_WriteText(intf_fileH, sourceH);
+							writeLn("Wrote file \(intf_fileH)")
 						} else if options["language"] == "cpp" {
 							activeRodlCodeGen?.Generator = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
 							let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], intf_file)
 							fileExtension = "h";
-							_WriteText(intf_file, sourceH);
-							writeLn("Wrote file \(intf_file)")
+							let intf_fileH = Path.ChangeExtension(intf_file, fileExtension);
+							_WriteText(intf_fileH, sourceH);
+							writeLn("Wrote file \(intf_fileH)")
 						}
 					}
 
