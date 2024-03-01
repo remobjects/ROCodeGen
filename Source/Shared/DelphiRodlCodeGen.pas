@@ -131,7 +131,6 @@ type
     method cpp_Impl_constructor(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition); virtual; empty;
     {$ENDREGION}
     {$REGION cpp support}
-    method cpp_generateNotAssigned(value: CGExpression): CGExpression; virtual;
     method cpp_GetTROAsyncCallbackType: String;virtual;
     method cpp_GetTROAsyncCallbackMethodType: String;virtual;
     method cpp_smartInit(aFile: CGCodeUnit);virtual; empty;
@@ -361,7 +360,7 @@ begin
           ifs_true := new CGAssignmentStatement(
                                                 faEntityname,
                                                 new CGNewInstanceExpression(laEntityItem.DataType.AsTypeReference));
-        lm.Statements.Add(new CGIfThenElseStatement(cpp_generateNotAssigned(faEntityname),ifs_true));
+        lm.Statements.Add(new CGIfThenElseStatement(new CGAssignedExpression(faEntityname) inverted(true),ifs_true));
       end;
       lm.Statements.Add(faEntityname.AsReturnStatement);
     end
@@ -4007,10 +4006,6 @@ begin
   Result := 'TROAsyncCallbackMethod';
 end;
 
-method DelphiRodlCodeGen.cpp_generateNotAssigned(value: CGExpression): CGExpression;
-begin
-  exit new CGUnaryOperatorExpression(new CGAssignedExpression(value),CGUnaryOperatorKind.Not);
-end;
 {$ENDREGION}
 
 method DelphiRodlCodeGen.get_IROTransport_typeref: CGTypeReference;
