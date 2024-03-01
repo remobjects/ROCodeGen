@@ -29,6 +29,7 @@ type
     method cpp_GlobalCondition_ns_name: String; override;
     method cpp_GetTROAsyncCallbackType: String; override;
     method cpp_GetTROAsyncCallbackMethodType: String; override;
+    method cpp_generateNotAssigned(value: CGExpression): CGExpression; override;
   protected
     property PureDelphi: Boolean read False; override;
     property CanUseNameSpace: Boolean := True; override;
@@ -722,6 +723,11 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_UuidId(anExpression: CGExpression): CGExpression;
 begin
   exit new CGMethodCallExpression(nil, '__uuidof',[anExpression.AsCallParameter])
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_generateNotAssigned(value: CGExpression): CGExpression;
+begin
+  exit new CGBinaryOperatorExpression(value, new CGNilExpression, CGBinaryOperatorKind.Equals);
 end;
 
 end.
