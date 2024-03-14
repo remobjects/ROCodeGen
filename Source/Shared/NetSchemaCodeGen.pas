@@ -83,20 +83,20 @@ type
     method GenerateCodeMetadata(schemaName: String;  schemaUri: String;  skippedTables: ICollection<String>;  includePrivateTables: Boolean);
     begin
       if not String.IsNullOrEmpty(schemaName) then begin
-        self.fCodeUnit.HeaderComment.Lines.Add(String.Format('#DA Schema Name:"{0}"', schemaName));
+        self.fCodeUnit.HeaderComment.Lines.Add(String.Format("#DA Schema name: {0}", schemaName));
       end;
 
       if not String.IsNullOrEmpty(schemaUri) then begin
-        self.fCodeUnit.HeaderComment.Lines.Add(String.Format('#DA Schema Source:"{0}"', schemaUri));
+        self.fCodeUnit.HeaderComment.Lines.Add(String.Format("#DA Schema source: {0}", schemaUri));
       end;
 
       if includePrivateTables then begin
-        self.fCodeUnit.HeaderComment.Lines.Add('#DA Add Private Tables');
+        self.fCodeUnit.HeaderComment.Lines.Add('#DA Includes private tables');
       end;
 
       if skippedTables.Count > 0 then begin
         var skippedTablesComment: StringBuilder := new StringBuilder();
-        skippedTablesComment.Append('#DA Skipped Tables:"');
+        skippedTablesComment.Append('#DA Skipped tables:"');
         for each tableName: String in skippedTables index i do begin
           if i > 0 then begin
             skippedTablesComment.Append(',');
@@ -144,7 +144,9 @@ type
         skippedTablesList.Add(tableName);
       end;
 
-      var namespaceReference: CGNamespaceReference := iif(not String.IsNullOrEmpty(&namespace), new CGNamespaceReference(&namespace), nil);
+
+      var lNamespace := coalesceEmpty(schema.Namespace, &namespace);
+      var namespaceReference := if length(lNamespace) > 0 then new CGNamespaceReference(lNamespace);
       self.fCodeUnit := new CGCodeUnit(namespaceReference);
 
       self.GenerateCodeMetadata(schemaName, schemaUri, skippedTables, includePrivateTables);
