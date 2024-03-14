@@ -46,7 +46,7 @@ type
     method Impl_CreateClassFactory(aLibrary: RodlLibrary; aEntity: RodlService; lvar: CGExpression): List<CGStatement>;override;
     method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);override;
     method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
-    method GenerateCGImport(aName: String; aNamespace : String := '';aExt: String := 'hpp'):CGImport; override;
+    method GenerateCGImport(aName: String; aNamespace: String := ''; aExt: String := 'hpp'; aCapitalize: Boolean = true): CGImport; override;
     method Invk_GetDefaultServiceRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
     method Invk_CheckRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
 
@@ -512,12 +512,16 @@ begin
   exit inherited ResolveDataTypeToTypeRefFullQualified(aLibrary, aDataType, aDefaultUnitName, aOrigDataType, aCapitalize and (aDefaultUnitName <> targetNamespace));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String): CGImport;
+method CPlusPlusBuilderRodlCodeGen.GenerateCGImport(aName: String;aNamespace : String; aExt: String; aCapitalize: Boolean): CGImport;
 begin
   var lns := aName+'.'+aExt;
   if aExt in ['h', 'hpp'] then begin
-    if String.IsNullOrEmpty(aNamespace) then
-      exit new CGImport(CapitalizeString(lns))
+    if String.IsNullOrEmpty(aNamespace) then begin
+      if aCapitalize then
+        exit new CGImport(CapitalizeString(lns))
+      else
+        exit new CGImport(lns);
+    end
     else
       exit new CGImport(new CGNamedTypeReference(aNamespace+'.'+lns))
   end
@@ -719,5 +723,6 @@ method CPlusPlusBuilderRodlCodeGen.cpp_UuidId(anExpression: CGExpression): CGExp
 begin
   exit new CGMethodCallExpression(nil, '__uuidof',[anExpression.AsCallParameter])
 end;
+
 
 end.

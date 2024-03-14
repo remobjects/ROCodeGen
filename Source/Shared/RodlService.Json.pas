@@ -135,13 +135,16 @@ type
         SaveBooleanToJson(node, "ForceAsyncResponse", ForceAsyncResponse);
       fRoles.SaveToJson(node);
       SaveAttributesToJson(node);
+
+      var temp := new EntityCollection<RodlParameter>(nil, "Parameter");
+      temp.Items.Add(self.Items);
       try
         if assigned(self.Result) then
-          Items.Insert(0, self.Result);
-        inherited SaveToJson(node, "Parameters", flattenUsedRODLs);
+          temp.Items.Insert(0, self.Result);
+        temp.SaveToJson(node, "Parameters", flattenUsedRODLs);
       finally
         if assigned(self.Result) then
-          Items.Remove(self.Result);
+          temp.Items.Remove(self.Result);
       end;
     end;
 
