@@ -930,6 +930,15 @@ begin
   CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeReference.String));
   CodeGenTypes.Add("xsdatetime", "NSDate".AsTypeReference().NullableUnwrapped);
 
+  CodeGenTypes.Add("nullableinteger", "NSNumber".AsTypeReference().NullableUnwrapped);
+  CodeGenTypes.Add("nullabledatetime", "NSDate".AsTypeReference().NullableUnwrapped);
+  CodeGenTypes.Add("nullabledouble", "NSNumber".AsTypeReference().NullableUnwrapped);
+  CodeGenTypes.Add("nullablecurrency", "NSDecimalNumber".AsTypeReference().NullableUnwrapped);
+  CodeGenTypes.Add("nullableint64", "NSNumber".AsTypeReference().NullableUnwrapped);
+  CodeGenTypes.Add("nullableboolean", "NSNumber".AsTypeReference().NullableUnwrapped);
+  CodeGenTypes.Add("nullableguid", "ROGuid".AsTypeReference);
+  CodeGenTypes.Add("nullabledecimal", "NSDecimalNumber".AsTypeReference().NullableUnwrapped);
+
   CodeGenTypeDefaults.Add("integer", 0.AsLiteralExpression);
   CodeGenTypeDefaults.Add("double", 0.0.AsLiteralExpression);
   CodeGenTypeDefaults.Add("int64", 0.AsLiteralExpression);
@@ -950,6 +959,15 @@ begin
   ReaderFunctions.Add("binary", "Binary");
   ReaderFunctions.Add("xml", "Xml");
   ReaderFunctions.Add("xsdatetime", "XsDateTime");
+
+  ReaderFunctions.Add("nullableinteger", "NullableInt32");
+  ReaderFunctions.Add("nullabledatetime", "NullableDateTime");
+  ReaderFunctions.Add("nullabledouble", "NullableDouble");
+  ReaderFunctions.Add("nullablecurrency", "NullableCurrency");
+  ReaderFunctions.Add("nullableint64", "NullableInt64");
+  ReaderFunctions.Add("nullabledecimal", "NullableDecimal");
+  ReaderFunctions.Add("nullableguid", "NullableGuid");
+  ReaderFunctions.Add("nullableboolean", "NullableBoolean");
 
   fCachedNumberFN.Add("integer","Int");
   fCachedNumberFN.Add("double", "Double");
@@ -1168,7 +1186,7 @@ begin
   var lLower: String  := aEntity.DataType.ToLowerInvariant();
   var lMethodName: String;
   var lIsEnum := isEnum(aLibrary,aEntity.DataType);
-  var lIsComplex := iif(not lIsEnum,isComplex(aLibrary,aEntity.DataType), false);
+  var lIsComplex := iif(not lIsEnum, isComplex(aLibrary, aEntity.DataType), false);
   var lIsArray := isArray(aLibrary, aEntity.DataType);
   var lIsStruct := isStruct(aLibrary, aEntity.DataType);
   var lIsSimple := not (lIsEnum or lIsComplex);
