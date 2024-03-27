@@ -49,14 +49,14 @@ implementation
 
 constructor JavaRodlCodeGen;
 begin
-  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeReference.Int32,true));
+  CodeGenTypes.Add("integer", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   CodeGenTypes.Add("datetime", "java.util.Date".AsTypeReference);
-  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeReference.Double,true));
+  CodeGenTypes.Add("double", ResolveStdtypes(CGPredefinedTypeReference.Double));
   CodeGenTypes.Add("currency", "java.math.BigDecimal".AsTypeReference);
   CodeGenTypes.Add("widestring", ResolveStdtypes(CGPredefinedTypeReference.String));
   CodeGenTypes.Add("ansistring", ResolveStdtypes(CGPredefinedTypeReference.String));
-  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeReference.Int64,true));
-  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeReference.Boolean,true));
+  CodeGenTypes.Add("int64", ResolveStdtypes(CGPredefinedTypeReference.Int64));
+  CodeGenTypes.Add("boolean", ResolveStdtypes(CGPredefinedTypeReference.Boolean));
   CodeGenTypes.Add("variant", "com.remobjects.sdk.VariantType".AsTypeReference);
   CodeGenTypes.Add("binary", new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.Int8)));
   CodeGenTypes.Add("xml", "com.remobjects.sdk.XmlType".AsTypeReference);
@@ -64,6 +64,15 @@ begin
   CodeGenTypes.Add("decimal", "java.math.BigDecimal".AsTypeReference);
   CodeGenTypes.Add("utf8string", ResolveStdtypes(CGPredefinedTypeReference.String));
   CodeGenTypes.Add("xsdatetime", "java.util.Date".AsTypeReference);
+
+  CodeGenTypes.Add("nullableinteger", ResolveStdtypes(CGPredefinedTypeReference.Int32, true));
+  CodeGenTypes.Add("nullabledatetime", "java.util.Date".AsTypeReference);
+  CodeGenTypes.Add("nullabledouble", ResolveStdtypes(CGPredefinedTypeReference.Double, true));
+  CodeGenTypes.Add("nullablecurrency", "java.math.BigDecimal".AsTypeReference);
+  CodeGenTypes.Add("nullableint64", ResolveStdtypes(CGPredefinedTypeReference.Int64, true));
+  CodeGenTypes.Add("nullableboolean", ResolveStdtypes(CGPredefinedTypeReference.Boolean, true));
+  CodeGenTypes.Add("nullableguid", "java.util.UUID".AsTypeReference);
+  CodeGenTypes.Add("nullabledecimal", "java.math.BigDecimal".AsTypeReference);
 
   ReaderFunctions.Add("integer", "Int32");
   ReaderFunctions.Add("datetime", "DateTime");
@@ -80,6 +89,15 @@ begin
   ReaderFunctions.Add("decimal", "Decimal");
   ReaderFunctions.Add("utf8string", "Utf8String");
   ReaderFunctions.Add("xsdatetime", "DateTime");
+
+  ReaderFunctions.Add("nullableinteger", "NullableInt32");
+  ReaderFunctions.Add("nullabledatetime", "NullableDateTime");
+  ReaderFunctions.Add("nullabledouble", "NullableDouble");
+  ReaderFunctions.Add("nullablecurrency", "NullableCurrency");
+  ReaderFunctions.Add("nullableint64", "NullableInt64");
+  ReaderFunctions.Add("nullableboolean", "NullableBoolean");
+  ReaderFunctions.Add("nullableguid", "NullableGuid");
+  ReaderFunctions.Add("nullabledecimal", "NullableDecimal");
 
   ReservedWords.Add([
     "abstract", "and", "add", "async", "as", "begin", "break", "case", "class", "const", "constructor", "continue",
@@ -235,7 +253,7 @@ begin
     end;
     {$ENDREGION}
     {$REGION public method writeToMessage(aName: String; aMessage: Message); override;}
-    lstruct.Members.Add(WriteToMessage_Method(aLibrary,aEntity,true));
+    lstruct.Members.Add(WriteToMessage_Method(aLibrary,aEntity, true));
     {$ENDREGION}
     {$REGION method ReadFromMessage_Method(aName: String; aMessage: Message); override;}
     lstruct.Members.Add(ReadFromMessage_Method(aLibrary,aEntity));
@@ -643,7 +661,7 @@ begin
   aFile.Types.Add(lIService);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
-    m.Comment := GenerateDocumentation(lop,true);
+    m.Comment := GenerateDocumentation(lop, true);
     lIService.Members.Add(m);
   end;
 
@@ -1170,7 +1188,7 @@ end;
 
 method JavaRodlCodeGen.GenerateServiceAsyncProxyEndMethod(aLibrary: RodlLibrary; aEntity: RodlOperation): CGMethodDefinition;
 begin
-  result := GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary,aEntity,true);
+  result := GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary,aEntity, true);
 
   var l_out:= new List<RodlParameter>;
   for lp: RodlParameter in aEntity.Items do begin
