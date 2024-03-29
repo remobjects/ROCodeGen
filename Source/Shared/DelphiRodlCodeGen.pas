@@ -4408,6 +4408,7 @@ begin
   {$REGION interface uses}
   lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
+  lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
   lUnit.Imports.Add(GenerateCGImport('uROServer'));
