@@ -2772,14 +2772,14 @@ begin
     'decimal':    k := new CGMethodCallExpression(aSerializer, 'WriteDecimal',[aName, aValue].ToList);
     'xsdatetime': k := new CGMethodCallExpression(aSerializer, 'WriteStruct',[aName, aValue, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter].ToList);
     'widestring': k := new CGMethodCallExpression(aSerializer, 'WriteUnicodeString',[aName, aValue].ToList,CallSiteKind := CGCallSiteKind.Reference);
-    'nullableboolean': k := new CGMethodCallExpression(aSerializer, 'WriteNullableBoolean',[aName, aValue].ToList);
-    'nullablecurrency': k := new CGMethodCallExpression(aSerializer, 'WriteNullableCurrency',[aName, aValue].ToList);
-    'nullabledatetime': k := new CGMethodCallExpression(aSerializer, 'WriteNullableDateTime',[aName, aValue].ToList);
-    'nullabledecimal': k := new CGMethodCallExpression(aSerializer, 'WriteNullableDecimal',[aName, aValue].ToList);
-    'nullabledouble': k := new CGMethodCallExpression(aSerializer, 'WriteNullableDouble',[aName, aValue].ToList);
-    'nullableguid': k := new CGMethodCallExpression(aSerializer, 'WriteNullableGuid',[aName, aValue].ToList);
-    'nullableint64': k := new CGMethodCallExpression(aSerializer, 'WriteNullableInt64',[aName, aValue].ToList);
-    'nullableinteger': k := new CGMethodCallExpression(aSerializer, 'WriteNullableInteger',[aName, aValue].ToList);
+    'nullableboolean': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableBoolean',[aName, aValue].ToList);end;
+    'nullablecurrency': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableCurrency',[aName, aValue].ToList);end;
+    'nullabledatetime': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableDateTime',[aName, aValue].ToList);end;
+    'nullabledecimal': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableDecimal',[aName, aValue].ToList);end;
+    'nullabledouble': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableDouble',[aName, aValue].ToList);end;
+    'nullableguid': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableGuid',[aName, aValue].ToList);end;
+    'nullableint64': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableInt64',[aName, aValue].ToList);end;
+    'nullableinteger': begin aValue.Modifier := CGParameterModifierKind.In; k := new CGMethodCallExpression(aSerializer, 'WriteNullableInteger',[aName, aValue].ToList);end;
 
   else
     if isArray(aLibrary,aElementType) then k := new CGMethodCallExpression(aSerializer, 'WriteArray',[aName, aValue, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter].ToList)
@@ -4263,6 +4263,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('uROProxy'));
   lUnit.Imports.Add(GenerateCGImport('uROExceptions'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
+  lUnit.Imports.Add(GenerateCGImport('uRONullable'));
   lUnit.Imports.Add(GenerateCGImport('uROClasses'));
   lUnit.Imports.Add(GenerateCGImport('uROTypes'));
   lUnit.Imports.Add(GenerateCGImport('uROClientIntf'));
@@ -4410,6 +4411,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('Classes','System'));
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
+  lUnit.Imports.Add(GenerateCGImport('uRONullable'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
   lUnit.Imports.Add(GenerateCGImport('uROServer'));
   lUnit.Imports.Add(GenerateCGImport('uROServerIntf'));
@@ -4526,6 +4528,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
   lUnit.Imports.Add(GenerateCGImport('uROClientIntf'));
+  lUnit.Imports.Add(GenerateCGImport('uRONullable'));
   lUnit.Imports.Add(GenerateCGImport('uROClasses'));
   lUnit.Imports.Add(GenerateCGImport('uROTypes'));
   lUnit.Imports.Add(GenerateCGImport('uROServer'));
