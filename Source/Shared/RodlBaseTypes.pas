@@ -189,7 +189,22 @@ type
           var lst := lResult.Where(b->b.Name.Equals(laname)).ToList;
           if lst.Count = 1 then begin
             var lIndex := lResult.IndexOf(lst[0]);
-            lResult.Insert(lIndex+1,lAncestors[i]);
+            if lIndex + 1 > lResult.Count - 1 then begin
+              lResult.Add(lAncestors[i]);
+            end
+            else begin
+              for j: Integer := lIndex + 1 to lResult.Count - 1 do begin
+                if lResult[j].Name.CompareToIgnoreCase(lAncestors[i].Name) >= 0 then begin
+                  lResult.Insert(j, lAncestors[i]);
+                  break;
+                end
+                else begin
+                  lResult.Insert(j + 1, lAncestors[i]);
+                  break;
+                end;
+              end;
+            end;
+
             lAncestors.RemoveAt(i);
             lWorked := true;
           end;
