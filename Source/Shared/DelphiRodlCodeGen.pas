@@ -2753,7 +2753,7 @@ begin
   case aElementType.ToLowerInvariant of
     'integer':    k := new CGMethodCallExpression(aSerializer, 'WriteInt32',[aName, aValue].ToList);
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'WriteDateTime',[aName, aValue].ToList);
-    'double':     k := new CGMethodCallExpression(aSerializer, 'WriteDouble',[aName, aValue].ToList);
+    'double':     k := new CGMethodCallExpression(aSerializer, 'WriteDouble_',[aName, aValue].ToList);
     'currency':   k := new CGMethodCallExpression(aSerializer, 'WriteCurrency',[aName, aValue].ToList);
     'ansistring': if fLegacyStrings then
                     k := new CGMethodCallExpression(aSerializer, 'WriteAnsiString',[aName, aValue].ToList)
