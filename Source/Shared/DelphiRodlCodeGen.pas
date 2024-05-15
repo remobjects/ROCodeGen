@@ -465,9 +465,9 @@ begin
   ProcessAttributes(aEntity, ltype);
 
   if aEntity.Count > 0 then begin
-    {$REGION public procedure Assign(aSource: TPersistent); override;}
+    {$REGION public procedure Assign(Source: TPersistent); override;}
     var lm := new CGMethodDefinition('Assign',
-                            Parameters :=[new CGParameterDefinition('aSource','TPersistent'.AsTypeReference)].ToList,
+                            Parameters :=[new CGParameterDefinition('Source','TPersistent'.AsTypeReference)].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register
@@ -476,7 +476,7 @@ begin
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
     lm.LocalVariables:Add(new CGVariableDeclarationStatement("lSource",l_FullEntityTypeRef));
 
-    var aSourceExpr := 'aSource'.AsNamedIdentifierExpression;
+    var aSourceExpr := 'Source'.AsNamedIdentifierExpression;
     lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'Assign', [aSourceExpr.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static));
     var lct := new CGBeginEndBlockStatement;
     lm.Statements.Add(new CGIfThenElseStatement(GenerateIsClause(aSourceExpr, l_FullEntityTypeRef),
@@ -940,7 +940,7 @@ begin
 
   {$REGION public procedure Assign(aSource: TPersistent); override;}
   lm := new CGMethodDefinition('Assign',
-                            Parameters := [new CGParameterDefinition('aSource','TPersistent'.AsTypeReference)].ToList,
+                            Parameters := [new CGParameterDefinition('Source','TPersistent'.AsTypeReference)].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register);
@@ -951,7 +951,7 @@ begin
   var lAsClass := isComplex(aLibrary,lElementType);
   if lAsClass then
     lm.LocalVariables:Add(new CGVariableDeclarationStatement("lItem",el_typeref));
-  var aSourceExpr := 'aSource'.AsNamedIdentifierExpression;                                                                     // aSource
+  var aSourceExpr := 'Source'.AsNamedIdentifierExpression;                                                                     // aSource
   var lSourceExpr := 'lSource'.AsNamedIdentifierExpression;                                                                     // lSource
   var lSource_Count := new CGFieldAccessExpression(lSourceExpr,'Count',CallSiteKind := CGCallSiteKind.Reference);                // lSource.Count
   var lSelfitems_i := new CGPropertyAccessExpression(CGSelfExpression.Self,
@@ -1397,9 +1397,9 @@ begin
   ProcessAttributes(aEntity, ltype);
 
   if aEntity.Count > 0 then begin
-    {$REGION public procedure Assign(aSource: EROException); override;}
+    {$REGION public procedure Assign(Source: EROException); override;}
     var lm := new CGMethodDefinition('Assign',
-                            Parameters :=[new CGParameterDefinition('aSource','EROException'.AsTypeReference)].ToList,
+                            Parameters :=[new CGParameterDefinition('Source','EROException'.AsTypeReference)].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register
@@ -1409,13 +1409,13 @@ begin
     lm.LocalVariables:Add(new CGVariableDeclarationStatement("lSource",exception_typeref));
 
 
-    lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'Assign', ['aSource'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static));
+    lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'Assign', ['Source'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static));
     var lct := new CGBeginEndBlockStatement;
-    lm.Statements.Add(new CGIfThenElseStatement(GenerateIsClause('aSource'.AsNamedIdentifierExpression,exception_typeref),
+    lm.Statements.Add(new CGIfThenElseStatement(GenerateIsClause('Source'.AsNamedIdentifierExpression,exception_typeref),
                                           lct));
 
     lct.Statements.Add(new CGAssignmentStatement('lSource'.AsNamedIdentifierExpression,
-                                                 new CGTypeCastExpression('aSource'.AsNamedIdentifierExpression, exception_typeref)));
+                                                 new CGTypeCastExpression('Source'.AsNamedIdentifierExpression, exception_typeref)));
     for lprop :RodlTypedEntity in aEntity.Items do begin
       var l_prop := lprop.Name;
       var l_lSource := 'lSource'.AsNamedIdentifierExpression;
