@@ -18,7 +18,7 @@ type
     {$REGION support methods}
     method ResolveDataTypeToTypeRef(aLibrary: RodlLibrary; aDataType: String): CGTypeReference;
     method ResolveDataTypeToDefaultExpression(aLibrary: RodlLibrary; aDataType: String): CGExpression;
-    method ResolveStdtypes(aType: CGPredefinedTypeReference; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
+    method ResolveStdtypes(aType: CGPredefinedTypeReference; isNullable: Boolean := false; isNotNullable: Boolean := false; isPointer: Boolean := false): CGTypeReference;
     method EntityNeedsCodeGen(aEntity: RodlEntity): Boolean;
     method PascalCase(name:String):String;
     method isStruct(aLibrary: RodlLibrary; aDataType: String): Boolean;
@@ -210,10 +210,12 @@ begin
   exit aString.Replace('\','\\').Replace('"','\"');
 end;
 
-method RodlCodeGen.ResolveStdtypes(aType: CGPredefinedTypeReference; isNullable: Boolean := false; isNotNullable: Boolean := false): CGTypeReference;
+method RodlCodeGen.ResolveStdtypes(aType: CGPredefinedTypeReference; isNullable: Boolean := false; isNotNullable: Boolean := false; isPointer: Boolean := false): CGTypeReference;
 begin
   if PredefinedTypes.ContainsKey(aType.Kind) then
     exit PredefinedTypes[aType.Kind]
+  else if isPointer then
+    exit new CGPointerTypeReference(aType)
   else if isNullable then
     exit aType.NullableNotUnwrapped
   else if isNotNullable then
@@ -225,7 +227,7 @@ end;
 method RodlCodeGen.ResolveDataTypeToTypeRef(aLibrary: RodlLibrary; aDataType: String): CGTypeReference;
 begin
   var lLower := aDataType.ToLowerInvariant();
-  if  CodeGenTypes.ContainsKey(lLower) then
+  if CodeGenTypes.ContainsKey(lLower) then
     exit CodeGenTypes[lLower]
   else
     exit aDataType.AsTypeReference(not isEnum(aLibrary, aDataType));
@@ -236,6 +238,8 @@ begin
   var lLower := aDataType.ToLowerInvariant();
   if CodeGenTypeDefaults.ContainsKey(lLower) then
     exit CodeGenTypeDefaults[lLower]
+  else if isEnum(aLibrary, aDataType) then
+    exit new CGTypeCastExpression(0.AsLiteralExpression, ResolveDataTypeToTypeRef(aLibrary, aDataType))
   else
     exit CGNilExpression.Nil;
 end;
