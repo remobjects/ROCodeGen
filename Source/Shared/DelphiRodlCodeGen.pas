@@ -465,9 +465,9 @@ begin
   ProcessAttributes(aEntity, ltype);
 
   if aEntity.Count > 0 then begin
-    {$REGION public procedure Assign(aSource: TPersistent); override;}
+    {$REGION public procedure Assign(Source: TPersistent); override;}
     var lm := new CGMethodDefinition('Assign',
-                            Parameters :=[new CGParameterDefinition('aSource','TPersistent'.AsTypeReference)].ToList,
+                            Parameters :=[new CGParameterDefinition('Source','TPersistent'.AsTypeReference)].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register
@@ -476,7 +476,7 @@ begin
     lm.LocalVariables := new List<CGVariableDeclarationStatement>;
     lm.LocalVariables:Add(new CGVariableDeclarationStatement("lSource",l_FullEntityTypeRef));
 
-    var aSourceExpr := 'aSource'.AsNamedIdentifierExpression;
+    var aSourceExpr := 'Source'.AsNamedIdentifierExpression;
     lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'Assign', [aSourceExpr.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static));
     var lct := new CGBeginEndBlockStatement;
     lm.Statements.Add(new CGIfThenElseStatement(GenerateIsClause(aSourceExpr, l_FullEntityTypeRef),
@@ -940,7 +940,7 @@ begin
 
   {$REGION public procedure Assign(aSource: TPersistent); override;}
   lm := new CGMethodDefinition('Assign',
-                            Parameters := [new CGParameterDefinition('aSource','TPersistent'.AsTypeReference)].ToList,
+                            Parameters := [new CGParameterDefinition('Source','TPersistent'.AsTypeReference)].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register);
@@ -951,7 +951,7 @@ begin
   var lAsClass := isComplex(aLibrary,lElementType);
   if lAsClass then
     lm.LocalVariables:Add(new CGVariableDeclarationStatement("lItem",el_typeref));
-  var aSourceExpr := 'aSource'.AsNamedIdentifierExpression;                                                                     // aSource
+  var aSourceExpr := 'Source'.AsNamedIdentifierExpression;                                                                     // aSource
   var lSourceExpr := 'lSource'.AsNamedIdentifierExpression;                                                                     // lSource
   var lSource_Count := new CGFieldAccessExpression(lSourceExpr,'Count',CallSiteKind := CGCallSiteKind.Reference);                // lSource.Count
   var lSelfitems_i := new CGPropertyAccessExpression(CGSelfExpression.Self,
@@ -1397,9 +1397,9 @@ begin
   ProcessAttributes(aEntity, ltype);
 
   if aEntity.Count > 0 then begin
-    {$REGION public procedure Assign(aSource: EROException); override;}
+    {$REGION public procedure Assign(Source: EROException); override;}
     var lm := new CGMethodDefinition('Assign',
-                            Parameters :=[new CGParameterDefinition('aSource','EROException'.AsTypeReference)].ToList,
+                            Parameters :=[new CGParameterDefinition('Source','EROException'.AsTypeReference)].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register
@@ -1409,13 +1409,13 @@ begin
     lm.LocalVariables:Add(new CGVariableDeclarationStatement("lSource",exception_typeref));
 
 
-    lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'Assign', ['aSource'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static));
+    lm.Statements.Add(new CGMethodCallExpression(CGInheritedExpression.Inherited,'Assign', ['Source'.AsNamedIdentifierExpression.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static));
     var lct := new CGBeginEndBlockStatement;
-    lm.Statements.Add(new CGIfThenElseStatement(GenerateIsClause('aSource'.AsNamedIdentifierExpression,exception_typeref),
+    lm.Statements.Add(new CGIfThenElseStatement(GenerateIsClause('Source'.AsNamedIdentifierExpression,exception_typeref),
                                           lct));
 
     lct.Statements.Add(new CGAssignmentStatement('lSource'.AsNamedIdentifierExpression,
-                                                 new CGTypeCastExpression('aSource'.AsNamedIdentifierExpression, exception_typeref)));
+                                                 new CGTypeCastExpression('Source'.AsNamedIdentifierExpression, exception_typeref)));
     for lprop :RodlTypedEntity in aEntity.Items do begin
       var l_prop := lprop.Name;
       var l_lSource := 'lSource'.AsNamedIdentifierExpression;
@@ -2274,9 +2274,9 @@ begin
         mem.LocalVariables.Add(new CGVariableDeclarationStatement('l_'+lmemparam.Name, ResolveDataTypeToTypeRefFullQualified(aLibrary,lmemparam.DataType, Intf_name)));
 
       mem.Statements.Add(new CGEmptyStatement);
-      for lmemparam in lmem.Items do
-        if isComplex(aLibrary, lmemparam.DataType) then
-          mem.Statements.Add(new CGAssignmentStatement(('l_'+lmemparam.Name).AsNamedIdentifierExpression, CGNilExpression.Nil));
+      //for lmemparam in lmem.Items do
+        //if isComplex(aLibrary, lmemparam.DataType) then
+          //mem.Statements.Add(new CGAssignmentStatement(('l_'+lmemparam.Name).AsNamedIdentifierExpression, CGNilExpression.Nil));
 
       mem.Statements.Add(new CGEmptyStatement);
       var list := new List<CGStatement>;
@@ -2646,10 +2646,10 @@ begin
     var local_name := new CGFieldAccessExpression(CGSelfExpression.Self, lmem.Name,CallSiteKind := CGCallSiteKind.Reference);
     var local_int_name := new CGFieldAccessExpression(CGSelfExpression.Self, 'int_'+lmem.Name,CallSiteKind := CGCallSiteKind.Reference);
     var local_l_name := ('l_'+lmem.Name).AsNamedIdentifierExpression;
-    if isComplex(aLibrary, lmem.DataType) and not aSerializeInitializedStructValues then
-      aStatements.Add(new CGAssignmentStatement(local_l_name,local_int_name))
-    else
-      aStatements.Add(new CGAssignmentStatement(local_l_name,local_name));
+    //if isComplex(aLibrary, lmem.DataType) and not aSerializeInitializedStructValues then
+      //aStatements.Add(new CGAssignmentStatement(local_l_name,local_int_name))
+    //else
+      //aStatements.Add(new CGAssignmentStatement(local_l_name,local_name));
 
     var lName := lmem.OriginalName.AsLiteralExpression.AsCallParameter;
     var lValue := local_l_name.AsCallParameter;
@@ -2693,10 +2693,10 @@ begin
   aValue.Modifier := CGParameterModifierKind.In;
   var k: CGMethodCallExpression;
   case aElementType.ToLowerInvariant of
-    'integer':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadIntegerWithErrorHandling',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);end;
+    'integer':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadInt32WithErrorHandling',[aName, aValue].ToList);end;
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'ReadDateTimeWithErrorHandling',[aName, aValue].ToList);
-    'double':     begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);end;
-    'currency':   begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);end;
+    'double':     begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, aValue].ToList);end;
+    'currency':   begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadCurrencyWithErrorHandling',[aName, aValue].ToList);end;
     'ansistring': if fLegacyStrings then
                     k := new CGMethodCallExpression(aSerializer, 'ReadAnsiStringWithErrorHandling',[aName, aValue].ToList)
                   else
@@ -2706,7 +2706,7 @@ begin
                   else
                     k := new CGMethodCallExpression(aSerializer, 'ReadLegacyStringWithErrorHandling',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'int64':      k := new CGMethodCallExpression(aSerializer, 'ReadInt64WithErrorHandling',[aName, aValue].ToList);
-    'boolean':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadEnumeratedWithErrorHandling',[aName,GenerateTypeInfoCall(aLibrary,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList); end;
+    'boolean':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadBooleanWithErrorHandling',[aName, aValue].ToList); end;
     'variant':    k := new CGMethodCallExpression(aSerializer, 'ReadVariantWithErrorHandling',[aName, aValue].ToList);
     'binary':     k := new CGMethodCallExpression(aSerializer, 'ReadBinaryWithErrorHandling',[aName, aValue].ToList);
     'xml':        k := new CGMethodCallExpression(aSerializer, 'ReadXmlWithErrorHandling',[aName, aValue].ToList);
@@ -2751,10 +2751,10 @@ begin
   aValue.Modifier := CGParameterModifierKind.Var; //c++ builder should pass it by reference
   var k: CGMethodCallExpression;
   case aElementType.ToLowerInvariant of
-    'integer':    k := new CGMethodCallExpression(aSerializer, 'WriteInteger',[aName, 'otSLong'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
+    'integer':    k := new CGMethodCallExpression(aSerializer, 'WriteInt32',[aName, aValue].ToList);
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'WriteDateTime',[aName, aValue].ToList);
-    'double':     k := new CGMethodCallExpression(aSerializer, 'WriteDouble',[aName, 'ftDouble'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
-    'currency':   k := new CGMethodCallExpression(aSerializer, 'WriteDouble',[aName, 'ftCurr'.AsNamedIdentifierExpression.AsCallParameter,aValue].ToList);
+    'double':     k := new CGMethodCallExpression(aSerializer, 'WriteDouble_',[aName, aValue].ToList);
+    'currency':   k := new CGMethodCallExpression(aSerializer, 'WriteCurrency',[aName, aValue].ToList);
     'ansistring': if fLegacyStrings then
                     k := new CGMethodCallExpression(aSerializer, 'WriteAnsiString',[aName, aValue].ToList)
                   else
@@ -2764,7 +2764,7 @@ begin
                   else
                     k := new CGMethodCallExpression(aSerializer, 'WriteLegacyString',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'int64':      k := new CGMethodCallExpression(aSerializer, 'WriteInt64',[aName, aValue].ToList);
-    'boolean':    k := new CGMethodCallExpression(aSerializer, 'WriteEnumerated',[aName, GenerateTypeInfoCall(aLibrary,ResolveStdtypes(CGPredefinedTypeReference.Boolean)).AsCallParameter,aValue].ToList);
+    'boolean':    k := new CGMethodCallExpression(aSerializer, 'WriteBoolean',[aName, aValue].ToList);
     'variant':    k := new CGMethodCallExpression(aSerializer, 'WriteVariant',[aName, aValue].ToList);
     'binary':     k := new CGMethodCallExpression(aSerializer, 'WriteBinary',[aName, aValue].ToList);
     'xml':        k := new CGMethodCallExpression(aSerializer, 'WriteXml',[aName, aValue].ToList);
