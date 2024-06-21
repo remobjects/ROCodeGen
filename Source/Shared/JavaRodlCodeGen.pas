@@ -448,7 +448,7 @@ begin
                             [
                               CGStatement(
                                 new CGTypeCastExpression(
-                                  new CGMethodCallExpression(CGInheritedExpression.Inherited, 'getItemAtIndex', [ 'anIndex'.AsNamedIdentifierExpression().AsCallParameter() ].ToList()),
+                                  new CGMethodCallExpression(CGInheritedExpression.Inherited, '__getItemAtIndex', [ 'anIndex'.AsNamedIdentifierExpression().AsCallParameter() ].ToList()),
                                   lElementType,
                                   ThrowsException := true
                                 ).AsReturnStatement()
@@ -456,7 +456,7 @@ begin
                             ].ToList(),
                             Parameters := [ new CGParameterDefinition("anIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32)) ].ToList(),
                             ReturnType := lElementType,
-                            Virtuality := CGMemberVirtualityKind.Override,
+                            //Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public)
   );
   {$ENDREGION}
@@ -906,7 +906,7 @@ begin
   // There is no need to generate CustomAttribute-related methods if there is no custom attributes
   if (aEntity.CustomAttributes.Count = 0) then exit;
   exit new CGFieldDefinition("_attributes",
-                             new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList),
+                             new CGNamedTypeReference("java.util.HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList),
                             &Static := true,
                             Visibility := CGMemberVisibilityKind.Private);
 end;
@@ -931,7 +931,7 @@ begin
   l_if_true.Statements.Add(
           new CGAssignmentStatement(
                             l_attributes,
-                            new CGNewInstanceExpression(new CGNamedTypeReference("HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList)))
+                            new CGNewInstanceExpression(new CGNamedTypeReference("java.util.HashMap", GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList)))
   );
 
   for l_key: String in aEntity.CustomAttributes.Keys do begin
@@ -1306,7 +1306,7 @@ method JavaRodlCodeGen.GenerateOperationAttribute(aLibrary: RodlLibrary; aEntity
 begin
   var ld := Operation_GetAttributes(aLibrary, aEntity);
   if ld.Count > 0 then begin
-    var lhashmaptype := new CGNamedTypeReference("HashMap",GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList);
+    var lhashmaptype := new CGNamedTypeReference("java.util.HashMap",GenericArguments := [ResolveStdtypes(CGPredefinedTypeReference.String),ResolveStdtypes(CGPredefinedTypeReference.String)].ToList);
     var l_attributes := "lAttributesMap".AsNamedIdentifierExpression;
     Statements.Add(new CGVariableDeclarationStatement("lAttributesMap",lhashmaptype,new CGNewInstanceExpression(lhashmaptype)));
     for l_key: String in ld.Keys do begin

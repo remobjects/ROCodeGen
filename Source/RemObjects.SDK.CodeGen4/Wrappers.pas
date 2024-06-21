@@ -151,7 +151,10 @@ begin
         DelphiRodlCodeGen(codegen).IsHydra := true;
     end;
     Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
-    Codegen4Platform.Java: codegen := new JavaRodlCodeGen;
+    Codegen4Platform.Java: begin
+      codegen := new JavaRodlCodeGen;
+      JavaRodlCodeGen(codegen).isCooperMode := not (Language = Codegen4Language.Java);
+    end;
     Codegen4Platform.Cocoa: codegen := new CocoaRodlCodeGen;
     Codegen4Platform.Net: begin
       codegen := new EchoesCodeDomRodlCodeGen;
