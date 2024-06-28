@@ -296,6 +296,9 @@ do {
 				options["language"] = "silver" // force our Swift
 			}
 			activeRodlCodeGen = JavaRodlCodeGen()
+			if let javaRodlCodeGen = activeRodlCodeGen as? JavaRodlCodeGen {
+				javaRodlCodeGen.isCooperMode = !(codegen is CGJavaCodeGenerator)
+			}
 			activeServerAccessCodeGen = JavaServerAccessCodeGen(rodl: rodlLibrary)
 		case "toffee", "nougat", "cocoa", "xcode", "swift": // keep Nougat, undocumdented, for backwards comopatibility
 			var lAppleSwift = options["platform"]?.ToLowerInvariant() == "swift"
