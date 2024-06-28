@@ -270,13 +270,17 @@ begin
       for lm :RodlTypedEntity in aEntity.Items do begin
         var f_name := "f_"+ lm.Name;
         var s_name := "s_" + lm.Name;
-        var st1: CGStatement :=new CGIfThenElseStatement(new CGBinaryOperatorExpression(f_name.AsNamedIdentifierExpression, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
-                                                          f_name.AsNamedIdentifierExpression.AsReturnStatement,
-                                                          s_name.AsNamedIdentifierExpression.AsReturnStatement);
+        var l_st: CGStatement;
+        if IsSimpleType(lm.DataType) then
+          l_st := f_name.AsNamedIdentifierExpression.AsReturnStatement
+        else
+          l_st := new CGIfThenElseStatement(new CGBinaryOperatorExpression(f_name.AsNamedIdentifierExpression, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
+                                                      f_name.AsNamedIdentifierExpression.AsReturnStatement,
+                                                      s_name.AsNamedIdentifierExpression.AsReturnStatement);
         //var st2: CGStatement :=new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,CGPropertyDefinition.MAGIC_VALUE_PARAMETER_NAME.AsNamedIdentifierExpression);
         lstruct.Members.Add(new CGPropertyDefinition(lm.Name,
                             ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
-                            [st1].ToList,
+                            [l_st],
                             SetExpression := f_name.AsNamedIdentifierExpression,
                             Visibility := CGMemberVisibilityKind.Public,
                             Comment := GenerateDocumentation(lm)));
