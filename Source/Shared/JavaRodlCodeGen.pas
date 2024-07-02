@@ -28,6 +28,7 @@ type
     method HandleAtributes_private(aLibrary: RodlLibrary; aEntity: RodlEntity): CGFieldDefinition;
     method HandleAtributes_public(aLibrary: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
     method ConvertToSimple(aElementType_str: String; aElementType: CGTypeReference; aValue: CGExpression): CGStatement;
+    method ConvertToObject(aElementType_str: String; aElementType: CGTypeReference): CGTypeReference;
     method IsSimpleType(aElementType_str: String): Boolean;
   protected
     method AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary);override;
@@ -1130,7 +1131,9 @@ begin
   if assigned(aEntity.Result) then Result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
   for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
-      Result.Parameters.Add(new CGParameterDefinition("_"+lp.Name, new CGNamedTypeReference(GenerateROSDKType("ReferenceType"), GenericArguments:=[ResolveDataTypeToTypeRef(aLibrary, lp.DataType)].ToList)));
+      Result.Parameters.Add(new CGParameterDefinition("_"+lp.Name,
+                                                      new CGNamedTypeReference(GenerateROSDKType("ReferenceType"),
+                                                                               GenericArguments:=[ConvertToObject(lp.DataType,ResolveDataTypeToTypeRef(aLibrary, lp.DataType))].ToList)));
   end;
 end;
 
@@ -1153,7 +1156,10 @@ begin
       Visibility := CGMemberVisibilityKind.Public);
   for lp: RodlParameter in aEntity.Items do begin
     if lp.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then
-      Result.Parameters.Add(new CGParameterDefinition(lp.Name, new CGNamedTypeReference(GenerateROSDKType("ReferenceType"), GenericArguments :=[ResolveDataTypeToTypeRef(aLibrary, lp.DataType)].ToList)));
+      Result.Parameters.Add(new CGParameterDefinition(lp.Name,
+                                                      new CGNamedTypeReference(GenerateROSDKType("ReferenceType"),
+                                                                               GenericArguments := [ConvertToObject(lp.DataType, ResolveDataTypeToTypeRef(aLibrary, lp.DataType))].ToList)
+                                                      ));
   end;
   if assigned(aEntity.Result) then
     result.ReturnType := ResolveDataTypeToTypeRef(aLibrary, aEntity.Result.DataType);
@@ -1440,11 +1446,13 @@ end;
 
 method JavaRodlCodeGen.ConvertToSimple(aElementType_str: String; aElementType: CGTypeReference; aValue: CGExpression): CGStatement;
 begin
-  case aElementType_str of
-    "integer": aElementType := CGPredefinedTypeReference.Int32.NullableNotUnwrapped;
-    "double":  aElementType := CGPredefinedTypeReference.Double.NullableNotUnwrapped;
-    "int64":   aElementType := CGPredefinedTypeReference.Int64.NullableNotUnwrapped;
-    "boolean": aElementType := CGPredefinedTypeReference.Boolean.NullableNotUnwrapped;
+  if not isCooperMode then begin
+    case aElementType_str of
+      "integer": aElementType := CGPredefinedTypeReference.Int32.NullableNotUnwrapped;
+      "double":  aElementType := CGPredefinedTypeReference.Double.NullableNotUnwrapped;
+      "int64":   aElementType := CGPredefinedTypeReference.Int64.NullableNotUnwrapped;
+      "boolean": aElementType := CGPredefinedTypeReference.Boolean.NullableNotUnwrapped;
+    end;
   end;
   var l_result: CGExpression := new CGTypeCastExpression(
                     aValue,
@@ -1465,6 +1473,13 @@ end;
 method JavaRodlCodeGen.IsSimpleType(aElementType_str: String): Boolean;
 begin
   exit aElementType_str.ToLowerInvariant() in ["integer", "double", "int64", "boolean"];
+end;
+
+method JavaRodlCodeGen.ConvertToObject(aElementType_str: String; aElementType: CGTypeReference): CGTypeReference;
+begin
+  if not isCooperMode and IsSimpleType(aElementType_str) then
+    aElementType := aElementType.NullableNotUnwrapped;
+  exit aElementType;
 end;
 
 end.
