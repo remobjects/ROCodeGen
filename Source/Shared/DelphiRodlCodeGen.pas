@@ -2693,10 +2693,10 @@ begin
   aValue.Modifier := CGParameterModifierKind.In;
   var k: CGMethodCallExpression;
   case aElementType.ToLowerInvariant of
-    'integer':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadInt32WithErrorHandling',[aName, aValue].ToList);end;
+    'integer':    k := new CGMethodCallExpression(aSerializer, 'ReadInt32WithErrorHandling',[aName, aValue].ToList);
     'datetime':   k := new CGMethodCallExpression(aSerializer, 'ReadDateTimeWithErrorHandling',[aName, aValue].ToList);
-    'double':     begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, aValue].ToList);end;
-    'currency':   begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadCurrencyWithErrorHandling',[aName, aValue].ToList);end;
+    'double':     k := new CGMethodCallExpression(aSerializer, 'ReadDoubleWithErrorHandling',[aName, aValue].ToList);
+    'currency':   k := new CGMethodCallExpression(aSerializer, 'ReadCurrencyWithErrorHandling',[aName, aValue].ToList);
     'ansistring': if fLegacyStrings then
                     k := new CGMethodCallExpression(aSerializer, 'ReadAnsiStringWithErrorHandling',[aName, aValue].ToList)
                   else
@@ -2706,7 +2706,7 @@ begin
                   else
                     k := new CGMethodCallExpression(aSerializer, 'ReadLegacyStringWithErrorHandling',[aName, aValue, GenerateParamAttributes(aElementType).AsCallParameter].ToList);
     'int64':      k := new CGMethodCallExpression(aSerializer, 'ReadInt64WithErrorHandling',[aName, aValue].ToList);
-    'boolean':    begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, 'ReadBooleanWithErrorHandling',[aName, aValue].ToList); end;
+    'boolean':    k := new CGMethodCallExpression(aSerializer, 'ReadBooleanWithErrorHandling',[aName, aValue].ToList);
     'variant':    k := new CGMethodCallExpression(aSerializer, 'ReadVariantWithErrorHandling',[aName, aValue].ToList);
     'binary':     k := new CGMethodCallExpression(aSerializer, 'ReadBinaryWithErrorHandling',[aName, aValue].ToList);
     'xml':        k := new CGMethodCallExpression(aSerializer, 'ReadXmlWithErrorHandling',[aName, aValue].ToList);
@@ -4319,7 +4319,7 @@ begin
   for k in list_use do begin
     m.Statements.Add(new CGAssignmentStatement(lres,
                                                new CGBinaryOperatorExpression(lres1,
-                                                                              new CGFieldAccessExpression(CapitalizeString(cpp_GetNamespaceForUses(k)).AsNamedIdentifierExpression,
+                                                                              new CGFieldAccessExpression(cpp_GetNamespaceForUses(k).AsNamedIdentifierExpression,
                                                                                   'DefaultNamespace',
                                                                                   CallSiteKind := CGCallSiteKind.Static),
                                                                               CGBinaryOperatorKind.Addition)
