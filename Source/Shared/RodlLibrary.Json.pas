@@ -138,6 +138,7 @@ type
       DontCodegen := DontApplyCodeGen;
       if node["Merged"]:BooleanValue then begin
         Loaded := true;
+        &Namespace := node["Namespace"]:StringValue;
         exit;
       end;
       var usedRodlFileName: String := Path.GetFullPath(FileName);
@@ -180,8 +181,10 @@ type
       if DontApplyCodeGen ≠ def_DontCodegen then
         SaveBooleanToJson(node, "DontCodeGen", DontApplyCodeGen);
 
-      if IsMerged and flattenUsedRODLs then
+      if IsMerged and flattenUsedRODLs then begin
         SaveBooleanToJson(node, "Merged", true);
+        SaveStringToJson(node, "Namespace", &Namespace);
+      end;
 
       SaveGuidToJson(node, "UsedRodlID", UsedRodlId);
       if assigned(Includes) then begin

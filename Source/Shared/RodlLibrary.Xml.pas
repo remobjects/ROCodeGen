@@ -91,6 +91,8 @@ type
       DontApplyCodeGen := (node.Attribute["DontCodeGen"] ≠ nil) and (node.Attribute["DontCodeGen"].Value = "1");
       if node.Attribute["Merged"]:Value = "1" then begin
         Loaded := true;
+        if node.Attribute["Namespace"] ≠ nil then
+          &Namespace := node.Attribute["Namespace"].Value;
         exit;
       end;
       var usedRodlFileName: String := Path.GetFullPath(FileName);
