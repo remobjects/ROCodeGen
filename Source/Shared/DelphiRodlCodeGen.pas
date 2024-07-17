@@ -2996,13 +2996,13 @@ begin
                   new CGThrowExpression(new CGNewInstanceExpression('EIntfCastError'.AsNamedIdentifierExpression,
                                               [String.Format('Critical error in {0}.{1}: __Instance does not support {2} interface',[l_TInvoker,mem.Name,l_EntityName]).AsLiteralExpression.AsCallParameter]))));
     ltry.Add(new CGEmptyStatement);
-    var l_paramnames := new CGArrayLiteralExpression();
+    var l_paramnames := new CGArrayLiteralExpression(ElementType := ResolveStdtypes(CGPredefinedTypeReference.String));
     for litem in lmem.Items do
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then
         l_paramnames.Elements.Add(litem.Name.AsLiteralExpression);
     if l_paramnames.Elements.Count > 0 then begin
       ltry.Add(new CGIfThenElseStatement(
-                  new CGMethodCallExpression(lMessage,'CanRemapParameters'),
+                  new CGMethodCallExpression(lMessage,'CanRemapParameters', CallSiteKind := CGCallSiteKind.Reference),
                   new CGMethodCallExpression(lMessage,
                                              'RemapParameters',
                                              [l_paramnames.AsCallParameter],
