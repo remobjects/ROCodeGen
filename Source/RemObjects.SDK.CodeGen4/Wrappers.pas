@@ -66,6 +66,7 @@ type
     DelphiFPCMode = 'DelphiFPCMode';
     DelphiCodeFirstMode = 'DelphiCodeFirstMode';
     DelphiGenericArrayMode = 'DelphiGenericArrayMode';
+    CBuilderSplitTypes = 'CBuilderSplitTypes';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
@@ -150,7 +151,11 @@ begin
       if ParseAddParams(lparams,DelphiHydra) = '1' then
         DelphiRodlCodeGen(codegen).IsHydra := true;
     end;
-    Codegen4Platform.CppBuilder: codegen := new CPlusPlusBuilderRodlCodeGen;
+    Codegen4Platform.CppBuilder: begin
+      codegen := new CPlusPlusBuilderRodlCodeGen;
+      if ParseAddParams(lparams, CBuilderSplitTypes) = '1' then
+        CPlusPlusBuilderRodlCodeGen(codegen).SplitTypes := true;
+    end;
     Codegen4Platform.Java: begin
       codegen := new JavaRodlCodeGen;
       JavaRodlCodeGen(codegen).isCooperMode := not (Language = Codegen4Language.Java);
@@ -284,27 +289,47 @@ end;
 
 method Codegen4Wrapper.GenerateInterfaceFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl: RodlLibrary; &namespace: String;fileext: String);
 begin
+  var genIntfFiles := method begin
+    var r := codegen.GenerateInterfaceFiles(rodl,&namespace);
+    for each l in r do
+      Res.Add(new Codegen4Record(l.Key, l.Value, Codegen4FileType.Unit));
+  end;
+
+
   var lunitname := rodl.Name + '_Intf.'+fileext;
   if codegen.CodeUnitSupport then begin
     if (codegen is JavaRodlCodeGen) and (codegen.Generator is CGJavaCodeGenerator) then begin
-      var r := codegen.GenerateInterfaceFiles(rodl,&namespace);
-      for each l in r do
-        Res.Add(new Codegen4Record(l.Key, l.Value, Codegen4FileType.Unit));
+      genIntfFiles();
     end
     else begin
-      var lunit := codegen.GenerateInterfaceCodeUnit(rodl,&namespace,lunitname);
-      Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
+      if (codegen is CPlusPlusBuilderRodlCodeGen) and CPlusPlusBuilderRodlCodeGen(codegen).SplitTypes then begin
 
-      if codegen.Generator is CGObjectiveCMCodeGenerator then begin
-        var gen := new CGObjectiveCHCodeGenerator;
-        gen.splitLinesLongerThan := codegen.Generator.splitLinesLongerThan;
-        lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
-        Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
-      end;
-      if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
+        genIntfFiles();
+
         var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
-        lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
-        Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
+        var old_gen := codegen.Generator;
+        try
+          codegen.Generator := gen;
+          genIntfFiles();
+        finally
+          codegen.Generator := old_gen;
+        end;
+      end
+      else begin
+        var lunit := codegen.GenerateInterfaceCodeUnit(rodl,&namespace,lunitname);
+        Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
+
+        if codegen.Generator is CGObjectiveCMCodeGenerator then begin
+          var gen := new CGObjectiveCHCodeGenerator;
+          gen.splitLinesLongerThan := codegen.Generator.splitLinesLongerThan;
+          lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
+          Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
+        end;
+        if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
+          var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
+          lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
+          Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
+        end;
       end;
     end;
   end
@@ -318,13 +343,31 @@ method Codegen4Wrapper.GenerateInvokerFiles(Res: Codegen4Records; codegen: RodlC
 begin
   var lunitname := rodl.Name + '_Invk.'+fileext;
   if codegen.CodeUnitSupport then begin
-    var lunit := codegen.GenerateInvokerCodeUnit(rodl,&namespace,lunitname);
-    if lunit <> nil then begin
-      Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
-      if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
-        var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
-        lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
-        Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
+    if (codegen is CPlusPlusBuilderRodlCodeGen) and CPlusPlusBuilderRodlCodeGen(codegen).SplitTypes then begin
+      var genIntfFiles := method begin
+        var r := codegen.GenerateInvokerFiles(rodl,&namespace);
+        for each l in r do
+          Res.Add(new Codegen4Record(l.Key, l.Value, Codegen4FileType.Unit));
+      end;
+      genIntfFiles();
+      var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
+      var old_gen := codegen.Generator;
+      try
+        codegen.Generator := gen;
+        genIntfFiles();
+      finally
+        codegen.Generator := old_gen;
+      end;
+    end
+    else begin
+      var lunit := codegen.GenerateInvokerCodeUnit(rodl,&namespace,lunitname);
+      if lunit <> nil then begin
+        Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
+        if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
+          var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
+          lunitname := Path.ChangeExtension(lunitname,gen.defaultFileExtension);
+          Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
+        end;
       end;
     end;
   end

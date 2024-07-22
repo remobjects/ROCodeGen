@@ -95,9 +95,12 @@ type
     method GenerateDestroyExpression(aExpr: CGExpression):CGStatement;
     {$ENDREGION}
 
-    {$REGION generate _Intf}
-    method Intf_GenerateLibraryAttributes(aFile: CGCodeUnit; aLibrary:RodlLibrary);
     method Add_RemObjects_Inc(aFile: CGCodeUnit; aLibrary: RodlLibrary); virtual;
+    {$REGION generate _Intf}
+    method Intf_GenerateDefaultNamespace(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+    method Intf_GenerateInterfaceImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+    method Intf_GenerateImplImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+    method Intf_GenerateLibraryAttributes(aFile: CGCodeUnit; aLibrary: RodlLibrary);
     method Intf_GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum);
     method Intf_GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);
     method Intf_GenerateStructCollection(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);
@@ -117,6 +120,8 @@ type
     method Intf_generateWriteStatement(aLibrary: RodlLibrary; aElementType: String; aSerializer: CGExpression; aName, aValue:CGCallParameter; aDataType:CGTypeReference; aIndex: CGCallParameter): List<CGStatement>;
     {$ENDREGION}
     {$REGION generate _Invk}
+    method Invk_GenerateInterfaceImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+    method Invk_GenerateImplImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
     method Invk_GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
     method Invk_GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink);
     method Invk_GetDefaultServiceRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); virtual;
@@ -2874,6 +2879,65 @@ begin
 end;
 
 {$REGION generate _Invk}
+method DelphiRodlCodeGen.Invk_GenerateInterfaceImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+begin
+  aFile.Imports.Add(GenerateCGImport('SysUtils','System'));
+  aFile.Imports.Add(GenerateCGImport('Classes','System'));
+  aFile.Imports.Add(GenerateCGImport('TypInfo','System'));
+  aFile.Imports.Add(GenerateCGImport('uROEncoding'));
+  aFile.Imports.Add(GenerateCGImport('uRONullable'));
+  aFile.Imports.Add(GenerateCGImport('uROXMLIntf'));
+  aFile.Imports.Add(GenerateCGImport('uROServer'));
+  aFile.Imports.Add(GenerateCGImport('uROServerIntf'));
+  aFile.Imports.Add(GenerateCGImport('uROClasses'));
+  aFile.Imports.Add(GenerateCGImport('uROTypes'));
+  aFile.Imports.Add(GenerateCGImport('uROClientIntf'));
+  var list := new List<String>;
+  for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
+    var s1 := lu.Includes:DelphiModule;
+    var lext := 'hpp';
+    if String.IsNullOrEmpty(s1) then begin
+      lext := 'h';
+      s1 := lu.Name;
+      if String.IsNullOrEmpty(s1) then
+        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
+    end;
+    s1 := s1+ '_Intf';
+    if not list.Contains(s1) then begin
+      aFile.Imports.Add(GenerateCGImport(s1,'',lext));
+      list.Add(s1);
+    end;
+  end;
+
+  list := new List<String>;
+  for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
+    var s1 := lu.Includes:DelphiModule;
+    var lext := 'hpp';
+    if String.IsNullOrEmpty(s1) then begin
+      lext := 'h';
+      s1 := lu.Name;
+      if String.IsNullOrEmpty(s1) then
+        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
+    end;
+    s1 := s1+ '_Invk';
+    if not list.Contains(s1) then begin
+      aFile.Imports.Add(GenerateCGImport(s1,'',lext));
+      cpp_pragmalink(aFile,CapitalizeString(s1));
+      list.Add(s1);
+    end;
+  end;
+  aFile.Imports.Add(GenerateCGImport(Intf_name,'','h', false));
+end;
+
+method DelphiRodlCodeGen.Invk_GenerateImplImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+begin
+  aFile.ImplementationImports.Add(GenerateCGImport('uROSystem'));
+  aFile.ImplementationImports.Add(GenerateCGImport('uROEventRepository'));
+  aFile.ImplementationImports.Add(GenerateCGImport('uRORes'));
+  aFile.ImplementationImports.Add(GenerateCGImport('uROClient'));
+end;
 
 method DelphiRodlCodeGen.Invk_GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
@@ -4261,87 +4325,16 @@ begin
   lUnit.Finalization := new List<CGStatement>;
   lUnit.HeaderComment := GenerateUnitComment(False);
   Add_RemObjects_Inc(lUnit, aLibrary);
-  {$REGION interface uses}
-
-  lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
-  lUnit.Imports.Add(GenerateCGImport('Classes','System'));
-  lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
-  if PureDelphi then begin
-    if IsCodeFirstCompatible    then lUnit.Imports.Add(GenerateCGImport('uRORTTIAttributes', CF_condition));
-    if IsGenericArrayCompatible then lUnit.Imports.Add(GenerateCGImport('uROArray',cond_GenericArray));
-  end;
-
-  lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
-  lUnit.Imports.Add(GenerateCGImport('uROUri'));
-  lUnit.Imports.Add(GenerateCGImport('uROProxy'));
-  lUnit.Imports.Add(GenerateCGImport('uROExceptions'));
-  lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
-  lUnit.Imports.Add(GenerateCGImport('uRONullable'));
-  lUnit.Imports.Add(GenerateCGImport('uROClasses'));
-  lUnit.Imports.Add(GenerateCGImport('uROTypes'));
-  lUnit.Imports.Add(GenerateCGImport('uROClientIntf'));
-  lUnit.Imports.Add(GenerateCGImport('uROAsync'));
-  lUnit.Imports.Add(GenerateCGImport('uROEventReceiver'));
-
-  var list := new List<String>;
-  var list_use := new List<RodlUse>;
-  for lu: RodlUse in aLibrary.Uses.Items do begin
-    if not lu.DontCodegen then continue;
-    var s1 := lu.Includes:DelphiModule;
-    var lExt := 'hpp';
-    if String.IsNullOrEmpty(s1) then begin
-      lExt := 'h';
-      s1 := lu.Name;
-      if String.IsNullOrEmpty(s1) then
-        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
-    end;
-    s1 := s1+ '_Intf';
-    if not list.Contains(s1) then begin
-      lUnit.Imports.Add(GenerateCGImport(s1,'',lExt));
-      list.Add(s1);
-      list_use.Add(lu);
-    end;
-  end;
-  {$ENDREGION}
-
-
-  {$REGION function DefaultNamespaces:string;}
-  var m := new CGMethodDefinition('DefaultNamespaces',
-                                  ReturnType :=ResolveStdtypes(CGPredefinedTypeReference.String),
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  CallingConvention := CGCallingConventionKind.Register);
-
-  m.LocalVariables := new List<CGVariableDeclarationStatement>;
-  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeReference.String), cpp_DefaultNamespace));
-
-  var lres := new CGLocalVariableAccessExpression('lres');
-  var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
-  for k in list_use do begin
-    m.Statements.Add(new CGAssignmentStatement(lres,
-                                               new CGBinaryOperatorExpression(lres1,
-                                                                              new CGFieldAccessExpression(cpp_GetNamespaceForUses(k).AsNamedIdentifierExpression,
-                                                                                  'DefaultNamespace',
-                                                                                  CallSiteKind := CGCallSiteKind.Static),
-                                                                              CGBinaryOperatorKind.Addition)
-                                                ));
-  end;
-  m.Statements.Add(lres.AsReturnStatement);
-  lUnit.Globals.Add(m.AsGlobal);
-  {$ENDREGION}
-
+  Intf_GenerateInterfaceImports(lUnit, aLibrary);
 
   cpp_smartInit(lUnit);
-  {$REGION implementation uses}
-  lUnit.ImplementationImports.Add(GenerateCGImport('uROSystem'));
-  lUnit.ImplementationImports.Add(GenerateCGImport('uROSerializer'));
-  lUnit.ImplementationImports.Add(GenerateCGImport('uROClient'));
-  lUnit.ImplementationImports.Add(GenerateCGImport('uROTransportChannel'));
-  lUnit.ImplementationImports.Add(GenerateCGImport('uRORes'));
-  {$ENDREGION}
+  Intf_GenerateImplImports(lUnit, aLibrary);
 
   cpp_pragmalink(lUnit,CapitalizeString('uROProxy'));
   cpp_pragmalink(lUnit,CapitalizeString('uROAsync'));
+
   AddGlobalConstants(lUnit, aLibrary);
+  Intf_GenerateDefaultNamespace(lUnit, aLibrary);
 
   var la: CGNamedTypeReference;
 
@@ -4419,65 +4412,9 @@ begin
   lUnit.Finalization := new List<CGStatement>;
   lUnit.HeaderComment := GenerateUnitComment(False);
   Add_RemObjects_Inc(lUnit, aLibrary);
-  {$REGION interface uses}
-  lUnit.Imports.Add(GenerateCGImport('SysUtils','System'));
-  lUnit.Imports.Add(GenerateCGImport('Classes','System'));
-  lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
-  lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
-  lUnit.Imports.Add(GenerateCGImport('uRONullable'));
-  lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
-  lUnit.Imports.Add(GenerateCGImport('uROServer'));
-  lUnit.Imports.Add(GenerateCGImport('uROServerIntf'));
-  lUnit.Imports.Add(GenerateCGImport('uROClasses'));
-  lUnit.Imports.Add(GenerateCGImport('uROTypes'));
-  lUnit.Imports.Add(GenerateCGImport('uROClientIntf'));
-  var list := new List<String>;
-  for lu: RodlUse in aLibrary.Uses.Items do begin
-    if not lu.DontCodegen then continue;
-    var s1 := lu.Includes:DelphiModule;
-    var lext := 'hpp';
-    if String.IsNullOrEmpty(s1) then begin
-      lext := 'h';
-      s1 := lu.Name;
-      if String.IsNullOrEmpty(s1) then
-        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
-    end;
-    s1 := s1+ '_Intf';
-    if not list.Contains(s1) then begin
-      lUnit.Imports.Add(GenerateCGImport(s1,'',lext));
-      list.Add(s1);
-    end;
-  end;
-
-  list := new List<String>;
-  for lu: RodlUse in aLibrary.Uses.Items do begin
-    if not lu.DontCodegen then continue;
-    var s1 := lu.Includes:DelphiModule;
-    var lext := 'hpp';
-    if String.IsNullOrEmpty(s1) then begin
-      lext := 'h';
-      s1 := lu.Name;
-      if String.IsNullOrEmpty(s1) then
-        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
-    end;
-    s1 := s1+ '_Invk';
-    if not list.Contains(s1) then begin
-      lUnit.Imports.Add(GenerateCGImport(s1,'',lext));
-      cpp_pragmalink(lUnit,CapitalizeString(s1));
-      list.Add(s1);
-    end;
-  end;
-  lUnit.Imports.Add(GenerateCGImport(Intf_name,'','h', false));
-
-  {$ENDREGION}
-
+  Invk_GenerateInterfaceImports(lUnit, aLibrary);
   cpp_smartInit(lUnit);
-  {$REGION implementation uses}
-  lUnit.ImplementationImports.Add(GenerateCGImport('uROSystem'));
-  lUnit.ImplementationImports.Add(GenerateCGImport('uROEventRepository'));
-  lUnit.ImplementationImports.Add(GenerateCGImport('uRORes'));
-  lUnit.ImplementationImports.Add(GenerateCGImport('uROClient'));
-  {$ENDREGION}
+  Invk_GenerateImplImports(lUnit, aLibrary);
   cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
 
   for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
@@ -4828,6 +4765,102 @@ begin
   end;
 end;
 
+method DelphiRodlCodeGen.Intf_GenerateDefaultNamespace(aFile: CGCodeUnit; aLibrary:RodlLibrary);
+begin
+  var list_use := new List<RodlUse>;
+  for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
+    var s1 := lu.Includes:DelphiModule;
+    var lExt := 'hpp';
+    if String.IsNullOrEmpty(s1) then begin
+      lExt := 'h';
+      s1 := lu.Name;
+      if String.IsNullOrEmpty(s1) then
+        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
+    end;
+    s1 := s1+ '_Intf';
+    if not list_use.Contains(lu) then
+      list_use.Add(lu);
+  end;
+
+  {$REGION function DefaultNamespaces:string;}
+  var m := new CGMethodDefinition('DefaultNamespaces',
+                                  ReturnType :=ResolveStdtypes(CGPredefinedTypeReference.String),
+                                  Visibility := CGMemberVisibilityKind.Public,
+                                  CallingConvention := CGCallingConventionKind.Register);
+
+  m.LocalVariables := new List<CGVariableDeclarationStatement>;
+  m.LocalVariables.Add(new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeReference.String), cpp_DefaultNamespace));
+
+  var lres := new CGLocalVariableAccessExpression('lres');
+  var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
+  for k in list_use do begin
+    if cpp_GetNamespaceForUses(k) = targetNamespace then continue;
+    m.Statements.Add(new CGAssignmentStatement(lres,
+                                               new CGBinaryOperatorExpression(lres1,
+                                                                              new CGFieldAccessExpression(cpp_GetNamespaceForUses(k).AsNamedIdentifierExpression,
+                                                                                  'DefaultNamespace',
+                                                                                  CallSiteKind := CGCallSiteKind.Static),
+                                                                              CGBinaryOperatorKind.Addition)
+                                                ));
+  end;
+  m.Statements.Add(lres.AsReturnStatement);
+  aFile.Globals.Add(m.AsGlobal);
+  {$ENDREGION}
+end;
+
+method DelphiRodlCodeGen.Intf_GenerateInterfaceImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+begin
+  aFile.Imports.Add(GenerateCGImport('SysUtils','System'));
+  aFile.Imports.Add(GenerateCGImport('Classes','System'));
+  aFile.Imports.Add(GenerateCGImport('TypInfo','System'));
+  if PureDelphi then begin
+    if IsCodeFirstCompatible    then aFile.Imports.Add(GenerateCGImport('uRORTTIAttributes', CF_condition));
+    if IsGenericArrayCompatible then aFile.Imports.Add(GenerateCGImport('uROArray',cond_GenericArray));
+  end;
+
+  aFile.Imports.Add(GenerateCGImport('uROEncoding'));
+  aFile.Imports.Add(GenerateCGImport('uROUri'));
+  aFile.Imports.Add(GenerateCGImport('uROProxy'));
+  aFile.Imports.Add(GenerateCGImport('uROExceptions'));
+  aFile.Imports.Add(GenerateCGImport('uROXMLIntf'));
+  aFile.Imports.Add(GenerateCGImport('uRONullable'));
+  aFile.Imports.Add(GenerateCGImport('uROClasses'));
+  aFile.Imports.Add(GenerateCGImport('uROTypes'));
+  aFile.Imports.Add(GenerateCGImport('uROClientIntf'));
+  aFile.Imports.Add(GenerateCGImport('uROAsync'));
+  aFile.Imports.Add(GenerateCGImport('uROEventReceiver'));
+
+  var list := new List<String>;
+  for lu: RodlUse in aLibrary.Uses.Items do begin
+    if not lu.DontCodegen then continue;
+    var s1 := lu.Includes:DelphiModule;
+    var lExt := 'hpp';
+    if String.IsNullOrEmpty(s1) then begin
+      lExt := 'h';
+      s1 := lu.Name;
+      if String.IsNullOrEmpty(s1) then
+        s1 := Path.GetFileNameWithoutExtension(lu.FileName);
+    end;
+    s1 := s1+ '_Intf';
+    if not list.Contains(s1) then begin
+      aFile.Imports.Add(GenerateCGImport(s1,'',lExt));
+      list.Add(s1);
+    end;
+  end;
+end;
+
+method DelphiRodlCodeGen.Intf_GenerateImplImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+begin
+  {$REGION implementation uses}
+  aFile.ImplementationImports.Add(GenerateCGImport('uROSystem'));
+  aFile.ImplementationImports.Add(GenerateCGImport('uROSerializer'));
+  aFile.ImplementationImports.Add(GenerateCGImport('uROClient'));
+  aFile.ImplementationImports.Add(GenerateCGImport('uROTransportChannel'));
+  aFile.ImplementationImports.Add(GenerateCGImport('uRORes'));
+  {$ENDREGION}
+end;
+
 method DelphiRodlCodeGen.Intf_GenerateLibraryAttributes(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
   LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes',
@@ -4883,5 +4916,6 @@ method DelphiRodlCodeGen.cpp_UuidId(anExpression: CGExpression): CGExpression;
 begin
   exit anExpression;
 end;
+
 
 end.

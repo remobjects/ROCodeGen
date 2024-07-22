@@ -77,16 +77,37 @@ type
     property RodlFileName: String :='';
 
     method GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;
+
     method GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;
+    begin
+      raise new Exception("not supported");
+    end;
+
     method GenerateImplementationCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit; virtual;
+    begin
+      raise new Exception("not supported");
+    end;
 
 
     method GenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; virtual;
-    method GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; virtual;
     method GenerateInvokerFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; virtual;
     method GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>;virtual;
 
+
+    method GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; virtual;
+    begin
+      raise new Exception("not supported");
+    end;
+
+    method GenerateInvokerFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; virtual;
+    begin
+      raise new Exception("not supported");
+    end;
+
     method GenerateImplementationFiles(file: CGCodeUnit; aLibrary: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;virtual;
+    begin
+      raise new Exception("not supported");
+    end;
   end;
 
   CompareFunc<T,U> = method(Value:T):U;
@@ -120,17 +141,6 @@ end;
 method RodlCodeGen.GenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
   exit Generator.GenerateUnit(GenerateInterfaceCodeUnit(aLibrary, aTargetNamespace, aUnitName));
-end;
-
-
-method RodlCodeGen.GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
-begin
-  raise new Exception("not supported");
-{
-  var lunit := DoGenerateInterfaceFile(aLibrary, aTargetNamespace);
-  result := new Dictionary<String,String>;
-  result.Add(lunit.FileName, Generator.GenerateUnit(lunit));
-}
 end;
 
 {$REGION support methods}
@@ -409,21 +419,6 @@ begin
   exit DoGenerateInterfaceFile(aLibrary, coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, GetNamespace(aLibrary)), aUnitName);
 end;
 
-method RodlCodeGen.GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
-begin
-  raise new Exception("not supported");
-end;
-
-method RodlCodeGen.GenerateImplementationCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit;
-begin
-  raise new Exception("not supported");
-end;
-
-method RodlCodeGen.GenerateImplementationFiles(file: CGCodeUnit; aLibrary: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;
-begin
-  raise new Exception("not supported");
-end;
-
 method RodlCodeGen.GenerateDocumentation(aEntity: RodlEntity; aGenerateOperationMembersDoc: Boolean := false): CGCommentStatement;
 begin
   var lDoc := aEntity.Documentation;
@@ -444,6 +439,7 @@ begin
   else
     exit nil;
 end;
+
 
 
 end.

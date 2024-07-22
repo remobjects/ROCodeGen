@@ -4,6 +4,49 @@ interface
 
 type
   CPlusPlusBuilderRodlCodeGen = public class(DelphiRodlCodeGen)
+  private
+    fimp_enums: CGImport;
+    fimp_Intf_Shared: CGImport;
+    method Intf_CreateCodeUnit(aLibrary: RodlLibrary; aName: String; aService: Boolean := false): CGCodeUnit;
+    begin
+      var lUnit := new CGCodeUnit();
+      lUnit.Namespace := new CGNamespaceReference(targetNamespace);
+
+      lUnit.FileName := aName;
+      lUnit.Initialization := new List<CGStatement>;
+      lUnit.Finalization := new List<CGStatement>;
+      lUnit.HeaderComment := GenerateUnitComment(false);
+      Add_RemObjects_Inc(lUnit, aLibrary);
+      Intf_GenerateInterfaceImports(lUnit, aLibrary);
+
+      cpp_smartInit(lUnit);
+      Intf_GenerateImplImports(lUnit, aLibrary);
+      if aService then begin
+        cpp_pragmalink(lUnit,CapitalizeString('uROProxy'));
+        cpp_pragmalink(lUnit,CapitalizeString('uROAsync'));
+      end;
+
+      exit lUnit;
+    end;
+    method Invk_CreateCodeUnit(aLibrary: RodlLibrary; aName: String): CGCodeUnit;
+    begin
+      var lUnit := new CGCodeUnit();
+      lUnit.Namespace := new CGNamespaceReference(targetNamespace);
+      lUnit.FileName := aName;
+      lUnit.Initialization := new List<CGStatement>;
+      lUnit.Finalization := new List<CGStatement>;
+      lUnit.HeaderComment := GenerateUnitComment(False);
+      Add_RemObjects_Inc(lUnit, aLibrary);
+      Invk_GenerateInterfaceImports(lUnit, aLibrary);
+
+      cpp_smartInit(lUnit);
+      Invk_GenerateImplImports(lUnit, aLibrary);
+      cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
+      exit lUnit;
+    end;
+    method ProcessEntity(aFile: CGCodeUnit; aEntity: RodlEntity);
+    method GenerateImportForEntity(aFile: CGCodeUnit; aEntity: nullable RodlEntity);
+    method AddImport(aFile: CGCodeUnit; aImport: CGImport);
   protected
     method _SetLegacyStrings(value: Boolean); override;
     method Add_RemObjects_Inc(aFile: CGCodeUnit; aLibrary: RodlLibrary); empty;override;
@@ -55,7 +98,12 @@ type
     property FPCMode: State read State.Off; override;
     property CodeFirstMode: State read State.Off; override;
     property GenericArrayMode: State read State.Off; override;
+    property SplitTypes: Boolean := false;
     constructor;
+    method GenerateInterfaceCodeUnits(aLibrary: RodlLibrary; aTargetNamespace: String): List<CGCodeUnit>;
+    method GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; override;
+    method GenerateInvokerCodeUnits(aLibrary: RodlLibrary; aTargetNamespace: String): List<CGCodeUnit>;
+    method GenerateInvokerFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; override;
   end;
 
 implementation
@@ -724,5 +772,256 @@ begin
   exit new CGMethodCallExpression(nil, '__uuidof',[anExpression.AsCallParameter])
 end;
 
+method CPlusPlusBuilderRodlCodeGen.GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
+begin
+  result := new Dictionary<String,String>;
+  var list := GenerateInterfaceCodeUnits(aLibrary, aTargetNamespace);
+  for each f in list do begin
+    if f.Initialization.Count = 0 then f.Initialization := nil;
+    if f.Finalization.Count = 0 then f.Finalization := nil;
+    result.Add(Path.ChangeExtension(f.FileName, Generator.defaultFileExtension),
+               Generator.GenerateUnit(f));
+  end;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.GenerateInterfaceCodeUnits(aLibrary: RodlLibrary; aTargetNamespace: String): List<CGCodeUnit>;
+begin
+  result := new List<CGCodeUnit>;
+  CreateCodeFirstAttributes;
+  ScopedEnums := ScopedEnums or aLibrary.ScopedEnums;
+  //special mode, only if aLibrary.ScopedEnums is set
+  IncludeUnitNameForOwnTypes := IncludeUnitNameForOwnTypes or aLibrary.ScopedEnums;
+  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, aLibrary.Namespace, aLibrary.Name, 'Unknown');
+  var lUnit := new CGCodeUnit();
+  result.add(lUnit);
+  lUnit.Namespace := new CGNamespaceReference(targetNamespace);
+
+  lUnit.FileName := coalesce(GetIncludesNamespace(aLibrary), aLibrary.Name, 'Unknown') + '_Intf';
+  Intf_name := lUnit.FileName;
+
+  var lunit_enums := coalesce(GetIncludesNamespace(aLibrary), aLibrary.Name, 'Unknown') + '_Enums';
+  fimp_enums := GenerateCGImport(lunit_enums, '', 'h', false);
+
+  lUnit.Initialization := new List<CGStatement>;
+  lUnit.Finalization := new List<CGStatement>;
+  lUnit.HeaderComment := GenerateUnitComment(False);
+  Add_RemObjects_Inc(lUnit, aLibrary);
+  Intf_GenerateInterfaceImports(lUnit, aLibrary);
+
+  cpp_smartInit(lUnit);
+  //Intf_GenerateImplImports(lUnit, aLibrary);
+
+  //cpp_pragmalink(lUnit,CapitalizeString('uROProxy'));
+  //cpp_pragmalink(lUnit,CapitalizeString('uROAsync'));
+
+  var lunit_Intf_Shared := coalesce(aLibrary.Name, 'Unknown') + '_Intf_Shared';
+  fimp_Intf_Shared := GenerateCGImport(lunit_Intf_Shared, '', 'h', false);
+  var l_sh_unit := Intf_CreateCodeUnit(aLibrary, lunit_Intf_Shared, false);
+  result.Add(l_sh_unit); AddImport(lUnit, fimp_Intf_Shared);
+  AddGlobalConstants(l_sh_unit, aLibrary);
+  Intf_GenerateDefaultNamespace(l_sh_unit, aLibrary);
+
+  if aLibrary.Enums.Count > 0 then begin
+    var l_unit := Intf_CreateCodeUnit(aLibrary, lunit_enums, false);
+    result.Add(l_unit); AddImport(lUnit, fimp_enums);
+    AddImport(l_unit, fimp_Intf_Shared);
+    for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      Intf_GenerateEnum(l_unit, aLibrary, aEntity);
+    end;
+  end;
+
+  for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
+    if not EntityNeedsCodeGen(aEntity) then continue;
+    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    AddImport(l_unit, fimp_Intf_Shared);
+    ProcessEntity(l_unit, aEntity);
+    Intf_GenerateStruct(l_unit, aLibrary, aEntity);
+
+    var l_unitCol := Intf_CreateCodeUnit(aLibrary, aEntity.Name + 'Collection', false);
+    l_unitCol.Imports.Add(GenerateCGImport(l_unit.FileName,'','h', false));
+    if (aEntity.AncestorEntity <> nil) and (not aEntity.AncestorEntity.IsFromUsedRodl) then
+      AddImport(l_unitCol, GenerateCGImport(aEntity.AncestorName + 'Collection', '', 'h', false));
+    var arr := aLibrary.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoringCaseInvariant(aEntity.Name)).ToList;
+    for each ar in arr do
+      GenerateImportForEntity(l_unitCol, ar);
+    result.Add(l_unitCol); AddImport(lUnit, GenerateCGImport(l_unitCol.FileName, '', 'h', false));
+    Intf_GenerateStructCollection(l_unitCol, aLibrary, aEntity);
+  end;
+
+  for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+    if not EntityNeedsCodeGen(aEntity) then continue;
+    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+    AddImport(l_unit, fimp_Intf_Shared);
+    ProcessEntity(l_unit, aEntity);
+    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+
+    Intf_GenerateArray(l_unit, aLibrary, aEntity);
+  end;
+
+  for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
+    if not EntityNeedsCodeGen(aEntity) then Continue;
+    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+    AddImport(l_unit, fimp_Intf_Shared);
+    ProcessEntity(l_unit, aEntity);
+    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    Intf_GenerateException(l_unit, aLibrary, aEntity);
+  end;
+
+  if aLibrary.Services.Items.Count > 0 then begin
+    var ltype := new CGClassTypeDefinition('TMyTransportChannel',
+                                       'TROTransportChannel'.AsTypeReference,
+                                       Visibility := CGTypeVisibilityKind.Unit);
+    cpp_generateDoLoginNeeded(ltype);
+    l_sh_unit.Types.Add(ltype);
+  end;
+
+  for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
+    if not EntityNeedsCodeGen(aEntity) then Continue;
+    var l_unit := Intf_CreateCodeUnit(aLibrary, 'I' + aEntity.Name, true);
+    AddImport(l_unit, fimp_Intf_Shared);
+    ProcessEntity(l_unit, aEntity);
+    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    Intf_GenerateService(l_unit, aLibrary, aEntity);
+  end;
+
+  for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin
+    if not EntityNeedsCodeGen(aEntity) then continue;
+    var l_unit := Intf_CreateCodeUnit(aLibrary, 'I' + aEntity.Name, false);
+    AddImport(l_unit, fimp_Intf_Shared);
+    ProcessEntity(l_unit, aEntity);
+    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    Intf_GenerateEventSink(l_unit, aLibrary, aEntity);
+  end;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.ProcessEntity(aFile: CGCodeUnit; aEntity: RodlEntity);
+begin
+  if aEntity is RodlArray then begin
+    GenerateImportForEntity(aFile, aEntity.OwnerLibrary.FindEntity(RodlArray(aEntity).ElementType));
+  end
+  else if aEntity is RodlStructEntity then begin
+    if assigned(RodlStructEntity(aEntity).AncestorEntity) then
+      GenerateImportForEntity(aFile, RodlStructEntity(aEntity).AncestorEntity);
+    for each it in RodlStructEntity(aEntity).Items do
+      GenerateImportForEntity(aFile, aEntity.OwnerLibrary.FindEntity(it.DataType));
+  end
+  else if aEntity is RodlServiceEntity then begin
+    if assigned(RodlServiceEntity(aEntity).AncestorEntity) then
+      GenerateImportForEntity(aFile, RodlStructEntity(aEntity).AncestorEntity);
+    for each op in RodlServiceEntity(aEntity).DefaultInterface.Items do begin
+      for each p in op.Items do
+        GenerateImportForEntity(aFile, aEntity.OwnerLibrary.FindEntity(p.DataType));
+    end;
+    if aEntity is RodlService then
+      AddImport(aFile, fimp_Intf_Shared);
+  end;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.GenerateImportForEntity(aFile: CGCodeUnit; aEntity: nullable RodlEntity);
+begin
+  if aEntity = nil then exit;
+  var lrodlUse: RodlUse := aEntity.FromUsedRodl;
+  if aEntity.IsFromUsedRodl then begin
+    if lrodlUse = nil then begin // workaround
+      for each t in aEntity.OwnerLibrary.Uses.Items do
+        if t.EntityID = aEntity.FromUsedRodlId then begin
+          lrodlUse := t;
+          break;
+        end;
+    end;
+    var s1 := lrodlUse.Includes:DelphiModule; // DA.RODL case
+    if not String.IsNullOrEmpty(s1) then begin
+      AddImport(aFile, GenerateCGImport(s1, '', 'hpp', false));
+      exit;
+    end;
+  end;
+  if aEntity is RodlEnum then begin
+    if aEntity.IsFromUsedRodl then
+      AddImport(aFile,GenerateCGImport(coalesce(lrodlUse.Name, 'Unknown') + '_Enums', '', 'h', false))
+    else
+      AddImport(aFile,fimp_enums);
+  end
+  else
+    AddImport(aFile,GenerateCGImport(aEntity.Name, '', 'h', false));
+end;
+
+method CPlusPlusBuilderRodlCodeGen.AddImport(aFile: CGCodeUnit; aImport: CGImport);
+begin
+  for each imp in aFile.Imports do begin
+    if imp.Name = aImport.Name then exit;
+  end;
+  aFile.Imports.Add(aImport);
+end;
+
+method CPlusPlusBuilderRodlCodeGen.GenerateInvokerCodeUnits(aLibrary: RodlLibrary; aTargetNamespace: String): List<CGCodeUnit>;
+begin
+  result := new List<CGCodeUnit>;
+  CreateCodeFirstAttributes;
+  if CodeFirstMode = State.On then exit nil;
+  IncludeUnitNameForOwnTypes := true;
+  targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, aLibrary.Namespace, aLibrary.Name, 'Unknown');
+  var lUnit := new CGCodeUnit();
+  result.Add(lUnit);
+  lUnit.Namespace := new CGNamespaceReference(targetNamespace);
+  lUnit.FileName := coalesce(GetIncludesNamespace(aLibrary), aLibrary.Name, 'Unknown') + '_Invk';
+
+
+  Invk_name := lUnit.FileName;
+  Intf_name := Invk_name.Substring(0, Invk_name.Length - 5) + '_Intf';
+  lUnit.Initialization := new List<CGStatement>;
+  lUnit.Finalization := new List<CGStatement>;
+  lUnit.HeaderComment := GenerateUnitComment(False);
+  Add_RemObjects_Inc(lUnit, aLibrary);
+  Invk_GenerateInterfaceImports(lUnit, aLibrary);
+
+  cpp_smartInit(lUnit);
+//  Invk_GenerateImplImports(lUnit, aLibrary);
+//  cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
+
+  for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
+    if not EntityNeedsCodeGen(aEntity) then Continue;
+    var l_unit := Invk_CreateCodeUnit(aLibrary, 'T'+ aEntity.Name +'_Invoker');
+    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    AddImport(lUnit, GenerateCGImport(Intf_name, '', 'h', false));
+    Invk_GenerateService(l_unit, aLibrary, aEntity);
+  end;
+
+  for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin
+    if not EntityNeedsCodeGen(aEntity) then Continue;
+    var l_unit := Invk_CreateCodeUnit(aLibrary, 'T'+ aEntity.Name +'_Writer');
+    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    AddImport(lUnit, GenerateCGImport(Intf_name, '', 'h', false));
+    Invk_GenerateEventSink(lUnit, aLibrary, aEntity);
+  end;
+
+  {$REGION initialization}
+  if (aLibrary.Services.Count > 0) or (aLibrary.EventSinks.Count > 0) then begin
+    for latr in aLibrary.CustomAttributes.Keys do begin
+      var latr1 := latr.ToLowerInvariant;
+      lUnit.Initialization.Add(new CGMethodCallExpression(nil, 'RegisterServiceAttribute',
+                                                               [''.AsLiteralExpression.AsCallParameter,
+                                                                latr.AsLiteralExpression.AsCallParameter,
+                                                               (if latr1 = 'wsdl' then 'WSDLLocation'.AsNamedIdentifierExpression
+                                                                else if latr1 = 'targetnamespace' then 'TargetNamespace'.AsNamedIdentifierExpression
+                                                                else aLibrary.CustomAttributes[latr].AsLiteralExpression).AsCallParameter].ToList));
+    end;
+  end;
+  {$ENDREGION}
+end;
+
+method CPlusPlusBuilderRodlCodeGen.GenerateInvokerFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
+begin
+  result := new Dictionary<String,String>;
+  var list := GenerateInvokerCodeUnits(aLibrary, aTargetNamespace);
+  for each f in list do begin
+    if f.Initialization.Count = 0 then f.Initialization := nil;
+    if f.Finalization.Count = 0 then f.Finalization := nil;
+    result.Add(Path.ChangeExtension(f.FileName, Generator.defaultFileExtension),
+               Generator.GenerateUnit(f));
+  end;
+
+end;
 
 end.
