@@ -39,13 +39,18 @@ type
       l_init.Add(new CGCommentStatement(l_comment));
 
       l_init.Add(new CGEmptyStatement());
-      l_init.Add(new CGVariableDeclarationStatement('RemObjects',
-                                                    nil,
-                                                    new CGPropertyAccessExpression(
-                                                      new CGMethodCallExpression(nil, 'require', './RemObjectsSDK.js'.AsLiteralExpression.AsCallParameter),
-                                                      'RemObjects'
-                                                    ),
-                                                    Constant := true));
+      l_init.Add(new CGTryFinallyCatchStatement(
+                                     [ new CGVariableDeclarationStatement('RemObjects',
+                                          nil,
+                                          new CGPropertyAccessExpression(
+                                            new CGMethodCallExpression(nil, 'require', './RemObjectsSDK.js'.AsLiteralExpression.AsCallParameter),
+                                            'RemObjects'
+                                          ),
+                                          Constant := true)],
+                                      CatchBlocks := [new CGCatchBlockStatement()].ToList
+                                      )
+                );
+      l_init.Add();
 
       var l_namespace := '__namespace'.AsNamedIdentifierExpression;
       var l_st: CGStatement := new CGVariableDeclarationStatement('__namespace', nil, new CGSelfExpression());
@@ -528,9 +533,15 @@ type
     method DoGenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     begin
       result := inherited DoGenerateInterfaceFile(aLibrary, aTargetNamespace, aUnitName);
-      result.Initialization.Add(new CGAssignmentStatement(
-                                  new CGPropertyAccessExpression('exports'.AsNamedIdentifierExpression, aLibrary.Name),
-                                  '__namespace'.AsNamedIdentifierExpression));
+      result.Initialization.Add(
+                                new CGTryFinallyCatchStatement(
+                                     [new CGAssignmentStatement(
+                                         new CGPropertyAccessExpression('exports'.AsNamedIdentifierExpression, aLibrary.Name),
+                                         '__namespace'.AsNamedIdentifierExpression)],
+                                      CatchBlocks := [new CGCatchBlockStatement()].ToList
+                                      )
+                );
+
     end;
   public
     constructor;
