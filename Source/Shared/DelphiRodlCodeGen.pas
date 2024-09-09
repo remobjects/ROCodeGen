@@ -111,10 +111,10 @@ type
     method Intf_GenerateRead(aFile: CGCodeUnit; aLibrary: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>;aSerializeInitializedStructValues:Boolean; aSerializer: CGExpression);
     method Intf_GenerateWrite(aFile: CGCodeUnit; aLibrary: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>;aSerializeInitializedStructValues:Boolean; aSerializer: CGExpression);
 
-    method Intf_GenerateAsyncInvoke(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
-    method Intf_GenerateAsyncRetrieve(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
-    method Intf_GenerateAsyncExBegin(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean; aMethod:Boolean): CGMethodDefinition;
-    method Intf_GenerateAsyncExEnd(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
+    method Intf_GenerateAsyncInvoke(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean; isInterface: Boolean): CGMethodDefinition;
+    method Intf_GenerateAsyncRetrieve(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean; isInterface: Boolean): CGMethodDefinition;
+    method Intf_GenerateAsyncExBegin(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean; aMethod:Boolean; isInterface: Boolean): CGMethodDefinition;
+    method Intf_GenerateAsyncExEnd(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean; isInterface: Boolean): CGMethodDefinition;
 
     method Intf_generateReadStatement(aLibrary: RodlLibrary; aElementType: String; aSerializer: CGExpression; aName, aValue:CGCallParameter; aDataType: CGTypeReference; aIndex: CGCallParameter): List<CGStatement>;
     method Intf_generateWriteStatement(aLibrary: RodlLibrary; aElementType: String; aSerializer: CGExpression; aName, aValue:CGCallParameter; aDataType:CGTypeReference; aIndex: CGCallParameter): List<CGStatement>;
@@ -1646,13 +1646,13 @@ begin
 
   {$REGION Invoke_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do
-    ltype.Members.Add(Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, false));
+    ltype.Members.Add(Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, false, true));
   {$ENDREGION}
 
   {$REGION Retrieve_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do
     if NeedsAsyncRetrieveOperationDefinition(lmem) then
-      ltype.Members.Add(Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, false));
+      ltype.Members.Add(Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, false, true));
   {$ENDREGION}
 
 
@@ -1670,15 +1670,15 @@ begin
 
   {$REGION Invoke_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do begin
-    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, false));
-    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, true));
+    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, false, true));
+    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, true, true));
   end;
 
   {$ENDREGION}
 
   {$REGION Retrieve_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do
-    ltype.Members.Add(Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, false));
+    ltype.Members.Add(Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, false, true));
   {$ENDREGION}
 
 
@@ -2114,13 +2114,13 @@ begin
 
   {$REGION Invoke_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do
-    ltype1.Members.Add(Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, true));
+    ltype1.Members.Add(Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, true, false));
   {$ENDREGION}
 
   {$REGION Retrieve_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do
     if NeedsAsyncRetrieveOperationDefinition(lmem) then
-      ltype1.Members.Add(Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, true));
+      ltype1.Members.Add(Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, true, false));
   {$ENDREGION}
   cpp_GenerateProxyConstructors(aLibrary, aEntity, ltype1);
   {$ENDREGION}
@@ -2148,14 +2148,14 @@ begin
 
   {$REGION Begin%service_method%}
   for lmem in aEntity.DefaultInterface.Items do begin
-    ltype1.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, true, false));
-    ltype1.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, true, true));
+    ltype1.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, true, false, false));
+    ltype1.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, true, true, false));
   end;
   {$ENDREGION}
 
   {$REGION End%service_method%}
   for lmem in aEntity.DefaultInterface.Items do
-    ltype1.Members.Add(Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, true));
+    ltype1.Members.Add(Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, true, false));
   {$ENDREGION}
   cpp_GenerateProxyConstructors(aLibrary, aEntity, ltype1);
   {$ENDREGION}
@@ -3452,12 +3452,12 @@ end;
 {$REGION generate _Async}
 
 
-method DelphiRodlCodeGen.Intf_GenerateAsyncInvoke(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
+method DelphiRodlCodeGen.Intf_GenerateAsyncInvoke(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean; isInterface: Boolean): CGMethodDefinition;
 begin
   result := new CGMethodDefinition('Invoke_'+aOperation.Name,
-                                    Visibility := CGMemberVisibilityKind.Protected,
                                     CallingConvention := CGCallingConventionKind.Register
                                     {Virtuality := CGMemberVirtualityKind.Virtual});
+  if not isInterface then result.Visibility := CGMemberVisibilityKind.Protected else result.Visibility := CGMemberVisibilityKind.Unspecified;
   for mem in aOperation.Items do begin
     if mem.ParamFlag in [ParamFlags.In, ParamFlags.InOut] then begin
       var lparam := new CGParameterDefinition(mem.Name,
@@ -3531,12 +3531,13 @@ begin
   end;
 end;
 
-method DelphiRodlCodeGen.Intf_GenerateAsyncRetrieve(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean): CGMethodDefinition;
+method DelphiRodlCodeGen.Intf_GenerateAsyncRetrieve(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody:  Boolean; isInterface: Boolean): CGMethodDefinition;
 begin
   result := new CGMethodDefinition('Retrieve_'+aOperation.Name,
-                                    Visibility := CGMemberVisibilityKind.Protected,
                                     CallingConvention := CGCallingConventionKind.Register
                                     {Virtuality := CGMemberVirtualityKind.Virtual});
+  if not isInterface then result.Visibility := CGMemberVisibilityKind.Protected else result.Visibility := CGMemberVisibilityKind.Unspecified;
+
   for mem in aOperation.Items do begin
     if mem.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
       var lparam := new CGParameterDefinition(mem.Name,
@@ -3673,12 +3674,13 @@ begin
   end;
 end;
 
-method DelphiRodlCodeGen.Intf_GenerateAsyncExBegin(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody: Boolean; aMethod:Boolean): CGMethodDefinition;
+method DelphiRodlCodeGen.Intf_GenerateAsyncExBegin(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody: Boolean; aMethod:Boolean; isInterface: Boolean): CGMethodDefinition;
 begin
   result := new CGMethodDefinition('Begin'+aOperation.Name,
-                                    Visibility := CGMemberVisibilityKind.Protected,
                                     CallingConvention := CGCallingConventionKind.Register,
                                     Overloaded := true);
+  if not isInterface then result.Visibility := CGMemberVisibilityKind.Protected else result.Visibility := CGMemberVisibilityKind.Unspecified;
+
   for mem in aOperation.Items do begin
     if mem.ParamFlag in [ParamFlags.In, ParamFlags.InOut] then begin
       var lparam := new CGParameterDefinition(mem.Name,
@@ -3763,12 +3765,13 @@ begin
   end;
 end;
 
-method DelphiRodlCodeGen.Intf_GenerateAsyncExEnd(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody: Boolean): CGMethodDefinition;
+method DelphiRodlCodeGen.Intf_GenerateAsyncExEnd(aLibrary: RodlLibrary; aEntity: RodlService; aOperation: RodlOperation; aNeedBody: Boolean; isInterface: Boolean): CGMethodDefinition;
 begin
   result := new CGMethodDefinition('End'+aOperation.Name,
-                                   Visibility := CGMemberVisibilityKind.Protected,
                                    CallingConvention := CGCallingConventionKind.Register
                                     {Virtuality := CGMemberVirtualityKind.Virtual});
+  if not isInterface then result.Visibility := CGMemberVisibilityKind.Protected else result.Visibility := CGMemberVisibilityKind.Unspecified;
+
   for mem in aOperation.Items do begin
     if mem.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
       var lparam := new CGParameterDefinition(mem.Name,
@@ -4002,7 +4005,7 @@ begin
         if rodl_member.Result.Name <> 'Result' then
           AddCGAttribute(cg4_member,
                          new CGAttribute('ROServiceMethodResultName'.AsTypeReference,
-                                         rodl_member.Result.Name.AsLiteralExpression.asCallParameter,
+                                         rodl_member.Result.Name.AsLiteralExpression.AsCallParameter,
                                          Condition := CF_condition));
         if IsAnsiString(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsAnsiString) else
         if IsUTF8String(rodl_member.Result.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
@@ -4665,10 +4668,10 @@ begin
   end;
 
   attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference,
-                                                  'emAnsi'.AsNamedIdentifierExpression.asCallParameter,
+                                                  'emAnsi'.AsNamedIdentifierExpression.AsCallParameter,
                                                   Condition := CF_condition);
   attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference,
-                                                  'emUTF8'.AsNamedIdentifierExpression.asCallParameter,
+                                                  'emUTF8'.AsNamedIdentifierExpression.AsCallParameter,
                                                   Condition := CF_condition);
 
   attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference,

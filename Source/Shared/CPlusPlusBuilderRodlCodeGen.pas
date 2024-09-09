@@ -213,7 +213,7 @@ begin
     ModeKind.Async: begin
       {$REGION Invoke_%service_method%}
       for lmem in laEntity.DefaultInterface.Items do begin
-          var lm := Intf_GenerateAsyncInvoke(aLibrary, laEntity, lmem, false);
+          var lm := Intf_GenerateAsyncInvoke(aLibrary, laEntity, lmem, false, false);
           lm.Virtuality := CGMemberVirtualityKind.Override;
 
           cpp_generateInheritedBody(lm);
@@ -223,7 +223,7 @@ begin
       {$REGION Retrieve_%service_method%}
       for lmem in laEntity.DefaultInterface.Items do
         if NeedsAsyncRetrieveOperationDefinition(lmem) then begin
-          var lm := Intf_GenerateAsyncRetrieve(aLibrary, laEntity, lmem, false);
+          var lm := Intf_GenerateAsyncRetrieve(aLibrary, laEntity, lmem, false, false);
           lm.Virtuality := CGMemberVirtualityKind.Override;
           cpp_generateInheritedBody(lm);
           service.Members.Add(lm);
@@ -233,13 +233,13 @@ begin
     ModeKind.AsyncEx: begin
       {$REGION Begin%service_method%}
       for lmem in laEntity.DefaultInterface.Items do begin
-        var lm := Intf_GenerateAsyncExBegin(aLibrary, laEntity, lmem, false, false);
+        var lm := Intf_GenerateAsyncExBegin(aLibrary, laEntity, lmem, false, false, false);
         lm.Virtuality := CGMemberVirtualityKind.Override;
 
         cpp_generateInheritedBody(lm);
         service.Members.Add(lm);
 
-        lm := Intf_GenerateAsyncExBegin(aLibrary, laEntity, lmem, false, true);
+        lm := Intf_GenerateAsyncExBegin(aLibrary, laEntity, lmem, false, true, false);
         lm.Virtuality := CGMemberVirtualityKind.Override;
 
         cpp_generateInheritedBody(lm);
@@ -249,7 +249,7 @@ begin
 
       {$REGION End%service_method%}
       for lmem in laEntity.DefaultInterface.Items do begin
-        var lm := Intf_GenerateAsyncExEnd(aLibrary, laEntity, lmem, false);
+        var lm := Intf_GenerateAsyncExEnd(aLibrary, laEntity, lmem, false, false);
         lm.Virtuality := CGMemberVirtualityKind.Override;
         cpp_generateInheritedBody(lm);
         service.Members.Add(lm);
