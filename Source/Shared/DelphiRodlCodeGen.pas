@@ -47,8 +47,14 @@ type
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
     method GenerateCodeFirstDocumentation(aFile: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
     method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
+    method GetHttpAPIAttribute(aEntity: RodlEntity): CGAttribute;
     {$ENDREGION}
     {$REGION support methods}
+    method IsHttpAPIAttribute(aName: String): Boolean;
+    begin
+      exit aName.ToLowerInvariant in
+        ['httpapipath', 'httpapimethod', 'httpapiresult', 'httpapitags', 'httpapioperationid', 'httpapirequestname', 'httpapiqueryparameter', 'httpapiheaderparameter'];
+    end;
     method isPresent_SerializeInitializedStructValues_Attribute(aLibrary: RodlLibrary): Boolean;
     method GetServiceAncestor(aLibrary: RodlLibrary;aEntity: RodlService): String;
     {$ENDREGION}
@@ -3977,7 +3983,8 @@ begin
       end;
     end;
 
-
+    var httpapi_attr := GetHttpAPIAttribute(rodl_member);
+    if assigned(httpapi_attr) then AddCGAttribute(cg4_member, httpapi_attr);
     cg4_member.Comment := GenerateDocumentation(rodl_member, true);
     GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
@@ -3994,6 +4001,8 @@ begin
           if IsAnsiString(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsAnsiString) else
           if IsUTF8String(rodl_param.DataType) then AddCGAttribute(cg4_param,attr_ROSerializeAsUTF8String);
         end;
+        httpapi_attr := GetHttpAPIAttribute(rodl_param);
+        if assigned(httpapi_attr) then AddCGAttribute(cg4_param, httpapi_attr);
         GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
         GenerateCodeFirstCustomAttributes(cg4_param, rodl_param);
         cg4_member.Parameters.Add(cg4_param);
@@ -4723,10 +4732,77 @@ begin
   end;
 end;
 
+method GetAttributeValue(aEntity: RodlEntity; aKey: String): String;
+begin
+  if aEntity.CustomAttributes_lower.ContainsKey(aKey) then
+    exit aEntity.CustomAttributes_lower[aKey]
+  else
+    exit nil;
+end;
+
+method DelphiRodlCodeGen.GetHttpAPIAttribute(aEntity: RodlEntity): CGAttribute;
+begin
+  result := nil;
+  if aEntity is RodlOperation then begin
+    var l_path := GetAttributeValue(aEntity, 'httpapipath');
+    if not String.IsNullOrEmpty(l_path) then begin
+      var l_method := GetAttributeValue(aEntity, 'httpapimethod');
+      var l_resultcode := GetAttributeValue(aEntity, 'httpapiresult');
+      var l_result_int: Integer := 200;
+      if not String.IsNullOrEmpty(l_resultcode) then
+        if not Integer.TryParse(l_resultcode, out l_result_int) then begin
+          l_resultcode := nil;
+          l_result_int := 200;
+        end;
+      var l_tags := GetAttributeValue(aEntity, 'httpapitags');
+      var l_operationId := GetAttributeValue(aEntity, 'httpapioperationid');
+      var l_requestName := GetAttributeValue(aEntity, 'httpapirequestname');
+
+      var attr := new CGAttribute('ROHttpAPIMethod'.AsTypeReference,
+                                  l_path.AsLiteralExpression.AsCallParameter,
+                                  Condition := CF_condition);
+
+      var l_need_RequestName := not String.IsNullOrEmpty(l_requestName);
+      var l_need_OperationId := not String.IsNullOrEmpty(l_operationId) or l_need_RequestName;
+      var l_need_Tags := not String.IsNullOrEmpty(l_tags) or l_need_OperationId;
+      var l_need_ResultCode := not String.IsNullOrEmpty(l_resultcode) or l_need_Tags;
+      var l_need_Method := not String.IsNullOrEmpty(l_method) or l_need_ResultCode;
+
+      if l_need_Method then begin
+        if String.IsNullOrEmpty(l_method) then l_method := 'POST';
+        attr.Parameters.Add(l_method.AsLiteralExpression.AsCallParameter);
+        if l_need_ResultCode then begin
+          attr.Parameters.Add(l_result_int.AsLiteralExpression.AsCallParameter);
+          if l_need_Tags then begin
+            if String.IsNullOrEmpty(l_tags) then l_tags := '';
+            attr.Parameters.Add(l_tags.AsLiteralExpression.AsCallParameter);
+            if l_need_OperationId then begin
+              if String.IsNullOrEmpty(l_operationId) then l_operationId := '';
+              attr.Parameters.Add(l_operationId.AsLiteralExpression.AsCallParameter);
+              if l_need_RequestName then
+                attr.Parameters.Add(l_requestName.AsLiteralExpression.AsCallParameter);
+            end;
+          end;
+        end;
+      end;
+      exit attr;
+    end;
+  end
+  else if aEntity is RodlParameter then begin
+    if GetAttributeValue(aEntity, 'httpapiqueryparameter') = '1' then
+      exit new CGAttribute('ROHttpAPIQueryParameter'.AsTypeReference,
+                           Condition := CF_condition)
+    else if GetAttributeValue(aEntity, 'httpapiheaderparameter') = '1' then
+      exit new CGAttribute('ROHttpAPIHeaderParameter'.AsTypeReference,
+                           Condition := CF_condition)
+  end;
+end;
+
 method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
 begin
   if IsCodeFirstCompatible then begin
     for k in aEntity.CustomAttributes.Keys do begin
+      if IsHttpAPIAttribute(k) then continue;
       var attr := new CGAttribute('ROCustom'.AsTypeReference,
                                   [k.AsLiteralExpression.AsCallParameter,
                                    aEntity.CustomAttributes[k].AsLiteralExpression.AsCallParameter]);
@@ -4774,9 +4850,9 @@ begin
   for lu: RodlUse in aLibrary.Uses.Items do begin
     if not lu.DontCodegen then continue;
     var s1 := lu.Includes:DelphiModule;
-    var lExt := 'hpp';
+    //var lExt := 'hpp';
     if String.IsNullOrEmpty(s1) then begin
-      lExt := 'h';
+      //lExt := 'h';
       s1 := lu.Name;
       if String.IsNullOrEmpty(s1) then
         s1 := Path.GetFileNameWithoutExtension(lu.FileName);
