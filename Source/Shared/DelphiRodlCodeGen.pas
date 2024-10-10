@@ -42,8 +42,8 @@ type
     property attr_ROSkip: CGAttribute;
     property attr_ROLibraryAttributes: CGAttribute;
     property attr_ROAbstract: CGAttribute;
-    property cond_GenericArray: CGConditionalDefine;
-    property cond_GenericArray_inverted: CGConditionalDefine;
+    property cond_ROUseGenerics: CGConditionalDefine;
+    property cond_ROUseGenerics_inverted: CGConditionalDefine;
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
     method GenerateCodeFirstDocumentation(aFile: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
     method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
@@ -633,20 +633,20 @@ begin
   if PureDelphi and IsGenericArrayCompatible then begin
     aFile.Types.Add(new CGClassTypeDefinition(aEntity.Name, ('TROArray<'+lElementType+'>').AsTypeReference,
                                              Visibility := CGTypeVisibilityKind.Public,
-                                             Condition := cond_GenericArray));
+                                             Condition := cond_ROUseGenerics));
   end;
   if GenericArrayMode = State.On then exit;
 
   // non generic arrays
   var linternalarr := new CGTypeAliasDefinition(larrayname+"_"+lElementType,
                                                 new CGArrayTypeReference(el_typeref),
-                                                Condition := cond_GenericArray_inverted);
+                                                Condition := cond_ROUseGenerics_inverted);
 
   var linternalarr_typeref := DuplicateType(ResolveDataTypeToTypeRefFullQualified(aLibrary, linternalarr.Name, Intf_name,larrayname), false);
   aFile.Types.Add(linternalarr);
   var ltype := new CGClassTypeDefinition(larrayname,'TROArray'.AsTypeReference,
                               Visibility := CGTypeVisibilityKind.Public,
-                              Condition := cond_GenericArray_inverted,
+                              Condition := cond_ROUseGenerics_inverted,
                               Comment := GenerateDocumentation(aEntity, true)
                               );
   AddCGAttribute(ltype, attr_ROLibraryAttributes);
@@ -1233,7 +1233,7 @@ begin
   {$REGION %arrayname%Enumerator}
   var lenumtype := new CGClassTypeDefinition(lEnumerator, 'TObject'.AsTypeReference,
                                              Visibility := CGTypeVisibilityKind.Public,
-                                             Condition := cond_GenericArray_inverted);
+                                             Condition := cond_ROUseGenerics_inverted);
   aFile.Types.Add(lenumtype);
   {$REGION private fArray: %arrayname%}
   lenumtype.Members.Add(
@@ -4485,7 +4485,7 @@ begin
   lUnit.Imports.Add(GenerateCGImport('TypInfo','System'));
   if PureDelphi then begin
     if IsCodeFirstCompatible then lUnit.Imports.Add(GenerateCGImport('uRORTTIAttributes', CF_condition));
-    if IsGenericArrayCompatible then lUnit.Imports.Add(GenerateCGImport('uROArray',cond_GenericArray));
+    if IsGenericArrayCompatible then lUnit.Imports.Add(GenerateCGImport('uROArray', cond_ROUseGenerics));
   end;
   lUnit.Imports.Add(GenerateCGImport('uROEncoding'));
   lUnit.Imports.Add(GenerateCGImport('uROXMLIntf'));
@@ -4657,11 +4657,11 @@ begin
     end;
     if CodeFirstMode = State.On then
       DelphiXE2Mode := State.On;
-    if CodeFirstMode = State.Off then
-      GenericArrayMode := State.Off;
+    //if CodeFirstMode = State.Off then
+      //GenericArrayMode := State.Off;
     if GenericArrayMode = State.On then begin
       DelphiXE2Mode := State.On;
-      CodeFirstMode := State.On;
+      //CodeFirstMode := State.On;
     end;
     if DelphiXE2Mode = State.On then
       FPCMode := State.Off;
@@ -4671,8 +4671,8 @@ begin
       CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(True);
     end;
     if (GenericArrayMode = State.Auto) then begin
-      cond_GenericArray := new CGConditionalDefine('RO_GenericArray');
-      cond_GenericArray_inverted := new CGConditionalDefine('RO_GenericArray') inverted(True);
+      cond_ROUseGenerics := new CGConditionalDefine('ROUseGenerics');
+      cond_ROUseGenerics_inverted := new CGConditionalDefine('ROUseGenerics') inverted(True);
     end;
   end;
 
@@ -4895,7 +4895,7 @@ begin
   aFile.Imports.Add(GenerateCGImport('TypInfo','System'));
   if PureDelphi then begin
     if IsCodeFirstCompatible    then aFile.Imports.Add(GenerateCGImport('uRORTTIAttributes', CF_condition));
-    if IsGenericArrayCompatible then aFile.Imports.Add(GenerateCGImport('uROArray',cond_GenericArray));
+    if IsGenericArrayCompatible then aFile.Imports.Add(GenerateCGImport('uROArray',cond_ROUseGenerics));
   end;
 
   aFile.Imports.Add(GenerateCGImport('uROEncoding'));

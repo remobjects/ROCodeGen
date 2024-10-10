@@ -145,8 +145,8 @@ begin
       if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.On then
         DelphiRodlCodeGen(codegen).FPCMode := State.Off;
 
-      if DelphiRodlCodeGen(codegen).CodeFirstMode = State.Off then
-        DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;
+      //if DelphiRodlCodeGen(codegen).CodeFirstMode = State.Off then
+        //DelphiRodlCodeGen(codegen).GenericArrayMode := State.Off;
 
       if ParseAddParams(lparams,DelphiHydra) = '1' then
         DelphiRodlCodeGen(codegen).IsHydra := true;
