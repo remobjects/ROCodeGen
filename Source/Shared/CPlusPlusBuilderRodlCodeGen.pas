@@ -793,7 +793,7 @@ begin
   IncludeUnitNameForOwnTypes := IncludeUnitNameForOwnTypes or aLibrary.ScopedEnums;
   targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, aLibrary.Namespace, aLibrary.Name, 'Unknown');
   var lUnit := new CGCodeUnit();
-  result.add(lUnit);
+  result.Add(lUnit);
   lUnit.Namespace := new CGNamespaceReference(targetNamespace);
 
   lUnit.FileName := coalesce(GetIncludesNamespace(aLibrary), aLibrary.Name, 'Unknown') + '_Intf';
