@@ -4748,12 +4748,14 @@ begin
     if not String.IsNullOrEmpty(l_path) then begin
       var l_method := GetAttributeValue(aEntity, 'httpapimethod');
       var l_resultcode := GetAttributeValue(aEntity, 'httpapiresult');
-      var l_result_int: Integer := 200;
-      if not String.IsNullOrEmpty(l_resultcode) then
-        if not Integer.TryParse(l_resultcode, out l_result_int) then begin
+      var l_result_int: nullable Integer := 200;
+      if not String.IsNullOrEmpty(l_resultcode) then begin
+        l_result_int := Convert.TryToInt32(l_resultcode);
+        if not assigned(l_result_int) then begin
           l_resultcode := nil;
           l_result_int := 200;
         end;
+      end;
       var l_tags := GetAttributeValue(aEntity, 'httpapitags');
       var l_operationId := GetAttributeValue(aEntity, 'httpapioperationid');
       var l_requestName := GetAttributeValue(aEntity, 'httpapirequestname');
