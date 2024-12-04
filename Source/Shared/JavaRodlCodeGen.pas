@@ -194,7 +194,7 @@ begin
                             &Partial := true,
                             Visibility := CGTypeVisibilityKind.Public
                             );
-  lstruct.Comment := GenerateDocumentation(aEntity);
+  lstruct.XmlDocumentation := GenerateDocumentation(aEntity);
   aFile.Types.Add(lstruct);
   {$REGION private class _attributes: HashMap<String, String>;}
   if (aEntity.CustomAttributes.Count > 0) then
@@ -244,7 +244,7 @@ begin
                                                     [new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,"aValue".AsNamedIdentifierExpression)],
                                                     Parameters := [new CGParameterDefinition("aValue",ltype)].ToList,
                                                     Visibility := CGMemberVisibilityKind.Public,
-                                                    Comment:= GenerateDocumentation(lm)));
+                                                    XmlDocumentation := GenerateDocumentation(lm)));
         var l_st: CGStatement;
         if IsSimpleType(lm.DataType) then
           l_st := f_name.AsNamedIdentifierExpression.AsReturnStatement
@@ -256,7 +256,7 @@ begin
                                                     [l_st],
                                                     ReturnType := ltype,
                                                     Visibility := CGMemberVisibilityKind.Public,
-                                                    Comment:= GenerateDocumentation(lm)));
+                                                    XmlDocumentation := GenerateDocumentation(lm)));
       end;
     end;
     {$ENDREGION}
@@ -284,7 +284,7 @@ begin
                             [l_st],
                             SetExpression := f_name.AsNamedIdentifierExpression,
                             Visibility := CGMemberVisibilityKind.Public,
-                            Comment := GenerateDocumentation(lm)));
+                            XmlDocumentation := GenerateDocumentation(lm)));
       end;
     end;
     {$ENDREGION}
@@ -304,7 +304,7 @@ begin
                                           Visibility := CGTypeVisibilityKind.Public,
                                           &Partial := true
                                           );
-  lArray.Comment := GenerateDocumentation(aEntity);
+  lArray.XmlDocumentation := GenerateDocumentation(aEntity);
   aFile.Types.Add(lArray);
 
   if not isCooperMode then begin
@@ -587,7 +587,7 @@ begin
                                               Visibility := CGTypeVisibilityKind.Public,
                                               &Partial := true
                                               );
-  lexception.Comment := GenerateDocumentation(aEntity);
+  lexception.XmlDocumentation := GenerateDocumentation(aEntity);
   aFile.Types.Add(lexception);
   if not isCooperMode then
     lexception.Attributes.Add(new CGAttribute("SuppressWarnings".AsTypeReference,
@@ -616,12 +616,12 @@ begin
                                       [new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,"aValue".AsNamedIdentifierExpression)],
                                       Parameters := [new CGParameterDefinition("aValue",ltype)].ToList,
                                       Visibility := CGMemberVisibilityKind.Public,
-                                      Comment:= GenerateDocumentation(lm)));
+                                      XmlDocumentation := GenerateDocumentation(lm)));
         lexception.Members.Add(new CGMethodDefinition("get"+lm.Name,
                                       [f_name.AsNamedIdentifierExpression.AsReturnStatement],
                                       ReturnType := ltype,
                                       Visibility := CGMemberVisibilityKind.Public,
-                                      Comment:= GenerateDocumentation(lm)));
+                                      XmlDocumentation := GenerateDocumentation(lm)));
       end;
     end;
   {$ENDREGION}
@@ -666,7 +666,7 @@ begin
       lm.Name,
       ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
       Visibility := CGMemberVisibilityKind.Public,
-      Comment := GenerateDocumentation(lm)));
+      XmlDocumentation := GenerateDocumentation(lm)));
   end;
   {$ENDREGION}
 end;
@@ -676,11 +676,11 @@ begin
   {$REGION I%SERVICE_NAME%}
   var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name),
                                                  Visibility := CGTypeVisibilityKind.Public);
-  lIService.Comment := GenerateDocumentation(aEntity);
+  lIService.XmlDocumentation := GenerateDocumentation(aEntity);
   aFile.Types.Add(lIService);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
-    m.Comment := GenerateDocumentation(lop, true);
+    m.XmlDocumentation := GenerateDocumentation(lop);
     lIService.Members.Add(m);
   end;
 
@@ -739,7 +739,7 @@ begin
   var i_adaptername := i_name+"_Adapter";
   var lIEvent := new CGInterfaceTypeDefinition(i_name,GenerateROSDKType("IEvents").AsTypeReference,
                             Visibility := CGTypeVisibilityKind.Public);
-  lIEvent.Comment := GenerateDocumentation(aEntity);
+  lIEvent.XmlDocumentation := GenerateDocumentation(aEntity);
   aFile.Types.Add(lIEvent);
 
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
@@ -759,12 +759,12 @@ begin
                                                       [new CGAssignmentStatement(f_name.AsNamedIdentifierExpression,"aValue".AsNamedIdentifierExpression)],
                                                       Parameters := [new CGParameterDefinition("aValue",ltype)].ToList,
                                                       Visibility := CGMemberVisibilityKind.Public,
-                                                      Comment:= GenerateDocumentation(lm)));
+                                                      XmlDocumentation := GenerateDocumentation(lm)));
         lOperation.Members.Add(new CGMethodDefinition("get"+lm.Name,
                                                       [f_name.AsNamedIdentifierExpression.AsReturnStatement],
                                                       ReturnType := ltype,
                                                       Visibility := CGMemberVisibilityKind.Public,
-                                                      Comment:= GenerateDocumentation(lm)));
+                                                      XmlDocumentation := GenerateDocumentation(lm)));
        end;
     end;
 
@@ -779,7 +779,7 @@ begin
                                                         lm.Name,
                                                         ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
                                                         Visibility := CGMemberVisibilityKind.Public,
-                                                        Comment:= GenerateDocumentation(lm)));
+                                                        XmlDocumentation := GenerateDocumentation(lm)));
       end;
       lop_method.Statements.Add(GetReaderStatement(aLibrary,lm,"aBuffer"));
     end;
@@ -789,7 +789,7 @@ begin
     lIEvent.Members.Add(new CGMethodDefinition(SafeIdentifier(lop.Name),
                                                Parameters := [new CGParameterDefinition("aEvent", lOperation.Name.AsTypeReference)].ToList,
                                                Visibility := CGMemberVisibilityKind.Public,
-                                               Comment := GenerateDocumentation(lop,false)
+                                               XmlDocumentation := GenerateDocumentation(lop)
     ));
   end;
   if not isCooperMode then begin
@@ -1387,12 +1387,12 @@ begin
   var lenum := new CGEnumTypeDefinition(SafeIdentifier(aEntity.Name),
                                         Visibility := CGTypeVisibilityKind.Public);
   if isCooperMode then lenum.BaseType := new CGNamedTypeReference("Enum");
-  lenum.Comment := GenerateDocumentation(aEntity);
+  lenum.XmlDocumentation := GenerateDocumentation(aEntity);
   aFile.Types.Add(lenum);
   for enummember: RodlEnumValue in aEntity.Items do begin
     var lname := GenerateEnumMemberName(aLibrary, aEntity, enummember);
     var lenummember := new CGEnumValueDefinition(lname);
-    lenummember.Comment := GenerateDocumentation(enummember);
+    lenummember.XmlDocumentation := GenerateDocumentation(enummember);
     lenum.Members.Add(lenummember);
   end;
 end;

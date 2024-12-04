@@ -56,6 +56,9 @@ type
     method GetGlobalName(aLibrary: RodlLibrary): String; override;
 
     property EnumBaseType: CGTypeReference read NSUIntegerType; override;
+    property DocumentationBeginTag: String := nil; override;
+    property DocumentationEndTag: String := nil; override;
+
   public
     property SwiftDialect: CGSwiftCodeGeneratorDialect := CGSwiftCodeGeneratorDialect.Silver;
     property DontPrefixEnumValues: Boolean := not IsObjC; override;
@@ -229,7 +232,7 @@ begin
 
   var lStruct := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestorName.AsTypeReference,
                                            Visibility := CGTypeVisibilityKind.Public,
-                                           Comment := GenerateDocumentation(aEntity));
+                                           XmlDocumentation := GenerateDocumentation(aEntity));
   lStruct.Attributes.Add(new CGAttribute("objc".AsTypeReference, SafeIdentifier(aEntity.Name).AsNamedIdentifierExpression.AsCallParameter));
   aFile.Types.Add(lStruct);
   {$REGION private class class __attributes: NSDictionary;}
@@ -245,7 +248,7 @@ begin
     var lType := ResolveDataTypeToTypeRef(aLibrary, m.DataType);
     var p := new CGPropertyDefinition(m.Name, lType,
                                       Visibility := CGMemberVisibilityKind.Public,
-                                      Comment := GenerateDocumentation(m));
+                                      XmlDocumentation := GenerateDocumentation(m));
     var lEnumDefault := FindEnum(aLibrary, m.DataType):DefaultValueName;
     if assigned(lEnumDefault) then
       p.Initializer := new CGEnumValueAccessExpression(lType, lEnumDefault);
@@ -276,7 +279,7 @@ begin
   var lAncestor := new CGNamedTypeReference("ROMutableArray");
   var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestor,
                                           Visibility := CGTypeVisibilityKind.Public,
-                                          Comment := GenerateDocumentation(aEntity));
+                                          XmlDocumentation := GenerateDocumentation(aEntity));
 
   if isComplex(aLibrary, aEntity.ElementType) then begin
     lAncestor.GenericArguments := new List<CGTypeReference>;
@@ -428,7 +431,7 @@ method CocoaRodlCodeGen.GenerateOldStyleArray(aFile: CGCodeUnit; aLibrary: RodlL
 begin
   var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), "ROArray".AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
-                                          Comment := GenerateDocumentation(aEntity));
+                                          XmlDocumentation := GenerateDocumentation(aEntity));
   aFile.Types.Add(lArray);
   {$REGION private class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
@@ -638,7 +641,7 @@ begin
   if String.IsNullOrEmpty(lAncestorName) then lAncestorName := "ROException";
   var lException := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestorName.AsTypeReference,
                                               Visibility := CGTypeVisibilityKind.Public,
-                                              Comment := GenerateDocumentation(aEntity));
+                                              XmlDocumentation := GenerateDocumentation(aEntity));
   aFile.Types.Add(lException);
 
   {$REGION private class class __attributes: NSDictionary;}
@@ -656,7 +659,7 @@ begin
     lException.Members.Add(new CGPropertyDefinition(m.Name,
                                                     ResolveDataTypeToTypeRef(aLibrary,m.DataType),
                                                     Visibility:= CGMemberVisibilityKind.Public,
-                                                    Comment := GenerateDocumentation(m)));
+                                                    XmlDocumentation := GenerateDocumentation(m)));
   {$ENDREGION}
 
   {$REGION public method initWithMessage(anExceptionMessage: NSString; a%FIELD_NAME_UNSAFE%: %FIELD_TYPE%);dynamic;}
@@ -726,13 +729,13 @@ begin
   {$REGION I%SERVICE_NAME%}
   var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name),
                                                  Visibility := CGTypeVisibilityKind.Public,
-                                                 Comment := GenerateDocumentation(aEntity));
+                                                 XmlDocumentation := GenerateDocumentation(aEntity));
   if length(lAncestorName) > 0 then
     lIService.Ancestors := [("I"+lAncestorName).AsTypeReference].ToList;
   aFile.Types.Add(lIService);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
-    m.Comment := GenerateDocumentation(lop, true);
+    m.XmlDocumentation := GenerateDocumentation(lop);
     lIService.Members.Add(m);
   end;
 
@@ -741,7 +744,7 @@ begin
   {$REGION I%SERVICE_NAME%_Async}
   var lIServiceAsync := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async"),
                                                       Visibility := CGTypeVisibilityKind.Public,
-                                                      Comment := GenerateDocumentation(aEntity));
+                                                      XmlDocumentation := GenerateDocumentation(aEntity));
   if length(lAncestorName) > 0 then
     lIServiceAsync.Ancestors := [("I"+lAncestorName+"_Async").AsTypeReference].ToList;
   aFile.Types.Add(lIServiceAsync);
@@ -756,7 +759,7 @@ begin
 
   var lIServiceAsync2 := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name+"_Async2"),
                                                        Visibility := CGTypeVisibilityKind.Public,
-                                                       Comment := GenerateDocumentation(aEntity));
+                                                       XmlDocumentation := GenerateDocumentation(aEntity));
   if length(lAncestorName) > 0 then
     lIServiceAsync2.Ancestors := [("I"+lAncestorName+"_Async2").AsTypeReference].ToList;
   aFile.Types.Add(lIServiceAsync2);
@@ -810,7 +813,7 @@ method CocoaRodlCodeGen.GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibra
 begin
   var lIEvent := new CGInterfaceTypeDefinition("I"+aEntity.Name,
                                               Visibility := CGTypeVisibilityKind.Public,
-                                              Comment:= GenerateDocumentation(aEntity));
+                                              XmlDocumentation := GenerateDocumentation(aEntity));
   aFile.Types.Add(lIEvent);
 
   var lEventInvoker := new CGClassTypeDefinition(aEntity.Name+"_EventInvoker", "ROEventInvoker".AsTypeReference,
@@ -823,7 +826,7 @@ begin
 
     var lievent_method := new CGMethodDefinition(lop.Name,
                                                  Visibility := CGMemberVisibilityKind.Public,
-                                                 Comment:= GenerateDocumentation(lop, true));
+                                                 XmlDocumentation := GenerateDocumentation(lop));
     lIEvent.Members.Add(lievent_method);
     var lInParam:=new List<RodlParameter>;
     for m: RodlParameter in lop.Items do begin

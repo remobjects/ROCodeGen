@@ -67,6 +67,7 @@ type
     DelphiCodeFirstMode = 'DelphiCodeFirstMode';
     DelphiGenericArrayMode = 'DelphiGenericArrayMode';
     CBuilderSplitTypes = 'CBuilderSplitTypes';
+    UseNativeNETCodegen = 'UseNativeNETCodegen';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
@@ -111,6 +112,7 @@ begin
     if l.Count = 2 then lparams[l[0]] := l[1];
   end;
 
+  var l_useNativeNETCodegen := ParseAddParams(lparams, UseNativeNETCodegen) = '1';
   var llang := Language.ToString;
   var lfileext:= '';
   var codegen: RodlCodeGen;
@@ -162,9 +164,15 @@ begin
     end;
     Codegen4Platform.Cocoa: codegen := new CocoaRodlCodeGen;
     Codegen4Platform.Net: begin
-      codegen := new EchoesCodeDomRodlCodeGen;
-      EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
-      EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
+      if l_useNativeNETCodegen then begin
+        codegen := new EchoesRodlCodeGen;
+        EchoesRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
+      end
+      else begin
+        codegen := new EchoesCodeDomRodlCodeGen;
+        EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
+        EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
+      end;
     end;
     Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
@@ -172,6 +180,7 @@ begin
   case Language of
     Codegen4Language.Oxygene: begin
       codegen.Generator := new CGOxygeneCodeGenerator();
+      // CGOxygeneCodeGenerator(codegen.Generator).Style := CGOxygeneCodeGeneratorStyle.GroupUnified;
       llang := 'oxygene';
       lfileext := 'pas';
     end;
@@ -186,6 +195,7 @@ begin
       lfileext := 'cs';
     end;
     Codegen4Language.VB: begin
+      codegen.Generator := new CGVisualBasicNetCodeGenerator(Dialect := CGVisualBasicCodeGeneratorDialect.Standard);
       llang := 'vb';
       lfileext := 'vb';
     end;

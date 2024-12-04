@@ -23,9 +23,7 @@ func writeSyntax() {
 	writeLn()
 	writeLn("Valid <platform> values:")
 	writeLn()
-	#if ECHOES
 	writeLn("  - .net, net, echoes")
-	#endif
 	writeLn("  - cocoa, xcode, toffee")
 	writeLn("  - java, cooper")
 	writeLn("  - delphi, c++builder, bcb")
@@ -55,6 +53,7 @@ func writeSyntax() {
 	writeLn("  --genericarray:<on|off|auto> (Delphi only)")
 	writeLn("  --splittypes (BCB only)")
 	writeLn("  --hydra (Delphi only)")
+	writeLn("  --codedom (.NET only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
@@ -323,14 +322,20 @@ do {
 		case "echoes", "net", ".net":
 			options["platform"] = ".net"
 			serverSupport = true
-			#if ECHOES
-			activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
-			activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
-			#else
-			//activeRodlCodeGen = DotNetRodlCodeGen()
-			writeLn(".NET codegen is not supported in the Mac version of rodl2code, sorry. Use 'mono rodl2code.exe', instead.")
-			return 2
-			#endif
+			if options["codedom"] != nil {
+				#if ECHOES
+				activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
+				activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
+				#else
+				//activeRodlCodeGen = DotNetRodlCodeGen()
+				writeLn("'--codedom' option is not supported in the Mac version of rodl2code, sorry. Use 'mono rodl2code.exe', instead.")
+				return 2
+				#endif
+			}
+			else {
+				activeRodlCodeGen = EchoesRodlCodeGen()
+				activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
+			}
 		case "delphi":
 			options["platform"] = "delphi"
 			options["language"] = "delphi" // force language to Delphi

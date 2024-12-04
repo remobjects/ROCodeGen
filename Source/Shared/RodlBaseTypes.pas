@@ -121,6 +121,11 @@ type
       result.Add(Self.fItems.Items);
     end;
 
+    method FindEntity(name: String): T;
+    begin
+      exit fItems.FindEntity(name);
+    end;
+
     property Items: List<T> read fItems.Items;
     property Count: Int32 read fItems.Count;
     property Item[index: Integer]: T read fItems[index]; default;

@@ -58,7 +58,7 @@ type
     method isPresent_SerializeInitializedStructValues_Attribute(aLibrary: RodlLibrary): Boolean;
     method GetServiceAncestor(aLibrary: RodlLibrary;aEntity: RodlService): String;
     {$ENDREGION}
-    method ProcessAttributes(aEntity: RodlEntity; aType: CGClassTypeDefinition; AlwaysWrite: Boolean := False);
+    method Intf_ProcessAttributes(aEntity: RodlEntity; aType: CGClassTypeDefinition; AlwaysWrite: Boolean := False);
     method GenerateAttributes(aLibrary: RodlLibrary; aService: RodlService; aOperation:RodlOperation; out aNames, aValues: List<CGExpression>);
     method set_CustomAncestor(value: String);
     method get_IROTransportChannel_typeref: CGTypeReference;
@@ -281,14 +281,14 @@ begin
                             Visibility := CGTypeVisibilityKind.Public
                             );
   aFile.Types.Add(lenum);
-  lenum.Comment := GenerateDocumentation(aEntity, true);
+  lenum.XmlDocumentation := GenerateDocumentation(aEntity);
   AddCGAttribute(lenum, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name, lenum, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(lenum,aEntity);
 
   for rodl_member: RodlEnumValue in aEntity.Items do begin
     var cg4_member := new CGEnumValueDefinition(iif(aEntity.PrefixEnumValues,lenum.Name+'_','') + rodl_member.Name);
-    cg4_member.Comment :=  GenerateDocumentation(rodl_member, true);
+    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     GenerateCodeFirstDocumentation(aFile, 'docs_'+aEntity.Name+'_'+rodl_member.Name, cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member,rodl_member);
     if IsCodeFirstCompatible then begin
@@ -337,7 +337,7 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public
                                          );
   aFile.Types.Add(ltype);
-  ltype.Comment := GenerateDocumentation(aEntity, true);
+  ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,ltype, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype,aEntity);
@@ -473,7 +473,7 @@ begin
   end;
   {$ENDREGION}
 
-  ProcessAttributes(aEntity, ltype);
+  Intf_ProcessAttributes(aEntity, ltype);
 
   if aEntity.Count > 0 then begin
     {$REGION public procedure Assign(Source: TPersistent); override;}
@@ -598,7 +598,7 @@ begin
                                           (lp+rodl_member.Name).AsNamedIdentifierExpression,
                                           ('f'+rodl_member.Name).AsNamedIdentifierExpression,
                                           Visibility := CGMemberVisibilityKind.Published);
-    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
     if IsCodeFirstCompatible then begin
@@ -647,7 +647,7 @@ begin
   var ltype := new CGClassTypeDefinition(larrayname,'TROArray'.AsTypeReference,
                               Visibility := CGTypeVisibilityKind.Public,
                               Condition := cond_ROUseGenerics_inverted,
-                              Comment := GenerateDocumentation(aEntity, true)
+                              XmlDocumentation := GenerateDocumentation(aEntity)
                               );
   AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,ltype, aEntity.Documentation);
@@ -807,7 +807,7 @@ begin
   lm.Statements.Add(new CGAssignmentStatement(fCount,anElementCount));
   {$ENDREGION}
 
-  ProcessAttributes(aEntity,ltype);
+  Intf_ProcessAttributes(aEntity,ltype);
 
   {$REGION public class function GetItemType: PTypeInfo; override;}
   lm := new CGMethodDefinition('GetItemType',
@@ -1313,7 +1313,7 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public
                                          );
   aFile.Types.Add(ltype);
-  ltype.Comment := GenerateDocumentation(aEntity, true);
+  ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,ltype, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, aEntity);
@@ -1405,7 +1405,7 @@ begin
   {$ENDREGION}
   end;
 
-  ProcessAttributes(aEntity, ltype);
+  Intf_ProcessAttributes(aEntity, ltype);
 
   if aEntity.Count > 0 then begin
     {$REGION public procedure Assign(Source: EROException); override;}
@@ -1548,7 +1548,7 @@ begin
                                           (lp+rodl_member.Name).AsNamedIdentifierExpression,
                                           ('f'+rodl_member.Name).AsNamedIdentifierExpression,
                                           Visibility := CGMemberVisibilityKind.Published);
-    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
     if IsCodeFirstCompatible then begin
@@ -1602,7 +1602,7 @@ begin
     ltype.Ancestors.Add("IROService".AsTypeReference);
 
 
-  ltype.Comment := GenerateDocumentation(aEntity, true);
+  ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,ltype, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, aEntity);
   ltype.InterfaceGuid := aEntity.DefaultInterface.EntityID;
@@ -1613,7 +1613,7 @@ begin
     var cg4_member := new CGMethodDefinition(rodl_member.Name,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
-    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
     for rodl_param in rodl_member.Items do begin
@@ -1630,6 +1630,7 @@ begin
 //        end;
         GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name+'_'+rodl_param.Name,cg4_param, rodl_param.Documentation);
         GenerateCodeFirstCustomAttributes(cg4_param, rodl_param);
+        cg4_param.XmlDocumentation := GenerateDocumentation(rodl_param);
         cg4_member.Parameters.Add(cg4_param);
       end;
     end;
@@ -2194,7 +2195,7 @@ begin
     ltype.Ancestors.Add("IROEventSink".AsTypeReference);
 
 
-  ltype.Comment := GenerateDocumentation(aEntity, true);
+  ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,ltype, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, aEntity);
 
@@ -2206,7 +2207,7 @@ begin
     var cg4_member := new CGMethodDefinition(rodl_member.Name,
                                       Visibility := CGMemberVisibilityKind.Public,
                                       CallingConvention := CGCallingConventionKind.Register);
-    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
     for rodl_param in rodl_member.Items do begin
@@ -2361,12 +2362,19 @@ begin
     (aLibrary.CustomAttributes_lower['serializeinitializedstructvalues'] = '1');
 end;
 
-method DelphiRodlCodeGen.ProcessAttributes(aEntity: RodlEntity; aType: CGClassTypeDefinition; AlwaysWrite: Boolean := False);
+method DelphiRodlCodeGen.Intf_ProcessAttributes(aEntity: RodlEntity; aType: CGClassTypeDefinition; AlwaysWrite: Boolean := False);
 begin
   if not AlwaysWrite and (aEntity.CustomAttributes.Count = 0) then exit;
+
+  var l_dict := new Dictionary<String, String>;
+  for each key in aEntity.CustomAttributes.Keys do
+    if not IsServerSideAttribute(key) then
+      l_dict.Add(key, aEntity.CustomAttributes[key]);
+
+
   {$REGION GetAttributeCount}
   var m1 := new CGMethodDefinition("GetAttributeCount",
-                                  [new CGIntegerLiteralExpression(aEntity.CustomAttributes.Count).AsReturnStatement],
+                                  [new CGIntegerLiteralExpression(l_dict.Count).AsReturnStatement],
                                   ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                   Visibility := CGMemberVisibilityKind.Public,
                                   &Static := true,
@@ -2377,9 +2385,9 @@ begin
 
   {$REGION GetAttributeName}
   var lcase: CGStatement;
-  if aEntity.CustomAttributes.Count > 0 then begin
+  if l_dict.Count > 0 then begin
     var lcases := new List<CGSwitchStatementCase>;
-    for item in aEntity.CustomAttributes.Keys index i do
+    for item in l_dict.Keys index i do
       lcases.Add(new CGSwitchStatementCase(new CGIntegerLiteralExpression(i),[CGStatement(item.AsLiteralExpression.AsReturnStatement)].ToList));
 
     lcase := new CGSwitchStatement('aIndex'.AsNamedIdentifierExpression, lcases);
@@ -2398,9 +2406,9 @@ begin
   {$ENDREGION}
 
   {$REGION GetAttributeValue}
-  if aEntity.CustomAttributes.Count > 0 then begin
+  if l_dict.Count > 0 then begin
     var lcases1 := new List<CGSwitchStatementCase>;
-    for item in aEntity.CustomAttributes.Values index i do
+    for item in l_dict.Values index i do
       lcases1.Add(new CGSwitchStatementCase(new CGIntegerLiteralExpression(i),[CGStatement(item.AsLiteralExpression.AsReturnStatement)].ToList));
 
     lcase := new CGSwitchStatement('aIndex'.AsNamedIdentifierExpression,lcases1);
@@ -3429,20 +3437,23 @@ begin
   var lsa := new Dictionary<String,String>;
   var lsa_lower := new Dictionary<String,String>;
   for li in aOperation.CustomAttributes.Keys do
-    if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
-      lsa.Add(li, aOperation.CustomAttributes[li]);
-      lsa_lower.Add(li.ToLowerInvariant, aOperation.CustomAttributes[li]);
-    end;
+    if not IsServerSideAttribute(li) then
+      if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
+        lsa.Add(li, aOperation.CustomAttributes[li]);
+        lsa_lower.Add(li.ToLowerInvariant, aOperation.CustomAttributes[li]);
+      end;
   for li in aService.CustomAttributes.Keys do
-    if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
-      lsa.Add(li, aService.CustomAttributes[li]);
-      lsa_lower.Add(li.ToLowerInvariant, aService.CustomAttributes[li]);
-    end;
+    if not IsServerSideAttribute(li) then
+      if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
+        lsa.Add(li, aService.CustomAttributes[li]);
+        lsa_lower.Add(li.ToLowerInvariant, aService.CustomAttributes[li]);
+      end;
   for li in aLibrary.CustomAttributes.Keys do
-    if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
-      lsa.Add(li, aLibrary.CustomAttributes[li]);
-      lsa_lower.Add(li.ToLowerInvariant, aLibrary.CustomAttributes[li]);
-    end;
+    if not IsServerSideAttribute(li) then
+      if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
+        lsa.Add(li, aLibrary.CustomAttributes[li]);
+        lsa_lower.Add(li.ToLowerInvariant, aLibrary.CustomAttributes[li]);
+      end;
 
   var lsa1 := new Dictionary<String,String>;
   for li in lsa.Keys.OrderBy(b->b) do
@@ -3875,7 +3886,7 @@ end;
 
 method DelphiRodlCodeGen.GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>;
 begin
-  var lunit := GenerateImplementationCodeUnit(aLibrary,aTargetNamespace, aServiceName);
+  var lunit := GenerateImplementationCodeUnit(aLibrary, aTargetNamespace, aServiceName);
   var service := aLibrary.Services.FindEntity(aServiceName);
   result := new Dictionary<String,String>;
   result.Add(Path.ChangeExtension(lunit.FileName, Generator.defaultFileExtension),
@@ -3958,7 +3969,7 @@ begin
                                      Condition := CF_condition));
   end;
 
-  lservice.Comment := GenerateDocumentation(aEntity, true);
+  lservice.XmlDocumentation := GenerateDocumentation(aEntity);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,lservice, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(lservice, aEntity);
 
@@ -3985,7 +3996,7 @@ begin
 
     var httpapi_attr := GetHttpAPIAttribute(rodl_member);
     if assigned(httpapi_attr) then AddCGAttribute(cg4_member, httpapi_attr);
-    cg4_member.Comment := GenerateDocumentation(rodl_member, true);
+    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
 
@@ -4804,6 +4815,7 @@ method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEnt
 begin
   if IsCodeFirstCompatible then begin
     for k in aEntity.CustomAttributes.Keys do begin
+
       if IsHttpAPIAttribute(k) then continue;
       var attr := new CGAttribute('ROCustom'.AsTypeReference,
                                   [k.AsLiteralExpression.AsCallParameter,
@@ -4948,7 +4960,7 @@ begin
                                                  "TObject".AsTypeReference,
                                                  Visibility := CGTypeVisibilityKind.Public);
   //AddCGAttribute(LibraryAttributes, attr_ROSkip);
-  ProcessAttributes(aLibrary, LibraryAttributes, true);
+  Intf_ProcessAttributes(aLibrary, LibraryAttributes, true);
   var ldefaultnamespace := if CanUseNameSpace then
                               targetNamespace
                             else

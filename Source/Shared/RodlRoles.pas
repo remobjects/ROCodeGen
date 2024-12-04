@@ -15,6 +15,12 @@ type
 
     property Role: String;
     property &Not: Boolean;
+
+    [ToString]
+    method ToString: String;
+    begin
+      exit (if self.&Not then "!" else "") + self.Role;
+    end;
   end;
 
   RodlRoles = public partial class

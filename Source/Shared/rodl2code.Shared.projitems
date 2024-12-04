@@ -91,5 +91,8 @@
       <VirtualFolder>RodlReader</VirtualFolder>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)WindowsHelper.pas" />
+    <Compile Include="$(MSBuildThisFileDirectory)EchoesRodlCodeGen.pas">
+      <VirtualFolder>CodeGens</VirtualFolder>
+    </Compile>
   </ItemGroup>
 </Project>
