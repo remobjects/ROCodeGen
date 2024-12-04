@@ -208,6 +208,7 @@ type
     property FPCMode: State := State.Auto; virtual;
     property CodeFirstMode: State := State.Auto; virtual;
     property GenericArrayMode: State := State.Auto; virtual;
+    property AsyncSupport: Boolean := True;
 
     method GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -1640,57 +1641,58 @@ begin
   end;
   {$ENDREGION}
 
-  {$REGION I%service%_Async}
-  if not String.IsNullOrEmpty(lancestorName) then
-    lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, 'I'+lancestorName+'_Async',Intf_name,lancestorName)
-  else
-    lancestor := 'IROAsyncInterface'.AsTypeReference;
-  ltype := new CGInterfaceTypeDefinition(l_IName_Async,lancestor,
-                                         Visibility := CGTypeVisibilityKind.Public);
-  if not PureDelphi then ltype.InterfaceGuid := Guid.NewGuid;
+  if AsyncSupport then begin
+    {$REGION I%service%_Async}
+    if not String.IsNullOrEmpty(lancestorName) then
+      lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, 'I'+lancestorName+'_Async',Intf_name,lancestorName)
+    else
+      lancestor := 'IROAsyncInterface'.AsTypeReference;
+    ltype := new CGInterfaceTypeDefinition(l_IName_Async,lancestor,
+                                           Visibility := CGTypeVisibilityKind.Public);
+    if not PureDelphi then ltype.InterfaceGuid := Guid.NewGuid;
 
-  aFile.Types.Add(ltype);
+    aFile.Types.Add(ltype);
 
-  {$REGION Invoke_%service_method%}
-  for lmem in aEntity.DefaultInterface.Items do
-    ltype.Members.Add(Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, false, true));
-  {$ENDREGION}
+    {$REGION Invoke_%service_method%}
+    for lmem in aEntity.DefaultInterface.Items do
+      ltype.Members.Add(Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, false, true));
+    {$ENDREGION}
 
-  {$REGION Retrieve_%service_method%}
-  for lmem in aEntity.DefaultInterface.Items do
-    if NeedsAsyncRetrieveOperationDefinition(lmem) then
-      ltype.Members.Add(Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, false, true));
-  {$ENDREGION}
+    {$REGION Retrieve_%service_method%}
+    for lmem in aEntity.DefaultInterface.Items do
+      if NeedsAsyncRetrieveOperationDefinition(lmem) then
+        ltype.Members.Add(Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, false, true));
+    {$ENDREGION}
 
 
-  {$ENDREGION}
+    {$ENDREGION}
 
-  {$REGION I%service%_AsyncEx}
-  if not String.IsNullOrEmpty(lancestorName) then
-    lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, 'I'+lancestorName+'_AsyncEx',Intf_name,lancestorName)
-  else
-    lancestor := 'IROAsyncInterfaceEx'.AsTypeReference;
-  ltype := new CGInterfaceTypeDefinition(l_IName_AsyncEx,lancestor,
-                                      Visibility := CGTypeVisibilityKind.Public);
-  if not PureDelphi then ltype.InterfaceGuid := Guid.NewGuid;
-  aFile.Types.Add(ltype);
+    {$REGION I%service%_AsyncEx}
+    if not String.IsNullOrEmpty(lancestorName) then
+      lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, 'I'+lancestorName+'_AsyncEx',Intf_name,lancestorName)
+    else
+      lancestor := 'IROAsyncInterfaceEx'.AsTypeReference;
+    ltype := new CGInterfaceTypeDefinition(l_IName_AsyncEx,lancestor,
+                                        Visibility := CGTypeVisibilityKind.Public);
+    if not PureDelphi then ltype.InterfaceGuid := Guid.NewGuid;
+    aFile.Types.Add(ltype);
 
-  {$REGION Invoke_%service_method%}
-  for lmem in aEntity.DefaultInterface.Items do begin
-    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, false, true));
-    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, true, true));
+    {$REGION Invoke_%service_method%}
+    for lmem in aEntity.DefaultInterface.Items do begin
+      ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, false, true));
+      ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, true, true));
+    end;
+
+    {$ENDREGION}
+
+    {$REGION Retrieve_%service_method%}
+    for lmem in aEntity.DefaultInterface.Items do
+      ltype.Members.Add(Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, false, true));
+    {$ENDREGION}
+
+
+    {$ENDREGION}
   end;
-
-  {$ENDREGION}
-
-  {$REGION Retrieve_%service_method%}
-  for lmem in aEntity.DefaultInterface.Items do
-    ltype.Members.Add(Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, false, true));
-  {$ENDREGION}
-
-
-  {$ENDREGION}
-
   var ldef := 'aDefaultNamespaces'.AsNamedIdentifierExpression.AsCallParameter;
 
   {$REGION Co%service%}
@@ -1767,157 +1769,158 @@ begin
   {$ENDREGION}
 
   {$ENDREGION}
+  if AsyncSupport then begin
+    {$REGION Co%service%_Async}
+    ltype1 := new CGClassTypeDefinition(l_CoName_Async,
+                                            new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
+                                            Visibility := CGTypeVisibilityKind.Public);
+    aFile.Types.Add(ltype1);
 
-  {$REGION Co%service%_Async}
-  ltype1 := new CGClassTypeDefinition(l_CoName_Async,
-                                          new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
-                                          Visibility := CGTypeVisibilityKind.Public);
-  aFile.Types.Add(ltype1);
+    {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_Async; overload;}
+    lmember := new CGMethodDefinition("Create",
+                                    &Static := true,
+                                    Overloaded := true,
+                                    ReturnType := l_IName_Async_typeref,
+                                    Visibility := CGMemberVisibilityKind.Public,
+                                    CallingConvention := CGCallingConventionKind.Register);
+    if aLibrary.DataSnap then
+      lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
 
-  {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_Async; overload;}
-  lmember := new CGMethodDefinition("Create",
-                                  &Static := true,
-                                  Overloaded := true,
-                                  ReturnType := l_IName_Async_typeref,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  CallingConvention := CGCallingConventionKind.Register);
-  if aLibrary.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
 
-  lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
+    l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
+    if aLibrary.DataSnap then
+      l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aMessage'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter);
 
-  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
-  if aLibrary.DataSnap then
-    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aMessage'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter);
-
-  lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
-  ltype1.Members.Add(lmember);
-  {$ENDREGION}
+    lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
+    ltype1.Members.Add(lmember);
+    {$ENDREGION}
 
 
-  {$REGION public class function Create(aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
-  lmember := new CGMethodDefinition("Create",
-                                  &Static := true,
-                                  Overloaded := true,
-                                  ReturnType := l_IName_Async_typeref,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  CallingConvention := CGCallingConventionKind.Register);
-  if aLibrary.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
+    {$REGION public class function Create(aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
+    lmember := new CGMethodDefinition("Create",
+                                    &Static := true,
+                                    Overloaded := true,
+                                    ReturnType := l_IName_Async_typeref,
+                                    Visibility := CGMemberVisibilityKind.Public,
+                                    CallingConvention := CGCallingConventionKind.Register);
+    if aLibrary.DataSnap then
+      lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
+    lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
-  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
-  if aLibrary.DataSnap then
-    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aUri'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add(ldef);
+    l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
+    if aLibrary.DataSnap then
+      l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aUri'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add(ldef);
 
-  lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
-  ltype1.Members.Add(lmember);
-  {$ENDREGION}
+    lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
+    ltype1.Members.Add(lmember);
+    {$ENDREGION}
 
-  {$REGION public class function Create(const aUrl: string; aDefaultNamespaces: string = ''): I%service%; overload;}
-  lmember := new CGMethodDefinition("Create",
-                                  &Static := true,
-                                  Overloaded := true,
-                                  ReturnType := l_IName_Async_typeref,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  CallingConvention := CGCallingConventionKind.Register);
-  if aLibrary.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
+    {$REGION public class function Create(const aUrl: string; aDefaultNamespaces: string = ''): I%service%; overload;}
+    lmember := new CGMethodDefinition("Create",
+                                    &Static := true,
+                                    Overloaded := true,
+                                    ReturnType := l_IName_Async_typeref,
+                                    Visibility := CGMemberVisibilityKind.Public,
+                                    CallingConvention := CGCallingConventionKind.Register);
+    if aLibrary.DataSnap then
+      lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
-  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
-  if aLibrary.DataSnap then
-    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aUrl'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add(ldef);
+    l_new := new CGNewInstanceExpression(l_Tname_AsyncProxy_typeref);
+    if aLibrary.DataSnap then
+      l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aUrl'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add(ldef);
 
-  lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
-  ltype1.Members.Add(lmember);
-  {$ENDREGION}
+    lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_Async_typeref));
+    ltype1.Members.Add(lmember);
+    {$ENDREGION}
 
-  {$ENDREGION}
+    {$ENDREGION}
 
-  {$REGION Co%service%_AsyncEx}
-  ltype1 := new CGClassTypeDefinition(l_CoName_AsyncEx,
-                                      new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
-                                      Visibility := CGTypeVisibilityKind.Public);
-  aFile.Types.Add(ltype1);
+    {$REGION Co%service%_AsyncEx}
+    ltype1 := new CGClassTypeDefinition(l_CoName_AsyncEx,
+                                        new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
+                                        Visibility := CGTypeVisibilityKind.Public);
+    aFile.Types.Add(ltype1);
 
-  {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_AsyncEx; overload;}
-  lmember := new CGMethodDefinition("Create",
-                                  &Static := true,
-                                  Overloaded := true,
-                                  ReturnType := l_IName_AsyncEx_typeref,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  CallingConvention := CGCallingConventionKind.Register);
-  if aLibrary.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
+    {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_AsyncEx; overload;}
+    lmember := new CGMethodDefinition("Create",
+                                    &Static := true,
+                                    Overloaded := true,
+                                    ReturnType := l_IName_AsyncEx_typeref,
+                                    Visibility := CGMemberVisibilityKind.Public,
+                                    CallingConvention := CGCallingConventionKind.Register);
+    if aLibrary.DataSnap then
+      lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aMessage',IROMessage_typeref, Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aTransportChannel',IROTransportChannel_typeref));
 
-  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
-  if aLibrary.DataSnap then
-    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aMessage'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
+    if aLibrary.DataSnap then
+      l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aMessage'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aTransportChannel'.AsNamedIdentifierExpression.AsCallParameter);
 
-  lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
-  ltype1.Members.Add(lmember);
-  {$ENDREGION}
+    lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
+    ltype1.Members.Add(lmember);
+    {$ENDREGION}
 
-  {$REGION public class function Create(aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
-  lmember := new CGMethodDefinition("Create",
-                                  &Static := true,
-                                  Overloaded := true,
-                                  ReturnType := l_IName_AsyncEx_typeref,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  CallingConvention := CGCallingConventionKind.Register);
-  if aLibrary.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
+    {$REGION public class function Create(aUri: TROUri; aDefaultNamespaces: string = ''): I%service%; overload;}
+    lmember := new CGMethodDefinition("Create",
+                                    &Static := true,
+                                    Overloaded := true,
+                                    ReturnType := l_IName_AsyncEx_typeref,
+                                    Visibility := CGMemberVisibilityKind.Public,
+                                    CallingConvention := CGCallingConventionKind.Register);
+    if aLibrary.DataSnap then
+      lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aUri',new CGConstantTypeReference('TROUri'.AsTypeReference)));
+    lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
-  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
-  if aLibrary.DataSnap then
-    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aUri'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add(ldef);
+    l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
+    if aLibrary.DataSnap then
+      l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aUri'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add(ldef);
 
-  lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
-  ltype1.Members.Add(lmember);
-  {$ENDREGION}
+    lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
+    ltype1.Members.Add(lmember);
+    {$ENDREGION}
 
-  {$REGION public class function Create(const aUrl: string): I%service%; overload;}
-  lmember := new CGMethodDefinition("Create",
-                                  &Static := true,
-                                  Overloaded := true,
-                                  ReturnType := l_IName_AsyncEx_typeref,
-                                  Visibility := CGMemberVisibilityKind.Public,
-                                  CallingConvention := CGCallingConventionKind.Register);
-  if aLibrary.DataSnap then
-    lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
-  lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
+    {$REGION public class function Create(const aUrl: string): I%service%; overload;}
+    lmember := new CGMethodDefinition("Create",
+                                    &Static := true,
+                                    Overloaded := true,
+                                    ReturnType := l_IName_AsyncEx_typeref,
+                                    Visibility := CGMemberVisibilityKind.Public,
+                                    CallingConvention := CGCallingConventionKind.Register);
+    if aLibrary.DataSnap then
+      lmember.Parameters.Add(new CGParameterDefinition('anAppServerName',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aUrl',ResolveStdtypes(CGPredefinedTypeReference.String), Modifier := CGParameterModifierKind.Const));
+    lmember.Parameters.Add(new CGParameterDefinition('aDefaultNamespaces',ResolveStdtypes(CGPredefinedTypeReference.String), DefaultValue := ''.AsLiteralExpression));
 
-  l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
-  if aLibrary.DataSnap then
-    l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add('aUrl'.AsNamedIdentifierExpression.AsCallParameter);
-  l_new.Parameters.Add(ldef);
+    l_new := new CGNewInstanceExpression(l_Tname_AsyncProxyEx_typeref);
+    if aLibrary.DataSnap then
+      l_new.Parameters.Add('anAppServerName'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add('aUrl'.AsNamedIdentifierExpression.AsCallParameter);
+    l_new.Parameters.Add(ldef);
 
-  lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
+    lmember.Statements.Add(cppGenerateProxyCast(l_new,l_IName_AsyncEx_typeref));
 
-  ltype1.Members.Add(lmember);
-  {$ENDREGION}
+    ltype1.Members.Add(lmember);
+    {$ENDREGION}
 
-  {$ENDREGION}
+    {$ENDREGION}
+  end;
 
   {$REGION T%service%_Proxy}
   if not String.IsNullOrEmpty(lancestorName) then
@@ -2097,6 +2100,7 @@ begin
   cpp_GenerateProxyConstructors(aLibrary, aEntity, ltype1);
   {$ENDREGION}
 
+  if AsyncSupport then begin
   {$REGION T%service%_AsyncProxy}
   if not String.IsNullOrEmpty(lancestorName) then
     lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, 'T'+lancestorName+'_AsyncProxy',Intf_name,lancestorName)
@@ -2167,6 +2171,7 @@ begin
   cpp_GenerateProxyConstructors(aLibrary, aEntity, ltype1);
   {$ENDREGION}
 
+  end;
   {$REGION initialization/finalization}
   aFile.Initialization:Add(new CGMethodCallExpression(nil, 'RegisterProxyClass',
                                                      [String.Format('I{0}_IID', l_EntityName).AsNamedIdentifierExpression.AsCallParameter,

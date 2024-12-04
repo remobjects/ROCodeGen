@@ -152,11 +152,15 @@ begin
 
       if ParseAddParams(lparams,DelphiHydra) = '1' then
         DelphiRodlCodeGen(codegen).IsHydra := true;
+      if ParseAddParams(lparams,AsyncSupport) = '0' then
+        DelphiRodlCodeGen(codegen).AsyncSupport := false;
     end;
     Codegen4Platform.CppBuilder: begin
       codegen := new CPlusPlusBuilderRodlCodeGen;
       if ParseAddParams(lparams, CBuilderSplitTypes) = '1' then
         CPlusPlusBuilderRodlCodeGen(codegen).SplitTypes := true;
+      if ParseAddParams(lparams,AsyncSupport) = '0' then
+        CPlusPlusBuilderRodlCodeGen(codegen).AsyncSupport := false;
     end;
     Codegen4Platform.Java: begin
       codegen := new JavaRodlCodeGen;

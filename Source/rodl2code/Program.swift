@@ -53,6 +53,7 @@ func writeSyntax() {
 	writeLn("  --genericarray:<on|off|auto> (Delphi only)")
 	writeLn("  --splittypes (BCB only)")
 	writeLn("  --hydra (Delphi only)")
+	writeLn("  --skipasync (Delphi/BCB)")
 	writeLn("  --codedom (.NET only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
@@ -344,7 +345,7 @@ do {
 			activeServerAccessCodeGen = DelphiServerAccessCodeGen(rodl:rodlLibrary)
 		case "bcb", "c++builder":
 			options["platform"] = "bcb"
-			options["language"] = "bcb" // force language to C++(Builder)
+			options["language"] = "cpp" // force language to C++(Builder)
 			serverSupport = true
 			activeRodlCodeGen = CPlusPlusBuilderRodlCodeGen()
 			activeServerAccessCodeGen = CPlusPlusBuilderServerAccessCodeGen(rodl:rodlLibrary)
@@ -370,9 +371,16 @@ do {
 		if options["splittypes"] != nil {
 			lcodegen.SplitTypes = true
 		}
+		if options["skipasync"] != nil {
+			lcodegen.AsyncSupport = false
+		}
 	}
 	if (options["platform"] == "delphi") {
 		let lcodegen = (activeRodlCodeGen as? DelphiRodlCodeGen)?;
+
+		if options["skipasync"] != nil {
+			lcodegen.AsyncSupport = false
+		}
 
 		if options["xe2"] != nil {
 			switch options["xe2"]?.ToLowerInvariant() {
@@ -618,7 +626,7 @@ do {
 					}
 
 					processServices()
-					if options["language"] == "bcb" {
+					if options["language"] == "cpp" {
 						activeRodlCodeGen?.Generator = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
 						(activeRodlCodeGen as? DelphiRodlCodeGen)?.GenerateDFMs = false
 						processServices()
