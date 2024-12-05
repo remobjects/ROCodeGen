@@ -73,7 +73,6 @@ type
     method GenerateImplementationCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit; override;
     method GenerateImplementationFiles(aFile: CGCodeUnit; aLibrary: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;override;
     begin
-      var service := aLibrary.Services.FindEntity(aServiceName);
       result := new Dictionary<String,String>;
       result.Add(Path.ChangeExtension(aFile.FileName, Generator.defaultFileExtension),
                  Generator.GenerateUnit(aFile));
@@ -348,10 +347,6 @@ begin
     GenerateCustomAttributeHandlers(ltype, aEntity);
     aFile.Types.Add(ltype);
     CodeGenTypes.Add(l_safename.ToLowerInvariant, l_safename.AsTypeReference);
-  end
-  else begin
-    // generate simple `array of element`
-    CodeGenTypes.Add(l_safename.ToLowerInvariant, new CGArrayTypeReference(ResolveDataTypeToTypeRef(aLibrary, aEntity.ElementType)));
   end;
 end;
 
@@ -1334,6 +1329,12 @@ begin
                                        &namespace(new CGNamespaceReference(lent.FromUsedRodl:Includes:NetModule))
                                        isClassType(not isEnum(aLibrary, aOrigType));
       end;
+      if lent is RodlArray then begin
+        if lent.HasCustomAttributes or not String.IsNullOrEmpty(lent.Documentation) then
+          exit aDataType.AsTypeReference(false)
+        else
+          exit new CGArrayTypeReference(ResolveDataTypeToTypeRef(aLibrary, RodlArray(lent).ElementType))
+      end;
     end;
     exit aDataType.AsTypeReference(not isEnum(aLibrary, aOrigType));
   end;
@@ -1528,7 +1529,6 @@ begin
     end;
     var isDisposerNeeded := false;
     for rodl_param in rodl_member.Items do
-      if rodl_param.ParamFlag = ParamFlags.InOut then
         if IsParameterDisposerNeeded(rodl_param) then begin
           isDisposerNeeded := true;
           break;
@@ -1598,9 +1598,9 @@ begin
 
     if rodl_member.Result <> nil then
       if IsParameterDisposerNeeded(rodl_member.Result) then
-      l_body.Add(new CGMethodCallExpression(self.OBJECT_DISPOSER_NAME.AsNamedIdentifierExpression,
-                                            "Add",
-                                            [rodl_member.Result.Name.AsNamedIdentifierExpression.AsCallParameter]));
+        l_body.Add(new CGMethodCallExpression(self.OBJECT_DISPOSER_NAME.AsNamedIdentifierExpression,
+                                              "Add",
+                                              [rodl_member.Result.Name.AsNamedIdentifierExpression.AsCallParameter]));
     for rodl_param in rodl_member.Items do begin
       if (rodl_param.ParamFlag in [ParamFlags.Out, ParamFlags.InOut]) and IsParameterDisposerNeeded(rodl_param) then
         l_body.Add(new CGMethodCallExpression(self.OBJECT_DISPOSER_NAME.AsNamedIdentifierExpression,
