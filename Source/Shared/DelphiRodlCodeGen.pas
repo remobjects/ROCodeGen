@@ -46,7 +46,7 @@ type
     property cond_ROUseGenerics_inverted: CGConditionalDefine;
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
     method GenerateCodeFirstDocumentation(aFile: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
-    method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
+    method GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity; aExcludeServiceGroups: Boolean := true);
     method GetHttpAPIAttribute(aEntity: RodlEntity): CGAttribute;
     {$ENDREGION}
     {$REGION support methods}
@@ -2202,7 +2202,7 @@ begin
 
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,ltype, aEntity.Documentation);
-  GenerateCodeFirstCustomAttributes(ltype, aEntity);
+  GenerateCodeFirstCustomAttributes(ltype, aEntity, false);
 
   ltype.InterfaceGuid := aEntity.DefaultInterface.EntityID;
   aFile.Types.Add(ltype);
@@ -3974,9 +3974,9 @@ begin
                                      Condition := CF_condition));
   end;
 
-  lservice.XmlDocumentation := GenerateDocumentation(aEntity);
+  //lservice.XmlDocumentation := GenerateDocumentation(aEntity);
   GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name,lservice, aEntity.Documentation);
-  GenerateCodeFirstCustomAttributes(lservice, aEntity);
+  GenerateCodeFirstCustomAttributes(lservice, aEntity, false);
 
   aFile.Types.Add(lservice);
   cpp_IUnknownSupport(aLibrary, aEntity, lservice);
@@ -4001,7 +4001,7 @@ begin
 
     var httpapi_attr := GetHttpAPIAttribute(rodl_member);
     if assigned(httpapi_attr) then AddCGAttribute(cg4_member, httpapi_attr);
-    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
+    //cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     GenerateCodeFirstDocumentation(aFile,'docs_'+aEntity.Name+'_'+rodl_member.Name,cg4_member, rodl_member.Documentation);
     GenerateCodeFirstCustomAttributes(cg4_member, rodl_member);
 
@@ -4816,17 +4816,28 @@ begin
   end;
 end;
 
-method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity);
+method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity; aExcludeServiceGroups: Boolean := true);
 begin
   if IsCodeFirstCompatible then begin
     for k in aEntity.CustomAttributes.Keys do begin
 
       if IsHttpAPIAttribute(k) then continue;
-      var attr := new CGAttribute('ROCustom'.AsTypeReference,
-                                  [k.AsLiteralExpression.AsCallParameter,
-                                   aEntity.CustomAttributes[k].AsLiteralExpression.AsCallParameter]);
-      if CodeFirstMode = State.Auto then attr.Condition := CF_condition;
-      AddCGAttribute(aType, attr);
+      if aExcludeServiceGroups and k.EqualsIgnoringCase('ROServiceGroups') then continue;
+      if k.EqualsIgnoringCase('ROServiceGroups') then begin
+        for it in aEntity.CustomAttributes[k].Split(",", true) do begin
+          var attr := new CGAttribute('ROServiceGroup'.AsTypeReference,
+                                      [it.AsLiteralExpression.AsCallParameter]);
+          if CodeFirstMode = State.Auto then attr.Condition := CF_condition;
+          AddCGAttribute(aType, attr);
+        end;
+      end
+      else begin
+        var attr := new CGAttribute('ROCustom'.AsTypeReference,
+                                    [k.AsLiteralExpression.AsCallParameter,
+                                     aEntity.CustomAttributes[k].AsLiteralExpression.AsCallParameter]);
+        if CodeFirstMode = State.Auto then attr.Condition := CF_condition;
+        AddCGAttribute(aType, attr);
+      end;
     end;
   end;
 end;
