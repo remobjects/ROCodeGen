@@ -226,6 +226,9 @@ begin
     end;
     Codegen4Language.Delphi: begin
       codegen.Generator := new CGDelphiCodeGenerator(splitLinesLongerThan := 200);
+      if codegen is DelphiRodlCodeGen then
+        if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.On then
+          CGDelphiCodeGenerator(codegen.Generator).Dialect := CGPascalCodeGeneratorDialect.Delphi2009;
       llang := 'delphi';
       lfileext := 'pas';
     end;

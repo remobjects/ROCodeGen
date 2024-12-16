@@ -384,7 +384,11 @@ do {
 
 		if options["xe2"] != nil {
 			switch options["xe2"]?.ToLowerInvariant() {
-				case "on": lcodegen.DelphiXE2Mode = State.On;
+				case "on":
+					lcodegen.DelphiXE2Mode = State.On;
+					if codegen is CGDelphiCodeGenerator {
+						(codegen as? CGDelphiCodeGenerator)?.Dialect = .Delphi2009;
+					}
 				case "off": lcodegen.DelphiXE2Mode = State.Off;
 				case "auto": lcodegen.DelphiXE2Mode = State.Auto;
 				default:
