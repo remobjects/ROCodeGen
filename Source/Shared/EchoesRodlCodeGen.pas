@@ -80,33 +80,61 @@ type
     method GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>; override;
   end;
 
+extension method String.AsTypeReference_NotNullable: not nullable CGTypeReference;
+extension method String.AsTypeReference_Nullable: not nullable CGTypeReference;
+extension method String.AsTypeReference_Nullable2: not nullable CGTypeReference;
 implementation
+
+extension method String.AsTypeReference_NotNullable: not nullable CGTypeReference;
+begin
+  exit self.AsTypeReference(CGTypeNullabilityKind.NotNullable);
+end;
+
+extension method String.AsTypeReference_Nullable: not nullable CGTypeReference;
+begin
+  exit self.AsTypeReference(CGTypeNullabilityKind.NullableUnwrapped);
+end;
+
+extension method String.AsTypeReference_Nullable2: not nullable CGTypeReference;
+begin
+  exit new CGNamedTypeReference(self) defaultNullability(CGTypeNullabilityKind.NotNullable) nullability(CGTypeNullabilityKind.NullableNotUnwrapped);
+  //exit self.AsTypeReference(CGTypeNullabilityKind.NullableUnwrapped);
+end;
 
 constructor EchoesRodlCodeGen;
 begin
   CodeGenTypes.Add("integer",         CGPredefinedTypeReference.Int32);
-  CodeGenTypes.Add("datetime",        "System.DateTime".AsTypeReference);
+  CodeGenTypes.Add("datetime",        "System.DateTime".AsTypeReference_NotNullable);
   CodeGenTypes.Add("double",          CGPredefinedTypeReference.Double);
-  CodeGenTypes.Add("currency",        "System.Decimal".AsTypeReference);
+  CodeGenTypes.Add("currency",        "System.Decimal".AsTypeReference_NotNullable);
   CodeGenTypes.Add("widestring",      CGPredefinedTypeReference.String);
   CodeGenTypes.Add("ansistring",      CGPredefinedTypeReference.String);
   CodeGenTypes.Add("int64",           CGPredefinedTypeReference.Int64);
   CodeGenTypes.Add("boolean",         CGPredefinedTypeReference.Boolean);
   CodeGenTypes.Add("variant",         CGPredefinedTypeReference.Object);
-  CodeGenTypes.Add("binary",          "RemObjects.SDK.Types.Binary".AsTypeReference);
-  CodeGenTypes.Add("xml",             "System.Xml.XmlNode".AsTypeReference);
-  CodeGenTypes.Add("guid",            "System.Guid".AsTypeReference);
-  CodeGenTypes.Add("decimal",         "System.Decimal".AsTypeReference);
+  CodeGenTypes.Add("binary",          "RemObjects.SDK.Types.Binary".AsTypeReference_Nullable);
+  CodeGenTypes.Add("xml",             "System.Xml.XmlNode".AsTypeReference_Nullable);
+  CodeGenTypes.Add("guid",            "System.Guid".AsTypeReference_NotNullable);
+  CodeGenTypes.Add("decimal",         "System.Decimal".AsTypeReference_NotNullable);
   CodeGenTypes.Add("utf8string",      CGPredefinedTypeReference.String);
-  CodeGenTypes.Add("xsdatetime",      "RemObjects.SDK.Types.XsDateTime".AsTypeReference);
-  CodeGenTypes.Add("nullableinteger", GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Int32]));
-  CodeGenTypes.Add("nullabledatetime",GenerateGenericType("System.Nullable", ["System.DateTime".AsTypeReference]));
-  CodeGenTypes.Add("nullabledouble",  GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Double]));
-  CodeGenTypes.Add("nullablecurrency",GenerateGenericType("System.Nullable", ["System.Decimal".AsTypeReference]));
-  CodeGenTypes.Add("nullableint64",   GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Int64]));
-  CodeGenTypes.Add("nullableboolean", GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Boolean]));
-  CodeGenTypes.Add("nullableguid",    GenerateGenericType("System.Nullable", ["System.Guid".AsTypeReference]));
-  CodeGenTypes.Add("nullabledecimal", GenerateGenericType("System.Nullable", ["System.Decimal".AsTypeReference]));
+  CodeGenTypes.Add("xsdatetime",      "RemObjects.SDK.Types.XsDateTime".AsTypeReference_Nullable);
+  //CodeGenTypes.Add("nullableinteger", GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Int32]));
+  //CodeGenTypes.Add("nullabledatetime",GenerateGenericType("System.Nullable", ["System.DateTime".AsTypeReference_NotNullable]));
+  //CodeGenTypes.Add("nullabledouble",  GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Double]));
+  //CodeGenTypes.Add("nullablecurrency",GenerateGenericType("System.Nullable", ["System.Decimal".AsTypeReference_NotNullable]));
+  //CodeGenTypes.Add("nullableint64",   GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Int64]));
+  //CodeGenTypes.Add("nullableboolean", GenerateGenericType("System.Nullable", [CGPredefinedTypeReference.Boolean]));
+  //CodeGenTypes.Add("nullableguid",    GenerateGenericType("System.Nullable", ["System.Guid".AsTypeReference_NotNullable]));
+  //CodeGenTypes.Add("nullabledecimal", GenerateGenericType("System.Nullable", ["System.Decimal".AsTypeReference_NotNullable]));
+
+  CodeGenTypes.Add("nullableinteger", CGPredefinedTypeReference.Int32.copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped));
+  CodeGenTypes.Add("nullabledatetime","System.DateTime".AsTypeReference_Nullable2);
+  CodeGenTypes.Add("nullabledouble",  CGPredefinedTypeReference.Double.copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped));
+  CodeGenTypes.Add("nullablecurrency","System.Decimal".AsTypeReference_Nullable2);
+  CodeGenTypes.Add("nullableint64",   CGPredefinedTypeReference.Int64.copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped));
+  CodeGenTypes.Add("nullableboolean", CGPredefinedTypeReference.Boolean.copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped));
+  CodeGenTypes.Add("nullableguid",    "System.Guid".AsTypeReference_Nullable2);
+  CodeGenTypes.Add("nullabledecimal", "System.Decimal".AsTypeReference_Nullable2);
 
   fStreamingFormats.Add("decimal", "Decimal");
   fStreamingFormats.Add("currency", "Currency");
@@ -240,9 +268,10 @@ end;
 method EchoesRodlCodeGen.Intf_GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum);
 begin
   var ltype := new CGEnumTypeDefinition(aEntity.Name,
+                            BaseType := CGPredefinedTypeReference.Int32,
                             Visibility := CGTypeVisibilityKind.Public);
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
-  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference));
+  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference_NotNullable));
   ltype.Attributes.Add(GenerateObfuscationAttribute);
   for rodl_member: RodlEnumValue in aEntity.Items index i do begin
     var cg4_member := new CGEnumValueDefinition(rodl_member.Name, i.AsLiteralExpression);
@@ -258,12 +287,12 @@ begin
   if String.IsNullOrEmpty(lAncestorName) then lAncestorName := "RemObjects.SDK.Types.ComplexType";
   var l_SafeEntityName := SafeIdentifier(aEntity.Name);
 
-  var ltype := new CGClassTypeDefinition(l_SafeEntityName, lAncestorName.AsTypeReference,
+  var ltype := new CGClassTypeDefinition(l_SafeEntityName, lAncestorName.AsTypeReference_NotNullable,
                             &Partial := true,
                             Visibility := CGTypeVisibilityKind.Public);
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
-  ltype.Attributes.Add(new CGAttribute("System.Serializable".AsTypeReference));
-  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference,
+  ltype.Attributes.Add(new CGAttribute("System.Serializable".AsTypeReference_NotNullable));
+  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference_NotNullable,
                                          [new CGCallParameter(new CGTypeOfExpression(($"{l_SafeEntityName}_Activator").AsNamedIdentifierExpression), "ActivatorClass")]));
   ltype.Attributes.Add(GenerateObfuscationAttribute);
 
@@ -288,7 +317,7 @@ begin
           //"variant"
           //"binary"
           //"xml"
-          "guid":       l_fld.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference, [l_val.AsLiteralExpression.AsCallParameter]);
+          "guid":       l_fld.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference_NotNullable, [l_val.AsLiteralExpression.AsCallParameter]);
           "decimal":    l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
           "utf8string": l_fld.Initializer := l_val.AsLiteralExpression;
           //"xsdatetime"
@@ -298,7 +327,7 @@ begin
           "nullablecurrency":l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
           "nullableint64":   l_fld.Initializer := Convert.ToInt64(l_val).AsLiteralExpression;
           "nullableboolean": l_fld.Initializer := Convert.ToBoolean(l_val).AsLiteralExpression;
-          "nullableguid":    l_fld.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference,[l_val.AsLiteralExpression.AsCallParameter]);
+          "nullableguid":    l_fld.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference_NotNullable,[l_val.AsLiteralExpression.AsCallParameter]);
           "nullabledecimal": l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
         end;
       end;
@@ -321,7 +350,7 @@ begin
                              new CGMethodCallExpression(CGSelfExpression.Self, "TriggerPropertyChanged",[l_safe.AsLiteralExpression.AsCallParameter])].ToList;
     var sf := GetStreamingFormat(aLibrary, laEntityItem.DataType);
     if sf <> nil then begin
-      l_prop.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference,[sf.AsNamedIdentifierExpression.AsCallParameter]));
+      l_prop.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference_NotNullable,[sf.AsNamedIdentifierExpression.AsCallParameter]));
     end;
     ltype.Members.Add(l_prop);
   end;
@@ -342,41 +371,43 @@ begin
                                              &Partial := true,
                                              Visibility := CGTypeVisibilityKind.Public);
     ltype.XmlDocumentation := GenerateDocumentation(aEntity);
-    ltype.Attributes.Add(new CGAttribute("System.Serializable".AsTypeReference));
-    ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference));
+    ltype.Attributes.Add(new CGAttribute("System.Serializable".AsTypeReference_NotNullable));
+    ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference_NotNullable));
     GenerateCustomAttributeHandlers(ltype, aEntity);
     aFile.Types.Add(ltype);
-    CodeGenTypes.Add(l_safename.ToLowerInvariant, l_safename.AsTypeReference);
   end;
 end;
 
 method EchoesRodlCodeGen.Intf_GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException);
 begin
+  const l_Message_paramname: String = "aMessage";
+  var l_FromServer_paramname: String := "aFromServer";
+
   var lAncestorName := aEntity.AncestorName;
   if String.IsNullOrEmpty(lAncestorName) then lAncestorName := "RemObjects.SDK.Types.ServerException";
   var l_SafeEntityName := SafeIdentifier(aEntity.Name);
 
-  var ltype := new CGClassTypeDefinition(l_SafeEntityName, lAncestorName.AsTypeReference,
+  var ltype := new CGClassTypeDefinition(l_SafeEntityName, lAncestorName.AsTypeReference_NotNullable,
                             &Partial := true,
                             Visibility := CGTypeVisibilityKind.Public);
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
-  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference));
+  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference_NotNullable));
   ltype.Attributes.Add(GenerateObfuscationAttribute);
   {$REGION public constructor(Message: System.String)}
   var l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("Message", ResolveStdtypes(CGPredefinedTypeReference.String)));
-  l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, ["Message".AsNamedIdentifierExpression.AsCallParameter]));
+  l_ctor.Parameters.Add(new CGParameterDefinition(l_Message_paramname, ResolveStdtypes(CGPredefinedTypeReference.String)));
+  l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, [l_Message_paramname.AsNamedIdentifierExpression.AsCallParameter]));
   ltype.Members.Add(l_ctor);
   {$ENDREGION}
 
   {$REGION public constructor(Message: System.String; FromServer: System.Boolean)}
   l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("Message", ResolveStdtypes(CGPredefinedTypeReference.String)));
-  l_ctor.Parameters.Add(new CGParameterDefinition("FromServer", ResolveStdtypes(CGPredefinedTypeReference.Boolean)));
+  l_ctor.Parameters.Add(new CGParameterDefinition(l_Message_paramname, ResolveStdtypes(CGPredefinedTypeReference.String)));
+  l_ctor.Parameters.Add(new CGParameterDefinition(l_FromServer_paramname, ResolveStdtypes(CGPredefinedTypeReference.Boolean)));
 
   l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
-                                                      ["Message".AsNamedIdentifierExpression.AsCallParameter,
-                                                       "FromServer".AsNamedIdentifierExpression.AsCallParameter]));
+                                                      [l_Message_paramname.AsNamedIdentifierExpression.AsCallParameter,
+                                                       l_FromServer_paramname.AsNamedIdentifierExpression.AsCallParameter]));
   ltype.Members.Add(l_ctor);
   {$ENDREGION}
 
@@ -385,29 +416,30 @@ begin
       l_ctor := nil
     else begin
       l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-      l_ctor.Parameters.Add(new CGParameterDefinition("Message", ResolveStdtypes(CGPredefinedTypeReference.String)));
-      l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, ["Message".AsNamedIdentifierExpression.AsCallParameter]));
+      l_ctor.Parameters.Add(new CGParameterDefinition(l_Message_paramname, ResolveStdtypes(CGPredefinedTypeReference.String)));
+      l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, [l_Message_paramname.AsNamedIdentifierExpression.AsCallParameter]));
       ltype.Members.Add(l_ctor);
     end;
 
     {$REGION public %fldname%: %fldtype% read ___%fldname% write ___%fldname%; virtual;}
     for laEntityItem: RodlTypedEntity in aEntity.Items do begin
-      var l_safe := laEntityItem.Name;
+      var l_name := laEntityItem.Name;
+      var l_name_paramname := $"a{laEntityItem.Name}";
       var l_type := ResolveDataTypeToTypeRef(aLibrary, laEntityItem.DataType);
-      var l_prop := new CGPropertyDefinition(l_safe,
+      var l_prop := new CGPropertyDefinition(l_name,
                                              l_type,
                                              Virtuality := CGMemberVirtualityKind.Virtual,
                                              Visibility := CGMemberVisibilityKind.Public);
       var sf := GetStreamingFormat(aLibrary, laEntityItem.DataType);
       if sf <> nil then begin
-        l_prop.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference,[sf.AsNamedIdentifierExpression.AsCallParameter]));
+        l_prop.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference_NotNullable,[sf.AsNamedIdentifierExpression.AsCallParameter]));
       end;
       ltype.Members.Add(l_prop);
 
       if l_ctor <> nil then begin
-        l_ctor.Parameters.Add(new CGParameterDefinition(l_safe, l_type));
-        l_ctor.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(CGSelfExpression.Self, l_safe),
-                                                        l_safe.AsNamedIdentifierExpression));
+        l_ctor.Parameters.Add(new CGParameterDefinition(l_name_paramname, l_type));
+        l_ctor.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(CGSelfExpression.Self, l_name),
+                                                        l_name_paramname.AsNamedIdentifierExpression));
       end;
     end;
     {$ENDREGION}
@@ -426,12 +458,12 @@ begin
   var l_SafeEntityName := SafeIdentifier(aEntity.Name);
   var l_eventName := $"I{l_SafeEntityName}";
 
-  var ltype := new CGInterfaceTypeDefinition(l_eventName, lAncestorName.AsTypeReference,
+  var ltype := new CGInterfaceTypeDefinition(l_eventName, lAncestorName.AsTypeReference_NotNullable,
                             Visibility := CGTypeVisibilityKind.Public);
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   ltype.Attributes.Add(GenerateObfuscationAttribute);
   var l_invokername := $"{l_SafeEntityName}_EventSinkInvoker";
-  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.EventSink".AsTypeReference,
+  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.EventSink".AsTypeReference_NotNullable,
                                        [new CGCallParameter(l_SafeEntityName.AsLiteralExpression, "Name"),
                                         new CGCallParameter(new CGTypeOfExpression(l_invokername.AsNamedIdentifierExpression), "InvokerClass")]));
 
@@ -464,7 +496,7 @@ begin
   else
     lAncestorName := $"{lAncestorName}_EventSinkInvoker";
   var l_invoker := new CGClassTypeDefinition(l_invokername,
-                                             lAncestorName.AsTypeReference,
+                                             lAncestorName.AsTypeReference_NotNullable,
                                              Visibility := CGTypeVisibilityKind.Public);
   l_invoker.Attributes.Add(GenerateObfuscationAttribute);
 
@@ -477,8 +509,8 @@ begin
                                                   &Static := true,
                                                   Visibility := CGMemberVisibilityKind.Public);
     l_invokermethod.Attributes.Add(GenerateObfuscationAttribute);
-    l_invokermethod.Parameters.Add(new CGParameterDefinition(self.INTF_EVENT_HANDLERS_PARAMETER, "RemObjects.SDK.IROEventSinkHandlers".AsTypeReference));
-    l_invokermethod.Parameters.Add(new CGParameterDefinition(self.INTF_MESSAGE_PARAMETER, "RemObjects.SDK.IMessage".AsTypeReference));
+    l_invokermethod.Parameters.Add(new CGParameterDefinition(self.INTF_EVENT_HANDLERS_PARAMETER, "RemObjects.SDK.IROEventSinkHandlers".AsTypeReference_NotNullable));
+    l_invokermethod.Parameters.Add(new CGParameterDefinition(self.INTF_MESSAGE_PARAMETER, "RemObjects.SDK.IMessage".AsTypeReference_NotNullable));
 
     var isDisposerNeeded := false;
     for rodl_param in rodl_member.Items do
@@ -491,7 +523,7 @@ begin
     if isDisposerNeeded then begin
       l_invokermethod.Statements.Add(
           new CGVariableDeclarationStatement(self.OBJECT_DISPOSER_NAME,
-                                              "RemObjects.SDK.ObjectDisposer".AsTypeReference,
+                                              "RemObjects.SDK.ObjectDisposer".AsTypeReference_NotNullable,
                                               new CGNewInstanceExpression("RemObjects.SDK.ObjectDisposer".AsNamedIdentifierExpression)));
       l_body := new List<CGStatement>;
       var l_try := new CGTryFinallyCatchStatement(l_body);
@@ -515,7 +547,7 @@ begin
     end;
     var l_cast := new CGTypeCastExpression(new CGArrayElementAccessExpression(self.INTF_EVENT_HANDLERS_PARAMETER.AsNamedIdentifierExpression,
                                                                               [self.INTF_INDEX.AsNamedIdentifierExpression]),
-                                           l_eventName.AsTypeReference,
+                                           l_eventName.AsTypeReference_NotNullable,
                                            true);
     var l_callmethod := new CGMethodCallExpression(l_cast, rodl_member.Name);
     for rodl_param in rodl_member.Items do
@@ -547,7 +579,7 @@ begin
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
     l_intf.Ancestors.Add(ResolveDataTypeToTypeRef(aLibrary, $"I{aEntity.AncestorName}", aEntity.AncestorName))  //I%ancestor%
   else
-    l_intf.Ancestors.Add("RemObjects.SDK.IROService".AsTypeReference);
+    l_intf.Ancestors.Add("RemObjects.SDK.IROService".AsTypeReference_NotNullable);
 
   aFile.Types.Add(l_intf);
   var l_proxy := new CGClassTypeDefinition($"{aEntity.Name}_Proxy", //%service%_Proxy
@@ -556,8 +588,8 @@ begin
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
     l_proxy.Ancestors.Add(ResolveDataTypeToTypeRef(aLibrary, $"{aEntity.AncestorName}_Proxy", aEntity.AncestorName))  //%ancestor%_Proxy
   else
-    l_proxy.Ancestors.Add("RemObjects.SDK.Proxy".AsTypeReference);
-  l_proxy.ImplementedInterfaces.Add(l_intf.Name.AsTypeReference);
+    l_proxy.Ancestors.Add("RemObjects.SDK.Proxy".AsTypeReference_NotNullable);
+  l_proxy.ImplementedInterfaces.Add(l_intf.Name.AsTypeReference_NotNullable);
   aFile.Types.Add(l_proxy);
 
   Intf_GenerateServiceProxyConstructors(l_proxy);
@@ -569,7 +601,7 @@ begin
                                                Visibility := CGMemberVisibilityKind.Public);
     l_intfmethod.XmlDocumentation := GenerateDocumentation(rodl_member);
     var l_proxymethod := new CGMethodDefinition(rodl_member.Name,
-                                                ImplementsInterface := $"I{aEntity.Name}".AsTypeReference,
+                                                ImplementsInterface := $"I{aEntity.Name}".AsTypeReference_NotNullable,
                                                 ImplementsInterfaceMember := rodl_member.Name,
                                                 Virtuality := CGMemberVirtualityKind.Virtual,
                                                 Visibility := CGMemberVisibilityKind.Public);
@@ -594,7 +626,7 @@ begin
     l_intf.Members.Add(l_intfmethod);
     l_proxy.Members.Add(l_proxymethod);
     l_proxymethod.Statements.Add(new CGVariableDeclarationStatement(self.INTF_LOCAL_MESSAGE,
-                                                                    "RemObjects.SDK.IMessage".AsTypeReference,
+                                                                    "RemObjects.SDK.IMessage".AsTypeReference_NotNullable,
                                                                     new CGMethodCallExpression(CGSelfExpression.Self, self.INTF_GET_MESSAGE)));
     var l_localmessage := self.INTF_LOCAL_MESSAGE.AsNamedIdentifierExpression;
     var l_channel := (new CGPropertyAccessExpression(CGSelfExpression.Self, "ClientChannel"));
@@ -703,19 +735,20 @@ begin
   var l_activator := new CGClassTypeDefinition(
                             $"{l_SafeEntityName}_Activator",
                             CGPredefinedTypeReference.Object, // VB.NET workaround
-                            ["RemObjects.SDK.ITypeActivator".AsTypeReference].ToList,
+                            ["RemObjects.SDK.ITypeActivator".AsTypeReference_NotNullable].ToList,
                             Visibility := CGTypeVisibilityKind.Public);
-  l_activator.Attributes.Add(new CGAttribute("System.Reflection.ObfuscationAttribute".AsTypeReference,
+  l_activator.Attributes.Add(new CGAttribute("System.Reflection.ObfuscationAttribute".AsTypeReference_NotNullable,
                                              [new CGCallParameter(true.AsLiteralExpression, "Exclude"),
                                               new CGCallParameter(false.AsLiteralExpression, "ApplyToMembers")
                                               ]));
   l_activator.Members.Add(new CGConstructorDefinition(&Empty := true,
                                                       Visibility := CGMemberVisibilityKind.Public));
   var l_method := new CGMethodDefinition("CreateInstance",
-                                         [new CGNewInstanceExpression(l_SafeEntityName.AsTypeReference).AsReturnStatement],
-                                         ImplementsInterface := "RemObjects.SDK.ITypeActivator".AsTypeReference,
+                                         [new CGNewInstanceExpression(l_SafeEntityName.AsTypeReference_NotNullable).AsReturnStatement],
+                                         ImplementsInterface := "RemObjects.SDK.ITypeActivator".AsTypeReference_NotNullable,
                                          ImplementsInterfaceMember := "CreateInstance",
-                                         ReturnType := CGPredefinedTypeReference.Object,
+                                         ReturnType := CGPredefinedTypeReference.Object.copyWithNullability(CGTypeNullabilityKind.NotNullable),
+                                        // Virtuality := CGMemberVirtualityKind.Final,
                                          Visibility := CGMemberVisibilityKind.Public);
   l_activator.Members.Add(l_method);
   aFile.Types.Add(l_activator);
@@ -735,20 +768,20 @@ begin
     l_default.Add((new CGNilExpression).AsReturnStatement);
 
     aType.Members.Add(new CGMethodDefinition("GetAttributeName",
-                                             [new CGSwitchStatement("aIndex".AsNamedIdentifierExpression,
+                                             [new CGSwitchStatement("anIndex".AsNamedIdentifierExpression,
                                                                     l_nameCases,
                                                                     l_default)],
-                                             Parameters := [new CGParameterDefinition("aIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
-                                             ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
+                                             Parameters := [new CGParameterDefinition("anIndex", CGPredefinedTypeReference.Int32)].ToList,
+                                             ReturnType := CGPredefinedTypeReference.String,
                                              Virtuality := CGMemberVirtualityKind.Override,
                                              Visibility := CGMemberVisibilityKind.Public));
 
     aType.Members.Add(new CGMethodDefinition("GetAttributeValue",
-                                             [new CGSwitchStatement("aIndex".AsNamedIdentifierExpression,
+                                             [new CGSwitchStatement("anIndex".AsNamedIdentifierExpression,
                                                                     l_valueCases,
                                                                     l_default)],
-                                             Parameters := [new CGParameterDefinition("aIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
-                                             ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
+                                             Parameters := [new CGParameterDefinition("anIndex", CGPredefinedTypeReference.Int32)].ToList,
+                                             ReturnType := CGPredefinedTypeReference.String,
                                              Virtuality := CGMemberVirtualityKind.Override,
                                              Visibility := CGMemberVisibilityKind.Public));
 
@@ -764,6 +797,7 @@ end;
 method EchoesRodlCodeGen.GenerateGenericType(aType: String; aGenericParams: array of CGTypeReference): CGTypeReference;
 begin
   var lResult := new CGNamedTypeReference(aType);
+  lResult.DefaultNullability := CGTypeNullabilityKind.NotNullable;
   lResult.GenericArguments := new List<CGTypeReference>;
   lResult.GenericArguments.Add(aGenericParams);
   exit lResult;
@@ -793,7 +827,7 @@ begin
   var lMethod := new CGMethodDefinition("ReadComplex",
                                         Virtuality := CGMemberVirtualityKind.Override,
                                         Visibility := CGMemberVisibilityKind.Public);
-  lMethod.Parameters.Add(new CGParameterDefinition("serializer", "RemObjects.SDK.Serializer".AsTypeReference));
+  lMethod.Parameters.Add(new CGParameterDefinition("serializer", "RemObjects.SDK.Serializer".AsTypeReference_NotNullable));
 
   var ifStatement := new CGBeginEndBlockStatement;
   var elseStatement := new CGBeginEndBlockStatement;
@@ -845,14 +879,19 @@ begin
     "nullableint64":    exit new CGMethodCallExpression(aSerializer, "ReadNullableInt64",   [l_name]);
     "nullableinteger":  exit new CGMethodCallExpression(aSerializer, "ReadNullableInt32",   [l_name]);
   else
-    var ltype := self.ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);
+    var ltype: CGTypeReference := self.ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);
+    var le: CGExpression;
+    if (ltype is CGNamedTypeReference) and (CGNamedTypeReference(ltype).GenericArguments = nil) then
+      le := CGNamedTypeReference(ltype).FullName.AsNamedIdentifierExpression
+    else
+      le := ltype.AsExpression;
     var lformat := GetStreamingFormat(aLibrary, aEntity.DataType);
     if lformat = nil then lformat := "RemObjects.SDK.StreamingFormat.Default";
     exit new CGTypeCastExpression(
           new CGMethodCallExpression(aSerializer,
                                      "Read",
                                      [l_name,
-                                     new CGTypeOfExpression(ltype.AsExpression).AsCallParameter,
+                                     new CGTypeOfExpression(le).AsCallParameter,
                                      lformat.AsNamedIdentifierExpression.AsCallParameter]),
           ltype,
           true);
@@ -891,13 +930,18 @@ begin
     "nullableinteger":  exit new CGMethodCallExpression(aSerializer, "WriteNullableInt32",   [l_name, l_value]);
   else
     var ltype := self.ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);
+    var le: CGExpression;
+    if (ltype is CGNamedTypeReference) and (CGNamedTypeReference(ltype).GenericArguments = nil) then
+      le := CGNamedTypeReference(ltype).FullName.AsNamedIdentifierExpression
+    else
+      le := ltype.AsExpression;
     var lformat := GetStreamingFormat(aLibrary, aEntity.DataType);
     if String.IsNullOrEmpty(lformat) then lformat := "RemObjects.SDK.StreamingFormat.Default";
     exit new CGMethodCallExpression(aSerializer,
                                    "Write",
                                    [l_name,
                                     l_value,
-                                    new CGTypeOfExpression(ltype.AsExpression).AsCallParameter,
+                                    new CGTypeOfExpression(le).AsCallParameter,
                                     lformat.AsNamedIdentifierExpression.AsCallParameter]);
   end;
 end;
@@ -907,7 +951,7 @@ begin
   var lMethod := new CGMethodDefinition("WriteComplex",
                                         Virtuality := CGMemberVirtualityKind.Override,
                                         Visibility := CGMemberVisibilityKind.Public);
-  lMethod.Parameters.Add(new CGParameterDefinition("serializer", "RemObjects.SDK.Serializer".AsTypeReference));
+  lMethod.Parameters.Add(new CGParameterDefinition("serializer", "RemObjects.SDK.Serializer".AsTypeReference_NotNullable));
 
   var ifStatement := new CGBeginEndBlockStatement;
   var elseStatement := new CGBeginEndBlockStatement;
@@ -937,7 +981,7 @@ begin
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
     l_intf.Ancestors.Add(ResolveDataTypeToTypeRef(aLibrary, $"I{aEntity.AncestorName}_Async", aEntity.AncestorName))  //I%ancestor%_Async
   else
-    l_intf.Ancestors.Add("RemObjects.SDK.IROService_Async".AsTypeReference);
+    l_intf.Ancestors.Add("RemObjects.SDK.IROService_Async".AsTypeReference_NotNullable);
 
   aFile.Types.Add(l_intf);
 
@@ -947,25 +991,25 @@ begin
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
     l_proxy.Ancestors.Add(ResolveDataTypeToTypeRef(aLibrary, $"{aEntity.AncestorName}_AsyncProxy", aEntity.AncestorName))  //%ancestor%_AsyncProxy
   else
-    l_proxy.Ancestors.Add("RemObjects.SDK.AsyncProxy".AsTypeReference);
-  l_proxy.ImplementedInterfaces.Add(l_intf.Name.AsTypeReference);
+    l_proxy.Ancestors.Add("RemObjects.SDK.AsyncProxy".AsTypeReference_NotNullable);
+  l_proxy.ImplementedInterfaces.Add(l_intf.Name.AsTypeReference_NotNullable);
   aFile.Types.Add(l_proxy);
   Intf_GenerateServiceProxyConstructors(l_proxy);
   Intf_GenerateServiceProxyInterfaceNameProperty(l_proxy, aEntity);
 
-  var l_callbackParam := new CGParameterDefinition(self.INTF_CALLBACK, "System.AsyncCallback".AsTypeReference);
+  var l_callbackParam := new CGParameterDefinition(self.INTF_CALLBACK, "System.AsyncCallback".AsTypeReference_Nullable);
   var l_userdataParam := new CGParameterDefinition(self.INTF_USER_DATA, CGPredefinedTypeReference.Object);
-  var l_asyncResult   := new CGParameterDefinition(self.INTF_ASYNC_RESULT, "System.IAsyncResult".AsTypeReference);
+  var l_asyncResult   := new CGParameterDefinition(self.INTF_ASYNC_RESULT, "System.IAsyncResult".AsTypeReference_NotNullable);
   var l_localmessage := self.INTF_LOCAL_MESSAGE.AsNamedIdentifierExpression;
   var l_localMessageVarDeclarationBegin := new CGVariableDeclarationStatement(self.INTF_LOCAL_MESSAGE,
-                                                              "RemObjects.SDK.IMessage".AsTypeReference,
+                                                              "RemObjects.SDK.IMessage".AsTypeReference_NotNullable,
                                                               new CGMethodCallExpression(CGSelfExpression.Self, self.INTF_GET_MESSAGE));
   var l_localMessageVarDeclarationEnd := new CGVariableDeclarationStatement(self.INTF_LOCAL_MESSAGE,
-                                                              "RemObjects.SDK.IMessage".AsTypeReference,
+                                                              "RemObjects.SDK.IMessage".AsTypeReference_NotNullable,
                                                               new CGPropertyAccessExpression(
                                                                   new CGTypeCastExpression(
                                                                       self.INTF_ASYNC_RESULT.AsNamedIdentifierExpression,
-                                                                      "RemObjects.SDK.IClientAsyncResult".AsTypeReference,
+                                                                      "RemObjects.SDK.IClientAsyncResult".AsTypeReference_NotNullable,
                                                                       true),
                                                                   "Message"));
   var l_channel := (new CGPropertyAccessExpression(CGSelfExpression.Self, "ClientChannel"));
@@ -983,17 +1027,17 @@ begin
     l_intf.Members.Add(l_intfEnd);
 
     var l_proxyBegin := new CGMethodDefinition($"Begin{rodl_member.Name}",
-                                               ImplementsInterface := l_IName.AsTypeReference,
+                                               ImplementsInterface := l_IName.AsTypeReference_NotNullable,
                                                ImplementsInterfaceMember := $"Begin{rodl_member.Name}",
                                                Virtuality := CGMemberVirtualityKind.Virtual,
                                                Visibility := CGMemberVisibilityKind.Public);
     var l_proxyEnd := new CGMethodDefinition($"End{rodl_member.Name}",
-                                             ImplementsInterface := l_IName.AsTypeReference,
+                                             ImplementsInterface := l_IName.AsTypeReference_NotNullable,
                                              ImplementsInterfaceMember := $"End{rodl_member.Name}",
                                              Virtuality := CGMemberVirtualityKind.Virtual,
                                              Visibility := CGMemberVisibilityKind.Public);
     var l_proxyAsync := new CGMethodDefinition($"{rodl_member.Name}Async",
-                                               ImplementsInterface := l_IName.AsTypeReference,
+                                               ImplementsInterface := l_IName.AsTypeReference_NotNullable,
                                                ImplementsInterfaceMember := $"{rodl_member.Name}Async",
                                                Virtuality := CGMemberVirtualityKind.Virtual,
                                                Visibility := CGMemberVisibilityKind.Public);
@@ -1030,11 +1074,11 @@ begin
         end;
       end;
     end;
-    l_intfBegin.ReturnType := "System.IAsyncResult".AsTypeReference;
+    l_intfBegin.ReturnType := "System.IAsyncResult".AsTypeReference_NotNullable;
     l_intfBegin.Parameters.Add(l_callbackParam);
     l_intfBegin.Parameters.Add(l_userdataParam);
 
-    l_proxyBegin.ReturnType := "System.IAsyncResult".AsTypeReference;
+    l_proxyBegin.ReturnType := "System.IAsyncResult".AsTypeReference_NotNullable;
     l_proxyBegin.Parameters.Add(l_callbackParam);
     l_proxyBegin.Parameters.Add(l_userdataParam);
 
@@ -1077,7 +1121,7 @@ begin
                                            self.INTF_USER_DATA.AsNamedIdentifierExpression.AsCallParameter]).AsReturnStatement);
 
     var l_try := new CGTryFinallyCatchStatement(l_body);
-    var l_except := new CGCatchBlockStatement("ex", "System.Exception".AsTypeReference);
+    var l_except := new CGCatchBlockStatement("ex", "System.Exception".AsTypeReference_NotNullable);
     if aNames.Count > 0 then
       l_except.Statements.Add(new CGMethodCallExpression(l_localmessage, "ClearAttributes",[l_channel.AsCallParameter]));
     l_except.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, self.INTF_CLEAR_MESSAGE, [l_localmessage.AsCallParameter]));
@@ -1135,11 +1179,11 @@ begin
       lBeginMethodCall.Parameters.Add(CGNilExpression.Nil.AsCallParameter);
       var lEndMethodCall: CGNewInstanceExpression :=
         if assigned(rodl_member.Result) then
-          new CGNewInstanceExpression("System.Func".AsTypeReference)
+          new CGNewInstanceExpression("System.Func".AsTypeReference_NotNullable)
         else
-          new CGNewInstanceExpression("System.Action".AsTypeReference);
+          new CGNewInstanceExpression("System.Action".AsTypeReference_NotNullable);
       lEndMethodCall.GenericArguments := new List<CGTypeReference>;
-      lEndMethodCall.GenericArguments.Add("System.IAsyncResult".AsTypeReference);
+      lEndMethodCall.GenericArguments.Add("System.IAsyncResult".AsTypeReference_NotNullable);
       if assigned(rodl_member.Result) then
         lEndMethodCall.GenericArguments.Add(ResolveDataTypeToTypeRef(aLibrary, rodl_member.Result.DataType));
 
@@ -1159,53 +1203,53 @@ method EchoesRodlCodeGen.Intf_GenerateServiceProxyConstructors(aType: CGClassTyp
 begin
   {$REGION constructor(message: RemObjects.SDK.IMessage; clientChannel: RemObjects.SDK.IClientChannel)}
   var l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("message","RemObjects.SDK.IMessage".AsTypeReference));
-  l_ctor.Parameters.Add(new CGParameterDefinition("clientChannel","RemObjects.SDK.IClientChannel".AsTypeReference));
+  l_ctor.Parameters.Add(new CGParameterDefinition("aMessage","RemObjects.SDK.IMessage".AsTypeReference_NotNullable));
+  l_ctor.Parameters.Add(new CGParameterDefinition("aClientChannel","RemObjects.SDK.IClientChannel".AsTypeReference_NotNullable));
   l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
-                                                       ["message".AsNamedIdentifierExpression.AsCallParameter,
-                                                        "clientChannel".AsNamedIdentifierExpression.AsCallParameter]));
+                                                       ["aMessage".AsNamedIdentifierExpression.AsCallParameter,
+                                                        "aClientChannel".AsNamedIdentifierExpression.AsCallParameter]));
   aType.Members.Add(l_ctor);
   {$ENDREGION}
   {$REGION constructor(message: RemObjects.SDK.IMessage; clientChannel: RemObjects.SDK.IClientChannel; interfaceName: System.String);}
   l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("message","RemObjects.SDK.IMessage".AsTypeReference));
-  l_ctor.Parameters.Add(new CGParameterDefinition("clientChannel","RemObjects.SDK.IClientChannel".AsTypeReference));
-  l_ctor.Parameters.Add(new CGParameterDefinition("interfaceName",CGPredefinedTypeReference.String));
+  l_ctor.Parameters.Add(new CGParameterDefinition("aMessage","RemObjects.SDK.IMessage".AsTypeReference_NotNullable));
+  l_ctor.Parameters.Add(new CGParameterDefinition("aClientChannel","RemObjects.SDK.IClientChannel".AsTypeReference_NotNullable));
+  l_ctor.Parameters.Add(new CGParameterDefinition("anInterfaceName",CGPredefinedTypeReference.String));
 
   l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
-                                                       ["message".AsNamedIdentifierExpression.AsCallParameter,
-                                                        "clientChannel".AsNamedIdentifierExpression.AsCallParameter,
-                                                        "interfaceName".AsNamedIdentifierExpression.AsCallParameter]));
+                                                       ["aMessage".AsNamedIdentifierExpression.AsCallParameter,
+                                                        "aClientChannel".AsNamedIdentifierExpression.AsCallParameter,
+                                                        "anInterfaceName".AsNamedIdentifierExpression.AsCallParameter]));
   aType.Members.Add(l_ctor);
   {$ENDREGION}
   {$REGION constructor(remoteService: RemObjects.SDK.IRemoteService)}
   l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("remoteService","RemObjects.SDK.IRemoteService".AsTypeReference));
+  l_ctor.Parameters.Add(new CGParameterDefinition("aRemoteService","RemObjects.SDK.IRemoteService".AsTypeReference_NotNullable));
   l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
-                                                       ["remoteService".AsNamedIdentifierExpression.AsCallParameter]));
+                                                       ["aRemoteService".AsNamedIdentifierExpression.AsCallParameter]));
   aType.Members.Add(l_ctor);
   {$ENDREGION}
   {$REGION constructor(remoteService: RemObjects.SDK.IRemoteService; interfaceName: System.String)}
   l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("remoteService","RemObjects.SDK.IRemoteService".AsTypeReference));
-  l_ctor.Parameters.Add(new CGParameterDefinition("interfaceName",CGPredefinedTypeReference.String));
+  l_ctor.Parameters.Add(new CGParameterDefinition("aRemoteService","RemObjects.SDK.IRemoteService".AsTypeReference_NotNullable));
+  l_ctor.Parameters.Add(new CGParameterDefinition("anInterfaceName",CGPredefinedTypeReference.String));
   l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
-                                                       ["remoteService".AsNamedIdentifierExpression.AsCallParameter,
-                                                        "interfaceName".AsNamedIdentifierExpression.AsCallParameter]));
+                                                       ["aRemoteService".AsNamedIdentifierExpression.AsCallParameter,
+                                                        "anInterfaceName".AsNamedIdentifierExpression.AsCallParameter]));
   aType.Members.Add(l_ctor);
   {$ENDREGION}
   {$REGION constructor(uri: System.Uri)}
   l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("uri","System.Uri".AsTypeReference));
+  l_ctor.Parameters.Add(new CGParameterDefinition("anUri","System.Uri".AsTypeReference_NotNullable));
   l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
-                                                       ["uri".AsNamedIdentifierExpression.AsCallParameter]));
+                                                       ["anUri".AsNamedIdentifierExpression.AsCallParameter]));
   aType.Members.Add(l_ctor);
   {$ENDREGION}
   {$REGION constructor(url: System.String)}
   l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public);
-  l_ctor.Parameters.Add(new CGParameterDefinition("url",CGPredefinedTypeReference.String));
+  l_ctor.Parameters.Add(new CGParameterDefinition("aUrl",CGPredefinedTypeReference.String));
   l_ctor.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited,
-                                                       ["url".AsNamedIdentifierExpression.AsCallParameter]));
+                                                       ["aUrl".AsNamedIdentifierExpression.AsCallParameter]));
   aType.Members.Add(l_ctor);
   {$ENDREGION}
 end;
@@ -1270,10 +1314,10 @@ begin
   var l_method := new CGMethodDefinition("Create",
                                          &Static := true,
                                          Visibility := CGMemberVisibilityKind.Public);
-  l_method.Parameters.Add(new CGParameterDefinition("message", "RemObjects.SDK.IMessage".AsTypeReference));
-  l_method.Parameters.Add(new CGParameterDefinition("clientChannel", "RemObjects.SDK.IClientChannel".AsTypeReference));
-  l_method.ReturnType := aIntfName.AsTypeReference;
-  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference,
+  l_method.Parameters.Add(new CGParameterDefinition("message", "RemObjects.SDK.IMessage".AsTypeReference_NotNullable));
+  l_method.Parameters.Add(new CGParameterDefinition("clientChannel", "RemObjects.SDK.IClientChannel".AsTypeReference_NotNullable));
+  l_method.ReturnType := aIntfName.AsTypeReference_NotNullable;
+  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference_NotNullable,
                                                       ["message".AsNamedIdentifierExpression.AsCallParameter,
                                                        "clientChannel".AsNamedIdentifierExpression.AsCallParameter])).AsReturnStatement);
   l_cotype.Members.Add(l_method);
@@ -1283,9 +1327,9 @@ begin
   l_method := new CGMethodDefinition("Create",
                                      &Static := true,
                                      Visibility := CGMemberVisibilityKind.Public);
-  l_method.Parameters.Add(new CGParameterDefinition("remoteService", "RemObjects.SDK.IRemoteService".AsTypeReference));
-  l_method.ReturnType := aIntfName.AsTypeReference;
-  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference,
+  l_method.Parameters.Add(new CGParameterDefinition("remoteService", "RemObjects.SDK.IRemoteService".AsTypeReference_NotNullable));
+  l_method.ReturnType := aIntfName.AsTypeReference_NotNullable;
+  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference_NotNullable,
                                                       ["remoteService".AsNamedIdentifierExpression.AsCallParameter])).AsReturnStatement);
   l_cotype.Members.Add(l_method);
   {$ENDREGION}
@@ -1294,9 +1338,9 @@ begin
   l_method := new CGMethodDefinition("Create",
                                      &Static := true,
                                      Visibility := CGMemberVisibilityKind.Public);
-  l_method.Parameters.Add(new CGParameterDefinition("uri", "System.Uri".AsTypeReference));
-  l_method.ReturnType := aIntfName.AsTypeReference;
-  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference,
+  l_method.Parameters.Add(new CGParameterDefinition("uri", "System.Uri".AsTypeReference_NotNullable));
+  l_method.ReturnType := aIntfName.AsTypeReference_NotNullable;
+  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference_NotNullable,
                                                       ["uri".AsNamedIdentifierExpression.AsCallParameter])).AsReturnStatement);
   l_cotype.Members.Add(l_method);
   {$ENDREGION}
@@ -1306,8 +1350,8 @@ begin
                                      &Static := true,
                                      Visibility := CGMemberVisibilityKind.Public);
   l_method.Parameters.Add(new CGParameterDefinition("url", CGPredefinedTypeReference.String));
-  l_method.ReturnType := aIntfName.AsTypeReference;
-  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference,
+  l_method.ReturnType := aIntfName.AsTypeReference_NotNullable;
+  l_method.Statements.Add((new CGNewInstanceExpression(aProxyName.AsTypeReference_NotNullable,
                                                       ["url".AsNamedIdentifierExpression.AsCallParameter])).AsReturnStatement);
   l_cotype.Members.Add(l_method);
   {$ENDREGION}
@@ -1331,12 +1375,12 @@ begin
       end;
       if lent is RodlArray then begin
         if lent.HasCustomAttributes or not String.IsNullOrEmpty(lent.Documentation) then
-          exit aDataType.AsTypeReference(false)
+          exit new CGNamedTypeReference(aDataType, IsClassType := false, DefaultNullability := CGTypeNullabilityKind.NullableUnwrapped)
         else
-          exit new CGArrayTypeReference(ResolveDataTypeToTypeRef(aLibrary, RodlArray(lent).ElementType))
+          exit new CGArrayTypeReference(ResolveDataTypeToTypeRef(aLibrary, RodlArray(lent).ElementType), DefaultNullability := CGTypeNullabilityKind.NullableUnwrapped);
       end;
     end;
-    exit aDataType.AsTypeReference(not isEnum(aLibrary, aOrigType));
+    exit new CGNamedTypeReference(aDataType, IsClassType := not isEnum(aLibrary, aOrigType), DefaultNullability := CGTypeNullabilityKind.NotNullable);
   end;
 end;
 
@@ -1347,14 +1391,14 @@ begin
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
     lservice.Ancestors.Add(ResolveDataTypeToTypeRef(aLibrary, aEntity.AncestorName))
   else
-    lservice.Ancestors.Add("RemObjects.SDK.Server.Service".AsTypeReference);
-  lservice.ImplementedInterfaces.Add($"I{aEntity.Name}".AsTypeReference);
+    lservice.Ancestors.Add("RemObjects.SDK.Server.Service".AsTypeReference_NotNullable);
+  lservice.ImplementedInterfaces.Add($"I{aEntity.Name}".AsTypeReference_NotNullable);
 
   if aEntity.Abstract then
-    lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.Abstract".AsTypeReference))
+    lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.Abstract".AsTypeReference_NotNullable))
   else
-    lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.ClassFactories.StandardClassFactory".AsTypeReference));
-  lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.Service".AsTypeReference,
+    lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.ClassFactories.StandardClassFactory".AsTypeReference_NotNullable));
+  lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.Service".AsTypeReference_NotNullable,
                                           [new CGCallParameter(aEntity.Name.AsLiteralExpression, "Name"),
                                            new CGCallParameter(new CGTypeOfExpression($"{aEntity.Name}_Invoker".AsNamedIdentifierExpression), "InvokerClass"),
                                            new CGCallParameter(new CGTypeOfExpression($"{aEntity.Name}_Activator".AsNamedIdentifierExpression), "ActivatorClass")].ToList));
@@ -1362,13 +1406,13 @@ begin
     var l_groups := aEntity.CustomAttributes["ROServiceGroups"];
     if not String.IsNullOrEmpty(l_groups) then begin
       for each it in l_groups.Split(",") do
-        lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.ServiceGroup".AsTypeReference, [it.AsLiteralExpression.AsCallParameter]));
+        lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.ServiceGroup".AsTypeReference_NotNullable, [it.AsLiteralExpression.AsCallParameter]));
     end;
   end;
 
   lservice.Members.Add(
     new CGFieldDefinition("components",
-                          "System.ComponentModel.Container".AsTypeReference,
+                          "System.ComponentModel.Container".AsTypeReference_Nullable,
                           Initializer := CGNilExpression.Nil,
                           Visibility := CGMemberVisibilityKind.Private));
 
@@ -1387,8 +1431,8 @@ begin
                                                                    ["sessionManager".AsNamedIdentifierExpression.AsCallParameter,
                                                                     "eventManager".AsNamedIdentifierExpression.AsCallParameter]),
                                      new CGMethodCallExpression(CGSelfExpression.Self,"InitializeComponent")],
-                                Parameters := [new CGParameterDefinition("sessionManager", "ISessionManager".AsTypeReference),
-                                               new CGParameterDefinition("eventManager", "IEventSinkManager".AsTypeReference)].ToList,
+                                Parameters := [new CGParameterDefinition("sessionManager", "ISessionManager".AsTypeReference_Nullable),
+                                               new CGParameterDefinition("eventManager", "IEventSinkManager".AsTypeReference_Nullable)].ToList,
                                 Visibility := if aEntity.Abstract then CGMemberVisibilityKind.Protected else CGMemberVisibilityKind.Public));
 
   var l_components := new CGFieldAccessExpression(CGSelfExpression.Self, "components");
@@ -1411,7 +1455,7 @@ begin
   for rodl_member in aEntity.DefaultInterface.Items do begin
     var l_intfmethod := new CGMethodDefinition(rodl_member.Name,
                                                [new CGCommentStatement("Insert code here to implement this method.")],
-                                               ImplementsInterface := $"I{aEntity.Name}".AsTypeReference,
+                                               ImplementsInterface := $"I{aEntity.Name}".AsTypeReference_NotNullable,
                                                ImplementsInterfaceMember := rodl_member.Name,
                                                Virtuality := CGMemberVirtualityKind.Virtual,
                                                Visibility := CGMemberVisibilityKind.Public);
@@ -1440,23 +1484,23 @@ begin
   var l_activator := new CGClassTypeDefinition(
                             $"{l_SafeEntityName}_Activator",
                             CGPredefinedTypeReference.Object, // VB.NET workaround
-                            ["RemObjects.SDK.Server.IServiceActivator".AsTypeReference].ToList,
+                            ["RemObjects.SDK.Server.IServiceActivator".AsTypeReference_NotNullable].ToList,
                             Visibility := CGTypeVisibilityKind.Public);
-  l_activator.Attributes.Add(new CGAttribute("System.Reflection.ObfuscationAttribute".AsTypeReference,
+  l_activator.Attributes.Add(new CGAttribute("System.Reflection.ObfuscationAttribute".AsTypeReference_NotNullable,
                                              [new CGCallParameter(true.AsLiteralExpression, "Exclude"),
                                               new CGCallParameter(false.AsLiteralExpression, "ApplyToMembers")
                                               ]));
   l_activator.Members.Add(new CGConstructorDefinition(&Empty := true,
                                                       Visibility := CGMemberVisibilityKind.Public));
   var l_method := new CGMethodDefinition("CreateInstance",
-                                         ImplementsInterface := "RemObjects.SDK.Server.IServiceActivator".AsTypeReference,
+                                         ImplementsInterface := "RemObjects.SDK.Server.IServiceActivator".AsTypeReference_NotNullable,
                                          ImplementsInterfaceMember := "CreateInstance",
-                                         ReturnType := "RemObjects.SDK.IROService".AsTypeReference,
+                                         ReturnType := "RemObjects.SDK.IROService".AsTypeReference_NotNullable,
                                          Visibility := CGMemberVisibilityKind.Public);
   if aEntity.Abstract then begin
     l_method.Statements.Add(
       new CGThrowExpression(
-        new CGNewInstanceExpression("RemObjects.SDK.Exceptions.ServerSetupException".AsTypeReference,
+        new CGNewInstanceExpression("RemObjects.SDK.Exceptions.ServerSetupException".AsTypeReference_NotNullable,
                                     [$"Cannot activate abstract entity {l_SafeEntityName}".AsLiteralExpression.AsCallParameter])));
   end
   else begin
@@ -1464,7 +1508,7 @@ begin
                               new CGMethodCallExpression("RemObjects.SDK.Server.Engine.ObjectActivator".AsNamedIdentifierExpression,
                                                          "GetInstance",
                                                          [new CGTypeOfExpression(l_SafeEntityName.AsNamedIdentifierExpression).AsCallParameter]),
-                              "RemObjects.SDK.IROService".AsTypeReference,
+                              "RemObjects.SDK.IROService".AsTypeReference_NotNullable,
                               true).AsReturnStatement);
   end;
   l_activator.Members.Add(l_method);
@@ -1488,10 +1532,10 @@ begin
                                                new CGConstructorCallStatement(CGInheritedExpression.Inherited),
                                                Visibility :=  CGMemberVisibilityKind.Public));
   var plist := new List<CGParameterDefinition>;
-  plist.Add(new CGParameterDefinition(self.INVK_INSTANCE,    "RemObjects.SDK.IROService".AsTypeReference));
-  plist.Add(new CGParameterDefinition(self.INVK_MESSAGE,     "RemObjects.SDK.IMessage".AsTypeReference));
-  plist.Add(new CGParameterDefinition(self.INVK_CHANNEL_INFO,"RemObjects.SDK.Server.IServerChannelInfo".AsTypeReference));
-  plist.Add(new CGParameterDefinition(self.INVK_OPTIONS     ,"RemObjects.SDK.Server.ResponseOptions".AsTypeReference, Modifier := CGParameterModifierKind.Out));
+  plist.Add(new CGParameterDefinition(self.INVK_INSTANCE,    "RemObjects.SDK.IROService".AsTypeReference_NotNullable));
+  plist.Add(new CGParameterDefinition(self.INVK_MESSAGE,     "RemObjects.SDK.IMessage".AsTypeReference_NotNullable));
+  plist.Add(new CGParameterDefinition(self.INVK_CHANNEL_INFO,"RemObjects.SDK.Server.IServerChannelInfo".AsTypeReference_NotNullable));
+  plist.Add(new CGParameterDefinition(self.INVK_OPTIONS     ,"RemObjects.SDK.Server.ResponseOptions".AsTypeReference_NotNullable, Modifier := CGParameterModifierKind.Out));
 
   for rodl_member in aEntity.DefaultInterface.Items do begin
     mem := new CGMethodDefinition($"Invoke_{rodl_member.Name}",
@@ -1508,7 +1552,7 @@ begin
       mem.Statements.Add(
             new CGMethodCallExpression(
                new CGTypeCastExpression(self.INVK_INSTANCE.AsNamedIdentifierExpression,
-                                        "RemObjects.SDK.Server.IRolesAwareService".AsTypeReference,
+                                        "RemObjects.SDK.Server.IRolesAwareService".AsTypeReference_NotNullable,
                                         true),
                "ServiceValidateRoles",
                [new CGArrayLiteralExpression(list, CGPredefinedTypeReference.String).AsCallParameter]));
@@ -1538,7 +1582,7 @@ begin
     if isDisposerNeeded then begin
       mem.Statements.Add(
           new CGVariableDeclarationStatement(self.OBJECT_DISPOSER_NAME,
-                                              "RemObjects.SDK.ObjectDisposer".AsTypeReference,
+                                              "RemObjects.SDK.ObjectDisposer".AsTypeReference_NotNullable,
                                               new CGNewInstanceExpression("RemObjects.SDK.ObjectDisposer".AsNamedIdentifierExpression)));
       l_body := new List<CGStatement>;
       var l_try := new CGTryFinallyCatchStatement(l_body);
@@ -1587,7 +1631,7 @@ begin
     var l_method := new CGMethodCallExpression(
                         new CGTypeCastExpression(
                           self.INVK_INSTANCE.AsNamedIdentifierExpression,
-                          $"I{l_EntityName}".AsTypeReference,
+                          $"I{l_EntityName}".AsTypeReference_NotNullable,
                           true),
                        rodl_member.Name,
                        l_paramlist);
@@ -1645,12 +1689,12 @@ begin
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
     ltype.Ancestors.Add(ResolveDataTypeToTypeRef(aLibrary, $"{aEntity.AncestorName}_EventSinkProxy", aEntity.AncestorName))
   else
-    ltype.Ancestors.Add("RemObjects.SDK.Server.EventSinkProxy".AsTypeReference);
+    ltype.Ancestors.Add("RemObjects.SDK.Server.EventSinkProxy".AsTypeReference_NotNullable);
 
-  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.EventSinkProxy".AsTypeReference,
+  ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.EventSinkProxy".AsTypeReference_NotNullable,
                                        [new CGCallParameter(l_EntityName.AsLiteralExpression, "Name"),
                                         new CGCallParameter(new CGTypeOfExpression($"I{l_EntityName}".AsNamedIdentifierExpression), "EventSink")]));
-  ltype.ImplementedInterfaces.Add($"I{l_EntityName}".AsTypeReference);
+  ltype.ImplementedInterfaces.Add($"I{l_EntityName}".AsTypeReference_NotNullable);
 
   ltype.Members.Add(new CGMethodDefinition(self.INVK_GET_INTERFACE_NAME,
                                            [l_EntityName.AsLiteralExpression.AsReturnStatement],
@@ -1671,14 +1715,14 @@ begin
                                      ["message".AsNamedIdentifierExpression.AsCallParameter,
                                      "channel".AsNamedIdentifierExpression.AsCallParameter,
                                      "eventTargets".AsNamedIdentifierExpression.AsCallParameter]),
-                                     Parameters := [new CGParameterDefinition("message", "RemObjects.SDK.IMessage".AsTypeReference),
-                                                    new CGParameterDefinition("channel", "RemObjects.SDK.Server.IServerEventChannel".AsTypeReference),
-                                                    new CGParameterDefinition("eventTargets", "RemObjects.SDK.Server.IEventTargets".AsTypeReference)].ToList,
+                                     Parameters := [new CGParameterDefinition("message", "RemObjects.SDK.IMessage".AsTypeReference_NotNullable),
+                                                    new CGParameterDefinition("channel", "RemObjects.SDK.Server.IServerEventChannel".AsTypeReference_NotNullable),
+                                                    new CGParameterDefinition("eventTargets", "RemObjects.SDK.Server.IEventTargets".AsTypeReference_NotNullable)].ToList,
                                      Visibility :=  CGMemberVisibilityKind.Public));
 
   for rodl_member in aEntity.DefaultInterface.Items do begin
     var mem := new CGMethodDefinition(rodl_member.Name,
-                                  ImplementsInterface := $"I{l_EntityName}".AsTypeReference,
+                                  ImplementsInterface := $"I{l_EntityName}".AsTypeReference_NotNullable,
                                   ImplementsInterfaceMember := rodl_member.Name,
                                   Virtuality := CGMemberVirtualityKind.Virtual,
                                   Visibility := CGMemberVisibilityKind.Public);
@@ -1720,7 +1764,7 @@ end;
 
 method EchoesRodlCodeGen.GenerateObfuscationAttribute: CGAttribute;
 begin
-  exit new CGAttribute("System.Reflection.ObfuscationAttribute".AsTypeReference,
+  exit new CGAttribute("System.Reflection.ObfuscationAttribute".AsTypeReference_NotNullable,
                        [new CGCallParameter(true.AsLiteralExpression, "Exclude")])
 end;
 
