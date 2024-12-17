@@ -92,6 +92,7 @@ type
     property DontPrefixEnumValues: Boolean := True; virtual;
     property CodeUnitSupport: Boolean := True; virtual;
     property RodlFileName: String :='';
+    property GenerateDocumentation: Boolean := True; virtual;
 
     method GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; virtual;
 
@@ -438,7 +439,7 @@ end;
 
 method RodlCodeGen.GenerateDocumentation(aEntity: RodlEntity): CGXmlDocumentationStatement;
 begin
-  if not String.IsNullOrEmpty(aEntity.Documentation) then begin
+  if GenerateDocumentation and not String.IsNullOrEmpty(aEntity.Documentation) then begin
     var list := new List<String>;
     if not String.IsNullOrEmpty(DocumentationBeginTag) then list.Add(DocumentationBeginTag);
     list.Add(aEntity.Documentation);

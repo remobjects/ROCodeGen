@@ -68,6 +68,7 @@ type
     DelphiGenericArrayMode = 'DelphiGenericArrayMode';
     CBuilderSplitTypes = 'CBuilderSplitTypes';
     UseNativeNETCodegen = 'UseNativeNETCodegen';
+    GenerateDocumentation = 'GenerateDocumentation';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
@@ -180,7 +181,8 @@ begin
     end;
     Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
-  codegen.RodlFileName := ParseAddParams(lparams,RODLFileName);
+  if ParseAddParams(lparams, GenerateDocumentation) = '0' then
+    codegen.GenerateDocumentation := false;
   case Language of
     Codegen4Language.Oxygene: begin
       codegen.Generator := new CGOxygeneCodeGenerator();

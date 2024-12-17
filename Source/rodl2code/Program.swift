@@ -55,6 +55,7 @@ func writeSyntax() {
 	writeLn("  --hydra (Delphi only)")
 	writeLn("  --skipasync (Delphi/BCB)")
 	writeLn("  --codedom (.NET only)")
+	writeLn("  --skipdocumentation")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
@@ -365,6 +366,9 @@ do {
 	}
 	if options["legacy-strings"] != nil {
 		(activeRodlCodeGen as? DelphiRodlCodeGen)?.LegacyStrings = true
+	}
+	if options["skipdocumentation"] != nil {
+		activeRodlCodeGen?.GenerateDocumentation = false
 	}
 	if (options["platform"] == "bcb") {
 		let lcodegen = (activeRodlCodeGen as? CPlusPlusBuilderRodlCodeGen)?

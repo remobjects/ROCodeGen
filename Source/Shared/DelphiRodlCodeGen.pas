@@ -4735,7 +4735,7 @@ end;
 
 method DelphiRodlCodeGen.GenerateCodeFirstDocumentation(aFile: CGCodeUnit; aName: String; aType: CGEntity; aDoc: String);
 begin
-  if IsCodeFirstCompatible and not String.IsNullOrEmpty(aDoc) then begin
+  if GenerateDocumentation and IsCodeFirstCompatible and not String.IsNullOrEmpty(aDoc) then begin
     aFile.Globals.Add(new CGFieldDefinition(aName,
                     Constant := true,
                     Visibility := CGMemberVisibilityKind.Public,
