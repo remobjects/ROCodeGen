@@ -444,7 +444,7 @@ begin
     if not String.IsNullOrEmpty(DocumentationBeginTag) then list.Add(DocumentationBeginTag);
     list.Add(aEntity.Documentation);
     if not String.IsNullOrEmpty(DocumentationEndTag) then list.Add(DocumentationEndTag);
-    exit new CGXmlDocumentationStatement(list);
+    exit new CGXmlDocumentationStatement(String.Join(#10, list));
   end
   else
     exit nil;
