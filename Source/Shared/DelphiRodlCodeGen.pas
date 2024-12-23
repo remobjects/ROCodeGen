@@ -4401,24 +4401,27 @@ begin
     Intf_GenerateException(lUnit, aLibrary, aEntity);
   end;
 
-  if aLibrary.Services.Items.Count > 0 then begin
-    var ltype := new CGClassTypeDefinition('TMyTransportChannel',
-                                       'TROTransportChannel'.AsTypeReference,
-                                       Visibility := CGTypeVisibilityKind.Unit);
-    cpp_generateDoLoginNeeded(ltype);
-    lUnit.Types.Add(ltype);
-  end;
-
   if not ExcludeServices then begin
+
+    if aLibrary.Services.Items.Count > 0 then begin
+      var ltype := new CGClassTypeDefinition('TMyTransportChannel',
+                                         'TROTransportChannel'.AsTypeReference,
+                                         Visibility := CGTypeVisibilityKind.Unit);
+      cpp_generateDoLoginNeeded(ltype);
+      lUnit.Types.Add(ltype);
+    end;
+
     for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
       if not EntityNeedsCodeGen(aEntity) then Continue;
       Intf_GenerateService(lUnit, aLibrary, aEntity);
     end;
   end;
 
-  for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    Intf_GenerateEventSink(lUnit, aLibrary, aEntity);
+  if not ExcludeEventSinks then begin
+    for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      Intf_GenerateEventSink(lUnit, aLibrary, aEntity);
+    end;
   end;
 
   exit lUnit;

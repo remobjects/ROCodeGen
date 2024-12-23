@@ -92,6 +92,7 @@ type
     property DontPrefixEnumValues: Boolean := True; virtual;
     property CodeUnitSupport: Boolean := True; virtual;
     property ExcludeServices: Boolean := false; // works for Intf generation only!
+    property ExcludeEventSinks: Boolean := false; // works for Intf generation only!
     property RodlFileName: String :='';
     property GenerateDocumentation: Boolean := True; virtual;
 
@@ -421,12 +422,14 @@ begin
     {$endregion}
   end;
 
-  {$region Generate EventSinks}
-  for aEntity: RodlEventSink in aLibrary.EventSinks.Items.OrderBy(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    GenerateEventSink(result, aLibrary, aEntity);
+  if not ExcludeEventSinks then begin
+    {$region Generate EventSinks}
+    for aEntity: RodlEventSink in aLibrary.EventSinks.Items.OrderBy(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      GenerateEventSink(result, aLibrary, aEntity);
+    end;
+    {$endregion}
   end;
-  {$endregion}
 end;
 
 method RodlCodeGen.GetNamespace(aLibrary: RodlLibrary): String;

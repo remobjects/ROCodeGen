@@ -57,6 +57,7 @@ func writeSyntax() {
 	writeLn("  --codedom (.NET only)")
 	writeLn("  --skipdocumentation")
 	writeLn("  --excludeservices (valid for --type:intf only)")
+	writeLn("  --excludeeventsinks (valid for --type:intf only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
@@ -374,6 +375,10 @@ do {
 	if options["excludeservices"] != nil {
 		activeRodlCodeGen?.ExcludeServices = true
 	}
+	if options["excludeeventsinks"] != nil {
+		activeRodlCodeGen?.ExcludeEventSinks = true
+	}
+
 	if (options["platform"] == "bcb") {
 		let lcodegen = (activeRodlCodeGen as? CPlusPlusBuilderRodlCodeGen)?
 		if options["splittypes"] != nil {

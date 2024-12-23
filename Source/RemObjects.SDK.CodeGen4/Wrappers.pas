@@ -70,6 +70,7 @@ type
     UseNativeNETCodegen = 'UseNativeNETCodegen';
     GenerateDocumentation = 'GenerateDocumentation';
     ExcludeServices = 'ExcludeServices';
+    ExcludeEventSinks = "ExcludeEventSinks";
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
@@ -185,6 +186,8 @@ begin
 
   if ParseAddParams(lparams, ExcludeServices) = '1' then
     codegen.ExcludeServices := true;
+  if ParseAddParams(lparams, ExcludeEventSinks) = '1' then
+    codegen.ExcludeEventSinks := true;
 
   if ParseAddParams(lparams, GenerateDocumentation) = '0' then
     codegen.GenerateDocumentation := false;

@@ -888,13 +888,15 @@ begin
     end;
   end;
 
-  for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, 'I' + aEntity.Name, false);
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
-    Intf_GenerateEventSink(l_unit, aLibrary, aEntity);
+  if not ExcludeEventSinks then begin
+    for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, 'I' + aEntity.Name, false);
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+      Intf_GenerateEventSink(l_unit, aLibrary, aEntity);
+    end;
   end;
 end;
 

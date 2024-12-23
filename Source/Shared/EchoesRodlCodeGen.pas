@@ -191,9 +191,11 @@ begin
     Intf_GenerateException(lUnit, aLibrary, aEntity);
   end;
 
-  for aEntity: RodlEventSink in aLibrary.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    Intf_GenerateEventSink(lUnit, aLibrary, aEntity);
+  if not ExcludeEventSinks then begin
+    for aEntity: RodlEventSink in aLibrary.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      Intf_GenerateEventSink(lUnit, aLibrary, aEntity);
+    end;
   end;
 
   if not ExcludeServices then begin
