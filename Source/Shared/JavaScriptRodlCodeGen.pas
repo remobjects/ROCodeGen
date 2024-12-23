@@ -23,7 +23,7 @@ type
 
 implementation
 
-method JavaScriptRodlCodeGen._FixDataType(aValue: RemObjects.Elements.RTL.String): RemObjects.Elements.RTL.String;
+method JavaScriptRodlCodeGen._FixDataType(aValue: String): String;
 begin
   var l_lower := aValue.ToLowerInvariant;
   if fKnownTypes.ContainsKey(l_lower) then
@@ -91,7 +91,7 @@ begin
 end;
 
 
-method JavaScriptRodlCodeGen.DoGenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: RemObjects.Elements.RTL.String; aUnitName: RemObjects.Elements.RTL.String := nil): CGCodeUnit;
+method JavaScriptRodlCodeGen.DoGenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit;
 begin
   result := inherited DoGenerateInterfaceFile(aLibrary, aTargetNamespace, aUnitName);
   result.Initialization.Add(
