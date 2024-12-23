@@ -196,10 +196,12 @@ begin
     Intf_GenerateEventSink(lUnit, aLibrary, aEntity);
   end;
 
-  for aEntity: RodlService in aLibrary.Services.Items{.Sort_OrdinalIgnoreCase(b->b.Name)} do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    Intf_GenerateServiceSync(lUnit, aLibrary, aEntity);
-    Intf_GenerateServiceAsync(lUnit, aLibrary, aEntity);
+  if not ExcludeServices then begin
+    for aEntity: RodlService in aLibrary.Services.Items{.Sort_OrdinalIgnoreCase(b->b.Name)} do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      Intf_GenerateServiceSync(lUnit, aLibrary, aEntity);
+      Intf_GenerateServiceAsync(lUnit, aLibrary, aEntity);
+    end;
   end;
 
   exit lUnit;

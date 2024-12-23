@@ -869,21 +869,23 @@ begin
     Intf_GenerateException(l_unit, aLibrary, aEntity);
   end;
 
-  if aLibrary.Services.Items.Count > 0 then begin
-    var ltype := new CGClassTypeDefinition('TMyTransportChannel',
-                                       'TROTransportChannel'.AsTypeReference,
-                                       Visibility := CGTypeVisibilityKind.Unit);
-    cpp_generateDoLoginNeeded(ltype);
-    l_sh_unit.Types.Add(ltype);
-  end;
+  if not ExcludeServices then begin
+    if aLibrary.Services.Items.Count > 0 then begin
+      var ltype := new CGClassTypeDefinition('TMyTransportChannel',
+                                         'TROTransportChannel'.AsTypeReference,
+                                         Visibility := CGTypeVisibilityKind.Unit);
+      cpp_generateDoLoginNeeded(ltype);
+      l_sh_unit.Types.Add(ltype);
+    end;
 
-  for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, 'I' + aEntity.Name, true);
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
-    Intf_GenerateService(l_unit, aLibrary, aEntity);
+    for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, 'I' + aEntity.Name, true);
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+      Intf_GenerateService(l_unit, aLibrary, aEntity);
+    end;
   end;
 
   for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin

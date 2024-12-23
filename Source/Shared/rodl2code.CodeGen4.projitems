@@ -12,12 +12,6 @@
     <Folder Include="CG4">
       <Virtual>True</Virtual>
     </Folder>
-    <Folder Include="CodeGens">
-      <Virtual>True</Virtual>
-    </Folder>
-    <Folder Include="RodlReader">
-      <Virtual>True</Virtual>
-    </Folder>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCodeGenerator.swift">

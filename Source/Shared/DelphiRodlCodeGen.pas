@@ -4408,9 +4408,12 @@ begin
     cpp_generateDoLoginNeeded(ltype);
     lUnit.Types.Add(ltype);
   end;
-  for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    Intf_GenerateService(lUnit, aLibrary, aEntity);
+
+  if not ExcludeServices then begin
+    for aEntity: RodlService in aLibrary.Services.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      Intf_GenerateService(lUnit, aLibrary, aEntity);
+    end;
   end;
 
   for aEntity: RodlEventSink in aLibrary.EventSinks.SortedByAncestor do begin

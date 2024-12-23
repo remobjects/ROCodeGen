@@ -69,6 +69,7 @@ type
     CBuilderSplitTypes = 'CBuilderSplitTypes';
     UseNativeNETCodegen = 'UseNativeNETCodegen';
     GenerateDocumentation = 'GenerateDocumentation';
+    ExcludeServices = 'ExcludeServices';
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
@@ -181,6 +182,10 @@ begin
     end;
     Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
+
+  if ParseAddParams(lparams, ExcludeServices) = '1' then
+    codegen.ExcludeServices := true;
+
   if ParseAddParams(lparams, GenerateDocumentation) = '0' then
     codegen.GenerateDocumentation := false;
   case Language of

@@ -56,6 +56,7 @@ func writeSyntax() {
 	writeLn("  --skipasync (Delphi/BCB)")
 	writeLn("  --codedom (.NET only)")
 	writeLn("  --skipdocumentation")
+	writeLn("  --excludeservices (valid for --type:intf only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
@@ -369,6 +370,9 @@ do {
 	}
 	if options["skipdocumentation"] != nil {
 		activeRodlCodeGen?.GenerateDocumentation = false
+	}
+	if options["excludeservices"] != nil {
+		activeRodlCodeGen?.ExcludeServices = true
 	}
 	if (options["platform"] == "bcb") {
 		let lcodegen = (activeRodlCodeGen as? CPlusPlusBuilderRodlCodeGen)?
