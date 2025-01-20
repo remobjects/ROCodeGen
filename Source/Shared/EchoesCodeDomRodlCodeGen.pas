@@ -138,7 +138,7 @@ begin
     //Console.WriteLine("Known CodeDom providers:");
     for each p in CodeDomProvider.GetAllCompilerInfo do begin
       //Console.Write("  ");
-      for each l in p.GetLanguages index i do begin
+      for each l in p.GetLanguages {index i} do begin
         //if i > 0 then Console.Write(", ");
         if (result = nil) and (l = lLookingForCodeDomName) then
           result := p.CreateProvider();
