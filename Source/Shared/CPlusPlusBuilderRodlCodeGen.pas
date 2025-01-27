@@ -159,7 +159,7 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.Array_GetLength(anArray: CGExpression): CGExpression;
 begin
-  exit new CGFieldAccessExpression(anArray,"Length", CallSiteKind := CGCallSiteKind.Instance);
+  exit new CGPropertyAccessExpression(anArray,"Length", CallSiteKind := CGCallSiteKind.Instance);
 end;
 
 method CPlusPlusBuilderRodlCodeGen.RaiseError(aMessage: CGExpression; aParams: List<CGExpression>): CGExpression;
@@ -167,7 +167,7 @@ begin
   var lres := new CGMethodCallExpression(CapitalizeString('uROClasses').AsNamedIdentifierExpression,'RaiseError',CallSiteKind := CGCallSiteKind.Static);
 
   if aMessage is CGNamedIdentifierExpression then begin
-      aMessage:=  ('_'+CGNamedIdentifierExpression(aMessage).Name).AsNamedIdentifierExpression;
+    aMessage:=  ('_'+CGNamedIdentifierExpression(aMessage).Name).AsNamedIdentifierExpression;
     lres.Parameters.Add(new CGMethodCallExpression(nil, 'LoadResourceString',[new CGCallParameter(aMessage, Modifier := CGParameterModifierKind.Var)]).AsCallParameter)
   end
   else
@@ -262,15 +262,15 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.cpp_IUnknownSupport(aLibrary: RodlLibrary; aEntity: RodlService; service: CGTypeDefinition);
 begin
-
+  var param_IID := new CGParameterDefinition('IID', new CGPointerTypeReference(new CGNamedTypeReference('GUID') isClasstype(False)) &reference(true), Modifier := CGParameterModifierKind.Const);
+  var param_Obj := new CGParameterDefinition('Obj', new CGPointerTypeReference(new CGPointerTypeReference(CGPredefinedTypeReference.Void)));
   var lm := new CGMethodDefinition('QueryInterface',
                                    [new CGMethodCallExpression(CGInheritedExpression.Inherited,
                                                                'cppQueryInterface',
-                                                               ['IID'.AsNamedIdentifierExpression.AsCallParameter,
-                                                                new CGTypeCastExpression('Obj'.AsNamedIdentifierExpression, CGPointerTypeReference.VoidPointer).AsCallParameter].ToList,
+                                                               [param_IID.AsCallParameter,
+                                                                new CGTypeCastExpression(param_Obj.AsExpression, CGPointerTypeReference.VoidPointer).AsCallParameter].ToList,
                                                                 CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-                                   Parameters := [new CGParameterDefinition('IID', new CGPointerTypeReference(new CGNamedTypeReference('GUID') isClasstype(False)) &reference(true), Modifier := CGParameterModifierKind.Const),
-                                                  new CGParameterDefinition('Obj', new CGPointerTypeReference(new CGPointerTypeReference(CGPredefinedTypeReference.Void)))].ToList(),
+                                   Parameters := [param_IID, param_Obj].ToList(),
                                    Virtuality := CGMemberVirtualityKind.Override,
                                    Visibility := CGMemberVisibilityKind.Protected,
                                    ReturnType := new CGNamedTypeReference('HRESULT') isClasstype(False),
@@ -375,10 +375,10 @@ begin
     if not String.IsNullOrEmpty(l_method) then
       exit new CGMethodCallExpression('Urotypes'.AsNamedIdentifierExpression, l_method, CallSiteKind := CGCallSiteKind.Static);
     if isComplex(aLibrary, l_name) then
-      exit new CGMethodCallExpression(nil,'__typeinfo',[l_name.AsNamedIdentifierExpression.AsCallParameter]);
+      exit new CGMethodCallExpression(nil,'__typeinfo',[GenerateTypeExpression(l_name).AsCallParameter]);
     if isEnum(aLibrary, l_name) then begin
       var lnamespace: CGExpression := nil;
-      if assigned(CGNamedTypeReference(aTypeInfo).Namespace)then lnamespace := CGNamedTypeReference(aTypeInfo).Namespace.Name.AsNamedIdentifierExpression;
+      if assigned(CGNamedTypeReference(aTypeInfo).Namespace) then lnamespace := CGNamedTypeReference(aTypeInfo).Namespace.Name.AsNamedIdentifierExpression;
       exit new CGMethodCallExpression(lnamespace, 'GetTypeInfo_'+l_name, CallSiteKind := CGCallSiteKind.Static);
     end;
     raise new Exception(String.Format('GenerateTypeInfoCall: Unsupported datatype: {0}',[l_name]));
@@ -393,19 +393,20 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public);
   lenum.Members.Add(new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Public,
                                                 CallingConvention := CGCallingConventionKind.Register));
-
-  lenum.Members.Add(new CGFieldDefinition('fHolderField',lenum_typeref, Visibility := CGMemberVisibilityKind.Private));
-  lenum.Members.Add(new CGPropertyDefinition('HolderField',lenum_typeref,
-                                             Visibility := CGMemberVisibilityKind.Published,
-                                             GetExpression := 'fHolderField'.AsNamedIdentifierExpression,
-                                             SetExpression := 'fHolderField'.AsNamedIdentifierExpression));
+  var fld_fHolderField := new CGFieldDefinition('fHolderField',lenum_typeref, Visibility := CGMemberVisibilityKind.Private);
+  lenum.Members.Add(fld_fHolderField);
+  var prop_HolderField := new CGPropertyDefinition('HolderField',lenum_typeref,
+                                                   Visibility := CGMemberVisibilityKind.Published,
+                                                   GetExpression := fld_fHolderField.AsExpression,
+                                                   SetExpression := fld_fHolderField.AsExpression);
+  lenum.Members.Add(prop_HolderField);
   aFile.Types.Add(lenum);
 
   aFile.Globals.Add(new CGMethodDefinition('GetTypeInfo_'+aEntity.Name,
                                             [new CGPointerDereferenceExpression(new CGFieldAccessExpression(
                                                   new CGMethodCallExpression(nil, 'GetPropInfo',
                                                                             [new CGMethodCallExpression(nil, '__typeinfo',[lenum.Name.AsNamedIdentifierExpression.AsCallParameter]).AsCallParameter,
-                                                                             'HolderField'.AsLiteralExpression.AsCallParameter]),
+                                                                             prop_HolderField.Name.AsLiteralExpression.AsCallParameter]),
                                              'PropType',
                                              CallSiteKind := CGCallSiteKind.Reference
                                             )).AsReturnStatement],
@@ -432,12 +433,15 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.cppGenerateProxyCast(aProxy: CGNewInstanceExpression; aInterface: CGNamedTypeReference): List<CGStatement>;
 begin
-  result := new List<CGStatement>;
-  result.Add(new CGVariableDeclarationStatement('lresult',aInterface));
-  result.Add(new CGVariableDeclarationStatement('lproxy',CGTypeReferenceExpression(aProxy.Type).Type,aProxy));
+  var localvar_lresult := new CGVariableDeclarationStatement('lresult',aInterface);
+  var localvar_lproxy := new CGVariableDeclarationStatement('lproxy',CGTypeReferenceExpression(aProxy.Type).Type,aProxy);
 
-  var lresult := new CGLocalVariableAccessExpression('lresult');
-  var lproxy :=  'lproxy'.AsNamedIdentifierExpression;
+  result := new List<CGStatement>;
+  result.Add(localvar_lresult);
+  result.Add(localvar_lproxy);
+
+  var lresult := localvar_lresult.AsExpression;
+  var lproxy :=  localvar_lproxy.AsExpression;
   var lQuery := new CGMethodCallExpression(lproxy, 'GetInterface',
                                            [lresult.AsCallParameter],
                                             CallSiteKind := CGCallSiteKind.Reference);
@@ -499,7 +503,7 @@ method CPlusPlusBuilderRodlCodeGen.cpp_generateInheritedBody(aMethod: CGMethodDe
 begin
   var ls :=new CGMethodCallExpression(CGInheritedExpression.Inherited, aMethod.Name);
   for p in aMethod.Parameters do
-    ls.Parameters.Add(p.Name.AsNamedIdentifierExpression.AsCallParameter);
+    ls.Parameters.Add(new CGParameterAccessExpression(p.Name).AsCallParameter);
   if assigned(aMethod.ReturnType)then
     aMethod.Statements.Add(ls.AsReturnStatement)
   else
@@ -525,22 +529,26 @@ begin
 
   var l_creator:= new CGNewInstanceExpression('TROClassFactory'.AsTypeReference,
                                    [l_EntityName.AsLiteralExpression.AsCallParameter,
-                                    l_methodName.AsNamedIdentifierExpression.AsCallParameter,
-                                    cpp_ClassId(l_TInvoker.AsNamedIdentifierExpression).AsCallParameter]);
-  r.Add(new CGVariableDeclarationStatement('lfactory','TROClassFactory'.AsTypeReference,l_creator));
-  r.Add(new CGMethodCallExpression('lfactory'.AsNamedIdentifierExpression,'GetInterface',
-                                    [lvar.AsCallParameter],
-                                    CallSiteKind := CGCallSiteKind.Reference));
+                                    new CGMethodAccessExpression(nil, l_methodName).AsCallParameter,
+                                    cpp_ClassId(GenerateTypeExpression(l_TInvoker)).AsCallParameter]);
+  var localvar_lfactory := new CGVariableDeclarationStatement('lfactory','TROClassFactory'.AsTypeReference,l_creator);
+  r.Add(localvar_lfactory);
+  r.Add(new CGMethodCallExpression(localvar_lfactory.AsExpression,
+                                   'GetInterface',
+                                   [lvar.AsCallParameter],
+                                   CallSiteKind := CGCallSiteKind.Reference));
   exit r;
   //new TROClassFactory("NewService", Create_NewService, __classid(TNewService_Invoker));
 end;
 
 method CPlusPlusBuilderRodlCodeGen.Impl_GenerateCreateService(aMethod: CGMethodDefinition; aCreator: CGNewInstanceExpression);
 begin
-  aMethod.Statements.Add(new CGVariableDeclarationStatement('lservice', CGTypeReferenceExpression(aCreator.Type).Type, aCreator));
-  aMethod.Statements.Add(new CGMethodCallExpression('lservice'.AsNamedIdentifierExpression,'GetInterface',
-                        ['anInstance'.AsNamedIdentifierExpression.AsCallParameter],
-                          CallSiteKind := CGCallSiteKind.Reference));
+  var localvar_lservice := new CGVariableDeclarationStatement('lservice', CGTypeReferenceExpression(aCreator.Type).Type, aCreator);
+  aMethod.Statements.Add(localvar_lservice);
+  aMethod.Statements.Add(new CGMethodCallExpression(localvar_lservice.AsExpression,
+                                                    'GetInterface',
+                                                    [(new CGParameterAccessExpression('anInstance')).AsCallParameter],
+                                                      CallSiteKind := CGCallSiteKind.Reference));
 
 end;
 
@@ -552,7 +560,7 @@ end;
 method CPlusPlusBuilderRodlCodeGen.AddDynamicArrayParameter(aMethod: CGMethodCallExpression; aDynamicArrayParam: CGExpression);
 begin
   aMethod.Parameters.Add(cpp_AddressOf(new CGArrayElementAccessExpression(aDynamicArrayParam,[new CGIntegerLiteralExpression(0)])).AsCallParameter);
-  aMethod.Parameters.Add(new CGFieldAccessExpression(aDynamicArrayParam,'Length', CallSiteKind := CGCallSiteKind.Instance).AsCallParameter);
+  aMethod.Parameters.Add(new CGPropertyAccessExpression(aDynamicArrayParam,'Length', CallSiteKind := CGCallSiteKind.Instance).AsCallParameter);
 end;
 
 method CPlusPlusBuilderRodlCodeGen.ResolveDataTypeToTypeRefFullQualified(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String; aCapitalize: Boolean): CGTypeReference;
@@ -579,13 +587,15 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.Invk_GetDefaultServiceRoles(&method: CGMethodDefinition; roles: CGArrayLiteralExpression);
 begin
-  &method.Statements.Add(new CGVariableDeclarationStatement('ltemp',new CGNamedTypeReference('TStringArray') isclasstype(false),new CGMethodCallExpression(CGInheritedExpression.Inherited,'GetDefaultServiceRoles',CallSiteKind:= CGCallSiteKind.Static)));
-  var ltemp := new CGLocalVariableAccessExpression('ltemp');
+  var localvar_ltemp := new CGVariableDeclarationStatement('ltemp',new CGNamedTypeReference('TStringArray') isclasstype(false),new CGMethodCallExpression(CGInheritedExpression.Inherited,'GetDefaultServiceRoles',CallSiteKind:= CGCallSiteKind.Static));
+  &method.Statements.Add(localvar_ltemp);
+  var ltemp := localvar_ltemp.AsExpression;
   if roles.Elements.Count > 0 then begin
-    var ltemp_len := new CGFieldAccessExpression(ltemp,'Length', CallSiteKind := CGCallSiteKind.Instance);
-    &method.Statements.Add(new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeReference.Int), ltemp_len));
+    var ltemp_len := new CGPropertyAccessExpression(ltemp,'Length', CallSiteKind := CGCallSiteKind.Instance);
+    var localvar_llen := new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeReference.Int), ltemp_len);
+    &method.Statements.Add(localvar_llen);
     &method.Statements.Add(new CGAssignmentStatement(ltemp_len, new CGBinaryOperatorExpression(ltemp_len, new CGIntegerLiteralExpression(roles.Elements.Count), CGBinaryOperatorKind.Addition)));
-    var llen :=new CGLocalVariableAccessExpression('llen');
+    var llen := localvar_llen.AsExpression;
     for i: Integer := 0 to roles.Elements.Count-1 do begin
       var lind: CGExpression := llen;
       if i > 0 then lind := new CGBinaryOperatorExpression(lind, new CGIntegerLiteralExpression(i), CGBinaryOperatorKind.Addition);
@@ -597,14 +607,17 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.Invk_CheckRoles(&method: CGMethodDefinition; roles: CGArrayLiteralExpression);
 begin
-  var l__Instance := '__Instance'.AsNamedIdentifierExpression;
-  &method.Statements.Add(new CGVariableDeclarationStatement('ltemp',new CGNamedTypeReference('TStringArray') isclasstype(false),new CGMethodCallExpression(nil, 'GetDefaultServiceRoles')));
-  var ltemp := new CGLocalVariableAccessExpression('ltemp');
-  var ltemp_len := new CGFieldAccessExpression(ltemp,'Length', CallSiteKind := CGCallSiteKind.Instance);
+  var l__Instance := new CGParameterAccessExpression('__Instance');
+  var localvar_ltemp := new CGVariableDeclarationStatement('ltemp',new CGNamedTypeReference('TStringArray') isclasstype(false),new CGMethodCallExpression(nil, 'GetDefaultServiceRoles'));
+
+  &method.Statements.Add(localvar_ltemp);
+  var ltemp := localvar_ltemp.AsExpression;
+  var ltemp_len := new CGPropertyAccessExpression(ltemp, 'Length', CallSiteKind := CGCallSiteKind.Instance);
   if roles.Elements.Count > 0 then begin
-    &method.Statements.Add(new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeReference.Int), ltemp_len));
+    var localvar_llen := new CGVariableDeclarationStatement('llen',ResolveStdtypes(CGPredefinedTypeReference.Int), ltemp_len);
+    &method.Statements.Add(localvar_llen);
     &method.Statements.Add(new CGAssignmentStatement(ltemp_len, new CGBinaryOperatorExpression(ltemp_len, new CGIntegerLiteralExpression(roles.Elements.Count), CGBinaryOperatorKind.Addition)));
-    var llen :=new CGLocalVariableAccessExpression('llen');
+    var llen := localvar_llen.AsExpression;
     for i: Integer := 0 to roles.Elements.Count-1 do begin
       var lind: CGExpression := llen;
       if i > 0 then lind := new CGBinaryOperatorExpression(lind, new CGIntegerLiteralExpression(i), CGBinaryOperatorKind.Addition);
@@ -625,15 +638,17 @@ end;
 method CPlusPlusBuilderRodlCodeGen.cpp_generateDoLoginNeeded(aType: CGClassTypeDefinition);
 begin
   //virtual void __fastcall DoLoginNeeded(Uroclientintf::_di_IROMessage aMessage, System::Sysutils::Exception* anException, bool &aRetry);
+
+  var par_aMessage := new CGParameterDefinition('aMessage', IROMessage_typeref);
+  var par_anException := new CGParameterDefinition('anException', new CGNamedTypeReference('Exception') &namespace(new CGNamespaceReference('System::Sysutils')) isclasstype(true));
+  var par_aRetry := new CGParameterDefinition('aRetry', ResolveStdtypes(CGPredefinedTypeReference.Boolean), Modifier := CGParameterModifierKind.Var);
   aType.Members.Add(new CGMethodDefinition('DoLoginNeeded',
                   [new CGMethodCallExpression(CGInheritedExpression.Inherited,'DoLoginNeeded',
-                                              ['aMessage'.AsNamedIdentifierExpression.AsCallParameter,
-                                              'anException'.AsNamedIdentifierExpression.AsCallParameter,
-                                              'aRetry'.AsNamedIdentifierExpression.AsCallParameter],
+                                              [par_aMessage.AsCallParameter,
+                                              par_anException.AsCallParameter,
+                                              par_aRetry.AsCallParameter],
                                               CallSiteKind := CGCallSiteKind.Static).AsReturnStatement],
-                  Parameters := [new CGParameterDefinition('aMessage', IROMessage_typeref),
-                                 new CGParameterDefinition('anException', new CGNamedTypeReference('Exception') &namespace(new CGNamespaceReference('System::Sysutils')) isclasstype(true)),
-                                 new CGParameterDefinition('aRetry', ResolveStdtypes(CGPredefinedTypeReference.Boolean), Modifier := CGParameterModifierKind.Var)].ToList,
+                  Parameters := [par_aMessage, par_anException, par_aRetry].ToList,
                   CallingConvention := CGCallingConventionKind.Register,
                   Visibility := CGMemberVisibilityKind.Public,
                   Virtuality := CGMemberVirtualityKind.Virtual));
@@ -671,11 +686,12 @@ begin
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
       //  void __fastcall SetMessageID(System::UnicodeString aMessageID);
+      var par_aMessageID := new CGParameterDefinition('aMessageID',ResolveStdtypes(CGPredefinedTypeReference.String));
       service.Members.Add(new CGMethodDefinition('SetMessageID',
                                                   [new CGMethodCallExpression(CGInheritedExpression.Inherited, 'SetMessageID',
-                                                                              ['aMessageID'.AsNamedIdentifierExpression.AsCallParameter],
+                                                                              [par_aMessageID.AsCallParameter],
                                                                               CallSiteKind := CGCallSiteKind.Static)],
-                                                  Parameters := [new CGParameterDefinition('aMessageID',ResolveStdtypes(CGPredefinedTypeReference.String))].ToList,
+                                                  Parameters := [par_aMessageID].ToList,
                                                   Virtuality := CGMemberVirtualityKind.Override,
                                                   CallingConvention := CGCallingConventionKind.Register,
                                                   Visibility := CGMemberVisibilityKind.Protected));
@@ -913,7 +929,7 @@ begin
   end
   else if aEntity is RodlServiceEntity then begin
     if assigned(RodlServiceEntity(aEntity).AncestorEntity) then
-      GenerateImportForEntity(aFile, RodlStructEntity(aEntity).AncestorEntity);
+      GenerateImportForEntity(aFile, RodlServiceEntity(aEntity).AncestorEntity);
     for each op in RodlServiceEntity(aEntity).DefaultInterface.Items do begin
       for each p in op.Items do
         GenerateImportForEntity(aFile, aEntity.OwnerLibrary.FindEntity(p.DataType));
@@ -1007,8 +1023,8 @@ begin
       lUnit.Initialization.Add(new CGMethodCallExpression(nil, 'RegisterServiceAttribute',
                                                                [''.AsLiteralExpression.AsCallParameter,
                                                                 latr.AsLiteralExpression.AsCallParameter,
-                                                               (if latr1 = 'wsdl' then 'WSDLLocation'.AsNamedIdentifierExpression
-                                                                else if latr1 = 'targetnamespace' then 'TargetNamespace'.AsNamedIdentifierExpression
+                                                               (if latr1 = 'wsdl' then new CGFieldAccessExpression(nil, 'WSDLLocation')
+                                                                else if latr1 = 'targetnamespace' then new CGFieldAccessExpression(nil, 'TargetNamespace')
                                                                 else aLibrary.CustomAttributes[latr].AsLiteralExpression).AsCallParameter].ToList));
     end;
   end;

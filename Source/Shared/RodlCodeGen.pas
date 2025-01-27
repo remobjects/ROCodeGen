@@ -85,7 +85,11 @@ type
       end;
       result := (lInParameters, lOutParameters);
     end;
-
+    method GenerateTypeExpression(aName: String): CGExpression;
+    begin
+      exit aName.AsNamedIdentifierExpression;
+      //exit aName.AsTypeReferenceExpression;
+    end;
   public
     class property KnownRODLPaths: Dictionary<String,String> := new Dictionary<String,String>;
     property Generator: CGCodeGenerator; virtual;
