@@ -251,7 +251,7 @@ end;
 method EchoesRodlCodeGen.GenerateImplementationCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit;
 begin
   var service := aLibrary.Services.FindEntity(aServiceName);
-  if service = nil then raise new Exception($"{aServiceName} wasn't found!");
+  if service = nil then raise new Exception($"Service {aServiceName} was not found in RODL.");
   if service.IsFromUsedRodl then begin
     aLibrary := service.FromUsedRodl.OwnerLibrary;
   end;
