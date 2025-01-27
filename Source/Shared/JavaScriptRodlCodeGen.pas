@@ -541,7 +541,7 @@ begin
                                         new CGMethodCallExpression(nil, "require", "./RemObjectsSDK.js".AsLiteralExpression.AsCallParameter),
                                         "RemObjects"
                                       ),
-                                      Constant := true)],
+                                      Constant := false)],
                                   CatchBlocks := [new CGCatchBlockStatement()].ToList
                                   )
             );
