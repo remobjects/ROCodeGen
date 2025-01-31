@@ -737,7 +737,7 @@ begin
   var fCount := new CGFieldAccessExpression(nil, "fCount");
   var fItems := new CGFieldAccessExpression(nil, "fItems");
   var localvar_i := new CGVariableDeclarationStatement("i", ResolveStdtypes(CGPredefinedTypeReference.Int32));
-  var fItems_i := new CGArrayElementAccessExpression(fItems, [localvar_i.AsExpression].ToList<CGExpression>);  //fItems[i]
+  var fItems_i := new CGArrayElementAccessExpression(fItems, [localvar_i.AsExpression as CGExpression]);
   var fCount_subtract_1    := new CGBinaryOperatorExpression(fCount,            //fCount-1
                                                             new CGIntegerLiteralExpression(1),
                                                             CGBinaryOperatorKind.Subtraction);
@@ -4807,7 +4807,7 @@ begin
   var par_aIndex := new CGParameterDefinition("aIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   var aIndex: CGExpression := par_aIndex.AsExpression;
   var localvar_i := new CGVariableDeclarationStatement("i", ResolveStdtypes(CGPredefinedTypeReference.Int32));
-  var fItems_i := new CGArrayElementAccessExpression(fItems, [localvar_i.AsExpression].ToList<CGExpression>);  //fItems[i]
+  var fItems_i := new CGArrayElementAccessExpression(fItems, [localvar_i.AsExpression as CGExpression]);
   var fCount_subtract_1    := new CGBinaryOperatorExpression(fCount,            //fCount-1
                                                             new CGIntegerLiteralExpression(1),
                                                             CGBinaryOperatorKind.Subtraction);
@@ -4958,7 +4958,7 @@ begin
   var lSerializer := localvar__Serializer.AsExpression;
   var localvar_i := new CGVariableDeclarationStatement("i", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   lm.LocalVariables.Add(localvar_i);
-  var fItems_i := new CGArrayElementAccessExpression(fItems, [localvar_i.AsExpression].ToList<CGExpression>);  //fItems[i]
+  var fItems_i := new CGArrayElementAccessExpression(fItems, [localvar_i.AsExpression as CGExpression]);
   lm.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[ cpp_ClassId(DuplicateType(aArrayType, false).AsExpression).AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
   var array__element_name := new CGMethodCallExpression(lSerializer,
                                                    'GetArrayElementName',
