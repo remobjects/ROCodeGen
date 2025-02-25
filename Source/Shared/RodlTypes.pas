@@ -21,6 +21,12 @@ type
   RodlArray = public partial class(RodlEntity)
   public
     property ElementType: String;
+    method Validate; override;
+    begin
+      inherited;
+      if RodlLibrary.IsInternalType(ElementType) then exit;
+      if OwnerLibrary:FindEntity(ElementType) = nil then raise new Exception($'Invalid or undefined element type ({self.ElementType}) is used in {self.GetFullName}');
+    end;
   end;
 
   RodlStructEntity = public partial abstract class (RodlComplexEntity<RodlField>)

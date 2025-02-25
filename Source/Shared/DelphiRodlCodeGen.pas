@@ -2514,9 +2514,11 @@ begin
                                                                                                               GenerateTypeInfoCall(aLibrary,aDataType).AsCallParameter,
                                                                                                               aValue].ToList);
   end;
-  if assigned(aIndex) then k.Parameters.Add(aIndex);
-  k.CallSiteKind := CGCallSiteKind.Reference;
-  result.Add(k);
+  if k <> nil then begin
+    if assigned(aIndex) then k.Parameters.Add(aIndex);
+    k.CallSiteKind := CGCallSiteKind.Reference;
+    result.Add(k);
+  end;
 end;
 
 method DelphiRodlCodeGen.ResolveNamespace(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String := "";aCapitalize: Boolean := false): String;

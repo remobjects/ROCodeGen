@@ -37,8 +37,34 @@ type
       Result := assigned(CustomAttributes) and (CustomAttributes:Count >0)
     end;
 
+    {$REGION validate}
+    method Validate; virtual; empty;
+    method GetFullName: String;
+    begin
+      //service & eventsing & rodlstruct & rodlexception & rodlenum
+      if (self is RodlServiceEntity) or (self is RodlStructEntity) or (self is RodlEnum) then
+        exit self.Name
+      // rodl operation & rodl param & field & enum value
+      else if (self is RodlOperation) or (self is RodlParameter) or (self is RodlField) or (self is RodlEnumValue) then begin
+        if assigned(self.Owner) then
+          exit Owner.GetFullName + '.' + self.Name
+        else
+          exit self.Name;
+      end
+      // rodl interface
+      else if self is RodlInterface then begin
+        if assigned(self.Owner) then
+          exit Owner.GetFullName
+        else
+          exit '';
+      end
+      else
+        exit self.Name;
+    end;
+    {$ENDREGION}
+
     property IsFromUsedRodl: Boolean read assigned(FromUsedRodl) or assigned(FromUsedRodlId) ;
-    {$region Properties}
+    {$REGION Properties}
     property EntityID: nullable Guid;
     property Name: String;
     property OriginalName: String read getOriginalName write fOriginalName;
@@ -54,7 +80,7 @@ type
     property Owner: RodlEntity;
     property OwnerLibrary: RodlLibrary read getOwnerLibrary;
     property DontCodegen: Boolean; virtual;
-    {$endregion}
+    {$ENDREGION}
     {$IFDEF ECHOES}
     method ToString: String; override;
     begin
@@ -66,6 +92,12 @@ type
   RodlTypedEntity = public partial abstract class (RodlEntity)
   public
     property DataType: String;
+    method Validate; override;
+    begin
+      inherited;
+      if RodlLibrary.IsInternalType(DataType) then exit;
+      if OwnerLibrary:FindEntity(DataType) = nil then raise new Exception($'Invalid or undefined type ({self.DataType}) is used in {self.GetFullName}');
+    end;
   end;
 
   RodlEntityWithAncestor = public partial abstract class (RodlEntity)
@@ -86,6 +118,15 @@ type
   public
     property AncestorName: String;
     property AncestorEntity: RodlEntity read getAncestorEntity write setAncestorEntity;
+    method Validate; override;
+    begin
+      inherited;
+      if not String.IsNullOrWhiteSpace(AncestorName) then begin
+        var a := AncestorEntity;
+        if (a = nil) then raise new Exception($'Invalid or undefined ancestor ({self.AncestorName}) is used in {self.GetFullName}');
+        a.Validate;
+      end;
+    end;
   end;
 
   RodlComplexEntity<T> = public partial abstract class (RodlEntityWithAncestor)
@@ -101,6 +142,12 @@ type
       fItemsNodeNameXml := nodeName + "s";
       fItemsNodeNameJson := aItemsNodeNameXmlJson;
       fItems := new EntityCollection<T>(self, nodeName);
+    end;
+
+    method Validate; override;
+    begin
+      inherited;
+      fItems.Validate;
     end;
 
     method GetInheritedItems: List<T>;
@@ -218,6 +265,12 @@ type
         end;
       end;
       exit lResult;
+    end;
+
+    method Validate;
+    begin
+      for each it in fItems do
+        it.Validate;
     end;
 
     property Owner : RodlEntity;

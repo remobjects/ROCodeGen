@@ -220,6 +220,7 @@ do {
 			writeLn("Unsupported type: "+options["type"])
 			return 2
 	}
+	rodlLibrary.Validate()
 
 
 	var codegen: CGCodeGenerator?

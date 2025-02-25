@@ -108,6 +108,7 @@ begin
   result := new Codegen4Records;
   var rodl := new RodlLibrary();
   rodl.LoadFromString(aRodl);
+  rodl.Validate;
 
   var lparams := new Dictionary<String,String>();
   for each p in AdditionalParameters.Split(';') do begin

@@ -164,6 +164,7 @@ end;
 
 method RodlCodeGen.GenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
+  aLibrary.Validate;
   exit Generator.GenerateUnit(GenerateInterfaceCodeUnit(aLibrary, aTargetNamespace, aUnitName));
 end;
 
@@ -354,11 +355,13 @@ end;
 
 method RodlCodeGen.GenerateInvokerFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
+  aLibrary.Validate;
   exit Generator.GenerateUnit(GenerateInvokerCodeUnit(aLibrary, aTargetNamespace, aUnitName));
 end;
 
 method RodlCodeGen.GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String, String>;
 begin
+  aLibrary.Validate;
   var lunit := GenerateImplementationCodeUnit(aLibrary, aTargetNamespace, aServiceName);
   exit GenerateImplementationFiles(lunit, aLibrary, aServiceName);
 end;
@@ -444,6 +447,7 @@ end;
 
 method RodlCodeGen.GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
 begin
+  aLibrary.Validate;
   exit DoGenerateInterfaceFile(aLibrary, coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, GetNamespace(aLibrary)), aUnitName);
 end;
 

@@ -220,6 +220,7 @@ end;
 
 method EchoesRodlCodeGen.GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>;
 begin
+  aLibrary.Validate;
   var lunit := GenerateImplementationCodeUnit(aLibrary, aTargetNamespace, aServiceName);
   result := new Dictionary<String, String>;
   result.Add(Path.ChangeExtension(lunit.FileName, Generator.defaultFileExtension),
