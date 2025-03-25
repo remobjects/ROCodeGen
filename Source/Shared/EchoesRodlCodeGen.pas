@@ -991,8 +991,8 @@ begin
   Intf_GenerateServiceProxyConstructors(l_proxy);
   Intf_GenerateServiceProxyInterfaceNameProperty(l_proxy, aEntity);
 
-  var param___callback := new CGParameterDefinition("___callback", "System.AsyncCallback".AsTypeReference_Nullable);
-  var param___userData := new CGParameterDefinition("___userData", CGPredefinedTypeReference.Object);
+  var param___callback := new CGParameterDefinition("___callback", "System.AsyncCallback".AsTypeReference_Nullable2);
+  var param___userData := new CGParameterDefinition("___userData", CGPredefinedTypeReference.Object.copyWithNullability(CGTypeNullabilityKind.NullableNotUnwrapped));
   var param___asyncResult := new CGParameterDefinition("___asyncResult", "System.IAsyncResult".AsTypeReference_NotNullable);
 
   var prop_Self_ClientChannel := new CGPropertyAccessExpression(CGSelfExpression.Self, "ClientChannel");
