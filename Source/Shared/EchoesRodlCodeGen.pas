@@ -1105,11 +1105,11 @@ begin
                                            param___userData.AsCallParameter]).AsReturnStatement);
 
     var l_try := new CGTryFinallyCatchStatement(l_body);
-    var l_except := new CGCatchBlockStatement("ex", "System.Exception".AsTypeReference_NotNullable);
+    var l_except := new CGCatchBlockStatement();
     if aNames.Count > 0 then
       l_except.Statements.Add(new CGMethodCallExpression(localvar___localMessage.AsExpression, "ClearAttributes",[prop_Self_ClientChannel.AsCallParameter]));
     l_except.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, "___ClearMessage", [localvar___localMessage.AsCallParameter]));
-    l_except.Statements.Add(new CGThrowExpression(new CGLocalVariableAccessExpression(l_except.Name)));
+    l_except.Statements.Add(new CGThrowExpression);
     l_try.CatchBlocks.Add(l_except);
     l_proxyBegin.Statements.Add(l_try);
     {$ENDREGION}
