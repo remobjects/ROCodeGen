@@ -13,8 +13,8 @@ type
     method GenerateCustomAttributeHandlers(aType: CGTypeDefinition; aRodlEntity: RodlEntity);
     method GenerateEntityActivator(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);
     method GenerateServiceActivator(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
-    method Intf_generateReadStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity): CGExpression;
-    method Intf_generateWriteStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity): CGExpression;
+    method Intf_generateReadStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity; aUseSoapName: Boolean): CGExpression;
+    method Intf_generateWriteStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity; aUseSoapName: Boolean): CGExpression;
 
     method Intf_StructReadMethod(aLibrary: RodlLibrary; aStruct: CGTypeDefinition; aRodlStruct: RodlStruct);
     method Intf_StructWriteMethod(aLibrary: RodlLibrary; aStruct: CGTypeDefinition; aRodlStruct: RodlStruct);
@@ -258,6 +258,11 @@ begin
   ltype.Attributes.Add(GenerateObfuscationAttribute);
   for rodl_member: RodlEnumValue in aEntity.Items index i do begin
     var cg4_member := new CGEnumValueDefinition(rodl_member.Name, i.AsLiteralExpression);
+    if (rodl_member.OriginalName ≠ rodl_member.Name) then begin
+      cg4_member.InlineAttributes := false;
+      cg4_member.Attributes.Add(new CGAttribute("RemObjects.SDK.RODLOriginalSOAPNameAttribute".AsTypeReference,
+                                                [rodl_member.OriginalName.AsLiteralExpression.AsCallParameter]));
+    end;
     cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
     ltype.Members.Add(cg4_member);
   end;
@@ -528,7 +533,8 @@ begin
                                         ResolveDataTypeToTypeRef(aLibrary, rodl_param.DataType),
                                         Value := Intf_generateReadStatement(aLibrary,
                                                                             param___message.AsExpression,
-                                                                            rodl_param));
+                                                                            rodl_param,
+                                                                            false));
       l_body.Add(localvar_param);
       if IsParameterDisposerNeeded(rodl_param) then
         l_body.Add(new CGMethodCallExpression(localvar___objectDisposer.AsExpression,
@@ -643,7 +649,7 @@ begin
 
     for rodl_param in rodl_member.Items do
       if rodl_param.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-        l_body.Add(Intf_generateWriteStatement(aLibrary, local_localmessage, rodl_param));
+        l_body.Add(Intf_generateWriteStatement(aLibrary, local_localmessage, rodl_param, false));
 
     l_body.Add(new CGMethodCallExpression(local_localmessage, "FinalizeMessage"));
     l_body.Add(new CGMethodCallExpression(prop_Self_ClientChannel,"Dispatch",[local_localmessage.AsCallParameter]));
@@ -656,13 +662,13 @@ begin
         l_localResultName := $"_{l_localResultName}";
       localvar_result := new CGVariableDeclarationStatement(l_localResultName,
                                                     ResolveDataTypeToTypeRef(aLibrary, rodl_member.Result.DataType),
-                                                    Intf_generateReadStatement(aLibrary, local_localmessage, rodl_member.Result));
+                                                    Intf_generateReadStatement(aLibrary, local_localmessage, rodl_member.Result, false));
       l_body.Add(localvar_result);
     end;
 
     for rodl_param in rodl_member.Items do
       if rodl_param.ParamFlag in [ParamFlags.InOut,ParamFlags.Out] then
-        l_body.Add(new CGAssignmentStatement(new CGParameterAccessExpression(rodl_param.Name), Intf_generateReadStatement(aLibrary, local_localmessage, rodl_param)));
+        l_body.Add(new CGAssignmentStatement(new CGParameterAccessExpression(rodl_param.Name), Intf_generateReadStatement(aLibrary, local_localmessage, rodl_param, false)));
 
     if rodl_member.Result <> nil then
       l_body.Add(localvar_result.AsExpression.AsReturnStatement);
@@ -836,21 +842,25 @@ begin
 
   for each laEntityItem in aRodlStruct.Items do begin
     ifStatement.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(CGSelfExpression.Self, laEntityItem.Name),
-                                                         Intf_generateReadStatement(aLibrary, param_serializer.AsExpression, laEntityItem)));
+                                                         Intf_generateReadStatement(aLibrary, param_serializer.AsExpression, laEntityItem, true)));
   end;
 
 
   for each laEntityItem in aRodlStruct.GetAllItems.Sort_OrdinalIgnoreCase(b->b.Name) do begin
     elseStatement.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(CGSelfExpression.Self, laEntityItem.Name),
-                                                           Intf_generateReadStatement(aLibrary, param_serializer.AsExpression, laEntityItem)));
+                                                           Intf_generateReadStatement(aLibrary, param_serializer.AsExpression, laEntityItem, true)));
   end;
   lMethod.Statements.Add(lif);
   aStruct.Members.Add(lMethod);
 end;
 
-method EchoesRodlCodeGen.Intf_generateReadStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity): CGExpression;
+method EchoesRodlCodeGen.Intf_generateReadStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity; aUseSoapName: Boolean): CGExpression;
 begin
-  var l_name := aEntity.Name.AsLiteralExpression.AsCallParameter;
+  var l_name := (if aUseSoapName then
+                  aEntity.OriginalName
+                else
+                  aEntity.Name
+                ).AsLiteralExpression.AsCallParameter;
   case aEntity.DataType.ToLowerInvariant of
     "integer":          exit new CGMethodCallExpression(aSerializer, "ReadInt32",           [l_name]);
     "datetime":         exit new CGMethodCallExpression(aSerializer, "ReadDateTime",        [l_name]);
@@ -893,9 +903,14 @@ begin
   end;
 end;
 
-method EchoesRodlCodeGen.Intf_generateWriteStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity): CGExpression;
+method EchoesRodlCodeGen.Intf_generateWriteStatement(aLibrary: RodlLibrary; aSerializer: CGExpression; aEntity: RodlTypedEntity; aUseSoapName: Boolean): CGExpression;
 begin
-  var l_name := aEntity.Name.AsLiteralExpression.AsCallParameter;
+  var l_name := (if aUseSoapName then
+                  aEntity.OriginalName
+                else
+                  aEntity.Name
+                ).AsLiteralExpression.AsCallParameter;
+
   var l_value := new CGPropertyAccessExpression(
                                                 iif(aEntity is RodlParameter, nil, CGSelfExpression.Self),
                                                 aEntity.Name).AsCallParameter;
@@ -957,10 +972,10 @@ begin
 
 
   for each laEntityItem in aRodlStruct.Items do
-    ifStatement.Statements.Add(Intf_generateWriteStatement(aLibrary, param_serializer.AsExpression, laEntityItem));
+    ifStatement.Statements.Add(Intf_generateWriteStatement(aLibrary, param_serializer.AsExpression, laEntityItem, true));
 
   for each laEntityItem in aRodlStruct.GetAllItems.Sort_OrdinalIgnoreCase(b->b.Name) do
-    elseStatement.Statements.Add(Intf_generateWriteStatement(aLibrary, param_serializer.AsExpression, laEntityItem));
+    elseStatement.Statements.Add(Intf_generateWriteStatement(aLibrary, param_serializer.AsExpression, laEntityItem, true));
 
   lMethod.Statements.Add(lif);
   aStruct.Members.Add(lMethod);
@@ -1095,7 +1110,7 @@ begin
 
     for rodl_param in rodl_member.Items do
       if rodl_param.ParamFlag in [ParamFlags.In,ParamFlags.InOut] then
-        l_body.Add(Intf_generateWriteStatement(aLibrary, localvar___localMessage.AsExpression, rodl_param));
+        l_body.Add(Intf_generateWriteStatement(aLibrary, localvar___localMessage.AsExpression, rodl_param, false));
 
     l_body.Add(new CGMethodCallExpression(localvar___localMessage.AsExpression, "FinalizeMessage"));
     l_body.Add(new CGMethodCallExpression(prop_Self_ClientChannel,
@@ -1133,13 +1148,15 @@ begin
         l_localResultName := $"_{l_localResultName}";
       localvar_resultName := new CGVariableDeclarationStatement(l_localResultName,
                                                     ResolveDataTypeToTypeRef(aLibrary, rodl_member.Result.DataType),
-                                                    Intf_generateReadStatement(aLibrary, localvar___localMessage.AsExpression, rodl_member.Result));
+                                                    Intf_generateReadStatement(aLibrary, localvar___localMessage.AsExpression, rodl_member.Result, false));
       l_body.Add(localvar_resultName);
     end;
 
     for rodl_param in rodl_member.Items do
       if rodl_param.ParamFlag in [ParamFlags.InOut,ParamFlags.Out] then
-        l_body.Add(new CGAssignmentStatement(new CGParameterAccessExpression(rodl_param.Name), Intf_generateReadStatement(aLibrary, localvar___localMessage.AsExpression, rodl_param)));
+        l_body.Add(new CGAssignmentStatement(
+                      new CGParameterAccessExpression(rodl_param.Name),
+                      Intf_generateReadStatement(aLibrary, localvar___localMessage.AsExpression, rodl_param, false)));
 
     if rodl_member.Result <> nil then
       l_body.Add(localvar_resultName.AsExpression.AsReturnStatement);
@@ -1625,7 +1642,8 @@ begin
                                                       ResolveDataTypeToTypeRef(aLibrary, rodl_param.DataType),
                                                       Value := Intf_generateReadStatement(aLibrary,
                                                                                           l_message,
-                                                                                          rodl_param)));
+                                                                                          rodl_param,
+                                                                                          false)));
     for rodl_param in rodl_member.Items do
       if (rodl_param.ParamFlag in [ParamFlags.In, ParamFlags.InOut]) and IsParameterDisposerNeeded(rodl_param) then
         l_body.Add(new CGMethodCallExpression(localvar___objectDisposer.AsExpression,
@@ -1690,13 +1708,13 @@ begin
                                            $"{rodl_member.Name}Response".AsLiteralExpression.AsCallParameter]));
     var l_hasout := False;
     if rodl_member.Result <> nil then begin
-      l_body.Add(Intf_generateWriteStatement(aLibrary, l_message, rodl_member.Result));
+      l_body.Add(Intf_generateWriteStatement(aLibrary, l_message, rodl_member.Result, false));
       l_hasout := True;
     end;
 
     for rodl_param in rodl_member.Items do
       if rodl_param.ParamFlag in [ParamFlags.Out,ParamFlags.InOut] then begin
-        l_body.Add(Intf_generateWriteStatement(aLibrary, l_message, rodl_param));
+        l_body.Add(Intf_generateWriteStatement(aLibrary, l_message, rodl_param, false));
         l_hasout := True;
       end;
 
@@ -1776,7 +1794,7 @@ begin
                                            rodl_member.Name.AsLiteralExpression.AsCallParameter]));
 
     for rodl_param in rodl_member.Items do
-      l_body.Add(Intf_generateWriteStatement(aLibrary, prop_Self___Message, rodl_param));
+      l_body.Add(Intf_generateWriteStatement(aLibrary, prop_Self___Message, rodl_param, false));
 
     l_body.Add(new CGMethodCallExpression(prop_Self___Message, "FinalizeMessage"));
     l_body.Add(new CGMethodCallExpression(prop_Self___ServerEventChannel,
