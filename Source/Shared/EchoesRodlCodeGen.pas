@@ -1387,6 +1387,16 @@ begin
   else begin
     var lent := aLibrary.FindEntity(aOrigType);
     if lent <> nil then begin
+      if lent is RodlArray then begin
+        if lent.HasCustomAttributes or not String.IsNullOrEmpty(lent.Documentation) then
+          exit new CGNamedTypeReference(aDataType,
+                                        IsClassType := false,
+                                        DefaultNullability := CGTypeNullabilityKind.NullableUnwrapped)
+        else
+          exit new CGArrayTypeReference(ResolveDataTypeToTypeRef(aLibrary, RodlArray(lent).ElementType),
+                                        DefaultNullability :=
+                                        CGTypeNullabilityKind.NullableUnwrapped);
+      end;
       if lent.IsFromUsedRodl then begin
         if not String.IsNullOrWhiteSpace(lent.FromUsedRodl:Includes:NetModule) then begin
           if isEnum(aLibrary, aOrigType) then
@@ -1399,16 +1409,6 @@ begin
                            &namespace(new CGNamespaceReference(lent.FromUsedRodl:Includes:NetModule))
                            isClassType(true);
         end;
-      end;
-      if lent is RodlArray then begin
-        if lent.HasCustomAttributes or not String.IsNullOrEmpty(lent.Documentation) then
-          exit new CGNamedTypeReference(aDataType,
-                                        IsClassType := false,
-                                        DefaultNullability := CGTypeNullabilityKind.NullableUnwrapped)
-        else
-          exit new CGArrayTypeReference(ResolveDataTypeToTypeRef(aLibrary, RodlArray(lent).ElementType),
-                                        DefaultNullability :=
-                                        CGTypeNullabilityKind.NullableUnwrapped);
       end;
     end;
     if isEnum(aLibrary, aOrigType) then
