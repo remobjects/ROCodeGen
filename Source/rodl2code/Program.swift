@@ -42,6 +42,7 @@ func writeSyntax() {
 	writeLn("  - delphi, pas, bcb, c++builder, cpp, c++ (Delphi & C++ Builder)")
 	writeLn("  - iodine (RemObjects' Java)")
 	writeLn("  - java (Oracle Java)")
+	writeLn("  - javascript, js")
 	writeLn()
 	writeLn("Additional options:")
 	writeLn()
