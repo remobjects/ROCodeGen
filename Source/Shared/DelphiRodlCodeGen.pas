@@ -1445,14 +1445,21 @@ begin
       mem.Statements.Add(new CGEmptyStatement);
       var list := new List<CGStatement>;
       for litem in lmem.Items do
-        list.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      litem.DataType,
-                                      param___Message.AsExpression,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGLocalVariableAccessExpression($"l_{litem.Name}").AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+        //list.Add(
+          //Intf_generateReadStatement(aLibrary,
+                                      //litem.DataType,
+                                      //param___Message.AsExpression,
+                                      //litem.Name.AsLiteralExpression.AsCallParameter,
+                                      //new CGLocalVariableAccessExpression($"l_{litem.Name}").AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+                                      //nil));
+        list.Add(new CGMethodCallExpression(param___Message.AsExpression,
+                                            'Read',
+                                            [litem.Name.AsLiteralExpression.AsCallParameter,
+                                            GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType, Intf_name)).AsCallParameter,
+                                            new CGCallParameter($"l_{litem.Name}".AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            new CGArrayLiteralExpression().AsCallParameter].ToList,
+                                            CallSiteKind:= CGCallSiteKind.Reference));
       for lmemparam in lmem.Items do
         lcall.Parameters.Add(new CGLocalVariableAccessExpression($"l_{lmemparam.Name}").AsCallParameter);
 
@@ -2255,14 +2262,22 @@ begin
     end;
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        ltry.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGLocalVariableAccessExpression("l_"+litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+        //ltry.Add(
+          //Intf_generateReadStatement(aLibrary,
+                                      //litem.DataType,
+                                      //lMessage,
+                                      //litem.Name.AsLiteralExpression.AsCallParameter,
+                                      //new CGLocalVariableAccessExpression("l_"+litem.Name).AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+                                      //nil));
+        ltry.Add(new CGMethodCallExpression(lMessage,
+                                            'Read',
+                                            [litem.Name.AsLiteralExpression.AsCallParameter,
+                                            GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                            new CGCallParameter(('l_'+litem.Name).AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                            CallSiteKind := CGCallSiteKind.Reference));
+
         if (litem.ParamFlag = ParamFlags.InOut) and isComplex(aLibrary, litem.DataType) then
            ltry.Add(new CGAssignmentStatement(new CGLocalVariableAccessExpression("__in_"+litem.Name),
                                               new CGLocalVariableAccessExpression("l_"+litem.Name)));
@@ -2301,39 +2316,60 @@ begin
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        ltry.Add(
-          Intf_generateWriteStatement(aLibrary,
-                                      lmem.Result.DataType,
-                                      lMessage,
-                                      lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsExpression.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name),
-                                      nil));
+        //ltry.Add(
+          //Intf_generateWriteStatement(aLibrary,
+                                      //lmem.Result.DataType,
+                                      //lMessage,
+                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                      //localvar_lResult.AsExpression.AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name),
+                                      //nil));
+        ltry.Add(new CGMethodCallExpression(lMessage,
+                                            'Write',
+                                            [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                            GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                            new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                            GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
+                                            CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        ltry.Add(
-          Intf_generateWriteStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGLocalVariableAccessExpression("l_"+litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+        //ltry.Add(
+          //Intf_generateWriteStatement(aLibrary,
+                                      //litem.DataType,
+                                      //lMessage,
+                                      //litem.Name.AsLiteralExpression.AsCallParameter,
+                                      //new CGLocalVariableAccessExpression("l_"+litem.Name).AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+                                      //nil));
+        ltry.Add(new CGMethodCallExpression(lMessage,
+                                            'Write',
+                                            [litem.Name.AsLiteralExpression.AsCallParameter,
+                                            GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                            new CGCallParameter(('l_'+litem.Name).AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                            CallSiteKind := CGCallSiteKind.Reference));
       end;
     end;
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        ltry.Add(
-          Intf_generateWriteStatement(aLibrary,
-                                      lmem.Result.DataType,
-                                      lMessage,
-                                      lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsExpression.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name),
-                                      nil));
+        //ltry.Add(
+          //Intf_generateWriteStatement(aLibrary,
+                                      //lmem.Result.DataType,
+                                      //lMessage,
+                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                      //localvar_lResult.AsExpression.AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name),
+                                      //nil));
+        ltry.Add(new CGMethodCallExpression(lMessage,
+                                            'Write',
+                                            [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                            GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                            new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                            GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
+                                            CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     ltry.Add(new CGMethodCallExpression(lMessage,'Finalize',CallSiteKind := CGCallSiteKind.Reference));
@@ -2462,14 +2498,21 @@ begin
                                                                            lmem.Name.AsLiteralExpression.AsCallParameter].ToList,
                                         CallSiteKind := CGCallSiteKind.Reference));
     for litem in lmem.Items do begin
-        ltry.Add(
-          Intf_generateWriteStatement(aLibrary,
-                                      litem.DataType,
-                                      lmessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+//        ltry.Add(
+//          Intf_generateWriteStatement(aLibrary,
+//                                      litem.DataType,
+//                                      lmessage,
+//                                      litem.Name.AsLiteralExpression.AsCallParameter,
+//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+//                                      nil));
+      ltry.Add(new CGMethodCallExpression(lmessage,
+                                          'Write',
+                                          [litem.Name.AsLiteralExpression.AsCallParameter,
+                                          GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                          new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                          new CGArrayLiteralExpression().AsCallParameter].ToList,
+                                          CallSiteKind:= CGCallSiteKind.Reference));
     end;
     ltry.Add(new CGMethodCallExpression(lmessage,"Finalize",CallSiteKind := CGCallSiteKind.Reference));
     ltry.Add(new CGEmptyStatement);
@@ -2653,14 +2696,21 @@ begin
                                                     CallSiteKind := CGCallSiteKind.Reference));
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        ltry.Statements.Add(
-          Intf_generateWriteStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+//        ltry.Statements.Add(
+//          Intf_generateWriteStatement(aLibrary,
+//                                      litem.DataType,
+//                                      lMessage,
+//                                      litem.Name.AsLiteralExpression.AsCallParameter,
+//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+//                                      nil));
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                        'Write',
+                                                        [litem.Name.AsLiteralExpression.AsCallParameter,
+                                                        GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                                        CallSiteKind := CGCallSiteKind.Reference));
       end;
     end;
 
@@ -2748,39 +2798,62 @@ begin
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-        ltry3.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      aOperation.Result.DataType,
-                                      lMessage,
-                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-                                      nil));
+//        ltry3.Statements.Add(
+//          Intf_generateReadStatement(aLibrary,
+//                                      aOperation.Result.DataType,
+//                                      lMessage,
+//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+//                                      localvar_lResult.AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
+//                                      nil));
+        ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(aLibrary, ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
+                                                      CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        ltry3.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+//        ltry3.Statements.Add(
+//          Intf_generateReadStatement(aLibrary,
+//                                      litem.DataType,
+//                                      lMessage,
+//                                      litem.Name.AsLiteralExpression.AsCallParameter,
+//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+//                                      nil));
+        ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                        'Read',
+                                                        [litem.Name.AsLiteralExpression.AsCallParameter,
+                                                        GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                                        CallSiteKind := CGCallSiteKind.Reference));
+
       end;
     end;
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-        ltry3.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      aOperation.Result.DataType,
-                                      lMessage,
-                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-                                      nil));
+//        ltry3.Statements.Add(
+//          Intf_generateReadStatement(aLibrary,
+//                                      aOperation.Result.DataType,
+//                                      lMessage,
+//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+//                                      localvar_lResult.AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
+//                                      nil));
+
+        ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(aLibrary, ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
+                                                      CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     var lEROSessionNotFound := new CGCatchBlockStatement("E","EROSessionNotFound".AsTypeReference);
@@ -2872,14 +2945,21 @@ begin
                                                     CallSiteKind := CGCallSiteKind.Reference));
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        ltry.Statements.Add(
-          Intf_generateWriteStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+//        ltry.Statements.Add(
+//          Intf_generateWriteStatement(aLibrary,
+//                                      litem.DataType,
+//                                      lMessage,
+//                                      litem.Name.AsLiteralExpression.AsCallParameter,
+//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+//                                      nil));
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                        'Write',
+                                                        [litem.Name.AsLiteralExpression.AsCallParameter,
+                                                        GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                                        CallSiteKind := CGCallSiteKind.Reference));
       end;
     end;
 
@@ -2936,39 +3016,60 @@ begin
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-        result.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      aOperation.Result.DataType,
-                                      lMessage,
-                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-                                      nil));
+//        result.Statements.Add(
+//          Intf_generateReadStatement(aLibrary,
+//                                      aOperation.Result.DataType,
+//                                      lMessage,
+//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+//                                      localvar_lResult.AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
+//                                      nil));
+        result.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
+                                                      CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        result.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+//        result.Statements.Add(
+//          Intf_generateReadStatement(aLibrary,
+//                                      litem.DataType,
+//                                      lMessage,
+//                                      litem.Name.AsLiteralExpression.AsCallParameter,
+//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+//                                      nil));
+        result.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                        'Read',
+                                                        [litem.Name.AsLiteralExpression.AsCallParameter,
+                                                        GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                                        CallSiteKind := CGCallSiteKind.Reference));
       end;
     end;
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-        result.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      aOperation.Result.DataType,
-                                      lMessage,
-                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-                                      nil));
+//        result.Statements.Add(
+//          Intf_generateReadStatement(aLibrary,
+//                                      aOperation.Result.DataType,
+//                                      lMessage,
+//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+//                                      localvar_lResult.AsCallParameter,
+//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
+//                                      nil));
+        result.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
+                                                      CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
 
@@ -4744,14 +4845,21 @@ begin
                                                     CallSiteKind := CGCallSiteKind.Reference));
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        ltry.Statements.Add(
-          Intf_generateWriteStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+        //ltry.Statements.Add(
+          //Intf_generateWriteStatement(aLibrary,
+                                      //litem.DataType,
+                                      //lMessage,
+                                      //litem.Name.AsLiteralExpression.AsCallParameter,
+                                      //new CGParameterAccessExpression(litem.Name).AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+                                      //nil));
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                        'Write',
+                                                        [litem.Name.AsLiteralExpression.AsCallParameter,
+                                                        GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                                        CallSiteKind := CGCallSiteKind.Reference));
       end;
     end;
     ltry.Statements.Add(new CGMethodCallExpression(lMessage,"Finalize",CallSiteKind := CGCallSiteKind.Reference));
@@ -4761,40 +4869,62 @@ begin
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        ltry.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      lmem.Result.DataType,
-                                      lMessage,
-                                      lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary, lmem.Result.DataType, Intf_name),
-                                      nil));
+        //ltry.Statements.Add(
+          //Intf_generateReadStatement(aLibrary,
+                                      //lmem.Result.DataType,
+                                      //lMessage,
+                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                      //localvar_lResult.AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary, lmem.Result.DataType, Intf_name),
+                                      //nil));
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
+                                                      CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        ltry.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      litem.DataType,
-                                      lMessage,
-                                      litem.Name.AsLiteralExpression.AsCallParameter,
-                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      nil));
+        //ltry.Statements.Add(
+          //Intf_generateReadStatement(aLibrary,
+                                      //litem.DataType,
+                                      //lMessage,
+                                      //litem.Name.AsLiteralExpression.AsCallParameter,
+                                      //new CGParameterAccessExpression(litem.Name).AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
+                                      //nil));
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                        'Read',
+                                                        [litem.Name.AsLiteralExpression.AsCallParameter,
+                                                        GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
+                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
+                                                        CallSiteKind := CGCallSiteKind.Reference));
       end;
 
     end;
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        ltry.Statements.Add(
-          Intf_generateReadStatement(aLibrary,
-                                      lmem.Result.DataType,
-                                      lMessage,
-                                      lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      localvar_lResult.AsCallParameter,
-                                      ResolveDataTypeToTypeRefFullQualified(aLibrary, lmem.Result.DataType, Intf_name),
-                                      nil));
+        //ltry.Statements.Add(
+          //Intf_generateReadStatement(aLibrary,
+                                      //lmem.Result.DataType,
+                                      //lMessage,
+                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                      //localvar_lResult.AsCallParameter,
+                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary, lmem.Result.DataType, Intf_name),
+                                      //nil));
+        ltry.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      'Read',
+                                                      [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
+                                                      GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
+                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
+                                                      CallSiteKind := CGCallSiteKind.Reference));
+
       end;
   {$ENDREGION}
     ltry.FinallyStatements.Add(new CGMethodCallExpression(lMessage,"UnsetAttributes",[lTransportChannel.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
