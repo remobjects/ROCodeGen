@@ -360,6 +360,14 @@ begin
       'UTF8String':       l_method := 'GetTypeInfo_UTF8String';
       'String':           l_method := 'GetTypeInfo_String';
       '_di_IXMLNode':     l_method := 'GetTypeInfo_Xml';
+      'NullableBoolean':  l_method := 'GetTypeInfo_NullableBoolean';
+      'NullableCurrency': l_method := 'GetTypeInfo_NullableCurrency';
+      'NullableDateTime': l_method := 'GetTypeInfo_NullableDateTime';
+      'NullableDecimal':  l_method := 'GetTypeInfo_NullableDecimal';
+      'NullableDouble':   l_method := 'GetTypeInfo_NullableDouble';
+      'NullableGuid':     l_method := 'GetTypeInfo_NullableGuid';
+      'NullableInt64':    l_method := 'GetTypeInfo_NullableInt64';
+      'NullableInteger':  l_method := 'GetTypeInfo_NullableInteger';
     else
     end;
     if not String.IsNullOrEmpty(l_method) then
