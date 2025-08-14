@@ -42,9 +42,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)JavaScriptRodlCodeGen.pas">
       <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
-    <Compile Include="$(MSBuildThisFileDirectory)EchoesCodeDomRodlCodeGen.pas">
-      <VirtualFolder>CodeGens</VirtualFolder>
-    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)ServerAccessCodeGen.swift">
       <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>

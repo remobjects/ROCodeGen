@@ -116,7 +116,7 @@ begin
     if l.Count = 2 then lparams[l[0]] := l[1];
   end;
 
-  var l_useNativeNETCodegen := ParseAddParams(lparams, UseNativeNETCodegen) = '1';
+//  var l_useNativeNETCodegen := ParseAddParams(lparams, UseNativeNETCodegen) = '1';
   var llang := Language.ToString;
   var lfileext:= '';
   var codegen: RodlCodeGen;
@@ -172,15 +172,15 @@ begin
     end;
     Codegen4Platform.Cocoa: codegen := new CocoaRodlCodeGen;
     Codegen4Platform.Net: begin
-      if l_useNativeNETCodegen then begin
+//      if l_useNativeNETCodegen then begin
         codegen := new EchoesRodlCodeGen;
         EchoesRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
-      end
-      else begin
-        codegen := new EchoesCodeDomRodlCodeGen;
-        EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
-        EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
-      end;
+      //end
+      //else begin
+        //codegen := new EchoesCodeDomRodlCodeGen;
+        //EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
+        //EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
+      //end;
     end;
     Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
@@ -263,12 +263,13 @@ begin
   if codegen = nil then
      raise new Exception("Unsupported platform: "+Language.ToString);
 
-  if codegen is EchoesCodeDomRodlCodeGen then begin
-    EchoesCodeDomRodlCodeGen(codegen).Language := llang;
-    if EchoesCodeDomRodlCodeGen(codegen).GetCodeDomProviderForLanguage = nil then
-      raise new Exception("No CodeDom provider is registered for language: "+llang);
-  end
-  else if codegen.Generator = nil then
+  //if codegen is EchoesCodeDomRodlCodeGen then begin
+    //EchoesCodeDomRodlCodeGen(codegen).Language := llang;
+    //if EchoesCodeDomRodlCodeGen(codegen).GetCodeDomProviderForLanguage = nil then
+      //raise new Exception("No CodeDom provider is registered for language: "+llang);
+  //end
+  //else
+  if codegen.Generator = nil then
     raise new Exception("Unsupported language: "+llang);
 
   if not (Platform in [Codegen4Platform.Delphi,Codegen4Platform.CppBuilder, Codegen4Platform.Net]) then
