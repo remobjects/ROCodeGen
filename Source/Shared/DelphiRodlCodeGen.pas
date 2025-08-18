@@ -1799,19 +1799,22 @@ begin
                                            Visibility := CGMemberVisibilityKind.Public,
                                            Condition := cond).AsGlobal());
   end;
-
-  for lEntity : RodlService in aLibrary.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(lEntity) then Continue;
-    GlobalsConst_GenerateServerGuid(aFile, aLibrary, lEntity);
+  if not ExcludeServices then begin
+    for lEntity : RodlService in aLibrary.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(lEntity) then Continue;
+      GlobalsConst_GenerateServerGuid(aFile, aLibrary, lEntity);
+    end;
   end;
 
-  for lEntity : RodlEventSink in aLibrary.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
-    if not EntityNeedsCodeGen(lEntity) then Continue;
-    var lName := lEntity.Name;
-    aFile.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeReference.String),
-                                Constant := true,
-                                Visibility := CGMemberVisibilityKind.Public,
-                                Initializer := (lEntity.Name).AsLiteralExpression).AsGlobal);
+  if not ExcludeEventSinks then begin
+    for lEntity : RodlEventSink in aLibrary.EventSinks.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
+      if not EntityNeedsCodeGen(lEntity) then Continue;
+      var lName := lEntity.Name;
+      aFile.Globals.Add(new CGFieldDefinition(String.Format("EID_{0}",[lName]), ResolveStdtypes(CGPredefinedTypeReference.String),
+                                  Constant := true,
+                                  Visibility := CGMemberVisibilityKind.Public,
+                                  Initializer := (lEntity.Name).AsLiteralExpression).AsGlobal);
+    end;
   end;
 
   for lEntity : RodlService in aLibrary.Services.Items.Sort_OrdinalIgnoreCase(b->b.Name)  do begin
@@ -3553,40 +3556,43 @@ begin
   Intf_GenerateDefaultNamespace(lUnit, aLibrary);
 
   var la: CGNamedTypeReference;
+  if PureDelphi then begin
+    if IncludeUnitNameForOwnTypes then
+      la := new CGNamedTypeReference("TLibraryAttributes") &namespace(new CGNamespaceReference(Intf_name)) isclasstype(true)
+    else
+      la := new CGNamedTypeReference("TLibraryAttributes") isclasstype(true);
+    attr_ROLibraryAttributes := new CGAttribute("ROLibraryAttributes".AsTypeReference,
+                                                [la.AsExpression.AsCallParameter],
+                                                Condition := CF_condition);
+    Intf_GenerateLibraryAttributes(lUnit, aLibrary);
+  end;
 
-  if IncludeUnitNameForOwnTypes then
-    la := new CGNamedTypeReference("TLibraryAttributes") &namespace(new CGNamespaceReference(Intf_name)) isclasstype(true)
-  else
-    la := new CGNamedTypeReference("TLibraryAttributes") isclasstype(true);
-  attr_ROLibraryAttributes := new CGAttribute("ROLibraryAttributes".AsTypeReference,
-                                              [la.AsExpression.AsCallParameter],
-                                              Condition := CF_condition);
-  Intf_GenerateLibraryAttributes(lUnit, aLibrary);
+  if not ExcludeClasses then begin
+    if aLibrary.Enums.Count >0 then begin
+      if PureDelphi and ScopedEnums then
+        lUnit.Directives.Add(new CGCompilerDirective("{$SCOPEDENUMS ON}"));
 
-  if aLibrary.Enums.Count >0 then begin
-    if PureDelphi and ScopedEnums then
-      lUnit.Directives.Add(new CGCompilerDirective("{$SCOPEDENUMS ON}"));
-
-    for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-      if not EntityNeedsCodeGen(aEntity) then Continue;
-      Intf_GenerateEnum(lUnit, aLibrary, aEntity);
+      for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+        if not EntityNeedsCodeGen(aEntity) then Continue;
+        Intf_GenerateEnum(lUnit, aLibrary, aEntity);
+      end;
     end;
-  end;
 
-  for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    Intf_GenerateStruct(lUnit, aLibrary, aEntity);
-    Intf_GenerateStructCollection(lUnit, aLibrary, aEntity);
-  end;
+    for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      Intf_GenerateStruct(lUnit, aLibrary, aEntity);
+      Intf_GenerateStructCollection(lUnit, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    Intf_GenerateArray(lUnit, aLibrary, aEntity);
-  end;
+    for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      Intf_GenerateArray(lUnit, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    Intf_GenerateException(lUnit, aLibrary, aEntity);
+    for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      Intf_GenerateException(lUnit, aLibrary, aEntity);
+    end;
   end;
 
   if not ExcludeServices then begin

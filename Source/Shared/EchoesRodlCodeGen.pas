@@ -146,27 +146,28 @@ begin
 
   AddDefaultClientNamespaces(lUnit);
   AddUsedNamespaces(lUnit, aLibrary);
+  if not ExcludeClasses then begin
+    for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      Intf_GenerateArray(lUnit, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    Intf_GenerateArray(lUnit, aLibrary, aEntity);
-  end;
 
+    for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      Intf_GenerateEnum(lUnit, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    Intf_GenerateEnum(lUnit, aLibrary, aEntity);
-  end;
+    for aEntity: RodlStruct in aLibrary.Structs.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      Intf_GenerateStruct(lUnit, aLibrary, aEntity);
+      GenerateEntityActivator(lUnit, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlStruct in aLibrary.Structs.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    Intf_GenerateStruct(lUnit, aLibrary, aEntity);
-    GenerateEntityActivator(lUnit, aLibrary, aEntity);
-  end;
-
-  for aEntity: RodlException in aLibrary.Exceptions.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    Intf_GenerateException(lUnit, aLibrary, aEntity);
+    for aEntity: RodlException in aLibrary.Exceptions.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      Intf_GenerateException(lUnit, aLibrary, aEntity);
+    end;
   end;
 
   if not ExcludeEventSinks then begin

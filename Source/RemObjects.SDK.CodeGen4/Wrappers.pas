@@ -67,8 +67,8 @@ type
     DelphiCodeFirstMode = 'DelphiCodeFirstMode';
     DelphiGenericArrayMode = 'DelphiGenericArrayMode';
     CBuilderSplitTypes = 'CBuilderSplitTypes';
-    UseNativeNETCodegen = 'UseNativeNETCodegen';
     GenerateDocumentation = 'GenerateDocumentation';
+    ExcludeClasses = 'ExcludeClasses';
     ExcludeServices = 'ExcludeServices';
     ExcludeEventSinks = "ExcludeEventSinks";
   private
@@ -185,6 +185,8 @@ begin
     Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
 
+  if ParseAddParams(lparams, ExcludeClasses) = '1' then
+    codegen.ExcludeClasses := true;
   if ParseAddParams(lparams, ExcludeServices) = '1' then
     codegen.ExcludeServices := true;
   if ParseAddParams(lparams, ExcludeEventSinks) = '1' then

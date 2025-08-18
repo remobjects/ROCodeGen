@@ -835,52 +835,54 @@ begin
   AddGlobalConstants(l_sh_unit, aLibrary);
   Intf_GenerateDefaultNamespace(l_sh_unit, aLibrary);
 
-  if aLibrary.Enums.Count > 0 then begin
-    var l_unit := Intf_CreateCodeUnit(aLibrary, lunit_enums, false);
-    result.Add(l_unit); AddImport(lUnit, fimp_enums);
-    AddImport(l_unit, fimp_Intf_Shared);
-    for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-      if not EntityNeedsCodeGen(aEntity) then continue;
-      Intf_GenerateEnum(l_unit, aLibrary, aEntity);
+  if not ExcludeClasses then begin
+    if aLibrary.Enums.Count > 0 then begin
+      var l_unit := Intf_CreateCodeUnit(aLibrary, lunit_enums, false);
+      result.Add(l_unit); AddImport(lUnit, fimp_enums);
+      AddImport(l_unit, fimp_Intf_Shared);
+      for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+        if not EntityNeedsCodeGen(aEntity) then continue;
+        Intf_GenerateEnum(l_unit, aLibrary, aEntity);
+      end;
     end;
-  end;
 
-  for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    Intf_GenerateStruct(l_unit, aLibrary, aEntity);
+    for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      Intf_GenerateStruct(l_unit, aLibrary, aEntity);
 
-    var l_unitCol := Intf_CreateCodeUnit(aLibrary, aEntity.Name + 'Collection', false);
-    l_unitCol.Imports.Add(GenerateCGImport(l_unit.FileName,'','h', false));
-    if (aEntity.AncestorEntity <> nil) and (not aEntity.AncestorEntity.IsFromUsedRodl) then
-      AddImport(l_unitCol, GenerateCGImport(aEntity.AncestorName + 'Collection', '', 'h', false));
-    var arr := aLibrary.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoringCaseInvariant(aEntity.Name)).ToList;
-    for each ar in arr do
-      GenerateImportForEntity(l_unitCol, ar);
-    result.Add(l_unitCol); AddImport(lUnit, GenerateCGImport(l_unitCol.FileName, '', 'h', false));
-    Intf_GenerateStructCollection(l_unitCol, aLibrary, aEntity);
-  end;
+      var l_unitCol := Intf_CreateCodeUnit(aLibrary, aEntity.Name + 'Collection', false);
+      l_unitCol.Imports.Add(GenerateCGImport(l_unit.FileName,'','h', false));
+      if (aEntity.AncestorEntity <> nil) and (not aEntity.AncestorEntity.IsFromUsedRodl) then
+        AddImport(l_unitCol, GenerateCGImport(aEntity.AncestorName + 'Collection', '', 'h', false));
+      var arr := aLibrary.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoringCaseInvariant(aEntity.Name)).ToList;
+      for each ar in arr do
+        GenerateImportForEntity(l_unitCol, ar);
+      result.Add(l_unitCol); AddImport(lUnit, GenerateCGImport(l_unitCol.FileName, '', 'h', false));
+      Intf_GenerateStructCollection(l_unitCol, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
 
-    Intf_GenerateArray(l_unit, aLibrary, aEntity);
-  end;
+      Intf_GenerateArray(l_unit, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
-    Intf_GenerateException(l_unit, aLibrary, aEntity);
+    for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+      Intf_GenerateException(l_unit, aLibrary, aEntity);
+    end;
   end;
 
   if not ExcludeServices then begin

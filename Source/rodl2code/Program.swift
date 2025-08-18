@@ -58,6 +58,7 @@ func writeSyntax() {
 	writeLn("  --skipasync (Delphi/BCB)")
 //    writeLn("  --codedom (.NET only)")
 	writeLn("  --skipdocumentation")
+	writeLn("  --excludeclasses (valid for --type:intf only)")
 	writeLn("  --excludeservices (valid for --type:intf only)")
 	writeLn("  --excludeeventsinks (valid for --type:intf only)")
 	writeLn()
@@ -374,6 +375,9 @@ do {
 	}
 	if options["skipdocumentation"] != nil {
 		activeRodlCodeGen?.GenerateDocumentation = false
+	}
+	if options["excludeclasses"] != nil {
+		activeRodlCodeGen?.ExcludeClasses = true
 	}
 	if options["excludeservices"] != nil {
 		activeRodlCodeGen?.ExcludeServices = true
