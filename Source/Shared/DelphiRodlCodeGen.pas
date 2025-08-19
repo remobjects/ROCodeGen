@@ -1355,7 +1355,7 @@ begin
   GenerateCodeFirstDocumentation(aFile,"docs_"+aEntity.Name,ltype, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, aEntity, false);
 
-  ltype.InterfaceGuid := aEntity.DefaultInterface.EntityID;
+  ltype.InterfaceGuid := aEntity.DefaultInterface.GetOrGenerateEntityID;
   aFile.Types.Add(ltype);
 
   for rodl_member in aEntity.DefaultInterface.Items do begin
@@ -1763,7 +1763,7 @@ begin
                                           Constant := true,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Condition := cond,
-                                          Initializer := ("{"+String(aLibrary.EntityID.ToString).ToUpperInvariant+"}").AsLiteralExpression).AsGlobal();
+                                          Initializer := ("{"+String(aLibrary.GetOrGenerateEntityID.ToString).ToUpperInvariant+"}").AsLiteralExpression).AsGlobal();
   aFile.Globals.Add(globalvar);
   GenerateExternalSym(globalvar);
   if aLibrary.CustomAttributes_lower.ContainsKey("wsdl") then begin
@@ -2438,7 +2438,7 @@ begin
 
   var ltype := new CGInterfaceTypeDefinition(l_IWriter, lancestor);
 
-  ltype.InterfaceGuid := aEntity.DefaultInterface.EntityID;
+  ltype.InterfaceGuid := aEntity.DefaultInterface.GetOrGenerateEntityID;
   aFile.Types.Add(ltype);
 
   var l_guidtype: CGTypeReference := new CGNamedTypeReference("TGUID") isClassType(false);
@@ -3110,7 +3110,7 @@ begin
   var field__ServiceID := new CGFieldDefinition("__ServiceID" ,
                               Constant := true,
                               Visibility := CGMemberVisibilityKind.Public,
-                              Initializer := ("{"+aEntity.DefaultInterface.EntityID.ToString+"}").AsLiteralExpression);
+                              Initializer := ("{"+aEntity.DefaultInterface.GetOrGenerateEntityID.ToString+"}").AsLiteralExpression);
   if not aEntity.Abstract then begin
   {$REGION implementation method + initialization/finalization}
     var l_fClassFactory := "fClassFactory_"+l_EntityName;
@@ -3217,7 +3217,15 @@ begin
         cg4_member.Parameters.Add(cg4_param);
       end;
     end;
-    cg4_member.Statements.Add(AddMessageDirective(rodl_member.Name+" is not implemented yet!"));
+
+    var lcode: String;
+    if rodl_member.Code.ContainsKey('delphi') then
+      lcode := rodl_member.Code['delphi'];
+
+    if not String.IsNullOrEmpty(lcode) then
+      cg4_member.Statements.Add(new CGRawStatement(lcode))
+    else
+      cg4_member.Statements.Add(AddMessageDirective(rodl_member.Name+" is not implemented yet!"));
     if assigned(rodl_member.Result) then begin
       if IsCodeFirstCompatible then begin
         if rodl_member.Result.Name <> "Result" then
@@ -3447,7 +3455,7 @@ begin
   aFile.Globals.Add(new CGFieldDefinition(String.Format("I{0}_IID",[lname]), "TGUID".AsTypeReference,
                               Constant := true,
                               Visibility := CGMemberVisibilityKind.Public,
-                              Initializer := ("{"+String(aEntity.DefaultInterface.EntityID.ToString).ToUpperInvariant+"}").AsLiteralExpression).AsGlobal);
+                              Initializer := ("{"+String(aEntity.DefaultInterface.GetOrGenerateEntityID.ToString).ToUpperInvariant+"}").AsLiteralExpression).AsGlobal);
 end;
 
 {$REGION cpp support}
@@ -3730,7 +3738,7 @@ begin
     var isDAFound := false;
     var ls: RodlEntityWithAncestor := service;
     while ls.AncestorEntity <> nil do begin
-      isDAFound := ls.AncestorEntity.EntityID.Equals(da_Service);
+      isDAFound := ls.AncestorEntity.GetOrGenerateEntityID.Equals(da_Service);
       if isDAFound then Break;
       ls := ls.AncestorEntity as RodlEntityWithAncestor;
     end;
@@ -4052,7 +4060,7 @@ end;
 
 method DelphiRodlCodeGen.isDAProject(aLibrary: RodlLibrary): Boolean;
 begin
-  case caseInsensitive(aLibrary.EntityID:ToString) of
+  case caseInsensitive(aLibrary.GetOrGenerateEntityID:ToString) of
     'DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6': exit true; //'DataAbstract4.RODL'
     '367FA81F-09B7-4294-85AD-68C140EF1FA7': exit true; //'DataAbstract-Simple.RODL'
   end;
@@ -4065,7 +4073,7 @@ method DelphiRodlCodeGen.GetRODLName(aLibrary: RodlLibrary): String;
 begin
   if not String.IsNullOrWhiteSpace(RodlFileName) then exit RodlFileName;
 
-  case caseInsensitive(aLibrary.EntityID:ToString) of
+  case caseInsensitive(aLibrary.GetOrGenerateEntityID:ToString) of
     //'DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6': exit 'DataAbstract4.RODL';       //Name="DataAbstract4"
     '367FA81F-09B7-4294-85AD-68C140EF1FA7': exit 'DataAbstract-Simple.RODL'; //Name="DataAbstractSimple"
     '943975A3-664A-4F07-AD0F-7357744276BF': exit 'ROServiceDiscovery.rodl';  //Name="ROServerDiscovery"
@@ -5389,7 +5397,7 @@ begin
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   GenerateCodeFirstDocumentation(aFile,$"docs_{aEntity.Name}",ltype, aEntity.Documentation);
   GenerateCodeFirstCustomAttributes(ltype, aEntity);
-  ltype.InterfaceGuid := aEntity.DefaultInterface.EntityID;
+  ltype.InterfaceGuid := aEntity.DefaultInterface.GetOrGenerateEntityID;
   aFile.Types.Add(ltype);
 
   for rodl_member in aEntity.DefaultInterface.Items do begin

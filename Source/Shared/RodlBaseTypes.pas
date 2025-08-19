@@ -62,6 +62,11 @@ type
         exit self.Name;
     end;
     {$ENDREGION}
+    method GetOrGenerateEntityID: Guid;
+    begin
+      if EntityID = nil then EntityID := Guid.NewGuid;
+      exit EntityID;
+    end;
 
     property IsFromUsedRodl: Boolean read assigned(FromUsedRodl) or assigned(FromUsedRodlId) ;
     {$REGION Properties}

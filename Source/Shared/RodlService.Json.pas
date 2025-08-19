@@ -22,7 +22,7 @@ type
     method SaveToJson(node: JsonObject; flattenUsedRODLs: Boolean); override;
     begin
       SaveStringToJson(node, "Name", Name);
-      SaveGuidToJson(node, "ID", DefaultInterface.EntityID);
+      SaveGuidToJson(node, "ID", DefaultInterface.GetOrGenerateEntityID);
       SaveStringToJson(node, "Ancestor", AncestorName);
       if &Abstract ≠ def_Abstract then
         SaveBooleanToJson(node, "Abstract", Abstract);
@@ -52,7 +52,7 @@ type
     method SaveToJson(node: JsonObject; flattenUsedRODLs: Boolean); override;
     begin
       SaveStringToJson(node, "Name", Name);
-      SaveGuidToJson(node, "ID", DefaultInterface.EntityID);
+      SaveGuidToJson(node, "ID", DefaultInterface.GetOrGenerateEntityID);
       SaveStringToJson(node, "ImplUnit", ImplUnit);
       SaveStringToJson(node, "ImplClass", ImplClass);
       SaveStringToJson(node, "Ancestor", AncestorName);
@@ -118,7 +118,7 @@ type
   public
     method LoadFromJsonNode(node: JsonNode); override;
     begin
-      LoadFromJsonNode(node,->new RodlParameter);
+      LoadFromJsonNode(node,-> new RodlParameter);
       fRoles.Clear;
       fRoles.LoadFromJsonNode(node);
       ForceAsyncResponse := valueOrDefault(node["ForceAsyncResponse"]:BooleanValue);
@@ -126,6 +126,16 @@ type
       for parameter: RodlParameter in Items do
         if parameter.ParamFlag = ParamFlags.Result then self.Result := parameter;
       Items.Remove(self.Result);
+      Code.RemoveAll;
+      var lcode := node["Code"];
+      if assigned(lcode) and (lcode.NodeKind = JsonNodeKind.Object) then begin
+        var lobj: JsonObject := lcode as JsonObject;
+        for each it in lobj.Keys do begin
+          var str := lobj[it].StringValue;
+          if not String.IsNullOrEmpty(str) then
+            Code.Add(it, str);
+        end;
+      end;
     end;
 
     method SaveToJson(node: JsonObject; flattenUsedRODLs: Boolean); override;
@@ -145,6 +155,12 @@ type
       finally
         if assigned(self.Result) then
           temp.Items.Remove(self.Result);
+      end;
+      if Code.Count > 0 then begin
+        var l_obj := new JsonObject();
+        for each it in Code do
+          l_obj.Add(it.Key, it.Value);
+        node.Add('Code', l_obj);
       end;
     end;
 

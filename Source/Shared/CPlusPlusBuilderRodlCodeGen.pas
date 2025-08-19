@@ -424,7 +424,7 @@ begin
                                           Initializer := new CGMethodCallExpression(
                                                               'Sysutils'.AsNamedIdentifierExpression,
                                                               'StringToGUID',
-                                                              [('{'+String(aEntity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
+                                                              [('{'+String(aEntity.DefaultInterface.GetOrGenerateEntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
                                                               CallSiteKind := CGCallSiteKind.Static)
                                        ).AsGlobal);
 end;
@@ -946,7 +946,7 @@ begin
   if aEntity.IsFromUsedRodl then begin
     if lrodlUse = nil then begin // workaround
       for each t in aEntity.OwnerLibrary.Uses.Items do
-        if t.EntityID = aEntity.FromUsedRodlId then begin
+        if t.GetOrGenerateEntityID = aEntity.FromUsedRodlId then begin
           lrodlUse := t;
           break;
         end;

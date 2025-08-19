@@ -55,6 +55,7 @@ type
   RodlOperation = public partial class(RodlComplexEntity<RodlParameter>)
   private
     fRoles: RodlRoles := new RodlRoles();
+    fCode: Dictionary<String, String> := new Dictionary<String, String>();
   public
     constructor;
     begin
@@ -64,6 +65,7 @@ type
     property Roles: RodlRoles read fRoles;
     property &Result: RodlParameter;
     property ForceAsyncResponse: Boolean := false;
+    property Code: Dictionary<String, String> read fCode;
   end;
 
   RodlParameter = public partial class(RodlTypedEntity)
