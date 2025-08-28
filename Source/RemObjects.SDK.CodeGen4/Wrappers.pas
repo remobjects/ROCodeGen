@@ -112,6 +112,7 @@ begin
 
   var lparams := new Dictionary<String,String>();
   for each p in AdditionalParameters.Split(';') do begin
+    if p.StartsWith('"') and p.EndsWith('"') then p := p.Substring(1, p.Length - 2);
     var l := p.SplitAtFirstOccurrenceOf('=');
     if l.Count = 2 then lparams[l[0]] := l[1];
   end;
