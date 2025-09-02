@@ -38,6 +38,7 @@ type
   RodlService = public partial class
   private
     const def_Private: Boolean = false;
+    const def_RequireSession: Boolean = false;
   public
     method LoadFromJsonNode(node: JsonNode); override;
     begin
@@ -45,6 +46,7 @@ type
       fRoles.Clear;
       fRoles.LoadFromJsonNode(node);
       &Private := valueOrDefault(node["Private"]:BooleanValue);
+      RequireSession := valueOrDefault(node["RequireSession"]:BooleanValue);
       ImplClass := node["ImplClass"]:StringValue;
       ImplUnit := node["ImplUnit"]:StringValue;
     end;
@@ -61,6 +63,9 @@ type
 
       if &Private ≠ def_Private then
         SaveBooleanToJson(node, "Private", &Private);
+
+      if RequireSession ≠ def_RequireSession then
+        SaveBooleanToJson(node, "RequireSession", RequireSession);
 
       if IsFromUsedRodl then
         SaveGuidToJson(node, "FromUsedRodlID", FromUsedRodlId);

@@ -17,6 +17,7 @@ type
       fRoles.Clear;
       fRoles.LoadFromXmlNode(node);
       &Private := node.Attribute["Private"]:Value = "1";
+      RequireSession := node.Attribute["RequireSession"]:Value = "1";
       ImplClass := node.Attribute["ImplClass"]:Value;
       ImplUnit := node.Attribute["ImplUnit"]:Value;
     end;

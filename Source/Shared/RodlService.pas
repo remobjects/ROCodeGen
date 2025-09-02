@@ -25,6 +25,7 @@ type
     property ImplUnit:String;
     property ImplClass:String;
     property &Private: Boolean;
+    property RequireSession: Boolean;
   end;
 
   RodlInclude = public partial class(RodlEntity)

@@ -1441,6 +1441,9 @@ begin
                                           [new CGCallParameter(aEntity.Name.AsLiteralExpression, "Name"),
                                            new CGCallParameter(new CGTypeOfExpression($"{aEntity.Name}_Invoker".AsNamedIdentifierExpression), "InvokerClass"),
                                            new CGCallParameter(new CGTypeOfExpression($"{aEntity.Name}_Activator".AsNamedIdentifierExpression), "ActivatorClass")].ToList));
+  if aEntity.RequireSession then
+    lservice.Attributes.Add(new CGAttribute("ServiceRequiresLogin".AsTypeReference_NotNullable));
+
   if aEntity.HasCustomAttributes then begin
     var l_groups := aEntity.CustomAttributes["ROServiceGroups"];
     if not String.IsNullOrEmpty(l_groups) then begin

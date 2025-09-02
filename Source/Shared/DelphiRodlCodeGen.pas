@@ -9,17 +9,6 @@ type
   DelphiServerAncestor = public enum (Remotable,RemoteDataModule, Custom);
 
   DelphiRodlCodeGen = public class(RodlCodeGen)
-  const
-      DFM_template = "object {0}: T{0}"#13#10+
-                     "  OldCreateOrder = True"#13#10+
-                     "  Height = 300"#13#10+
-                     "  Width = 300"#13#10+
-                     "end";
-      DFM_template2 = "inherited {0}: T{0}"#13#10+
-                      "  OldCreateOrder = True"#13#10+
-                      "  Height = 300"#13#10+
-                      "  Width = 300"#13#10+
-                      "end";
   private
     fIROTransportChannel_typeref: CGTypeReference;
     fIROTransport_typeref: CGTypeReference;
@@ -61,6 +50,7 @@ type
     method IsCodeFirstCompatible: Boolean;
     method IsGenericArrayCompatible: Boolean;
     method GenerateExternalSym(globalvar: CGGlobalVariableDefinition);
+    method DoGenerateDFM(service: RodlService): String;
   protected
     fLegacyStrings: Boolean := false;
     method _SetLegacyStrings(value: Boolean); virtual;
@@ -3089,9 +3079,10 @@ begin
   result := new Dictionary<String,String>;
   result.Add(Path.ChangeExtension(lunit.FileName, Generator.defaultFileExtension),
              Generator.GenerateUnit(lunit));
-  if isDFMNeeded and GenerateDFMs then
+  if isDFMNeeded and GenerateDFMs then begin
     result.Add(Path.ChangeExtension(lunit.FileName, "dfm"),
-               String.Format(iif(String.IsNullOrEmpty(service.AncestorName), DFM_template, DFM_template2),[aServiceName]));
+               String.Format(DoGenerateDFM(service),[aServiceName]));
+  end;
 end;
 
 {$REGION generate _Impl}
@@ -3243,6 +3234,7 @@ begin
     lservice.Members.Add(cg4_member);
     {$ENDREGION}
   end;
+
 end;
 
 method DelphiRodlCodeGen.Impl_GenerateDFMInclude(aFile: CGCodeUnit);
@@ -3723,7 +3715,10 @@ begin
   case DefaultServerAncestor of
     DelphiServerAncestor.Remotable: ;
     DelphiServerAncestor.RemoteDataModule: lUnit.Imports.Add(GenerateCGImport("uRORemoteDataModule"));
-    DelphiServerAncestor.Custom: lUnit.Imports.Add(GenerateCGImport(CustomUses));
+    DelphiServerAncestor.Custom: begin
+      for each it in CustomUses.Split(",", true) do
+        lUnit.Imports.Add(GenerateCGImport(it.Trim()));
+    end;
   end;
 
   if IsHydra then begin
@@ -3824,6 +3819,23 @@ begin
   exit lUnit;
 end;
 
+
+method DelphiRodlCodeGen.DoGenerateDFM(service: RodlService): String;
+begin
+    var dfm: String := (if String.IsNullOrEmpty(service.AncestorName) then
+                        "object {0}: T{0}"
+                       else
+                        "inherited {0}: T{0}")+ #13#10;
+    if service.RequireSession then
+      dfm := dfm + "  RequireSession = True"#13#10;
+    exit dfm+
+               "  OldCreateOrder = True"#13#10+
+               "  Height = 300"#13#10+
+               "  Width = 300"#13#10+
+               "end";
+
+end;
+
 method DelphiRodlCodeGen.GenerateImplementationFiles(aFile: CGCodeUnit; aLibrary: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;
 begin
   CreateCodeFirstAttributes;
@@ -3831,9 +3843,10 @@ begin
   result := new Dictionary<String,String>;
   result.Add(Path.ChangeExtension(aFile.FileName, Generator.defaultFileExtension),
              Generator.GenerateUnit(aFile));
-  if isDFMNeeded then
+  if isDFMNeeded and GenerateDFMs then begin
     result.Add(Path.ChangeExtension(aFile.FileName, "dfm"),
-               String.Format(iif(String.IsNullOrEmpty(service.AncestorName), DFM_template, DFM_template2),[aServiceName]));
+               String.Format(DoGenerateDFM(service),[aServiceName]));
+  end;
 end;
 
 method DelphiRodlCodeGen.GenerateParamAttributes(aName: String): CGSetLiteralExpression;
