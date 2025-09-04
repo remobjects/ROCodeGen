@@ -71,6 +71,7 @@ type
     ExcludeClasses = 'ExcludeClasses';
     ExcludeServices = 'ExcludeServices';
     ExcludeEventSinks = "ExcludeEventSinks";
+    DelphiGenerateServerSideAttributes = "GenerateServerSideAttributes";
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
@@ -140,6 +141,7 @@ begin
       DelphiRodlCodeGen(codegen).FPCMode := ParseAddParams(lparams,DelphiFPCMode, DelphiRodlCodeGen(codegen).FPCMode);
       DelphiRodlCodeGen(codegen).GenericArrayMode := ParseAddParams(lparams,DelphiGenericArrayMode, DelphiRodlCodeGen(codegen).GenericArrayMode);
       DelphiRodlCodeGen(codegen).DelphiXE2Mode := ParseAddParams(lparams,DelphiXE2Mode, DelphiRodlCodeGen(codegen).DelphiXE2Mode);
+      DelphiRodlCodeGen(codegen).GenerateServerSideAttributes := ParseAddParams(lparams, DelphiGenerateServerSideAttributes) = "1";
 
       if DelphiRodlCodeGen(codegen).FPCMode = State.On then
         DelphiRodlCodeGen(codegen).DelphiXE2Mode := State.Off;

@@ -230,6 +230,7 @@ type
     property CodeFirstMode: State := State.Auto; virtual;
     property GenericArrayMode: State := State.Auto; virtual;
     property AsyncSupport: Boolean := true;
+    property GenerateServerSideAttributes: Boolean := false;
 
     method GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
     method GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
@@ -238,7 +239,7 @@ type
 
     method GenerateInvokerFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String; override;
     method GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String,String>; override;
-end;
+  end;
 
 implementation
 
@@ -1513,7 +1514,7 @@ begin
 
   var l_dict := new Dictionary<String, String>;
   for each key in aEntity.CustomAttributes.Keys do
-    if not IsServerSideAttribute(key) then
+    if GenerateServerSideAttributes or not IsServerSideAttribute(key) then
       l_dict.Add(key, aEntity.CustomAttributes[key]);
 
 
@@ -2604,19 +2605,19 @@ begin
   var lsa := new Dictionary<String,String>;
   var lsa_lower := new Dictionary<String,String>;
   for li in aOperation.CustomAttributes.Keys do
-    if not IsServerSideAttribute(li) then
+    if GenerateServerSideAttributes or not IsServerSideAttribute(li) then
       if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
         lsa.Add(li, aOperation.CustomAttributes[li]);
         lsa_lower.Add(li.ToLowerInvariant, aOperation.CustomAttributes[li]);
       end;
   for li in aService.CustomAttributes.Keys do
-    if not IsServerSideAttribute(li) then
+    if GenerateServerSideAttributes or not IsServerSideAttribute(li) then
       if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
         lsa.Add(li, aService.CustomAttributes[li]);
         lsa_lower.Add(li.ToLowerInvariant, aService.CustomAttributes[li]);
       end;
   for li in aLibrary.CustomAttributes.Keys do
-    if not IsServerSideAttribute(li) then
+    if GenerateServerSideAttributes or not IsServerSideAttribute(li) then
       if not lsa_lower.ContainsKey(li.ToLowerInvariant) then begin
         lsa.Add(li, aLibrary.CustomAttributes[li]);
         lsa_lower.Add(li.ToLowerInvariant, aLibrary.CustomAttributes[li]);
