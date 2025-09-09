@@ -29,21 +29,6 @@ type
       exit lUnit;
     end;
     method Invk_CreateCodeUnit(aLibrary: RodlLibrary; aName: String): CGCodeUnit;
-    begin
-      var lUnit := new CGCodeUnit();
-      lUnit.Namespace := new CGNamespaceReference(targetNamespace);
-      lUnit.FileName := aName;
-      lUnit.Initialization := new List<CGStatement>;
-      lUnit.Finalization := new List<CGStatement>;
-      lUnit.HeaderComment := GenerateUnitComment(False);
-      Add_RemObjects_Inc(lUnit, aLibrary);
-      Invk_GenerateInterfaceImports(lUnit, aLibrary);
-
-      cpp_smartInit(lUnit);
-      Invk_GenerateImplImports(lUnit, aLibrary);
-      cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
-      exit lUnit;
-    end;
     method ProcessEntity(aFile: CGCodeUnit; aEntity: RodlEntity);
     method GenerateImportForEntity(aFile: CGCodeUnit; aEntity: nullable RodlEntity);
     method AddImport(aFile: CGCodeUnit; aImport: CGImport);
@@ -72,12 +57,14 @@ type
     method cpp_GlobalCondition_ns_name: String; override;
     method cpp_GetTROAsyncCallbackType: String; override;
     method cpp_GetTROAsyncCallbackMethodType: String; override;
+    method cpp_SetAttributes(aList: List<CGStatement>; aMessage, aChannel: CGLocalVariableAccessExpression;aNames, aValues: List<CGExpression>); override;
+    method cpp_StoreAttributes2(aList: List<CGStatement>; aMessage: CGLocalVariableAccessExpression;aNames, aValues: List<CGExpression>); override;
   protected
     property PureDelphi: Boolean read False; override;
     property CanUseNameSpace: Boolean := True; override;
     method Array_SetLength(anArray, aValue: CGExpression): CGExpression; override;
     method Array_GetLength(anArray: CGExpression): CGExpression; override;
-    method RaiseError(aMessage:CGExpression; aParams:List<CGExpression>): CGExpression;override;
+    method RaiseError(aMessage:CGExpression; aParams:List<CGExpression>): CGStatement;override;
     method ResolveDataTypeToTypeRefFullQualified(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String := '';aCapitalize: Boolean := True): CGTypeReference; override;
     method ResolveInterfaceTypeRef(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String := ''; aCapitalize: Boolean := True): CGNamedTypeReference; override;
     method InterfaceCast(aSource, aType, aDest: CGExpression): CGExpression; override;
@@ -88,11 +75,11 @@ type
     method Impl_GenerateDFMInclude(aFile: CGCodeUnit);override;
     method Impl_CreateClassFactory(aLibrary: RodlLibrary; aEntity: RodlService; lvar: CGExpression): List<CGStatement>;override;
     method Impl_GenerateCreateService(aMethod: CGMethodDefinition;aCreator: CGNewInstanceExpression);override;
-    method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
+    //method AddDynamicArrayParameter(aMethod:CGMethodCallExpression; aDynamicArrayParam: CGExpression); override;
     method GenerateCGImport(aName: String; aNamespace: String := ''; aExt: String := 'hpp'; aCapitalize: Boolean = true): CGImport; override;
     method Invk_GetDefaultServiceRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
     method Invk_CheckRoles(&method: CGMethodDefinition;roles: CGArrayLiteralExpression); override;
-
+    method Invk_RemapParameters(aMessage: CGParameterAccessExpression; aParamNames:CGArrayLiteralExpression):CGStatement; override;
   public
     property DelphiXE2Mode: State := State.On; override;
     property FPCMode: State read State.Off; override;
@@ -162,19 +149,22 @@ begin
   exit new CGPropertyAccessExpression(anArray,"Length", CallSiteKind := CGCallSiteKind.Instance);
 end;
 
-method CPlusPlusBuilderRodlCodeGen.RaiseError(aMessage: CGExpression; aParams: List<CGExpression>): CGExpression;
+method CPlusPlusBuilderRodlCodeGen.RaiseError(aMessage: CGExpression; aParams: List<CGExpression>): CGStatement;
 begin
-  var lres := new CGMethodCallExpression(CapitalizeString('uROClasses').AsNamedIdentifierExpression,'RaiseError',CallSiteKind := CGCallSiteKind.Static);
-
+  var lmethod := new CGMethodCallExpression(CapitalizeString('uROClasses').AsNamedIdentifierExpression,
+                                            'RaiseError',
+                                            CallSiteKind := CGCallSiteKind.Static);
   if aMessage is CGNamedIdentifierExpression then begin
     aMessage:=  ('_'+CGNamedIdentifierExpression(aMessage).Name).AsNamedIdentifierExpression;
-    lres.Parameters.Add(new CGMethodCallExpression(nil, 'LoadResourceString',[new CGCallParameter(aMessage, Modifier := CGParameterModifierKind.Var)]).AsCallParameter)
+    lmethod.Parameters.Add(new CGMethodCallExpression(nil,
+                                                      'LoadResourceString',
+                                                      [new CGCallParameter(aMessage, Modifier := CGParameterModifierKind.Var)]).AsCallParameter);
   end
   else
-    lres.Parameters.Add(aMessage.AsCallParameter);
+    lmethod.Parameters.Add(aMessage.AsCallParameter);
   if aParams <> nil then
-    lres.Parameters.Add(new CGArrayLiteralExpression(aParams).AsCallParameter);
-  exit lres;
+    lmethod.Parameters.Add(new CGArrayLiteralExpression(aParams).AsCallParameter);
+  exit lmethod;
 end;
 
 
@@ -370,6 +360,14 @@ begin
       'UTF8String':       l_method := 'GetTypeInfo_UTF8String';
       'String':           l_method := 'GetTypeInfo_String';
       '_di_IXMLNode':     l_method := 'GetTypeInfo_Xml';
+      'NullableBoolean':  l_method := 'GetTypeInfo_NullableBoolean';
+      'NullableCurrency': l_method := 'GetTypeInfo_NullableCurrency';
+      'NullableDateTime': l_method := 'GetTypeInfo_NullableDateTime';
+      'NullableDecimal':  l_method := 'GetTypeInfo_NullableDecimal';
+      'NullableDouble':   l_method := 'GetTypeInfo_NullableDouble';
+      'NullableGuid':     l_method := 'GetTypeInfo_NullableGuid';
+      'NullableInt64':    l_method := 'GetTypeInfo_NullableInt64';
+      'NullableInteger':  l_method := 'GetTypeInfo_NullableInteger';
     else
     end;
     if not String.IsNullOrEmpty(l_method) then
@@ -426,7 +424,7 @@ begin
                                           Initializer := new CGMethodCallExpression(
                                                               'Sysutils'.AsNamedIdentifierExpression,
                                                               'StringToGUID',
-                                                              [('{'+String(aEntity.DefaultInterface.EntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
+                                                              [('{'+String(aEntity.DefaultInterface.GetOrGenerateEntityID.ToString).ToUpperInvariant+'}').AsLiteralExpression.AsCallParameter],
                                                               CallSiteKind := CGCallSiteKind.Static)
                                        ).AsGlobal);
 end;
@@ -557,11 +555,11 @@ begin
   aFile.ImplementationDirectives.Add(new CGCompilerDirective('#pragma link "'+aUnitName+'"'));
 end;
 
-method CPlusPlusBuilderRodlCodeGen.AddDynamicArrayParameter(aMethod: CGMethodCallExpression; aDynamicArrayParam: CGExpression);
-begin
-  aMethod.Parameters.Add(cpp_AddressOf(new CGArrayElementAccessExpression(aDynamicArrayParam,[new CGIntegerLiteralExpression(0)])).AsCallParameter);
-  aMethod.Parameters.Add(new CGPropertyAccessExpression(aDynamicArrayParam,'Length', CallSiteKind := CGCallSiteKind.Instance).AsCallParameter);
-end;
+//method CPlusPlusBuilderRodlCodeGen.AddDynamicArrayParameter(aMethod: CGMethodCallExpression; aDynamicArrayParam: CGExpression);
+//begin
+  //aMethod.Parameters.Add(cpp_AddressOf(new CGArrayElementAccessExpression(aDynamicArrayParam,[new CGIntegerLiteralExpression(0)])).AsCallParameter);
+  //aMethod.Parameters.Add(new CGPropertyAccessExpression(aDynamicArrayParam,'Length', CallSiteKind := CGCallSiteKind.Instance).AsCallParameter);
+//end;
 
 method CPlusPlusBuilderRodlCodeGen.ResolveDataTypeToTypeRefFullQualified(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String; aCapitalize: Boolean): CGTypeReference;
 begin
@@ -837,52 +835,54 @@ begin
   AddGlobalConstants(l_sh_unit, aLibrary);
   Intf_GenerateDefaultNamespace(l_sh_unit, aLibrary);
 
-  if aLibrary.Enums.Count > 0 then begin
-    var l_unit := Intf_CreateCodeUnit(aLibrary, lunit_enums, false);
-    result.Add(l_unit); AddImport(lUnit, fimp_enums);
-    AddImport(l_unit, fimp_Intf_Shared);
-    for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-      if not EntityNeedsCodeGen(aEntity) then continue;
-      Intf_GenerateEnum(l_unit, aLibrary, aEntity);
+  if not ExcludeClasses then begin
+    if aLibrary.Enums.Count > 0 then begin
+      var l_unit := Intf_CreateCodeUnit(aLibrary, lunit_enums, false);
+      result.Add(l_unit); AddImport(lUnit, fimp_enums);
+      AddImport(l_unit, fimp_Intf_Shared);
+      for aEntity: RodlEnum in aLibrary.Enums.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+        if not EntityNeedsCodeGen(aEntity) then continue;
+        Intf_GenerateEnum(l_unit, aLibrary, aEntity);
+      end;
     end;
-  end;
 
-  for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    Intf_GenerateStruct(l_unit, aLibrary, aEntity);
+    for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      Intf_GenerateStruct(l_unit, aLibrary, aEntity);
 
-    var l_unitCol := Intf_CreateCodeUnit(aLibrary, aEntity.Name + 'Collection', false);
-    l_unitCol.Imports.Add(GenerateCGImport(l_unit.FileName,'','h', false));
-    if (aEntity.AncestorEntity <> nil) and (not aEntity.AncestorEntity.IsFromUsedRodl) then
-      AddImport(l_unitCol, GenerateCGImport(aEntity.AncestorName + 'Collection', '', 'h', false));
-    var arr := aLibrary.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoringCaseInvariant(aEntity.Name)).ToList;
-    for each ar in arr do
-      GenerateImportForEntity(l_unitCol, ar);
-    result.Add(l_unitCol); AddImport(lUnit, GenerateCGImport(l_unitCol.FileName, '', 'h', false));
-    Intf_GenerateStructCollection(l_unitCol, aLibrary, aEntity);
-  end;
+      var l_unitCol := Intf_CreateCodeUnit(aLibrary, aEntity.Name + 'Collection', false);
+      l_unitCol.Imports.Add(GenerateCGImport(l_unit.FileName,'','h', false));
+      if (aEntity.AncestorEntity <> nil) and (not aEntity.AncestorEntity.IsFromUsedRodl) then
+        AddImport(l_unitCol, GenerateCGImport(aEntity.AncestorName + 'Collection', '', 'h', false));
+      var arr := aLibrary.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoringCaseInvariant(aEntity.Name)).ToList;
+      for each ar in arr do
+        GenerateImportForEntity(l_unitCol, ar);
+      result.Add(l_unitCol); AddImport(lUnit, GenerateCGImport(l_unitCol.FileName, '', 'h', false));
+      Intf_GenerateStructCollection(l_unitCol, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+    for aEntity: RodlArray in aLibrary.Arrays.Items.Sort_OrdinalIgnoreCase(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
 
-    Intf_GenerateArray(l_unit, aLibrary, aEntity);
-  end;
+      Intf_GenerateArray(l_unit, aLibrary, aEntity);
+    end;
 
-  for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
-    AddImport(l_unit, fimp_Intf_Shared);
-    ProcessEntity(l_unit, aEntity);
-    result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
-    Intf_GenerateException(l_unit, aLibrary, aEntity);
+    for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      var l_unit := Intf_CreateCodeUnit(aLibrary, aEntity.Name, false);
+      AddImport(l_unit, fimp_Intf_Shared);
+      ProcessEntity(l_unit, aEntity);
+      result.Add(l_unit); AddImport(lUnit, GenerateCGImport(l_unit.FileName, '', 'h', false));
+      Intf_GenerateException(l_unit, aLibrary, aEntity);
+    end;
   end;
 
   if not ExcludeServices then begin
@@ -946,7 +946,7 @@ begin
   if aEntity.IsFromUsedRodl then begin
     if lrodlUse = nil then begin // workaround
       for each t in aEntity.OwnerLibrary.Uses.Items do
-        if t.EntityID = aEntity.FromUsedRodlId then begin
+        if t.GetOrGenerateEntityID = aEntity.FromUsedRodlId then begin
           lrodlUse := t;
           break;
         end;
@@ -1043,5 +1043,87 @@ begin
   end;
 
 end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_SetAttributes(aList: List<CGStatement>; aMessage: CGLocalVariableAccessExpression; aChannel: CGLocalVariableAccessExpression; aNames: List<CGExpression>; aValues: List<CGExpression>);
+begin
+  var ln := new CGVariableDeclarationStatement('___attr_names',
+                                                 new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                          ArrayKind := CGArrayKind.Static),
+                                                 new CGArrayLiteralExpression(aNames,
+                                                                              ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                              ArrayKind := CGArrayKind.Static));
+  aList.Add(ln);
+  var lv := new CGVariableDeclarationStatement('___attr_values',
+                                                 new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                          ArrayKind := CGArrayKind.Static),
+                                                 new CGArrayLiteralExpression(aValues,
+                                                                              ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                              ArrayKind := CGArrayKind.Static));
+  aList.Add(lv);
+  aList.Add(new CGMethodCallExpression(aMessage,"SetAttributes",[aChannel.AsCallParameter,
+                                                                 new CGMethodCallExpression(nil,'EXISTINGARRAY',[ln.AsCallParameter]).AsCallParameter,
+                                                                 new CGMethodCallExpression(nil,'EXISTINGARRAY',[lv.AsCallParameter]).AsCallParameter].ToList,
+                                                CallSiteKind := CGCallSiteKind.Reference));
+end;
+
+method CPlusPlusBuilderRodlCodeGen.Invk_RemapParameters(aMessage: CGParameterAccessExpression; aParamNames: CGArrayLiteralExpression): CGStatement;
+begin
+  var lresult := new CGBeginEndBlockStatement;
+  aParamNames.ArrayKind := CGArrayKind.Static;
+  var lvar := new CGVariableDeclarationStatement('___remap_array',
+                                                 new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.String), ArrayKind := CGArrayKind.Static),
+                                                 aParamNames);
+
+  lresult.Statements.Add(lvar);
+  var l_EXISTINGARRAY := new CGMethodCallExpression(nil,'EXISTINGARRAY',[lvar.AsCallParameter]);
+  lresult.Statements.Add(new CGMethodCallExpression(aMessage,
+                                                   "RemapParameters",
+                                                   [l_EXISTINGARRAY.AsCallParameter],
+                                                   CallSiteKind := CGCallSiteKind.Reference));
+  exit lresult;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.Invk_CreateCodeUnit(aLibrary: RodlLibrary; aName: String): CGCodeUnit;
+begin
+  var lUnit := new CGCodeUnit();
+  lUnit.Namespace := new CGNamespaceReference(targetNamespace);
+  lUnit.FileName := aName;
+  lUnit.Initialization := new List<CGStatement>;
+  lUnit.Finalization := new List<CGStatement>;
+  lUnit.HeaderComment := GenerateUnitComment(False);
+  Add_RemObjects_Inc(lUnit, aLibrary);
+  Invk_GenerateInterfaceImports(lUnit, aLibrary);
+
+  cpp_smartInit(lUnit);
+  Invk_GenerateImplImports(lUnit, aLibrary);
+  cpp_pragmalink(lUnit,CapitalizeString('uROServer'));
+  exit lUnit;
+end;
+
+method CPlusPlusBuilderRodlCodeGen.cpp_StoreAttributes2(aList: List<CGStatement>; aMessage: CGLocalVariableAccessExpression; aNames: List<CGExpression>; aValues: List<CGExpression>);
+begin
+  var ln := new CGVariableDeclarationStatement('___attr_names',
+                                                 new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                          ArrayKind := CGArrayKind.Static),
+                                                 new CGArrayLiteralExpression(aNames,
+                                                                              ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                              ArrayKind := CGArrayKind.Static));
+  aList.Add(ln);
+  var lv := new CGVariableDeclarationStatement('___attr_values',
+                                                 new CGArrayTypeReference(ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                          ArrayKind := CGArrayKind.Static),
+                                                 new CGArrayLiteralExpression(aValues,
+                                                                              ResolveStdtypes(CGPredefinedTypeReference.String),
+                                                                              ArrayKind := CGArrayKind.Static));
+  aList.Add(lv);
+  aList.Add(new CGMethodCallExpression(aMessage,"StoreAttributes2",[
+                                                                 new CGMethodCallExpression(nil,'EXISTINGARRAY',[ln.AsCallParameter]).AsCallParameter,
+                                                                 new CGMethodCallExpression(nil,'EXISTINGARRAY',[lv.AsCallParameter]).AsCallParameter].ToList,
+                                                CallSiteKind := CGCallSiteKind.Reference));
+end;
+
+
+
+
 
 end.

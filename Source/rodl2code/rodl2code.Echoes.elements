@@ -56,10 +56,6 @@
     <Reference Include="Silver">
       <Private>True</Private>
     </Reference>
-    <Reference Include="RemObjects.SDK">
-      <HintPath>..\..\..\RemObjects SDK for .NET\Bin\RemObjects.SDK.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="Elements">
       <Private>True</Private>
     </Reference>

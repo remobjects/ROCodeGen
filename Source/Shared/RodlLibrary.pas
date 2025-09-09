@@ -153,6 +153,44 @@ type
     property DontApplyCodeGen: Boolean;
     property DataSnap: Boolean := false;
     property ScopedEnums: Boolean := false;
+
+    {$REGION validate}
+    method Validate; override;
+    begin
+      fArrays.Validate;
+      fExceptions.Validate;
+      fServices.Validate;
+      fEventSinks.Validate;
+    end;
+
+    class method IsInternalType(aType: String): Boolean;
+    begin
+      exit aType.ToLowerInvariant in
+        ["ansistring",
+          "binary",
+          "boolean",
+          "currency",
+          "datetime",
+          "decimal",
+          "double",
+          "guid",
+          "int64",
+          "integer",
+          "nullableboolean",
+          "nullablecurrency",
+          "nullabledatetime",
+          "nullabledecimal",
+          "nullabledouble",
+          "nullableguid",
+          "nullableint64",
+          "nullableinteger",
+          "utf8string",
+          "variant",
+          "widestring",
+          "xml",
+          "xsdatetime"];
+    end;
+    {$ENDREGION}
   end;
 
   //

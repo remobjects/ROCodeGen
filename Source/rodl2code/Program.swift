@@ -31,16 +31,18 @@ func writeSyntax() {
 	writeLn()
 	writeLn("Valid <language> values:")
 	writeLn()
-	writeLn("  - oxygene, pas")
-	writeLn("  - hydrogene, c#, cs")
-	writeLn("  - visual-basic, visualbasic, vb, vb.net")
-	writeLn("  - mercury")
+	writeLn("  - oxygene, pas (RemObjects Oxygene)")
+	writeLn("  - hydrogene, c#, cs (RemObjects C#)")
+	writeLn("  - standard-csharp (Microsoft C#)")
+	writeLn("  - visual-basic, visualbasic, vb, vb.net (Microsoft VB)")
+	writeLn("  - mercury (RemObjects VB)")
 	writeLn("  - silver (RemObjects Swift)")
 	writeLn("  - swift (Apple Swift)")
 	writeLn("  - objective-c, Objc")
-	writeLn("  - delphi, pas, bcb, c++builder, cpp, c++")
+	writeLn("  - delphi, pas, bcb, c++builder, cpp, c++ (Delphi & C++ Builder)")
 	writeLn("  - iodine (RemObjects' Java)")
 	writeLn("  - java (Oracle Java)")
+	writeLn("  - javascript, js")
 	writeLn()
 	writeLn("Additional options:")
 	writeLn()
@@ -54,8 +56,9 @@ func writeSyntax() {
 	writeLn("  --splittypes (BCB only)")
 	writeLn("  --hydra (Delphi only)")
 	writeLn("  --skipasync (Delphi/BCB)")
-	writeLn("  --codedom (.NET only)")
+//    writeLn("  --codedom (.NET only)")
 	writeLn("  --skipdocumentation")
+	writeLn("  --excludeclasses (valid for --type:intf only)")
 	writeLn("  --excludeservices (valid for --type:intf only)")
 	writeLn("  --excludeeventsinks (valid for --type:intf only)")
 	writeLn()
@@ -220,6 +223,7 @@ do {
 			writeLn("Unsupported type: "+options["type"])
 			return 2
 	}
+	rodlLibrary.Validate()
 
 
 	var codegen: CGCodeGenerator?
@@ -326,20 +330,20 @@ do {
 		case "echoes", "net", ".net":
 			options["platform"] = ".net"
 			serverSupport = true
-			if options["codedom"] != nil {
-				#if ECHOES
-				activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
-				activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
-				#else
-				//activeRodlCodeGen = DotNetRodlCodeGen()
-				writeLn("'--codedom' option is not supported in the Mac version of rodl2code, sorry. Use 'mono rodl2code.exe', instead.")
-				return 2
-				#endif
-			}
-			else {
+			//if options["codedom"] != nil {
+				//#if ECHOES
+				//activeRodlCodeGen = EchoesCodeDomRodlCodeGen()
+				//activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
+				//#else
+				////activeRodlCodeGen = DotNetRodlCodeGen()
+				//writeLn("'--codedom' option is not supported in the Mac version of rodl2code, sorry. Use 'mono rodl2code.exe', instead.")
+				//return 2
+				//#endif
+			//}
+			//else {
 				activeRodlCodeGen = EchoesRodlCodeGen()
 				activeServerAccessCodeGen = NetServerAccessCodeGen(rodl: rodlLibrary, namespace: options["namespace"])
-			}
+			//}
 		case "delphi":
 			options["platform"] = "delphi"
 			options["language"] = "delphi" // force language to Delphi
@@ -371,6 +375,9 @@ do {
 	}
 	if options["skipdocumentation"] != nil {
 		activeRodlCodeGen?.GenerateDocumentation = false
+	}
+	if options["excludeclasses"] != nil {
+		activeRodlCodeGen?.ExcludeClasses = true
 	}
 	if options["excludeservices"] != nil {
 		activeRodlCodeGen?.ExcludeServices = true
@@ -477,15 +484,15 @@ do {
 		writeLn("Unsupported platform: "+options["platform"])
 		return 2
 	}
-	#if ECHOES
-	if let echoesRodlCodegen = activeRodlCodeGen as? EchoesCodeDomRodlCodeGen {
-		echoesRodlCodegen.Language = options["language"]
-		if echoesRodlCodegen.GetCodeDomProviderForLanguage() == nil {
-			writeLn("No CodeDom provider is registered for language: "+options["language"])
-			return 2
-		}
-	}
-	#endif
+	//#if ECHOES
+	//if let echoesRodlCodegen = activeRodlCodeGen as? EchoesCodeDomRodlCodeGen {
+		//echoesRodlCodegen.Language = options["language"]
+		//if echoesRodlCodegen.GetCodeDomProviderForLanguage() == nil {
+			//writeLn("No CodeDom provider is registered for language: "+options["language"])
+			//return 2
+		//}
+	//}
+	//#endif
 	if codegen == nil {
 		writeSyntax()
 		writeLn("Unsupported language: "+options["language"])

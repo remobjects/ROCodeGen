@@ -17,6 +17,7 @@ type
       fRoles.Clear;
       fRoles.LoadFromXmlNode(node);
       &Private := node.Attribute["Private"]:Value = "1";
+      RequireSession := node.Attribute["RequireSession"]:Value = "1";
       ImplClass := node.Attribute["ImplClass"]:Value;
       ImplUnit := node.Attribute["ImplUnit"]:Value;
     end;
@@ -57,6 +58,17 @@ type
       for parameter: RodlParameter in Items do
         if parameter.ParamFlag = ParamFlags.Result then self.Result := parameter;
       Items.Remove(self.Result);
+      Code.RemoveAll;
+      var lcode := node.FirstElementWithName("Code");
+      if lcode ≠ nil then begin
+        for each it: XmlElement in lcode.Elements do begin
+          var lang := it.Attribute["Language"].Value;
+          if (it.Nodes.Count = 1) and (it.Nodes[0].NodeType = XmlNodeType.CData) then begin
+            var value := XmlCData(it.Nodes[0]).Value;
+            Code.Add(lang, value);
+          end;
+        end;
+      end;
     end;
   end;
 

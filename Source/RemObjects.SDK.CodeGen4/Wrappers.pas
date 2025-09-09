@@ -67,10 +67,11 @@ type
     DelphiCodeFirstMode = 'DelphiCodeFirstMode';
     DelphiGenericArrayMode = 'DelphiGenericArrayMode';
     CBuilderSplitTypes = 'CBuilderSplitTypes';
-    UseNativeNETCodegen = 'UseNativeNETCodegen';
     GenerateDocumentation = 'GenerateDocumentation';
+    ExcludeClasses = 'ExcludeClasses';
     ExcludeServices = 'ExcludeServices';
     ExcludeEventSinks = "ExcludeEventSinks";
+    DelphiGenerateServerSideAttributes = "GenerateServerSideAttributes";
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName: String; aDefaultState: State):State;
@@ -108,14 +109,16 @@ begin
   result := new Codegen4Records;
   var rodl := new RodlLibrary();
   rodl.LoadFromString(aRodl);
+  rodl.Validate;
 
   var lparams := new Dictionary<String,String>();
   for each p in AdditionalParameters.Split(';') do begin
+    if p.StartsWith('"') and p.EndsWith('"') then p := p.Substring(1, p.Length - 2);
     var l := p.SplitAtFirstOccurrenceOf('=');
     if l.Count = 2 then lparams[l[0]] := l[1];
   end;
 
-  var l_useNativeNETCodegen := ParseAddParams(lparams, UseNativeNETCodegen) = '1';
+//  var l_useNativeNETCodegen := ParseAddParams(lparams, UseNativeNETCodegen) = '1';
   var llang := Language.ToString;
   var lfileext:= '';
   var codegen: RodlCodeGen;
@@ -138,6 +141,7 @@ begin
       DelphiRodlCodeGen(codegen).FPCMode := ParseAddParams(lparams,DelphiFPCMode, DelphiRodlCodeGen(codegen).FPCMode);
       DelphiRodlCodeGen(codegen).GenericArrayMode := ParseAddParams(lparams,DelphiGenericArrayMode, DelphiRodlCodeGen(codegen).GenericArrayMode);
       DelphiRodlCodeGen(codegen).DelphiXE2Mode := ParseAddParams(lparams,DelphiXE2Mode, DelphiRodlCodeGen(codegen).DelphiXE2Mode);
+      DelphiRodlCodeGen(codegen).GenerateServerSideAttributes := ParseAddParams(lparams, DelphiGenerateServerSideAttributes) = "1";
 
       if DelphiRodlCodeGen(codegen).FPCMode = State.On then
         DelphiRodlCodeGen(codegen).DelphiXE2Mode := State.Off;
@@ -171,19 +175,21 @@ begin
     end;
     Codegen4Platform.Cocoa: codegen := new CocoaRodlCodeGen;
     Codegen4Platform.Net: begin
-      if l_useNativeNETCodegen then begin
+//      if l_useNativeNETCodegen then begin
         codegen := new EchoesRodlCodeGen;
         EchoesRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
-      end
-      else begin
-        codegen := new EchoesCodeDomRodlCodeGen;
-        EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
-        EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
-      end;
+      //end
+      //else begin
+        //codegen := new EchoesCodeDomRodlCodeGen;
+        //EchoesCodeDomRodlCodeGen(codegen).AsyncSupport := ParseAddParams(lparams,AsyncSupport) = '1';
+        //EchoesCodeDomRodlCodeGen(codegen).FullFramework:= ParseAddParams(lparams,FullFramework) = '1';
+      //end;
     end;
     Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
   end;
 
+  if ParseAddParams(lparams, ExcludeClasses) = '1' then
+    codegen.ExcludeClasses := true;
   if ParseAddParams(lparams, ExcludeServices) = '1' then
     codegen.ExcludeServices := true;
   if ParseAddParams(lparams, ExcludeEventSinks) = '1' then
@@ -262,12 +268,13 @@ begin
   if codegen = nil then
      raise new Exception("Unsupported platform: "+Language.ToString);
 
-  if codegen is EchoesCodeDomRodlCodeGen then begin
-    EchoesCodeDomRodlCodeGen(codegen).Language := llang;
-    if EchoesCodeDomRodlCodeGen(codegen).GetCodeDomProviderForLanguage = nil then
-      raise new Exception("No CodeDom provider is registered for language: "+llang);
-  end
-  else if codegen.Generator = nil then
+  //if codegen is EchoesCodeDomRodlCodeGen then begin
+    //EchoesCodeDomRodlCodeGen(codegen).Language := llang;
+    //if EchoesCodeDomRodlCodeGen(codegen).GetCodeDomProviderForLanguage = nil then
+      //raise new Exception("No CodeDom provider is registered for language: "+llang);
+  //end
+  //else
+  if codegen.Generator = nil then
     raise new Exception("Unsupported language: "+llang);
 
   if not (Platform in [Codegen4Platform.Delphi,Codegen4Platform.CppBuilder, Codegen4Platform.Net]) then

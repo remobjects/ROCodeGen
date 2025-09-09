@@ -403,6 +403,7 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 
 		let interfaceProperty = CGPropertyDefinition(propertyName, proxyInterfaceType.NotNullable)
 		interfaceProperty.ReadOnly = true
+		interfaceProperty.Visibility = .Public
 		self.serverInterface!.Members.Add(interfaceProperty)
 	}
 }

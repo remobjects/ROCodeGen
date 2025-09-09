@@ -24,7 +24,7 @@ type
       end;
 
       if assigned(GroupUnder) then
-        SaveGuidToJson(node, "Group", GroupUnder.EntityID);
+        SaveGuidToJson(node, "Group", GroupUnder.GetOrGenerateEntityID);
     end;
 
     method SaveStringToJson(node: JsonObject; attributeName: String; value: String);

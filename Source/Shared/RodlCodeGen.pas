@@ -97,6 +97,7 @@ type
     property CodeUnitSupport: Boolean := True; virtual;
     property ExcludeServices: Boolean := false; // works for Intf generation only!
     property ExcludeEventSinks: Boolean := false; // works for Intf generation only!
+    property ExcludeClasses: Boolean := false; //works for Intf generation only!
     property RodlFileName: String :='';
     property GenerateDocumentation: Boolean := True; virtual;
 
@@ -164,6 +165,7 @@ end;
 
 method RodlCodeGen.GenerateInterfaceFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
+  aLibrary.Validate;
   exit Generator.GenerateUnit(GenerateInterfaceCodeUnit(aLibrary, aTargetNamespace, aUnitName));
 end;
 
@@ -354,11 +356,13 @@ end;
 
 method RodlCodeGen.GenerateInvokerFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
 begin
+  aLibrary.Validate;
   exit Generator.GenerateUnit(GenerateInvokerCodeUnit(aLibrary, aTargetNamespace, aUnitName));
 end;
 
 method RodlCodeGen.GenerateImplementationFiles(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): not nullable Dictionary<String, String>;
 begin
+  aLibrary.Validate;
   var lunit := GenerateImplementationCodeUnit(aLibrary, aTargetNamespace, aServiceName);
   exit GenerateImplementationFiles(lunit, aLibrary, aServiceName);
 end;
@@ -389,33 +393,35 @@ begin
     lLibraryCustomAttributes.Add(key, aLibrary.CustomAttributes[key]);
   {$endregion}
 
-  {$region Generate Enums}
-  for aEntity: RodlEnum in aLibrary.Enums.Items.OrderBy(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    GenerateEnum(result, aLibrary, aEntity);
-  end;
-  {$endregion}
+  if not ExcludeClasses then begin
+    {$region Generate Enums}
+    for aEntity: RodlEnum in aLibrary.Enums.Items.OrderBy(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      GenerateEnum(result, aLibrary, aEntity);
+    end;
+    {$endregion}
 
-  {$region Generate Structs}
-  for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    GenerateStruct(result, aLibrary, aEntity);
-  end;
-  {$endregion}
+    {$region Generate Structs}
+    for aEntity: RodlStruct in aLibrary.Structs.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      GenerateStruct(result, aLibrary, aEntity);
+    end;
+    {$endregion}
 
-  {$region Generate Arrays}
-  for aEntity: RodlArray  in aLibrary.Arrays.Items.OrderBy(b->b.Name) do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    GenerateArray(result, aLibrary, aEntity);
-  end;
-  {$endregion}
+    {$region Generate Arrays}
+    for aEntity: RodlArray  in aLibrary.Arrays.Items.OrderBy(b->b.Name) do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      GenerateArray(result, aLibrary, aEntity);
+    end;
+    {$endregion}
 
-  {$region Generate Exception}
-  for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
-    if not EntityNeedsCodeGen(aEntity) then Continue;
-    GenerateException(result, aLibrary, aEntity);
+    {$region Generate Exception}
+    for aEntity: RodlException in aLibrary.Exceptions.SortedByAncestor do begin
+      if not EntityNeedsCodeGen(aEntity) then Continue;
+      GenerateException(result, aLibrary, aEntity);
+    end;
+    {$endregion}
   end;
-  {$endregion}
 
   if not ExcludeServices then begin
     {$region Generate Services}
@@ -444,6 +450,7 @@ end;
 
 method RodlCodeGen.GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
 begin
+  aLibrary.Validate;
   exit DoGenerateInterfaceFile(aLibrary, coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, GetNamespace(aLibrary)), aUnitName);
 end;
 
