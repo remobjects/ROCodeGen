@@ -143,7 +143,7 @@ writeLn("Processing RODL file "+rodlFileName)
 
 do {
 
-	var isSupportedUrl =    rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://")
+	var isSupportedUrl =    rodlFileName.hasPrefix("http://") || rodlFileName.hasPrefix("https://") || rodlFileName.hasPrefix("file://")
 	var isUnsupportedUrl =  rodlFileName.hasPrefix("superhttp://") || rodlFileName.hasPrefix("superhttps://") ||
 							rodlFileName.hasPrefix("supertcp://") || rodlFileName.hasPrefix("supertcps://") ||
 							rodlFileName.hasPrefix("tcp://") || rodlFileName.hasPrefix("tcps://") ||
