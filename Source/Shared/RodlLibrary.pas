@@ -90,7 +90,11 @@ type
     begin
       case caseInsensitive(aUrl.Scheme) of
         "http", "https": begin
-            LoadFromString(Http.GetString(new HttpRequest(aUrl)));
+            var req := new HttpRequest(aUrl);
+            req.VerifyUntrustedCertificate := (info) -> begin
+              exit true;
+            end;
+            LoadFromString(Http.GetString(req));
           end;
         "file": begin
             LoadFromFile(aUrl.FilePath);
