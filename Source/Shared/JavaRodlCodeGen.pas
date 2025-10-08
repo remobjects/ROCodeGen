@@ -43,8 +43,8 @@ type
     method GetIncludesNamespace(aLibrary: RodlLibrary): String; override;
   public
     constructor;
-    property addROSDKPrefix: Boolean := True;
-    property isCooperMode: Boolean := True;
+    property addROSDKPrefix: Boolean := true;
+    property isCooperMode: Boolean := false;
     method GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; override;
   end;
 
@@ -1373,7 +1373,6 @@ end;
 
 method JavaRodlCodeGen.GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>;
 begin
-  isCooperMode := False;
   var l_dict := new Dictionary<String,String>;
   var lunit := DoGenerateInterfaceFile(aLibrary, aTargetNamespace);
   for k in lunit.Types.OrderBy(b->b.Name) do begin

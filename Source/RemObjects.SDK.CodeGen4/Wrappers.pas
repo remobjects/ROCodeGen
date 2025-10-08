@@ -12,7 +12,20 @@ type
   [ComVisible(true)]
   Codegen4Mode = public enum (Intf, Invk, Impl, &Async, All_Impl, _ServerAccess, All);
   [ComVisible(true)]
-  Codegen4Language = public enum (Oxygene, CSharp, Standard_CSharp, VB, Silver, Standard_Swift, ObjC, Delphi, Java, CppBuilder, JavaScript);
+  Codegen4Language = public enum (Oxygene = 0, Oxygene_Standard = 0,
+                                  CSharp = 1, CSharp_Hydrogene = 1,
+                                  Standard_CSharp = 2, CSharp_Standard = 2,
+                                  VB = 3, VB_Standard = 3,
+                                  Silver = 4, Swift_Silver = 4,
+                                  Standard_Swift = 5, Swift_Standard = 5,
+                                  ObjC = 6,
+                                  Delphi = 7,
+                                  Java = 8, Java_Standard = 8,
+                                  CppBuilder = 9, CPlusPlus_CPlusPlusBuilder = 9,
+                                  JavaScript = 10,
+                                  Mercury = 11, VB_Mercury = 11,
+                                  Iodine = 12, Java_Iodine = 12
+                                  );
   [ComVisible(true)]
   Codegen4FileType = public enum (&Unit, Header, Form);
 
@@ -100,7 +113,7 @@ begin
   RodlCodeGen.KnownRODLPaths["uRODataSnap.rodl".ToLowerInvariant()]          := RODRoot + "/Source/DataSnap/uRODataSnap.rodl";
   RodlCodeGen.KnownRODLPaths["HydraAutoUpdate.RODL".ToLowerInvariant()]      := HYDRoot + "/Source/HydraAutoUpdate.RODL";
 
-  if Language in [Codegen4Language.Delphi, Codegen4Language.CppBuilder] then
+  if Language in [Codegen4Language.Delphi, Codegen4Language.CPlusPlus_CPlusPlusBuilder] then
     RodlCodeGen.KnownRODLPaths["DataAbstract-Simple.RODL".ToLowerInvariant()] := DADRoot + "/Source/DataAbstract-Simple.RODL"
   else
     RodlCodeGen.KnownRODLPaths["DataAbstract-Simple.RODL".ToLowerInvariant()] := DANRoot + "/Source/RemObjects.DataAbstract.Server/DataAbstract-Simple.RODL";
@@ -119,7 +132,7 @@ begin
   end;
 
 //  var l_useNativeNETCodegen := ParseAddParams(lparams, UseNativeNETCodegen) = '1';
-  var llang := Language.ToString;
+  //var llang := Language.ToString;
   var lfileext:= '';
   var codegen: RodlCodeGen;
   case &Platform of
@@ -170,8 +183,7 @@ begin
         CPlusPlusBuilderRodlCodeGen(codegen).AsyncSupport := false;
     end;
     Codegen4Platform.Java: begin
-      codegen := new JavaRodlCodeGen;
-      JavaRodlCodeGen(codegen).isCooperMode := not (Language = Codegen4Language.Java);
+      codegen := new JavaRodlCodeGen(isCooperMode := Language = Codegen4Language.Java_Iodine);
     end;
     Codegen4Platform.Cocoa: codegen := new CocoaRodlCodeGen;
     Codegen4Platform.Net: begin
@@ -198,37 +210,40 @@ begin
   if ParseAddParams(lparams, GenerateDocumentation) = '0' then
     codegen.GenerateDocumentation := false;
   case Language of
-    Codegen4Language.Oxygene: begin
-      codegen.Generator := new CGOxygeneCodeGenerator();
-      // CGOxygeneCodeGenerator(codegen.Generator).Style := CGOxygeneCodeGeneratorStyle.GroupUnified;
-      llang := 'oxygene';
+    Codegen4Language.Oxygene_Standard: begin
+      codegen.Generator := new CGOxygeneCodeGenerator(Style := CGOxygeneCodeGeneratorStyle.Standard);
+      //llang := 'oxygene';
       lfileext := 'pas';
     end;
-    Codegen4Language.CSharp: begin
+    Codegen4Language.CSharp_Hydrogene: begin
       codegen.Generator := new CGCSharpCodeGenerator(Dialect := CGCSharpCodeGeneratorDialect.Hydrogene);
-      llang := 'c#';
+      //llang := 'c#';
       lfileext := 'cs';
     end;
-    Codegen4Language.Standard_CSharp: begin
+    Codegen4Language.CSharp_Standard: begin
       codegen.Generator := new CGCSharpCodeGenerator(Dialect := CGCSharpCodeGeneratorDialect.Standard);
-      llang := 'standard-c#';
+      //llang := 'standard-c#';
       lfileext := 'cs';
     end;
-    Codegen4Language.VB: begin
+    Codegen4Language.VB_Standard: begin
       codegen.Generator := new CGVisualBasicNetCodeGenerator(Dialect := CGVisualBasicCodeGeneratorDialect.Standard);
-      llang := 'vb';
+      //llang := 'vb';
       lfileext := 'vb';
     end;
-    Codegen4Language.Silver: begin
+    Codegen4Language.VB_Mercury: begin
+      codegen.Generator := new CGVisualBasicNetCodeGenerator(Dialect := CGVisualBasicCodeGeneratorDialect.Mercury);
+      lfileext := 'vb';
+    end;
+    Codegen4Language.Swift_Silver: begin
       codegen.Generator := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Silver);
-      llang := 'swift';
+      //llang := 'swift';
       lfileext := 'swift';
       if codegen is CocoaRodlCodeGen then
         CocoaRodlCodeGen(codegen).SwiftDialect := CGSwiftCodeGeneratorDialect.Silver;
     end;
-    Codegen4Language.Standard_Swift: begin
+    Codegen4Language.Swift_Standard: begin
       codegen.Generator := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Standard);
-      llang := 'standard-swift';
+      //llang := 'standard-swift';
       lfileext := 'swift';
       if codegen is CocoaRodlCodeGen then begin
         CocoaRodlCodeGen(codegen).SwiftDialect := CGSwiftCodeGeneratorDialect.Standard;
@@ -237,7 +252,7 @@ begin
     end;
     Codegen4Language.ObjC: begin
       codegen.Generator := new CGObjectiveCMCodeGenerator();
-      llang := 'objc';
+      //llang := 'objc';
       lfileext := 'm';
     end;
     Codegen4Language.Delphi: begin
@@ -245,22 +260,28 @@ begin
       if codegen is DelphiRodlCodeGen then
         if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.On then
           CGDelphiCodeGenerator(codegen.Generator).Dialect := CGPascalCodeGeneratorDialect.Delphi2009;
-      llang := 'delphi';
+      //llang := 'delphi';
       lfileext := 'pas';
     end;
-    Codegen4Language.Java: begin
-      codegen.Generator := new CGJavaCodeGenerator();
-      llang := 'java';
+    Codegen4Language.Java_Standard: begin
+      codegen.Generator := new CGJavaCodeGenerator( Dialect := CGJavaCodeGeneratorDialect.Standard);
+      //llang := 'java';
+      lfileext := 'java';
+    end;
+    Codegen4Language.Java_Iodine: begin
+      codegen.Generator := new CGJavaCodeGenerator( Dialect := CGJavaCodeGeneratorDialect.Iodine);
+      //llang := 'java';
       lfileext := 'java';
     end;
     Codegen4Language.JavaScript: begin
       codegen.Generator := new CGJavaScriptCodeGenerator();
-      llang := 'js';
+      //llang := 'js';
       lfileext := 'js';
     end;
-    Codegen4Language.CppBuilder: begin
-      codegen.Generator := new CGCPlusPlusCPPCodeGenerator(Dialect:=CGCPlusPlusCodeGeneratorDialect.CPlusPlusBuilder, splitLinesLongerThan := 200);
-      llang := 'c++builder';
+    Codegen4Language.CPlusPlus_CPlusPlusBuilder: begin
+      codegen.Generator := new CGCPlusPlusCPPCodeGenerator(Dialect := CGCPlusPlusCodeGeneratorDialect.CPlusPlusBuilder,
+                                                           splitLinesLongerThan := 200);
+      //llang := 'c++builder';
       lfileext := 'cpp';
     end;
   end;
@@ -275,7 +296,7 @@ begin
   //end
   //else
   if codegen.Generator = nil then
-    raise new Exception("Unsupported language: "+llang);
+    raise new Exception("Unsupported language: "+Language.ToString);
 
   if not (Platform in [Codegen4Platform.Delphi,Codegen4Platform.CppBuilder, Codegen4Platform.Net]) then
     if Mode in [Codegen4Mode.Invk, Codegen4Mode.Impl,Codegen4Mode.All_Impl] then
