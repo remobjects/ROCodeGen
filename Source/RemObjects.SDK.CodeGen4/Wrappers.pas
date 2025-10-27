@@ -8,7 +8,7 @@ uses
 
 type
   [ComVisible(true)]
-  Codegen4Platform = public enum (Cocoa, Delphi, Java, Net, CppBuilder, JavaScript);
+  Codegen4Platform = public enum (Cocoa, Delphi, Java, Net, CppBuilder, JavaScript, Php);
   [ComVisible(true)]
   Codegen4Mode = public enum (Intf, Invk, Impl, &Async, All_Impl, _ServerAccess, All);
   [ComVisible(true)]
@@ -24,7 +24,8 @@ type
                                   CppBuilder = 9, CPlusPlus_CPlusPlusBuilder = 9,
                                   JavaScript = 10,
                                   Mercury = 11, VB_Mercury = 11,
-                                  Iodine = 12, Java_Iodine = 12
+                                  Iodine = 12, Java_Iodine = 12,
+                                  Php = 13
                                   );
   [ComVisible(true)]
   Codegen4FileType = public enum (&Unit, Header, Form);
@@ -198,6 +199,7 @@ begin
       //end;
     end;
     Codegen4Platform.JavaScript: codegen := new JavaScriptRodlCodeGen;
+    Codegen4Platform.Php: codegen := new PhpRodlCodeGen;
   end;
 
   if ParseAddParams(lparams, ExcludeClasses) = '1' then
@@ -283,6 +285,10 @@ begin
                                                            splitLinesLongerThan := 200);
       //llang := 'c++builder';
       lfileext := 'cpp';
+    end;
+    Codegen4Language.Php: begin
+      codegen.Generator := new CGPhpCodeGenerator();
+      lfileext := 'php.inc';
     end;
   end;
 

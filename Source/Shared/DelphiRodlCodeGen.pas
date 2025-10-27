@@ -6,7 +6,7 @@ type
   ModeKind = public enum (Plain, &Async, AsyncEx);
   State = public enum (Off, &On, Auto);
 
-  DelphiServerAncestor = public enum (Remotable,RemoteDataModule, Custom);
+  DelphiServerAncestor = public enum (Remotable, RemoteDataModule, Custom);
 
   DelphiRodlCodeGen = public class(RodlCodeGen)
   private
@@ -3986,12 +3986,15 @@ begin
     if not String.IsNullOrEmpty(l_path) then begin
       var l_method := GetAttributeValue(aEntity, 'httpapimethod');
       var l_resultcode := GetAttributeValue(aEntity, 'httpapiresult');
-      var l_result_int: nullable Integer := 200;
+      var l_result_int: Integer := 200;
       if not String.IsNullOrEmpty(l_resultcode) then begin
-        l_result_int := Convert.TryToInt32(l_resultcode);
-        if not assigned(l_result_int) then begin
+        var temp := Convert.TryToInt32(l_resultcode);
+        if not assigned(temp) then begin
           l_resultcode := nil;
           l_result_int := 200;
+        end
+        else begin
+          l_result_int := temp;
         end;
       end;
       var l_tags := GetAttributeValue(aEntity, 'httpapitags');

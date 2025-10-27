@@ -83,5 +83,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)..\..\..\CodeGen4\CGCPlusPlusHCodeGenerator.swift">
       <VirtualFolder>CG4</VirtualFolder>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\..\codegen4\CGPhpCodeGenerator.swift">
+      <VirtualFolder>CG4</VirtualFolder>
+    </Compile>
   </ItemGroup>
 </Project>

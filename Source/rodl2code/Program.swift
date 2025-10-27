@@ -28,6 +28,7 @@ func writeSyntax() {
 	writeLn("  - java, cooper")
 	writeLn("  - delphi, c++builder, bcb")
 	writeLn("  - javascript, js")
+	writeLn("  - php")
 	writeLn()
 	writeLn("Valid <language> values:")
 	writeLn()
@@ -43,6 +44,7 @@ func writeSyntax() {
 	writeLn("  - iodine (RemObjects' Java)")
 	writeLn("  - java (Oracle Java)")
 	writeLn("  - javascript, js")
+	writeLn("  - php")
 	writeLn()
 	writeLn("Additional options:")
 	writeLn()
@@ -56,7 +58,6 @@ func writeSyntax() {
 	writeLn("  --splittypes (BCB only)")
 	writeLn("  --hydra (Delphi only)")
 	writeLn("  --skipasync (Delphi/BCB)")
-//    writeLn("  --codedom (.NET only)")
 	writeLn("  --skipdocumentation")
 	writeLn("  --excludeclasses (valid for --type:intf only)")
 	writeLn("  --excludeservices (valid for --type:intf only)")
@@ -204,6 +205,9 @@ do {
 	if options["platform"]?.ToLowerInvariant() == "delphi" && options["language"] == nil {
 		options["language"] = "delphi"
 	}
+	if options["platform"]?.ToLowerInvariant() == "php" && options["language"] == nil {
+		options["language"] = "php"
+	}
 	if options["platform"]?.ToLowerInvariant() == "bcb" && options["language"] == nil {
 		options["language"] = "cpp"
 	}
@@ -292,6 +296,11 @@ do {
 			options["platform"] = "javascript" // force platform to JavaScript
 			codegen = CGJavaScriptCodeGenerator()
 			fileExtension = "js"
+		case "php":
+			//options["language"] = "php"
+			//options["platform"] = "php"
+			codegen = CGPhpCodeGenerator()
+			fileExtension = "php.inc"
 		default:
 	}
 
@@ -360,6 +369,8 @@ do {
 			options["platform"] = "javascript"
 			options["language"] = "js" // force language to JavaScript
 			activeRodlCodeGen = JavaScriptRodlCodeGen()
+		case "php":
+			activeRodlCodeGen = PhpRodlCodeGen()
 		default:
 	}
 

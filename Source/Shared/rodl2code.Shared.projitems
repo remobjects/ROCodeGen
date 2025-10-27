@@ -91,5 +91,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)EchoesRodlCodeGen.pas">
       <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)PhpRodlCodegen.pas">
+      <VirtualFolder>CodeGens</VirtualFolder>
+    </Compile>
   </ItemGroup>
 </Project>
