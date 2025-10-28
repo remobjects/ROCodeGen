@@ -7,66 +7,18 @@ type
   private
     method _FixDataType(aValue: String): String;
     method GetScalarType(aValue: String): CGTypeReference;
-    begin
-      case aValue.ToLowerInvariant of
-        "integer": exit CGPredefinedTypeReference.Int;
-        "double": exit CGPredefinedTypeReference.Double;
-        "boolean": exit CGPredefinedTypeReference.Boolean;
-        "nullableinteger": exit CGPredefinedTypeReference.Int.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
-        "nullabledouble": exit CGPredefinedTypeReference.Double.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
-        "nullableboolean": exit CGPredefinedTypeReference.Boolean.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
-        "nullabledatetime",
-        "nullablecurrency",
-        "nullableint64",
-        "nullableguid",
-        "nullabledecimal": exit CGPredefinedTypeReference.String.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
-      else
-        exit CGPredefinedTypeReference.String;
-      end;
-    end;
     method GetGlobalVariable(aName: String): CGExpression;
     method GenerateCustomAttributeHandlers(aType: CGTypeDefinition; aRodlEntity: RodlEntity); empty;
-//    method GenerateUTF8String(file: CGCodeUnit);
     method GenerateXsDateTimeClass(file: CGCodeUnit; aLibrary: RodlLibrary);
-    begin
-      var str := new RodlStruct(Name := "XsDateTime");
-      str.Items.Add(new RodlField(Name := "DateTime", DataType := "DateTime"));
-      str.Items.Add(new RodlField(Name := "TimeZoneOffset", DataType := "Integer"));
-      GenerateStruct(file, aLibrary, str);
-      if file.Types.Last:Name = "XsDateTime" then begin
-        //var l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Unspecified);
-        var list := file.Types.Last.Members.Where(b->b is CGConstructorDefinition);
-        if list.Count = 1 then begin
-          var l_ctor := list.First as CGConstructorDefinition;
-          var l_p_dt := new CGPhpConstructorParameterDefinition("$DT",
-                                                                DefaultValue := CGNilExpression.Nil
-                                                                //,Visibility := CGPhpConstructorParameterVisibility.Public
-                                                                );
-          var l_p_offset := new CGPhpConstructorParameterDefinition("$Offset",
-                                                                    DefaultValue := 0.AsLiteralExpression
-                                                                    //, Visibility := CGPhpConstructorParameterVisibility.Public
-                                                                    );
-
-          l_ctor.Parameters.Add(l_p_dt);
-          l_ctor.Parameters.Add(l_p_offset);
-          l_ctor.Statements.Add(new CGAssignmentStatement(new CGFieldAccessExpression(CGSelfExpression.Self, "DateTime"), l_p_dt.AsExpression));
-          l_ctor.Statements.Add(new CGAssignmentStatement(new CGFieldAccessExpression(CGSelfExpression.Self, "TimeZoneOffset"), l_p_offset.AsExpression));
-        end;
-      end;
-    end;
-
-
     method Decrement1(aExpression: CGExpression): CGExpression;
-
     method GenerateHelper(file: CGCodeUnit; aLibrary: RodlLibrary);
     method IsScalar(aLibrary: RodlLibrary; aDataType: String): Boolean;
-
     method Generate_FromXmlRpcVal_Body(aLibrary: RodlLibrary; aStruct: RodlStructEntity; aList: List<CGStatement>);
-
     method Generate_ToXmlRpcVal_Body(aLibrary: RodlLibrary; aStruct: RodlStructEntity; aList: List<CGStatement>);
     property HelperName: CGExpression;
     method ParamToComment(aLibrary: RodlLibrary; aParam: RodlParameter): String;
-    method GenerateServiceMethod(aLibrary: RodlLibrary; aService: RodlService; aOperation: RodlOperation; aUseSession: Boolean): CGMethodDefinition;
+    method GenerateServiceMethod_readResult(aLibrary: RodlLibrary; aOperation: RodlOperation; aRes: CGExpression): CGStatement;
+    method GenerateServiceMethod(aLibrary: RodlLibrary; aService: RodlService; aOperation: RodlOperation): CGMethodDefinition;
   protected
     property EnumBaseType: CGTypeReference read nil; override;
     method AddUsedNamespaces(file: CGCodeUnit; aLibrary: RodlLibrary); override;
@@ -74,10 +26,6 @@ type
     method GetGlobalName(aLibrary: RodlLibrary): String; override; empty;
     method AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary); override;
     method GenerateStructs(aFile: CGCodeUnit; aLibrary: RodlLibrary); override;
-    begin
-      GenerateXsDateTimeClass(aFile, aLibrary);
-      inherited;
-    end;
     method GenerateExceptions(file: CGCodeUnit; aLibrary: RodlLibrary); override;
     method GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum); override;
     method GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct); override;
@@ -324,7 +272,17 @@ begin
     l_service.Ancestors.Add(aEntity.AncestorName.AsTypeReference);
   l_service.XmlDocumentation := GenerateDocumentation(aEntity);
   aFile.Types.Add(l_service);
-  l_service.Members.Add(new CGPropertyDefinition("$___server", Visibility := CGMemberVisibilityKind.Private));
+  l_service.Members.Add(new CGPropertyDefinition("$WrappedResult",
+                                                 Visibility := CGMemberVisibilityKind.Public,
+                                                 Initializer := CGBooleanLiteralExpression.False));
+  l_service.Members.Add(new CGPropertyDefinition("$SessionID",
+                                                 Visibility := CGMemberVisibilityKind.Public,
+                                                 Initializer := "00000000-0000-0000-0000-000000000000".AsLiteralExpression));
+  l_service.Members.Add(new CGPropertyDefinition("$UseSession",
+                                                 Visibility := CGMemberVisibilityKind.Public,
+                                                 Initializer := CGBooleanLiteralExpression.False));
+  l_service.Members.Add(new CGPropertyDefinition("$___server",
+                                                 Visibility := CGMemberVisibilityKind.Private));
   /* ------------------------------------------------------------------- */
   /* constructor
 
@@ -395,10 +353,10 @@ begin
                                                ReturnType := "xmlrpc_client".AsTypeReference,
                                                Visibility := CGMemberVisibilityKind.Unspecified));
   /* ------------------------------------------------------------------- */
-  for each op in aEntity.DefaultInterface.Items do begin
-    l_service.Members.Add(GenerateServiceMethod(aLibrary, aEntity, op, false));
-    l_service.Members.Add(GenerateServiceMethod(aLibrary, aEntity, op, true));
-  end;
+  for each op in aEntity.DefaultInterface.Items do
+    l_service.Members.Add(GenerateServiceMethod(aLibrary, aEntity, op));
+
+
 end;
 
 method PhpRodlCodeGen.GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink);
@@ -417,42 +375,6 @@ method PhpRodlCodeGen.GetGlobalVariable(aName: String): CGExpression;
 begin
   exit new CGArrayElementAccessExpression("$GLOBALS".AsNamedIdentifierExpression, aName.AsLiteralExpression);
 end;
-
-//method PhpRodlCodeGen.GenerateUTF8String(file: CGCodeUnit);
-//begin
-  //var l_utf8 := new CGClassTypeDefinition("UTF8String");
-  //file.Types.Add(l_utf8);
-  ///* -------------------------------------------------------------*/
-  //var l_m := new CGMethodDefinition("Switcher",
-                                   //Visibility := CGMemberVisibilityKind.Private,
-                                   //&Static := true);
-  //l_m.Statements.Add(new CGAssignmentStatement(GetGlobalVariable("xmlrpc_internalencoding"), "UTF-8".AsLiteralExpression));
-  //l_utf8.Members.Add(l_m);
-  ///* -------------------------------------------------------------*/
-  //l_m := new CGMethodDefinition("ToXmlRpcVal",
-                                //Visibility := CGMemberVisibilityKind.Unspecified,
-                                //&Static := true);
-  //if GenerateTypes then l_m.ReturnType := "xmlrpcval".AsTypeReference;
-  //var l_p := new CGParameterDefinition("$InParam");
-  //if GenerateTypes then l_p.Type := CGPredefinedTypeReference.Dynamic;
-  //l_m.Parameters.Add(l_p);
-  //l_m.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self,"Switcher", CallSiteKind := CGCallSiteKind.Static));
-  //l_m.Statements.Add(new CGNewInstanceExpression("xmlrpcval".AsNamedIdentifierExpression,
-                                                    //[l_p.AsCallParameter,
-                                                     //"string".AsLiteralExpression.AsCallParameter]).AsReturnStatement);
-  //l_utf8.Members.Add(l_m);
-  ///* -------------------------------------------------------------*/
-  //l_m := new CGMethodDefinition("FromXmlRpcVal",
-                                //Visibility := CGMemberVisibilityKind.Unspecified,
-                                //&Static := true);
-  //if GenerateTypes then l_m.ReturnType := CGPredefinedTypeReference.String;
-  //l_p := new CGParameterDefinition("$InObject");
-  //if GenerateTypes then l_p.Type :=  CGPredefinedTypeReference.Dynamic;
-  //l_m.Parameters.Add(l_p);
-  //l_m.Statements.Add(new CGMethodCallExpression(l_p.AsExpression,"scalarval").AsReturnStatement);
-  //l_utf8.Members.Add(l_m);
-  ///* -------------------------------------------------------------*/
-//end;
 
 method PhpRodlCodeGen.GenerateHelper(file: CGCodeUnit; aLibrary: RodlLibrary);
 begin
@@ -488,8 +410,8 @@ begin
   for each it in aLibrary.Exceptions.SortedByAncestor.ToList do
     l_cases.Add(
       new CGSwitchStatementCase(
-        CGExpression(it.Name.AsLiteralExpression),
-        [new CGThrowExpression(new CGNewInstanceExpression(it.Name.AsTypeReference,[l_submsg.AsCallParameter]))].ToList<CGStatement>
+        it.Name.AsLiteralExpression,
+        [new CGThrowExpression(new CGNewInstanceExpression(it.Name.AsTypeReference,[l_submsg.AsCallParameter])) as CGStatement].ToList
       ));
   l_else.Statements.Add(new CGSwitchStatement(l_class.AsExpression,
                                               l_cases.ToArray,
@@ -694,9 +616,9 @@ begin
   exit r + "$" + aParam.Name + ": " + aParam.DataType;
 end;
 
-method PhpRodlCodeGen.GenerateServiceMethod(aLibrary: RodlLibrary; aService: RodlService; aOperation: RodlOperation; aUseSession: Boolean): CGMethodDefinition;
+method PhpRodlCodeGen.GenerateServiceMethod(aLibrary: RodlLibrary; aService: RodlService; aOperation: RodlOperation): CGMethodDefinition;
 begin
-  var lname := aOperation.Name + iif(aUseSession,"_with_SessionID","");
+  var lname := aOperation.Name;
   var lresult := new CGMethodDefinition(lname, Visibility := CGMemberVisibilityKind.Unspecified);
   if assigned(aOperation.Result) and GenerateTypes then
     lresult.ReturnType := if not isEnum(aLibrary, aOperation.Result.DataType) and IsScalar(aLibrary, aOperation.Result.DataType) then
@@ -704,12 +626,9 @@ begin
                             else
                               aOperation.Result.DataType.AsTypeReference;
 
-  var l_p_session := new CGParameterDefinition("$SessionId", CGPredefinedTypeReference.String);
+  var f_session := new CGFieldAccessExpression(CGSelfExpression.Self, "SessionID");
+
   var l_comment := "";
-  if aUseSession then begin
-    lresult.Parameters.Add(l_p_session);
-    l_comment := l_p_session.Name + ": string";
-  end;
   for each p in aOperation.Items do begin
     var l_type :=
       if not isEnum(aLibrary, p.DataType) and IsScalar(aLibrary, p.DataType) then
@@ -732,18 +651,18 @@ begin
                                                   new CGNewInstanceExpression("xmlrpcmsg".AsTypeReference,
                                                                               [(aService.Name+"."+aOperation.Name).AsLiteralExpression.AsCallParameter]));
   lresult.Statements.Add(l_msg);
-  var dx := 0;
-  if aUseSession then begin
-
-    //$___msg->addParam(new xmlrpcval($SessionId, "string"));
-    lresult.Statements.Add(new CGMethodCallExpression(l_msg.AsExpression,
+  //$___msg->addParam(new xmlrpcval($SessionId, "string"));
+  lresult.Statements.Add(
+    new CGIfThenElseStatement(new CGFieldAccessExpression(CGSelfExpression.Self, "UseSession"),
+                              new CGMethodCallExpression(l_msg.AsExpression,
                                                       "addParam",
-                                                      [l_p_session.AsCallParameter,
-                                                       "string".AsLiteralExpression.AsCallParameter]));
-    inc(dx);
-  end;
+                                                      [new CGNewInstanceExpression("xmlrpcval".AsTypeReference,
+                                                          [f_session.AsCallParameter,
+                                                          "string".AsLiteralExpression.AsCallParameter]).AsCallParameter
+                                                      ])
+                              ));
   for p in aOperation.Items index i do begin
-    var l_p := lresult.Parameters[i + dx];
+    var l_p := lresult.Parameters[i];
     var l_value: CGExpression;
     if IsScalar(aLibrary, p.DataType) then
       l_value := new CGNewInstanceExpression("xmlrpcval".AsTypeReference,
@@ -794,36 +713,117 @@ begin
                                  CallSiteKind := CGCallSiteKind.Static)
     )
   );
+  var l_res_Value := new CGMethodCallExpression(l_res.AsExpression,"value");
+
+  var if_true := new CGBeginEndBlockStatement;
+  var if_false := new CGBeginEndBlockStatement;
+
+
+  lresult.Statements.Add(
+    new CGIfThenElseStatement(
+      new CGFieldAccessExpression(CGSelfExpression.Self, "WrappedResult"),
+      if_true,
+      if_false
+    ));
+
+  //$SessionId = $___res->value()->structmem("SessionId")->scalarval();
+  var t_s := new CGVariableDeclarationStatement("$temp_session",
+                                                nil,
+                                                new CGMethodCallExpression(
+                                                  new CGMethodCallExpression(l_res_Value,
+                                                      "structmem",["SessionId".AsLiteralExpression.AsCallParameter]),
+                                                  "scalarval"));
+  if_true.Statements.Add(t_s);
+  if_true.Statements.Add(
+    new CGIfThenElseStatement(new CGBinaryOperatorExpression(t_s.AsExpression, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
+                              new CGAssignmentStatement(f_session, t_s.AsExpression)));
   if aOperation.Result <> nil then begin
-    var l_res_Value := new CGMethodCallExpression(l_res.AsExpression,"value");
-    if IsScalar(aLibrary, aOperation.Result.DataType) then
-      lresult.Statements.Add(new CGMethodCallExpression(l_res_Value, "scalarval").AsReturnStatement)
-    else begin
-      var ar := aLibrary.Arrays.FindEntity(aOperation.Result.DataType);
-      if assigned(ar) then begin
-        if IsScalar(aLibrary, ar.ElementType) then
-          lresult.Statements.Add(
-            new CGMethodCallExpression(
-              HelperName,"ToArray",
-              [l_res_Value.AsCallParameter],
-              CallSiteKind := CGCallSiteKind.Static).AsReturnStatement)
-        else
-          lresult.Statements.Add(
-            new CGMethodCallExpression(
-              ar.ElementType.AsNamedIdentifierExpression,"ToArray",
-              [l_res_Value.AsCallParameter],
-              CallSiteKind := CGCallSiteKind.Static).AsReturnStatement)
-      end
-      else
-        lresult.Statements.Add(
-          new CGMethodCallExpression(
-            aOperation.Result.DataType.AsNamedIdentifierExpression,
-            "FromXmlRpcVal",
-            [l_res_Value.AsCallParameter],
-            CallSiteKind := CGCallSiteKind.Static).AsReturnStatement);
-    end;
+    if_false.Statements.Add(GenerateServiceMethod_readResult(aLibrary, aOperation, l_res_Value));
+    var lr := new CGMethodCallExpression(l_res_Value,"structmem",["Result".AsLiteralExpression.AsCallParameter]);
+    if_true.Statements.Add(GenerateServiceMethod_readResult(aLibrary, aOperation, lr));
   end;
   exit lresult;
+end;
+
+method PhpRodlCodeGen.GetScalarType(aValue: String): CGTypeReference;
+begin
+  case aValue.ToLowerInvariant of
+    "integer": exit CGPredefinedTypeReference.Int;
+    "double": exit CGPredefinedTypeReference.Double;
+    "boolean": exit CGPredefinedTypeReference.Boolean;
+    "nullableinteger": exit CGPredefinedTypeReference.Int.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
+    "nullabledouble": exit CGPredefinedTypeReference.Double.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
+    "nullableboolean": exit CGPredefinedTypeReference.Boolean.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
+    "nullabledatetime",
+    "nullablecurrency",
+    "nullableint64",
+    "nullableguid",
+    "nullabledecimal": exit CGPredefinedTypeReference.String.copyWithNullability(CGTypeNullabilityKind.NullableUnwrapped);
+  else
+    exit CGPredefinedTypeReference.String;
+  end;
+end;
+
+method PhpRodlCodeGen.GenerateXsDateTimeClass(file: CGCodeUnit; aLibrary: RodlLibrary);
+begin
+  var str := new RodlStruct(Name := "XsDateTime");
+  str.Items.Add(new RodlField(Name := "DateTime", DataType := "DateTime"));
+  str.Items.Add(new RodlField(Name := "TimeZoneOffset", DataType := "Integer"));
+  GenerateStruct(file, aLibrary, str);
+  if file.Types.Last:Name = "XsDateTime" then begin
+    //var l_ctor := new CGConstructorDefinition(Visibility := CGMemberVisibilityKind.Unspecified);
+    var list := file.Types.Last.Members.Where(b->b is CGConstructorDefinition);
+    if list.Count = 1 then begin
+      var l_ctor := list.First as CGConstructorDefinition;
+      var l_p_dt := new CGPhpConstructorParameterDefinition("$DT",
+                                                            DefaultValue := CGNilExpression.Nil
+                                                            //,Visibility := CGPhpConstructorParameterVisibility.Public
+                                                            );
+      var l_p_offset := new CGPhpConstructorParameterDefinition("$Offset",
+                                                                DefaultValue := 0.AsLiteralExpression
+                                                                //, Visibility := CGPhpConstructorParameterVisibility.Public
+                                                                );
+
+      l_ctor.Parameters.Add(l_p_dt);
+      l_ctor.Parameters.Add(l_p_offset);
+      l_ctor.Statements.Add(new CGAssignmentStatement(new CGFieldAccessExpression(CGSelfExpression.Self, "DateTime"), l_p_dt.AsExpression));
+      l_ctor.Statements.Add(new CGAssignmentStatement(new CGFieldAccessExpression(CGSelfExpression.Self, "TimeZoneOffset"), l_p_offset.AsExpression));
+    end;
+  end;
+end;
+
+method PhpRodlCodeGen.GenerateServiceMethod_readResult(aLibrary: RodlLibrary; aOperation: RodlOperation; aRes: CGExpression): CGStatement;
+begin
+  if IsScalar(aLibrary, aOperation.Result.DataType) then
+    exit new CGMethodCallExpression(aRes, "scalarval").AsReturnStatement
+  else begin
+    var ar := aLibrary.Arrays.FindEntity(aOperation.Result.DataType);
+    if assigned(ar) then begin
+      if IsScalar(aLibrary, ar.ElementType) then
+        exit new CGMethodCallExpression(
+            HelperName,"ToArray",
+            [aRes.AsCallParameter],
+            CallSiteKind := CGCallSiteKind.Static).AsReturnStatement
+      else
+        exit
+          new CGMethodCallExpression(
+            ar.ElementType.AsNamedIdentifierExpression,"ToArray",
+            [aRes.AsCallParameter],
+            CallSiteKind := CGCallSiteKind.Static).AsReturnStatement
+    end
+    else
+      exit new CGMethodCallExpression(
+          aOperation.Result.DataType.AsNamedIdentifierExpression,
+          "FromXmlRpcVal",
+          [aRes.AsCallParameter],
+          CallSiteKind := CGCallSiteKind.Static).AsReturnStatement;
+  end;
+end;
+
+method PhpRodlCodeGen.GenerateStructs(aFile: CGCodeUnit; aLibrary: RodlLibrary);
+begin
+  GenerateXsDateTimeClass(aFile, aLibrary);
+  inherited;
 end;
 
 end.
