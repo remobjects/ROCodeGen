@@ -17,7 +17,8 @@ type
     method Generate_ToXmlRpcVal_Body(aLibrary: RodlLibrary; aStruct: RodlStructEntity; aList: List<CGStatement>);
     property HelperName: CGExpression;
     method ParamToComment(aLibrary: RodlLibrary; aParam: RodlParameter): String;
-    method GenerateServiceMethod_readResult(aLibrary: RodlLibrary; aOperation: RodlOperation; aRes: CGExpression): CGStatement;
+    method GenerateServiceMethod_WriteParam(aLibrary: RodlLibrary; aParam: RodlParameter; msg: CGExpression): CGStatement;
+    method GenerateServiceMethod_ReadParam(aLibrary: RodlLibrary; aParam: RodlParameter; aRes: CGExpression): CGExpression;
     method GenerateServiceMethod(aLibrary: RodlLibrary; aService: RodlService; aOperation: RodlOperation): CGMethodDefinition;
   protected
     property EnumBaseType: CGTypeReference read nil; override;
@@ -82,13 +83,16 @@ begin
   aFile.HeaderComment.Lines.Add("http://gggeek.github.io/phpxmlrpc/");
   aFile.HeaderComment.Lines.Add("");
 
+  aFile.HeaderComment.Lines.Add("* _with_SessionID methods were deprecated. use UseSession & SessionID properties instead.");
+  aFile.HeaderComment.Lines.Add("");
+
   var f := false;
   for each svc: RodlService in aLibrary.Services.Items do
     for each op in svc.DefaultInterface.Items do
       for each p in op.Items do
         if p.ParamFlag in [ParamFlags.Out, ParamFlags.InOut] then begin
           if not f then begin
-            aFile.HeaderComment.Lines.Add("Out and InOut parameters are not supported by XMLRPC client library. Please consider to change method definition(s):");
+            aFile.HeaderComment.Lines.Add("Out and InOut parameters are supported only if WrapResult property is set to true on both sides (client and server)");
             f := true;
           end;
           aFile.HeaderComment.Lines.Add($"  * {svc.Name}.{op.Name}");
@@ -661,39 +665,11 @@ begin
                                                           "string".AsLiteralExpression.AsCallParameter]).AsCallParameter
                                                       ])
                               ));
-  for p in aOperation.Items index i do begin
-    var l_p := lresult.Parameters[i];
-    var l_value: CGExpression;
-    if IsScalar(aLibrary, p.DataType) then
-      l_value := new CGNewInstanceExpression("xmlrpcval".AsTypeReference,
-                                             [l_p.AsCallParameter,
-                                              _FixDataType(p.DataType).AsLiteralExpression.AsCallParameter])
-    else begin
-      var ar := aLibrary.Arrays.FindEntity(p.DataType);
-      if assigned(ar) then begin
-        if IsScalar(aLibrary, ar.ElementType) then
-          l_value := new CGMethodCallExpression(HelperName,
-                                                "FromArray",
-                                                [l_p.AsCallParameter,
-                                                 _FixDataType(ar.ElementType).AsLiteralExpression.AsCallParameter],
-                                                 CallSiteKind := CGCallSiteKind.Static)
-        else
-          l_value := new CGMethodCallExpression(ar.ElementType.AsNamedIdentifierExpression,
-                                                "FromArray",
-                                                [l_p.AsCallParameter],
-                                                 CallSiteKind := CGCallSiteKind.Static);
-      end
-      else
-        l_value := new CGMethodCallExpression(p.DataType.AsNamedIdentifierExpression,
-                                              "ToXmlRpcVal",
-                                              [l_p.AsCallParameter],
-                                              CallSiteKind := CGCallSiteKind.Static);
-    end;
-
-    lresult.Statements.Add(new CGMethodCallExpression(l_msg.AsExpression,
-                                                      "addParam",
-                                                      [l_value.AsCallParameter]));
+  for p in aOperation.Items do begin
+    if p.ParamFlag in [ParamFlags.In, ParamFlags.InOut] then
+      lresult.Statements.Add(GenerateServiceMethod_WriteParam(aLibrary, p, l_msg.AsExpression));
   end;
+
   /* $___res = $this->$___server->send($___msg); */
   var l_res := new CGVariableDeclarationStatement("$___res",
                                                   nil,
@@ -726,22 +702,46 @@ begin
       if_false
     ));
 
-  //$SessionId = $___res->value()->structmem("SessionId")->scalarval();
-  var t_s := new CGVariableDeclarationStatement("$temp_session",
-                                                nil,
-                                                new CGMethodCallExpression(
-                                                  new CGMethodCallExpression(l_res_Value,
-                                                      "structmem",["SessionId".AsLiteralExpression.AsCallParameter]),
-                                                  "scalarval"));
-  if_true.Statements.Add(t_s);
   if_true.Statements.Add(
-    new CGIfThenElseStatement(new CGBinaryOperatorExpression(t_s.AsExpression, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
-                              new CGAssignmentStatement(f_session, t_s.AsExpression)));
+      new CGIfThenElseStatement(
+        new CGMethodCallExpression(l_res_Value,
+                                   "structMemExists",
+                                   ["SessionId".AsLiteralExpression.AsCallParameter]),
+        new CGAssignmentStatement(
+          f_session,
+          new CGMethodCallExpression(
+            new CGMethodCallExpression(l_res_Value,
+                "structmem",["SessionId".AsLiteralExpression.AsCallParameter]),
+            "scalarval")
+          )
+      )
+    );
+  var l_var_result := new CGVariableDeclarationStatement("$__result", nil);
   if aOperation.Result <> nil then begin
-    if_false.Statements.Add(GenerateServiceMethod_readResult(aLibrary, aOperation, l_res_Value));
-    var lr := new CGMethodCallExpression(l_res_Value,"structmem",["Result".AsLiteralExpression.AsCallParameter]);
-    if_true.Statements.Add(GenerateServiceMethod_readResult(aLibrary, aOperation, lr));
+    if_false.Statements.Add(GenerateServiceMethod_ReadParam(aLibrary, aOperation.Result, l_res_Value).AsReturnStatement);
+    l_var_result.Value := GenerateServiceMethod_ReadParam(aLibrary,
+                                                          aOperation.Result,
+                                                          new CGMethodCallExpression(l_res_Value,
+                                                                                     "structmem",
+                                                                                     [aOperation.Result.Name.AsLiteralExpression.AsCallParameter]));
+    if_true.Statements.Add(l_var_result);
   end;
+
+  for each p in aOperation.Items do begin
+    if p.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
+      if_true.Statements.Add(
+        new CGAssignmentStatement(new CGParameterAccessExpression($"${p.Name}"),
+        GenerateServiceMethod_ReadParam(aLibrary,
+                                        p,
+                                        new CGMethodCallExpression(l_res_Value,
+                                                                   "structmem",
+                                                                   [p.Name.AsLiteralExpression.AsCallParameter]))));
+    end;
+  end;
+
+  if aOperation.Result <> nil then
+    if_true.Statements.Add(l_var_result.AsExpression.AsReturnStatement);
+
   exit lresult;
 end;
 
@@ -792,31 +792,31 @@ begin
   end;
 end;
 
-method PhpRodlCodeGen.GenerateServiceMethod_readResult(aLibrary: RodlLibrary; aOperation: RodlOperation; aRes: CGExpression): CGStatement;
+method PhpRodlCodeGen.GenerateServiceMethod_ReadParam(aLibrary: RodlLibrary; aParam: RodlParameter; aRes: CGExpression): CGExpression;
 begin
-  if IsScalar(aLibrary, aOperation.Result.DataType) then
-    exit new CGMethodCallExpression(aRes, "scalarval").AsReturnStatement
+  if IsScalar(aLibrary, aParam.DataType) then
+    exit new CGMethodCallExpression(aRes, "scalarval")
   else begin
-    var ar := aLibrary.Arrays.FindEntity(aOperation.Result.DataType);
+    var ar := aLibrary.Arrays.FindEntity(aParam.DataType);
     if assigned(ar) then begin
       if IsScalar(aLibrary, ar.ElementType) then
         exit new CGMethodCallExpression(
             HelperName,"ToArray",
             [aRes.AsCallParameter],
-            CallSiteKind := CGCallSiteKind.Static).AsReturnStatement
+            CallSiteKind := CGCallSiteKind.Static)
       else
         exit
           new CGMethodCallExpression(
             ar.ElementType.AsNamedIdentifierExpression,"ToArray",
             [aRes.AsCallParameter],
-            CallSiteKind := CGCallSiteKind.Static).AsReturnStatement
+            CallSiteKind := CGCallSiteKind.Static)
     end
     else
       exit new CGMethodCallExpression(
-          aOperation.Result.DataType.AsNamedIdentifierExpression,
+          aParam.DataType.AsNamedIdentifierExpression,
           "FromXmlRpcVal",
           [aRes.AsCallParameter],
-          CallSiteKind := CGCallSiteKind.Static).AsReturnStatement;
+          CallSiteKind := CGCallSiteKind.Static);
   end;
 end;
 
@@ -825,5 +825,41 @@ begin
   GenerateXsDateTimeClass(aFile, aLibrary);
   inherited;
 end;
+
+method PhpRodlCodeGen.GenerateServiceMethod_WriteParam(aLibrary: RodlLibrary; aParam: RodlParameter; msg: CGExpression): CGStatement;
+begin
+  var l_p := new CGParameterAccessExpression($"${aParam.Name}").AsCallParameter;
+  var l_value: CGExpression;
+  if IsScalar(aLibrary, aParam.DataType) then
+    l_value := new CGNewInstanceExpression("xmlrpcval".AsTypeReference,
+                                           [l_p,
+                                            _FixDataType(aParam.DataType).AsLiteralExpression.AsCallParameter])
+  else begin
+    var ar := aLibrary.Arrays.FindEntity(aParam.DataType);
+    if assigned(ar) then begin
+      if IsScalar(aLibrary, ar.ElementType) then
+        l_value := new CGMethodCallExpression(HelperName,
+                                              "FromArray",
+                                              [l_p,
+                                               _FixDataType(ar.ElementType).AsLiteralExpression.AsCallParameter],
+                                               CallSiteKind := CGCallSiteKind.Static)
+      else
+        l_value := new CGMethodCallExpression(ar.ElementType.AsNamedIdentifierExpression,
+                                              "FromArray",
+                                              [l_p],
+                                               CallSiteKind := CGCallSiteKind.Static);
+    end
+    else
+      l_value := new CGMethodCallExpression(aParam.DataType.AsNamedIdentifierExpression,
+                                            "ToXmlRpcVal",
+                                            [l_p],
+                                            CallSiteKind := CGCallSiteKind.Static);
+  end;
+
+  exit new CGMethodCallExpression(msg,
+                                  "addParam",
+                                  [l_value.AsCallParameter]);
+end;
+
 
 end.
