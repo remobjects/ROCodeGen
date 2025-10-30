@@ -627,6 +627,16 @@ begin
                                                                       "RemObjects.SDK.IMessage".AsTypeReference_NotNullable,
                                                                       new CGMethodCallExpression(CGSelfExpression.Self, "___GetMessage"));
     l_proxymethod.Statements.Add(localvar___localMessage);
+    var l_needCheck := false;
+    for rodl_param in rodl_member.Items do begin
+      if rodl_param.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
+        l_needCheck := True;
+        break;
+      end;
+    end;
+    if l_needCheck then
+      l_proxymethod.Statements.Add(new CGMethodCallExpression(localvar___localMessage.AsExpression, "CheckForOutputParameters"));
+
     var local_localmessage := localvar___localMessage.AsExpression;
     var prop_Self_ClientChannel := new CGPropertyAccessExpression(CGSelfExpression.Self, "ClientChannel");
     var l_body := new List<CGStatement>;
@@ -1140,6 +1150,16 @@ begin
                                                                           true),
                                                                       "Message"));
     l_proxyEnd.Statements.Add(localvar___localMessage);
+    var l_needCheck := false;
+    for rodl_param in rodl_member.Items do begin
+      if rodl_param.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
+        l_needCheck := True;
+        break;
+      end;
+    end;
+    if l_needCheck then
+      l_proxyEnd.Statements.Add(new CGMethodCallExpression(localvar___localMessage.AsExpression, "CheckForOutputParameters"));
+
     l_body := new List<CGStatement>;
 
     var localvar_resultName: CGVariableDeclarationStatement;
@@ -1590,6 +1610,18 @@ begin
                                   Parameters := plist,
                                   &Static := true,
                                   Visibility := CGMemberVisibilityKind.Public);
+    var l_needCheck := false;
+    if rodl_member.Items.Count > 0 then begin
+      for rodl_param in rodl_member.Items do begin
+        if rodl_param.ParamFlag in [ParamFlags.InOut, ParamFlags.Out] then begin
+          l_needCheck := True;
+          break;
+        end;
+      end;
+    end;
+    if l_needCheck then begin
+      mem.Statements.Add(new CGMethodCallExpression(param___Message.AsExpression,"CheckForOutputParameters"));
+    end;
 
     if (rodl_member.Roles:Roles:Count > 0) or (aEntity.Roles:Roles:Count > 0) then begin
       var list := new List<CGExpression>;
