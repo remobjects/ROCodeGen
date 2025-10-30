@@ -408,7 +408,7 @@ begin
       lm.Statements.Add(faEntityname.AsReturnStatement);
     end
     else begin
-      lNeedInitSimpleTypeWithDefaultValues := lNeedInitSimpleTypeWithDefaultValues or laEntityItem.CustomAttributes_lower.ContainsKey('default');
+      lNeedInitSimpleTypeWithDefaultValues := lNeedInitSimpleTypeWithDefaultValues or laEntityItem.CustomAttributes_lower.ContainsKey("default");
     end;
   end;
   {$ENDREGION}
@@ -1382,7 +1382,7 @@ begin
   end;
   {$ENDREGION}
 
-  {$REGION 'T%eventsink%_Invoker'}
+  {$REGION "T%eventsink%_Invoker"}
   var lancestor: CGTypeReference;
   if not String.IsNullOrEmpty(lancestorName) then
     lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, "T"+lancestorName+"_Invoker",Intf_name,lancestorName)
@@ -1436,19 +1436,11 @@ begin
       mem.Statements.Add(new CGEmptyStatement);
       var list := new List<CGStatement>;
       for litem in lmem.Items do
-        //list.Add(
-          //Intf_generateReadStatement(aLibrary,
-                                      //litem.DataType,
-                                      //param___Message.AsExpression,
-                                      //litem.Name.AsLiteralExpression.AsCallParameter,
-                                      //new CGLocalVariableAccessExpression($"l_{litem.Name}").AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      //nil));
         list.Add(new CGMethodCallExpression(param___Message.AsExpression,
-                                            'Read',
+                                            "Read",
                                             [litem.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType, Intf_name)).AsCallParameter,
-                                            new CGCallParameter($"l_{litem.Name}".AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            new CGLocalVariableAccessExpression($"l_{litem.Name}").AsCallParameter(CGParameterModifierKind.Var),
                                             new CGArrayLiteralExpression().AsCallParameter].ToList,
                                             CallSiteKind:= CGCallSiteKind.Reference));
       for lmemparam in lmem.Items do
@@ -1762,7 +1754,7 @@ begin
                                             Constant := true,
                                             Visibility := CGMemberVisibilityKind.Public,
                                             Condition := cond,
-                                            Initializer := ("'"+aLibrary.CustomAttributes_lower.Item["wsdl"]+"'").AsLiteralExpression).AsGlobal();
+                                            Initializer := ($"'{aLibrary.CustomAttributes_lower.Item["wsdl"]}'").AsLiteralExpression).AsGlobal();
     aFile.Globals.Add(globalvar);
     GenerateExternalSym(globalvar);
   end;
@@ -2027,7 +2019,7 @@ begin
   end;
 end;
 
-method DelphiRodlCodeGen.ResolveDataTypeToTypeRefFullQualified(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String := ''; aCapitalize: Boolean := false): CGTypeReference;
+method DelphiRodlCodeGen.ResolveDataTypeToTypeRefFullQualified(aLibrary: RodlLibrary; aDataType: String; aDefaultUnitName: String; aOrigDataType: String := ""; aCapitalize: Boolean := false): CGTypeReference;
 begin
   var ltype := iif(String.IsNullOrEmpty(aOrigDataType), aDataType, aOrigDataType);
   var lLower := ltype.ToLowerInvariant();
@@ -2200,6 +2192,16 @@ begin
     if lHasObjectDisposer then
       mem.LocalVariables.Add(localvar__lObjectDisposer);
 
+    for litem in lmem.Items do begin
+      if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
+        mem.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      "CheckForOutputParameters",
+                                                      CallSiteKind := CGCallSiteKind.Reference
+                                                      ));
+        break;
+      end;
+    end;
+
     var ar := new CGArrayLiteralExpression(ElementType := ResolveStdtypes(CGPredefinedTypeReference.String));
     if lmem.Roles.Roles.Count >0 then
       for lr in lmem.Roles.Roles do
@@ -2211,13 +2213,8 @@ begin
     var p2: List<CGExpression>;
     GenerateAttributes(aLibrary, aEntity, lmem,out p1, out p2);
     var transport_callparameter := param__Transport.AsCallParameter;
-    if p1.Count > 0 then begin
+    if p1.Count > 0 then
       cpp_SetAttributes(mem.Statements, lMessage, param__Transport.AsExpression, p1, p2);
-      //mem.Statements.Add(new CGMethodCallExpression(lMessage,"SetAttributes",[transport_callparameter,
-                                                                              //new CGArrayLiteralExpression(p1, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter,
-                                                                              //new CGArrayLiteralExpression(p2, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter].ToList,
-                                                    //CallSiteKind := CGCallSiteKind.Reference));
-    end;
     mem.Statements.Add(new CGMethodCallExpression(lMessage,"ApplyAttributes2_Transport",[transport_callparameter].ToList,
                                                   CallSiteKind := CGCallSiteKind.Reference));
     for lmemparam in lmem.Items do begin
@@ -2254,27 +2251,23 @@ begin
                   Invk_RemapParameters(lMessage, l_paramnames)
               ));
     end;
+
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        //ltry.Add(
-          //Intf_generateReadStatement(aLibrary,
-                                      //litem.DataType,
-                                      //lMessage,
-                                      //litem.Name.AsLiteralExpression.AsCallParameter,
-                                      //new CGLocalVariableAccessExpression("l_"+litem.Name).AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      //nil));
+        var l_param := new CGLocalVariableAccessExpression($"l_{litem.Name}");
+
         ltry.Add(new CGMethodCallExpression(lMessage,
-                                            'Read',
+                                            "Read",
                                             [litem.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                            new CGCallParameter(('l_'+litem.Name).AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            l_param.AsCallParameter(CGParameterModifierKind.Var),
                                             GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                             CallSiteKind := CGCallSiteKind.Reference));
 
-        if (litem.ParamFlag = ParamFlags.InOut) and isComplex(aLibrary, litem.DataType) then
-           ltry.Add(new CGAssignmentStatement(new CGLocalVariableAccessExpression("__in_"+litem.Name),
-                                              new CGLocalVariableAccessExpression("l_"+litem.Name)));
+        if (litem.ParamFlag = ParamFlags.InOut) and isComplex(aLibrary, litem.DataType) then begin
+          var localvar_in_field := new CGLocalVariableAccessExpression($"__in_{litem.Name}");
+          ltry.Add(new CGAssignmentStatement(localvar_in_field, l_param));
+        end;
       end;
     end;
     if lmem.Count>0 then ltry.Add(new CGEmptyStatement);
@@ -2298,50 +2291,30 @@ begin
                                         (lmem.Name+"Response").AsLiteralExpression.AsCallParameter
                                         ].ToList,
                                         CallSiteKind := CGCallSiteKind.Reference));
-    if p1.Count > 0 then begin
+    if p1.Count > 0 then
       cpp_SetAttributes(ltry, lMessage, param__Transport.AsExpression, p1, p2);
-      //ltry.Add(new CGMethodCallExpression(lMessage,"SetAttributes",[transport_callparameter,
-                                                                              //new CGArrayLiteralExpression(p1, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter,
-                                                                              //new CGArrayLiteralExpression(p2, ResolveStdtypes(CGPredefinedTypeReference.String)).AsCallParameter].ToList,
-                                                    //CallSiteKind := CGCallSiteKind.Reference));
-    end;
+
     ltry.Add(new CGMethodCallExpression(lMessage,"ApplyAttributes2_Transport",[transport_callparameter].ToList,
                                                   CallSiteKind := CGCallSiteKind.Reference));
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        //ltry.Add(
-          //Intf_generateWriteStatement(aLibrary,
-                                      //lmem.Result.DataType,
-                                      //lMessage,
-                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      //localvar_lResult.AsExpression.AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name),
-                                      //nil));
         ltry.Add(new CGMethodCallExpression(lMessage,
-                                            'Write',
+                                            "Write",
                                             [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
-                                            new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                            localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                             GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                             CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        //ltry.Add(
-          //Intf_generateWriteStatement(aLibrary,
-                                      //litem.DataType,
-                                      //lMessage,
-                                      //litem.Name.AsLiteralExpression.AsCallParameter,
-                                      //new CGLocalVariableAccessExpression("l_"+litem.Name).AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      //nil));
         ltry.Add(new CGMethodCallExpression(lMessage,
-                                            'Write',
+                                            "Write",
                                             [litem.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                            new CGCallParameter(('l_'+litem.Name).AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                            new CGLocalVariableAccessExpression($"l_{litem.Name}").AsCallParameter(CGParameterModifierKind.Var),
                                             GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                             CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -2349,24 +2322,16 @@ begin
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        //ltry.Add(
-          //Intf_generateWriteStatement(aLibrary,
-                                      //lmem.Result.DataType,
-                                      //lMessage,
-                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      //localvar_lResult.AsExpression.AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name),
-                                      //nil));
         ltry.Add(new CGMethodCallExpression(lMessage,
-                                            'Write',
+                                            "Write",
                                             [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
-                                            new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                            localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                             GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                             CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
-    ltry.Add(new CGMethodCallExpression(lMessage,'Finalize',CallSiteKind := CGCallSiteKind.Reference));
+    ltry.Add(new CGMethodCallExpression(lMessage, "Finalize", CallSiteKind := CGCallSiteKind.Reference));
     ltry.Add(new CGEmptyStatement);
 
 
@@ -2492,19 +2457,11 @@ begin
                                                                            lmem.Name.AsLiteralExpression.AsCallParameter].ToList,
                                         CallSiteKind := CGCallSiteKind.Reference));
     for litem in lmem.Items do begin
-//        ltry.Add(
-//          Intf_generateWriteStatement(aLibrary,
-//                                      litem.DataType,
-//                                      lmessage,
-//                                      litem.Name.AsLiteralExpression.AsCallParameter,
-//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-//                                      nil));
       ltry.Add(new CGMethodCallExpression(lmessage,
-                                          'Write',
+                                          "Write",
                                           [litem.Name.AsLiteralExpression.AsCallParameter,
                                           GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                          new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                          new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
                                           new CGArrayLiteralExpression().AsCallParameter].ToList,
                                           CallSiteKind:= CGCallSiteKind.Reference));
     end;
@@ -2690,19 +2647,11 @@ begin
                                                     CallSiteKind := CGCallSiteKind.Reference));
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-//        ltry.Statements.Add(
-//          Intf_generateWriteStatement(aLibrary,
-//                                      litem.DataType,
-//                                      lMessage,
-//                                      litem.Name.AsLiteralExpression.AsCallParameter,
-//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-//                                      nil));
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                        'Write',
+                                                        "Write",
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
                                                         GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -2766,6 +2715,15 @@ begin
       result.LocalVariables.Add(localvar_lResult);
 
     result.Statements.Add(new CGAssignmentStatement(lMessage, new CGMethodCallExpression(nil, "__GetMessage")));
+    for litem in aOperation.Items do begin
+      if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
+        result.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                        "CheckForOutputParameters",
+                                                        CallSiteKind := CGCallSiteKind.Reference
+                                                        ));
+        break;
+      end;
+    end;
     result.Statements.Add(new CGMethodCallExpression(lMessage,"SetAutoGeneratedNamespaces",[new CGMethodCallExpression(nil,"DefaultNamespaces").AsCallParameter],CallSiteKind := CGCallSiteKind.Reference));
     result.Statements.Add(new CGAssignmentStatement(lTransportChannel, new CGPropertyAccessExpression(nil, "__TransportChannel")));
     result.Statements.Add(new CGAssignmentStatement(lFreeStream, new CGBooleanLiteralExpression(false)));
@@ -2789,41 +2747,26 @@ begin
     var ltry3 := new CGTryFinallyCatchStatement();
     ltry3.Statements.Add(ltry4);
     ltry3.Statements.Add(new CGEmptyStatement);
+
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-//        ltry3.Statements.Add(
-//          Intf_generateReadStatement(aLibrary,
-//                                      aOperation.Result.DataType,
-//                                      lMessage,
-//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-//                                      localvar_lResult.AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-//                                      nil));
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                      'Read',
+                                                      "Read",
                                                       [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(aLibrary, ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
-                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                                       GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-//        ltry3.Statements.Add(
-//          Intf_generateReadStatement(aLibrary,
-//                                      litem.DataType,
-//                                      lMessage,
-//                                      litem.Name.AsLiteralExpression.AsCallParameter,
-//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-//                                      nil));
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                        'Read',
+                                                        "Read",
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
                                                         GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind := CGCallSiteKind.Reference));
 
@@ -2832,20 +2775,11 @@ begin
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-//        ltry3.Statements.Add(
-//          Intf_generateReadStatement(aLibrary,
-//                                      aOperation.Result.DataType,
-//                                      lMessage,
-//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-//                                      localvar_lResult.AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-//                                      nil));
-
         ltry3.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                      'Read',
+                                                      "Read",
                                                       [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(aLibrary, ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
-                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                                       GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -2939,19 +2873,11 @@ begin
                                                     CallSiteKind := CGCallSiteKind.Reference));
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-//        ltry.Statements.Add(
-//          Intf_generateWriteStatement(aLibrary,
-//                                      litem.DataType,
-//                                      lMessage,
-//                                      litem.Name.AsLiteralExpression.AsCallParameter,
-//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-//                                      nil));
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                        'Write',
+                                                        "Write",
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
                                                         GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -2992,6 +2918,17 @@ begin
     result.ReturnType := ResolveDataTypeToTypeRefFullQualified(aLibrary, aOperation.Result.DataType,Intf_name);
 
   if aNeedBody then begin
+    var lMessage := new CGPropertyAccessExpression(param_aRequest.AsExpression, "Message",CallSiteKind := CGCallSiteKind.Reference);
+    for litem in aOperation.Items do begin
+      if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
+        result.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                          "CheckForOutputParameters",
+                                                          CallSiteKind := CGCallSiteKind.Reference
+                                                          ));
+        break;
+      end;
+    end;
+
     var localvar_lResult := new CGVariableDeclarationStatement("lResult",result.ReturnType);
     if assigned(aOperation.Result) then begin
       result.LocalVariables := new List<CGVariableDeclarationStatement>;
@@ -3004,44 +2941,27 @@ begin
     if assigned(aOperation.Result) and isComplex(aLibrary, aOperation.Result.DataType) then
       result.Statements.Add(new CGAssignmentStatement(localvar_lResult.AsExpression, CGNilExpression.Nil));
     result.Statements.Add(new CGMethodCallExpression(param_aRequest.AsExpression,"ReadResponse",CallSiteKind := CGCallSiteKind.Reference));
-    var lMessage := new CGPropertyAccessExpression(param_aRequest.AsExpression, "Message",CallSiteKind := CGCallSiteKind.Reference);
     result.Statements.Add(new CGMethodCallExpression(lMessage,"SetAutoGeneratedNamespaces",[new CGMethodCallExpression(nil,"DefaultNamespaces").AsCallParameter],CallSiteKind := CGCallSiteKind.Reference));
 
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-//        result.Statements.Add(
-//          Intf_generateReadStatement(aLibrary,
-//                                      aOperation.Result.DataType,
-//                                      lMessage,
-//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-//                                      localvar_lResult.AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-//                                      nil));
         result.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                      'Read',
+                                                      "Read",
                                                       [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
-                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                                       GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in aOperation.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-//        result.Statements.Add(
-//          Intf_generateReadStatement(aLibrary,
-//                                      litem.DataType,
-//                                      lMessage,
-//                                      litem.Name.AsLiteralExpression.AsCallParameter,
-//                                      new CGParameterAccessExpression(litem.Name).AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-//                                      nil));
         result.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                        'Read',
+                                                        "Read",
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
                                                         GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -3049,19 +2969,11 @@ begin
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(aOperation.Result) then begin
-//        result.Statements.Add(
-//          Intf_generateReadStatement(aLibrary,
-//                                      aOperation.Result.DataType,
-//                                      lMessage,
-//                                      aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
-//                                      localvar_lResult.AsCallParameter,
-//                                      ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name),
-//                                      nil));
         result.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                      'Read',
+                                                      "Read",
                                                       [aOperation.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,aOperation.Result.DataType,Intf_name)).AsCallParameter,
-                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                                       GenerateParamAttributes(aOperation.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -3211,8 +3123,8 @@ begin
     end;
 
     var lcode: String;
-    if rodl_member.Code.ContainsKey('delphi') then
-      lcode := rodl_member.Code['delphi'];
+    if rodl_member.Code.ContainsKey("delphi") then
+      lcode := rodl_member.Code["delphi"];
 
     if not String.IsNullOrEmpty(lcode) then
       cg4_member.Statements.Add(new CGRawStatement(lcode))
@@ -3905,29 +3817,29 @@ begin
       FPCMode := State.Off;
 
     if (CodeFirstMode = State.Auto) then begin
-      CF_condition := new CGConditionalDefine('RO_RTTI_Support');
-      CF_condition_inverted := new CGConditionalDefine('RO_RTTI_Support') inverted(true);
+      CF_condition := new CGConditionalDefine("RO_RTTI_Support");
+      CF_condition_inverted := new CGConditionalDefine("RO_RTTI_Support") inverted(true);
     end;
     if (GenericArrayMode = State.Auto) then begin
-      cond_ROUseGenerics := new CGConditionalDefine('ROUseGenerics');
-      cond_ROUseGenerics_inverted := new CGConditionalDefine('ROUseGenerics') inverted(true);
+      cond_ROUseGenerics := new CGConditionalDefine("ROUseGenerics");
+      cond_ROUseGenerics_inverted := new CGConditionalDefine("ROUseGenerics") inverted(true);
     end;
   end;
 
-  attr_ROSerializeAsAnsiString := new CGAttribute('ROStreamAs'.AsTypeReference,
-                                                  'emAnsi'.AsNamedIdentifierExpression.AsCallParameter,
+  attr_ROSerializeAsAnsiString := new CGAttribute("ROStreamAs".AsTypeReference,
+                                                  "emAnsi".AsNamedIdentifierExpression.AsCallParameter,
                                                   Condition := CF_condition);
-  attr_ROSerializeAsUTF8String := new CGAttribute('ROStreamAs'.AsTypeReference,
-                                                  'emUTF8'.AsNamedIdentifierExpression.AsCallParameter,
+  attr_ROSerializeAsUTF8String := new CGAttribute("ROStreamAs".AsTypeReference,
+                                                  "emUTF8".AsNamedIdentifierExpression.AsCallParameter,
                                                   Condition := CF_condition);
 
-  attr_ROServiceMethod := new CGAttribute('ROServiceMethod'.AsTypeReference,
+  attr_ROServiceMethod := new CGAttribute("ROServiceMethod".AsTypeReference,
                                           Condition := CF_condition);
-  attr_ROEventSink := new CGAttribute('ROEventSink'.AsTypeReference,
+  attr_ROEventSink := new CGAttribute("ROEventSink".AsTypeReference,
                                       Condition := CF_condition);
-  attr_ROSkip := new CGAttribute('ROSkip'.AsTypeReference,
+  attr_ROSkip := new CGAttribute("ROSkip".AsTypeReference,
                                  Condition := CF_condition);
-  attr_ROAbstract := new CGAttribute('ROAbstract'.AsTypeReference,
+  attr_ROAbstract := new CGAttribute("ROAbstract".AsTypeReference,
                                      Condition := CF_condition);
 
 end;
@@ -3950,7 +3862,7 @@ begin
       ltype.Attributes.Add(anAttribute);
     end
     else begin
-      raise new Exception('unknown type');
+      raise new Exception("unknown type");
     end;
   end;
 end;
@@ -3963,7 +3875,7 @@ begin
                     Visibility := CGMemberVisibilityKind.Public,
                     Initializer := aDoc.AsLiteralExpression,
                     Condition := CF_condition).AsGlobal());
-    var attr := new CGAttribute('RODocumentation'.AsTypeReference,
+    var attr := new CGAttribute("RODocumentation".AsTypeReference,
                                 [new CGLocalVariableAccessExpression(aName).AsCallParameter],
                                 Condition := CF_condition);
     AddCGAttribute(aType, attr);
@@ -3982,10 +3894,10 @@ method DelphiRodlCodeGen.GetHttpAPIAttribute(aEntity: RodlEntity): CGAttribute;
 begin
   result := nil;
   if aEntity is RodlOperation then begin
-    var l_path := GetAttributeValue(aEntity, 'httpapipath');
+    var l_path := GetAttributeValue(aEntity, "httpapipath");
     if not String.IsNullOrEmpty(l_path) then begin
-      var l_method := GetAttributeValue(aEntity, 'httpapimethod');
-      var l_resultcode := GetAttributeValue(aEntity, 'httpapiresult');
+      var l_method := GetAttributeValue(aEntity, "httpapimethod");
+      var l_resultcode := GetAttributeValue(aEntity, "httpapiresult");
       var l_result_int: Integer := 200;
       if not String.IsNullOrEmpty(l_resultcode) then begin
         var temp := Convert.TryToInt32(l_resultcode);
@@ -3997,11 +3909,11 @@ begin
           l_result_int := temp;
         end;
       end;
-      var l_tags := GetAttributeValue(aEntity, 'httpapitags');
-      var l_operationId := GetAttributeValue(aEntity, 'httpapioperationid');
-      var l_requestName := GetAttributeValue(aEntity, 'httpapirequestname');
+      var l_tags := GetAttributeValue(aEntity, "httpapitags");
+      var l_operationId := GetAttributeValue(aEntity, "httpapioperationid");
+      var l_requestName := GetAttributeValue(aEntity, "httpapirequestname");
 
-      var attr := new CGAttribute('ROHttpAPIMethod'.AsTypeReference,
+      var attr := new CGAttribute("ROHttpAPIMethod".AsTypeReference,
                                   l_path.AsLiteralExpression.AsCallParameter,
                                   Condition := CF_condition);
 
@@ -4012,15 +3924,15 @@ begin
       var l_need_Method := not String.IsNullOrEmpty(l_method) or l_need_ResultCode;
 
       if l_need_Method then begin
-        if String.IsNullOrEmpty(l_method) then l_method := 'POST';
+        if String.IsNullOrEmpty(l_method) then l_method := "POST";
         attr.Parameters.Add(l_method.AsLiteralExpression.AsCallParameter);
         if l_need_ResultCode then begin
           attr.Parameters.Add(l_result_int.AsLiteralExpression.AsCallParameter);
           if l_need_Tags then begin
-            if String.IsNullOrEmpty(l_tags) then l_tags := '';
+            if String.IsNullOrEmpty(l_tags) then l_tags := "";
             attr.Parameters.Add(l_tags.AsLiteralExpression.AsCallParameter);
             if l_need_OperationId then begin
-              if String.IsNullOrEmpty(l_operationId) then l_operationId := '';
+              if String.IsNullOrEmpty(l_operationId) then l_operationId := "";
               attr.Parameters.Add(l_operationId.AsLiteralExpression.AsCallParameter);
               if l_need_RequestName then
                 attr.Parameters.Add(l_requestName.AsLiteralExpression.AsCallParameter);
@@ -4032,11 +3944,11 @@ begin
     end;
   end
   else if aEntity is RodlParameter then begin
-    if GetAttributeValue(aEntity, 'httpapiqueryparameter') = '1' then
-      exit new CGAttribute('ROHttpAPIQueryParameter'.AsTypeReference,
+    if GetAttributeValue(aEntity, "httpapiqueryparameter") = "1" then
+      exit new CGAttribute("ROHttpAPIQueryParameter".AsTypeReference,
                            Condition := CF_condition)
-    else if GetAttributeValue(aEntity, 'httpapiheaderparameter') = '1' then
-      exit new CGAttribute('ROHttpAPIHeaderParameter'.AsTypeReference,
+    else if GetAttributeValue(aEntity, "httpapiheaderparameter") = "1" then
+      exit new CGAttribute("ROHttpAPIHeaderParameter".AsTypeReference,
                            Condition := CF_condition)
   end;
 end;
@@ -4047,17 +3959,17 @@ begin
     for k in aEntity.CustomAttributes.Keys do begin
 
       if IsHttpAPIAttribute(k) then continue;
-      if aExcludeServiceGroups and k.EqualsIgnoringCase('ROServiceGroups') then continue;
-      if k.EqualsIgnoringCase('ROServiceGroups') then begin
+      if aExcludeServiceGroups and k.EqualsIgnoringCase("ROServiceGroups") then continue;
+      if k.EqualsIgnoringCase("ROServiceGroups") then begin
         for it in aEntity.CustomAttributes[k].Split(",", true) do begin
-          var attr := new CGAttribute('ROServiceGroup'.AsTypeReference,
+          var attr := new CGAttribute("ROServiceGroup".AsTypeReference,
                                       [it.AsLiteralExpression.AsCallParameter]);
           if CodeFirstMode = State.Auto then attr.Condition := CF_condition;
           AddCGAttribute(aType, attr);
         end;
       end
       else begin
-        var attr := new CGAttribute('ROCustom'.AsTypeReference,
+        var attr := new CGAttribute("ROCustom".AsTypeReference,
                                     [k.AsLiteralExpression.AsCallParameter,
                                      aEntity.CustomAttributes[k].AsLiteralExpression.AsCallParameter]);
         if CodeFirstMode = State.Auto then attr.Condition := CF_condition;
@@ -4070,19 +3982,19 @@ end;
 method DelphiRodlCodeGen.cpp_GetNamespaceForUses(aUse: RodlUse):String;
 begin
   if not String.IsNullOrEmpty(aUse.Includes:DelphiModule) then
-    exit aUse.Includes.DelphiModule + '_Intf' // std RODL like DA, DA_simple => delphi mode
+    exit aUse.Includes.DelphiModule + "_Intf" // std RODL like DA, DA_simple => delphi mode
   else
-    exit aUse.Name+'_Intf';
+    exit aUse.Name+"_Intf";
 end;
 
 method DelphiRodlCodeGen.isDAProject(aLibrary: RodlLibrary): Boolean;
 begin
   case caseInsensitive(aLibrary.GetOrGenerateEntityID:ToString) of
-    'DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6': exit true; //'DataAbstract4.RODL'
-    '367FA81F-09B7-4294-85AD-68C140EF1FA7': exit true; //'DataAbstract-Simple.RODL'
+    "DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6": exit true; //"DataAbstract4.RODL"
+    "367FA81F-09B7-4294-85AD-68C140EF1FA7": exit true; //"DataAbstract-Simple.RODL"
   end;
   for k: RodlUse in aLibrary.Uses:Items do
-    if Path.GetFileName(k.FileName).ToUpperInvariant in ['DATAABSTRACT4.RODL', 'DATAABSTRACT-SIMPLE.RODL'] then exit true;
+    if Path.GetFileName(k.FileName).ToUpperInvariant in ["DATAABSTRACT4.RODL", "DATAABSTRACT-SIMPLE.RODL"] then exit true;
   exit false;
 end;
 
@@ -4091,11 +4003,11 @@ begin
   if not String.IsNullOrWhiteSpace(RodlFileName) then exit RodlFileName;
 
   case caseInsensitive(aLibrary.GetOrGenerateEntityID:ToString) of
-    //'DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6': exit 'DataAbstract4.RODL';       //Name="DataAbstract4"
-    '367FA81F-09B7-4294-85AD-68C140EF1FA7': exit 'DataAbstract-Simple.RODL'; //Name="DataAbstractSimple"
-    '943975A3-664A-4F07-AD0F-7357744276BF': exit 'ROServiceDiscovery.rodl';  //Name="ROServerDiscovery"
-    //'9EC7C50C-DAC2-48A9-9A0F-CBAA29A11EF7': exit 'uRODataSnap.rodl';         //Name="uRODataSnap"
-    else exit aLibrary.Name+'.RODL';
+    //"DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6": exit "DataAbstract4.RODL";       //Name="DataAbstract4"
+    "367FA81F-09B7-4294-85AD-68C140EF1FA7": exit "DataAbstract-Simple.RODL"; //Name="DataAbstractSimple"
+    "943975A3-664A-4F07-AD0F-7357744276BF": exit "ROServiceDiscovery.rodl";  //Name="ROServerDiscovery"
+    //"9EC7C50C-DAC2-48A9-9A0F-CBAA29A11EF7": exit "uRODataSnap.rodl";         //Name="uRODataSnap"
+    else exit aLibrary.Name+".RODL";
   end;
 end;
 
@@ -4105,34 +4017,34 @@ begin
   for lu: RodlUse in aLibrary.Uses.Items do begin
     if not lu.DontCodegen then continue;
     var s1 := lu.Includes:DelphiModule;
-    //var lExt := 'hpp';
+    //var lExt := "hpp";
     if String.IsNullOrEmpty(s1) then begin
-      //lExt := 'h';
+      //lExt := "h";
       s1 := lu.Name;
       if String.IsNullOrEmpty(s1) then
         s1 := Path.GetFileNameWithoutExtension(lu.FileName);
     end;
-    s1 := s1+ '_Intf';
+    s1 := s1+ "_Intf";
     if not list_use.Contains(lu) then
       list_use.Add(lu);
   end;
 
   {$REGION function DefaultNamespaces:string;}
-  var localvar_lres := new CGVariableDeclarationStatement('lres',ResolveStdtypes(CGPredefinedTypeReference.String), cpp_DefaultNamespace);
-  var m := new CGMethodDefinition('DefaultNamespaces',
+  var localvar_lres := new CGVariableDeclarationStatement("lres",ResolveStdtypes(CGPredefinedTypeReference.String), cpp_DefaultNamespace);
+  var m := new CGMethodDefinition("DefaultNamespaces",
                                   LocalVariables := [localvar_lres].ToList,
                                   ReturnType :=ResolveStdtypes(CGPredefinedTypeReference.String),
                                   Visibility := CGMemberVisibilityKind.Public,
                                   CallingConvention := CGCallingConventionKind.Register);
 
   var lres := localvar_lres.AsExpression;
-  var lres1 := new CGBinaryOperatorExpression(lres, ';'.AsLiteralExpression, CGBinaryOperatorKind.Addition);
+  var lres1 := new CGBinaryOperatorExpression(lres, ";".AsLiteralExpression, CGBinaryOperatorKind.Addition);
   for k in list_use do begin
     if cpp_GetNamespaceForUses(k) = targetNamespace then continue;
     m.Statements.Add(new CGAssignmentStatement(lres,
                                                new CGBinaryOperatorExpression(lres1,
                                                                               new CGMethodCallExpression(CapitalizeString(cpp_GetNamespaceForUses(k)).AsNamedIdentifierExpression,
-                                                                                  'DefaultNamespaces',
+                                                                                  "DefaultNamespaces",
                                                                                   CallSiteKind := CGCallSiteKind.Static),
                                                                               CGBinaryOperatorKind.Addition)
                                                 ));
@@ -4144,40 +4056,40 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateInterfaceImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  aFile.Imports.Add(GenerateCGImport('SysUtils','System'));
-  aFile.Imports.Add(GenerateCGImport('Classes','System'));
-  aFile.Imports.Add(GenerateCGImport('TypInfo','System'));
+  aFile.Imports.Add(GenerateCGImport("SysUtils","System"));
+  aFile.Imports.Add(GenerateCGImport("Classes","System"));
+  aFile.Imports.Add(GenerateCGImport("TypInfo","System"));
   if PureDelphi then begin
-    if IsCodeFirstCompatible    then aFile.Imports.Add(GenerateCGImport('uRORTTIAttributes', CF_condition));
-    if IsGenericArrayCompatible then aFile.Imports.Add(GenerateCGImport('uROArray',cond_ROUseGenerics));
+    if IsCodeFirstCompatible    then aFile.Imports.Add(GenerateCGImport("uRORTTIAttributes", CF_condition));
+    if IsGenericArrayCompatible then aFile.Imports.Add(GenerateCGImport("uROArray",cond_ROUseGenerics));
   end;
 
-  aFile.Imports.Add(GenerateCGImport('uROEncoding'));
-  aFile.Imports.Add(GenerateCGImport('uROUri'));
-  aFile.Imports.Add(GenerateCGImport('uROProxy'));
-  aFile.Imports.Add(GenerateCGImport('uROExceptions'));
-  aFile.Imports.Add(GenerateCGImport('uROXMLIntf'));
-  aFile.Imports.Add(GenerateCGImport('uRONullable'));
-  aFile.Imports.Add(GenerateCGImport('uROClasses'));
-  aFile.Imports.Add(GenerateCGImport('uROTypes'));
-  aFile.Imports.Add(GenerateCGImport('uROClientIntf'));
-  aFile.Imports.Add(GenerateCGImport('uROAsync'));
-  aFile.Imports.Add(GenerateCGImport('uROEventReceiver'));
+  aFile.Imports.Add(GenerateCGImport("uROEncoding"));
+  aFile.Imports.Add(GenerateCGImport("uROUri"));
+  aFile.Imports.Add(GenerateCGImport("uROProxy"));
+  aFile.Imports.Add(GenerateCGImport("uROExceptions"));
+  aFile.Imports.Add(GenerateCGImport("uROXMLIntf"));
+  aFile.Imports.Add(GenerateCGImport("uRONullable"));
+  aFile.Imports.Add(GenerateCGImport("uROClasses"));
+  aFile.Imports.Add(GenerateCGImport("uROTypes"));
+  aFile.Imports.Add(GenerateCGImport("uROClientIntf"));
+  aFile.Imports.Add(GenerateCGImport("uROAsync"));
+  aFile.Imports.Add(GenerateCGImport("uROEventReceiver"));
 
   var list := new List<String>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
     if not lu.DontCodegen then continue;
     var s1 := lu.Includes:DelphiModule;
-    var lExt := 'hpp';
+    var lExt := "hpp";
     if String.IsNullOrEmpty(s1) then begin
-      lExt := 'h';
+      lExt := "h";
       s1 := lu.Name;
       if String.IsNullOrEmpty(s1) then
         s1 := Path.GetFileNameWithoutExtension(lu.FileName);
     end;
-    s1 := s1+ '_Intf';
+    s1 := s1+ "_Intf";
     if not list.Contains(s1) then begin
-      aFile.Imports.Add(GenerateCGImport(s1,'',lExt));
+      aFile.Imports.Add(GenerateCGImport(s1, "", lExt));
       cpp_pragmalink(aFile,CapitalizeString(s1));
       list.Add(s1);
     end;
@@ -4187,17 +4099,17 @@ end;
 method DelphiRodlCodeGen.Intf_GenerateImplImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
   {$REGION implementation uses}
-  aFile.ImplementationImports.Add(GenerateCGImport('uROSystem'));
-  aFile.ImplementationImports.Add(GenerateCGImport('uROSerializer'));
-  aFile.ImplementationImports.Add(GenerateCGImport('uROClient'));
-  aFile.ImplementationImports.Add(GenerateCGImport('uROTransportChannel'));
-  aFile.ImplementationImports.Add(GenerateCGImport('uRORes'));
+  aFile.ImplementationImports.Add(GenerateCGImport("uROSystem"));
+  aFile.ImplementationImports.Add(GenerateCGImport("uROSerializer"));
+  aFile.ImplementationImports.Add(GenerateCGImport("uROClient"));
+  aFile.ImplementationImports.Add(GenerateCGImport("uROTransportChannel"));
+  aFile.ImplementationImports.Add(GenerateCGImport("uRORes"));
   {$ENDREGION}
 end;
 
 method DelphiRodlCodeGen.Intf_GenerateLibraryAttributes(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  LibraryAttributes := new CGClassTypeDefinition('TLibraryAttributes',
+  LibraryAttributes := new CGClassTypeDefinition("TLibraryAttributes",
                                                  "TObject".AsTypeReference,
                                                  Visibility := CGTypeVisibilityKind.Public);
   //AddCGAttribute(LibraryAttributes, attr_ROSkip);
@@ -4206,39 +4118,39 @@ begin
                               targetNamespace
                             else
                               Intf_name;
-  LibraryAttributes.Members.Add(new CGMethodDefinition('DefaultNamespace',
-                                                        [GenerateGlobalVarName('DefaultNamespace', ldefaultnamespace).AsReturnStatement],
+  LibraryAttributes.Members.Add(new CGMethodDefinition("DefaultNamespace",
+                                                        [GenerateGlobalVarName("DefaultNamespace", ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
-  LibraryAttributes.Members.Add(new CGMethodDefinition('Documentation',
-                                                        [coalesce(aLibrary.Documentation,'').AsLiteralExpression.AsReturnStatement],
+  LibraryAttributes.Members.Add(new CGMethodDefinition("Documentation",
+                                                        [coalesce(aLibrary.Documentation,"").AsLiteralExpression.AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
 
-  LibraryAttributes.Members.Add(new CGMethodDefinition('LibraryName',
+  LibraryAttributes.Members.Add(new CGMethodDefinition("LibraryName",
                                                         [aLibrary.Name.AsLiteralExpression.AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
-  LibraryAttributes.Members.Add(new CGMethodDefinition('LibraryUID',
-                                                        [GenerateGlobalVarName('LibraryUID', ldefaultnamespace).AsReturnStatement],
+  LibraryAttributes.Members.Add(new CGMethodDefinition("LibraryUID",
+                                                        [GenerateGlobalVarName("LibraryUID", ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
-  LibraryAttributes.Members.Add(new CGMethodDefinition('RodlName',
+  LibraryAttributes.Members.Add(new CGMethodDefinition("RodlName",
                                                         [GetRODLName(aLibrary).AsLiteralExpression.AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
                                                         CallingConvention := CGCallingConventionKind.Register));
-  LibraryAttributes.Members.Add(new CGMethodDefinition('TargetNamespace',
-                                                        [GenerateGlobalVarName('TargetNamespace', ldefaultnamespace).AsReturnStatement],
+  LibraryAttributes.Members.Add(new CGMethodDefinition("TargetNamespace",
+                                                        [GenerateGlobalVarName("TargetNamespace", ldefaultnamespace).AsReturnStatement],
                                                         Visibility := CGMemberVisibilityKind.Public,
                                                         &Static := true,
                                                         ReturnType := ResolveStdtypes(CGPredefinedTypeReference.String),
@@ -4255,7 +4167,7 @@ method DelphiRodlCodeGen.GenerateExternalSym(globalvar: CGGlobalVariableDefiniti
 begin
    if PureDelphi then begin
      globalvar.RawFooter := new List<not nullable String>;
-     globalvar.RawFooter.Add('{$EXTERNALSYM '+globalvar.Variable.Name+'}');
+     globalvar.RawFooter.Add("{$EXTERNALSYM "+globalvar.Variable.Name+"}");
    end;
 end;
 
@@ -4274,7 +4186,9 @@ end;
 method DelphiRodlCodeGen.IsHttpAPIAttribute(aName: String): Boolean;
 begin
   exit aName.ToLowerInvariant in
-    ['httpapipath', 'httpapimethod', 'httpapiresult', 'httpapitags', 'httpapioperationid', 'httpapirequestname', 'httpapiqueryparameter', 'httpapiheaderparameter'];
+    ["httpapipath", "httpapimethod", "httpapiresult", "httpapitags",
+     "httpapioperationid", "httpapirequestname", "httpapiqueryparameter",
+     "httpapiheaderparameter"];
 end;
 
 method DelphiRodlCodeGen.GenerateGlobalVarName(aName: String; aUnitName: String): CGExpression;
@@ -4287,11 +4201,11 @@ begin
   var fItems := new CGFieldAccessExpression(nil, "fItems");
   var fCount := new CGFieldAccessExpression(nil, "fCount");
   var par_aIndex := new CGParameterDefinition("aIndex", ResolveStdtypes(CGPredefinedTypeReference.Int32));
-  var par_Ref := new CGParameterDefinition('Ref',CGPointerTypeReference.VoidPointer);
+  var par_Ref := new CGParameterDefinition("Ref",CGPointerTypeReference.VoidPointer);
   var aIndex: CGExpression := par_aIndex.AsExpression;
   var fItems_aIndex := new CGArrayElementAccessExpression(fItems,[aIndex].ToList);  //fItems[aIndex]
 
-  var lm := new CGMethodDefinition('SetItemRef',
+  var lm := new CGMethodDefinition("SetItemRef",
                                 Parameters := [par_aIndex, par_Ref].ToList,
                                 Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Public,
@@ -4302,7 +4216,7 @@ begin
                                                       new CGBinaryOperatorExpression(aIndex,new CGIntegerLiteralExpression(0),CGBinaryOperatorKind.LessThan),
                                                       new CGBinaryOperatorExpression(aIndex, fCount, CGBinaryOperatorKind.GreatThanOrEqual),
                                                       CGBinaryOperatorKind.LogicalOr),
-                      RaiseError('err_ArrayIndexOutOfBounds'.AsNamedIdentifierExpression,[aIndex].ToList)));
+                      RaiseError("err_ArrayIndexOutOfBounds".AsNamedIdentifierExpression,[aIndex].ToList)));
   lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(par_Ref.AsExpression, fItems_aIndex, CGBinaryOperatorKind.NotEquals),
                                               new CGBeginEndBlockStatement([
                                                                           new CGIfThenElseStatement(new CGAssignedExpression(fItems_aIndex),
@@ -4321,7 +4235,7 @@ begin
   var aIndex: CGExpression := par_aIndex.AsExpression;
   var fItems_aIndex := new CGArrayElementAccessExpression(fItems,[aIndex].ToList);  //fItems[aIndex]
 
-  var lm := new CGMethodDefinition('GetItemRef',
+  var lm := new CGMethodDefinition("GetItemRef",
                                 Parameters := [par_aIndex].ToList,
                                 Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Public,
@@ -4333,7 +4247,7 @@ begin
                                                       new CGBinaryOperatorExpression(aIndex,new CGIntegerLiteralExpression(0),CGBinaryOperatorKind.LessThan),
                                                       new CGBinaryOperatorExpression(aIndex, fCount, CGBinaryOperatorKind.GreatThanOrEqual),
                                                       CGBinaryOperatorKind.LogicalOr),
-                      RaiseError('err_ArrayIndexOutOfBounds'.AsNamedIdentifierExpression,[aIndex].ToList)));
+                      RaiseError("err_ArrayIndexOutOfBounds".AsNamedIdentifierExpression,[aIndex].ToList)));
   if aComplex then
     lm.Statements.Add(fItems_aIndex.AsReturnStatement)
   else
@@ -4344,7 +4258,7 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateArray_GetItemSize(aElementType: CGTypeReference): CGMethodDefinition;
 begin
-  exit new CGMethodDefinition('GetItemSize',
+  exit new CGMethodDefinition("GetItemSize",
                               [new CGSizeOfExpression(aElementType.AsExpression).AsReturnStatement],
                                 ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                 Virtuality := CGMemberVirtualityKind.Override,
@@ -4357,7 +4271,7 @@ method DelphiRodlCodeGen.Intf_GenerateArray_Clear(aComplex: Boolean): CGMethodDe
 begin
   var fItems := new CGFieldAccessExpression(nil, "fItems");
   var fCount := new CGFieldAccessExpression(nil, "fCount");
-  var lm := new CGMethodDefinition('Clear',
+  var lm := new CGMethodDefinition("Clear",
                                 Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Public,
                                 CallingConvention := CGCallingConventionKind.Register);
@@ -4395,7 +4309,7 @@ begin
                                                             new CGIntegerLiteralExpression(1),
                                                             CGBinaryOperatorKind.Subtraction);
 
-  var lm := new CGMethodDefinition('Delete',
+  var lm := new CGMethodDefinition("Delete",
                                 Parameters := [par_aIndex].ToList,
                                 Virtuality := CGMemberVirtualityKind.Override,
                                 Visibility := CGMemberVisibilityKind.Public,
@@ -4416,7 +4330,7 @@ begin
 
 
   lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(aIndex, fCount, CGBinaryOperatorKind.GreatThanOrEqual),
-                                              RaiseError('err_InvalidIndex'.AsNamedIdentifierExpression, [aIndex].ToList)));
+                                              RaiseError("err_InvalidIndex".AsNamedIdentifierExpression, [aIndex].ToList)));
   lm.Statements.Add(new CGEmptyStatement);
   if aComplex then begin
     lm.Statements.Add(GenerateDestroyExpression(new CGArrayElementAccessExpression(fItems,[aIndex].ToList)));
@@ -4440,8 +4354,8 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateArray_Assign(aLibrary: RodlLibrary; aArrayType: CGTypeReference; aElementType: CGTypeReference; elType: String; aComplex: Boolean): CGMethodDefinition;
 begin
-  var par_Source := new CGParameterDefinition('Source','TPersistent'.AsTypeReference);
-  var lm := new CGMethodDefinition('Assign',
+  var par_Source := new CGParameterDefinition("Source","TPersistent".AsTypeReference);
+  var lm := new CGMethodDefinition("Assign",
                             Parameters := [par_Source].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
@@ -4456,22 +4370,22 @@ begin
     lm.LocalVariables.Add(localvar_lItem);
   var aSourceExpr := par_Source.AsExpression;                                                                     // aSource
   var lSourceExpr := localvar_lSource.AsExpression;                                                                     // lSource
-  var lSource_Count := new CGPropertyAccessExpression(lSourceExpr, 'Count', CallSiteKind := CGCallSiteKind.Reference);                // lSource.Count
+  var lSource_Count := new CGPropertyAccessExpression(lSourceExpr, "Count", CallSiteKind := CGCallSiteKind.Reference);                // lSource.Count
   var lSelfitems_i := new CGPropertyAccessExpression(CGSelfExpression.Self,
-                                                     'Items',
+                                                     "Items",
                                                      [localvar_i.AsCallParameter].ToList,
                                                      CallSiteKind := CGCallSiteKind.Reference); // Self.Items[i]
   var larritem := new CGPropertyAccessExpression(lSourceExpr,
-                                                 'Items',
+                                                 "Items",
                                                  [localvar_i.AsCallParameter].ToList,
                                                  CallSiteKind := CGCallSiteKind.Reference); // lSource.Items[i]
   var litem := localvar_lItem.AsExpression;                                                                             // lItem
   var lct := new CGBeginEndBlockStatement;
   lm.Statements.Add(new CGIfThenElseStatement(GenerateIsClause(aSourceExpr,aArrayType),
                                         lct,
-                                        new CGMethodCallExpression(CGInheritedExpression.Inherited,'Assign',[aSourceExpr.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static)));
+                                        new CGMethodCallExpression(CGInheritedExpression.Inherited,"Assign",[aSourceExpr.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Static)));
   lct.Statements.Add(new CGAssignmentStatement(lSourceExpr,new CGTypeCastExpression(aSourceExpr, aArrayType)));
-  lct.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, 'Clear',CallSiteKind := CGCallSiteKind.Reference));
+  lct.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, "Clear",CallSiteKind := CGCallSiteKind.Reference));
   lct.Statements.Add(new CGEmptyStatement);
 
   if aComplex then begin
@@ -4485,15 +4399,15 @@ begin
     else if isBinary(elType) then begin
       //binary
       if_true.Statements.Add(new CGAssignmentStatement(litem,new CGNewInstanceExpression(aElementType))); //lItem := Binary.Create();
-      if_true.Statements.Add(new CGMethodCallExpression(litem,'Assign',[larritem.AsCallParameter].ToList, CallSiteKind := CGCallSiteKind.Reference));//lItem.Assign(lSource.Items[i]);
+      if_true.Statements.Add(new CGMethodCallExpression(litem,"Assign",[larritem.AsCallParameter].ToList, CallSiteKind := CGCallSiteKind.Reference));//lItem.Assign(lSource.Items[i]);
     end
     else begin
       // unknown object
-      var lnew: CGExpression := new CGNewInstanceExpression(new CGMethodCallExpression(larritem,'ClassType',CallSiteKind := CGCallSiteKind.Static));//lSource.Items[i].ClassType.Create()
+      var lnew: CGExpression := new CGNewInstanceExpression(new CGMethodCallExpression(larritem,"ClassType",CallSiteKind := CGCallSiteKind.Static));//lSource.Items[i].ClassType.Create()
       if_true.Statements.Add(new CGAssignmentStatement(litem,new CGTypeCastExpression(lnew,aElementType)));//lItem := AdminProperty(xxx);
-      if_true.Statements.Add(new CGMethodCallExpression(litem,'Assign',[larritem.AsCallParameter].ToList, CallSiteKind := CGCallSiteKind.Reference));//lItem.Assign(lSource.Items[i]);
+      if_true.Statements.Add(new CGMethodCallExpression(litem,"Assign",[larritem.AsCallParameter].ToList, CallSiteKind := CGCallSiteKind.Reference));//lItem.Assign(lSource.Items[i]);
     end;
-    if_true.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self,'Add',[litem.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference)); //self.Add(lItem);
+    if_true.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self,"Add",[litem.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference)); //self.Add(lItem);
     lct.Statements.Add(new CGForToLoopStatement(localvar_i.Name, //for i := 0 to lSource.Count-1 do
                                                 ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                 new CGIntegerLiteralExpression(0),
@@ -4503,11 +4417,11 @@ begin
                                                 new CGIfThenElseStatement(
                                                                           new CGAssignedExpression(larritem),
                                                                           if_true,
-                                                                          new CGMethodCallExpression(CGSelfExpression.Self,'Add',[CGNilExpression.Nil.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference)
+                                                                          new CGMethodCallExpression(CGSelfExpression.Self,"Add",[CGNilExpression.Nil.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference)
                                                                           )));
   end
   else begin
-    lct.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, 'Resize',[lSource_Count.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
+    lct.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, "Resize",[lSource_Count.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
     lct.Statements.Add(new CGForToLoopStatement(localvar_i.Name, //for i := 0 to lSource.Count-1 do
                                                 ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                 new CGIntegerLiteralExpression(0),
@@ -4527,26 +4441,26 @@ begin
   var fCount_subtract_1 := new CGBinaryOperatorExpression(fCount,            //fCount-1
                                                             new CGIntegerLiteralExpression(1),
                                                             CGBinaryOperatorKind.Subtraction);
-  var par_aSerializer := new CGParameterDefinition('aSerializer','TObject'.AsTypeReference);
-  var lm := new CGMethodDefinition('WriteComplex',
+  var par_aSerializer := new CGParameterDefinition("aSerializer","TObject".AsTypeReference);
+  var lm := new CGMethodDefinition("WriteComplex",
                             Parameters := [par_aSerializer].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register);
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-  var TROSerializer_typeref := 'TROSerializer'.AsTypeReference;
+  var TROSerializer_typeref := "TROSerializer".AsTypeReference;
   var lSerializer_typeref := new CGTypeCastExpression(par_aSerializer.AsExpression, TROSerializer_typeref);
-  var localvar__Serializer := new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref, lSerializer_typeref);
+  var localvar__Serializer := new CGVariableDeclarationStatement("__Serializer",TROSerializer_typeref, lSerializer_typeref);
   lm.LocalVariables.Add(localvar__Serializer);
   var lSerializer := localvar__Serializer.AsExpression;
   var localvar_i := new CGVariableDeclarationStatement("i", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   lm.LocalVariables.Add(localvar_i);
   var fItems_i := new CGArrayElementAccessExpression(fItems, [localvar_i.AsExpression as CGExpression]);
-  lm.Statements.Add(new CGMethodCallExpression(lSerializer,'ChangeClass',[ cpp_ClassId(DuplicateType(aArrayType, false).AsExpression).AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
+  lm.Statements.Add(new CGMethodCallExpression(lSerializer,"ChangeClass",[ cpp_ClassId(DuplicateType(aArrayType, false).AsExpression).AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
   var array__element_name := new CGMethodCallExpression(lSerializer,
-                                                   'GetArrayElementName',
-                                                   [new CGMethodCallExpression(nil, 'GetItemType').AsCallParameter,
-                                                    new CGMethodCallExpression(nil, 'GetItemRef',[localvar_i.AsCallParameter].ToList).AsCallParameter].ToList,
+                                                   "GetArrayElementName",
+                                                   [new CGMethodCallExpression(nil, "GetItemType").AsCallParameter,
+                                                    new CGMethodCallExpression(nil, "GetItemRef",[localvar_i.AsCallParameter].ToList).AsCallParameter].ToList,
                                                     CallSiteKind := CGCallSiteKind.Reference).AsCallParameter;
   var ws := Intf_generateWriteStatement(aLibrary,
                                   elType,
@@ -4567,34 +4481,34 @@ end;
 method DelphiRodlCodeGen.Intf_GenerateArray_ReadComplex(aLibrary: RodlLibrary; aElementType: CGTypeReference; elType: String): CGMethodDefinition;
 begin
   var fCount := new CGFieldAccessExpression(nil, "fCount");
-  var Self_Items := new CGPropertyAccessExpression(CGSelfExpression.Self, 'Items', CallSiteKind := CGCallSiteKind.Reference);//Self.Items
+  var Self_Items := new CGPropertyAccessExpression(CGSelfExpression.Self, "Items", CallSiteKind := CGCallSiteKind.Reference);//Self.Items
   var fCount_subtract_1 := new CGBinaryOperatorExpression(fCount,            //fCount-1
                                                             new CGIntegerLiteralExpression(1),
                                                             CGBinaryOperatorKind.Subtraction);
-  var TROSerializer_typeref := 'TROSerializer'.AsTypeReference;
+  var TROSerializer_typeref := "TROSerializer".AsTypeReference;
 
-  var par_aSerializer := new CGParameterDefinition('aSerializer','TObject'.AsTypeReference);
+  var par_aSerializer := new CGParameterDefinition("aSerializer","TObject".AsTypeReference);
 
   var lSerializer_typeref := new CGTypeCastExpression(par_aSerializer.AsExpression, TROSerializer_typeref);
 
-  var lm := new CGMethodDefinition('ReadComplex',
+  var lm := new CGMethodDefinition("ReadComplex",
                             Parameters := [par_aSerializer].ToList,
                             Virtuality := CGMemberVirtualityKind.Override,
                             Visibility := CGMemberVisibilityKind.Public,
                             CallingConvention := CGCallingConventionKind.Register);
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-  var localvar__Serializer := new CGVariableDeclarationStatement('__Serializer',TROSerializer_typeref, lSerializer_typeref);
+  var localvar__Serializer := new CGVariableDeclarationStatement("__Serializer",TROSerializer_typeref, lSerializer_typeref);
   var lSerializer := localvar__Serializer.AsExpression;
   lm.LocalVariables.Add(localvar__Serializer);
-  var localvar_lval := new CGVariableDeclarationStatement('lval', aElementType);
+  var localvar_lval := new CGVariableDeclarationStatement("lval", aElementType);
   lm.LocalVariables.Add(localvar_lval);
   var localvar_i := new CGVariableDeclarationStatement("i", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   lm.LocalVariables.Add(localvar_i); // var i: integer;
   var Self_Items_i := new CGArrayElementAccessExpression(Self_Items, [localvar_i.AsExpression]);    //Self.Items[i]
   var array__element_name := new CGMethodCallExpression(lSerializer,
-                                                   'GetArrayElementName',
-                                                   [new CGMethodCallExpression(nil, 'GetItemType').AsCallParameter,
-                                                    new CGMethodCallExpression(nil, 'GetItemRef',[localvar_i.AsCallParameter].ToList).AsCallParameter].ToList,
+                                                   "GetArrayElementName",
+                                                   [new CGMethodCallExpression(nil, "GetItemType").AsCallParameter,
+                                                    new CGMethodCallExpression(nil, "GetItemRef",[localvar_i.AsCallParameter].ToList).AsCallParameter].ToList,
                                                     CallSiteKind := CGCallSiteKind.Reference).AsCallParameter;
   var lforst := new List<CGStatement>;
   lforst.Add(Intf_generateReadStatement(aLibrary,
@@ -4621,8 +4535,8 @@ begin
                                                      new CGIntegerLiteralExpression(1),
                                                      CGBinaryOperatorKind.Addition);
   var fItems := new CGFieldAccessExpression(nil, "fItems");
-  var par_Value := new CGParameterDefinition('Value', aElementType);
-  var lm := new CGMethodDefinition('Add',
+  var par_Value := new CGParameterDefinition("Value", aElementType);
+  var lm := new CGMethodDefinition("Add",
                           Overloaded := aComplex,
                           Parameters := [par_Value].ToList,
                           Visibility := CGMemberVisibilityKind.Public,
@@ -4630,7 +4544,7 @@ begin
                           CallingConvention := CGCallingConventionKind.Register);
 
   lm.LocalVariables := new List<CGVariableDeclarationStatement>;
-  var localvar_lResult := new CGVariableDeclarationStatement('lResult', lm.ReturnType, fCount);
+  var localvar_lResult := new CGVariableDeclarationStatement("lResult", lm.ReturnType, fCount);
   lm.LocalVariables.Add(localvar_lResult);
   var lResult := localvar_lResult.AsExpression;
   var fItems_Result := new CGArrayElementAccessExpression(fItems, [lResult]);  //fItems[lResult]
@@ -4638,7 +4552,7 @@ begin
   lm.Statements.Add(new CGIfThenElseStatement(new CGBinaryOperatorExpression(Array_GetLength(fItems),
                                                                              lResult,
                                                                              CGBinaryOperatorKind.Equals),
-                                              new CGMethodCallExpression(CGSelfExpression.Self, 'Grow',CallSiteKind := CGCallSiteKind.Reference)));
+                                              new CGMethodCallExpression(CGSelfExpression.Self, "Grow",CallSiteKind := CGCallSiteKind.Reference)));
   lm.Statements.Add(new CGAssignmentStatement(fItems_Result, par_Value.AsExpression));
   lm.Statements.Add(new CGAssignmentStatement(fCount, fCount_add_1));
   lm.Statements.Add(lResult.AsReturnStatement);
@@ -4648,21 +4562,21 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateArray_GetIndex(aElementType: CGTypeReference): CGMethodDefinition;
 begin
-  var par_aValue := new CGParameterDefinition('aValue',
+  var par_aValue := new CGParameterDefinition("aValue",
                                               aElementType,
                                               Modifier := CGParameterModifierKind.Const);
-  var par_aStartFrom := new CGParameterDefinition('aStartFrom',
+  var par_aStartFrom := new CGParameterDefinition("aStartFrom",
                                                   ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                   Modifier := CGParameterModifierKind.Const,
                                                   DefaultValue := new CGIntegerLiteralExpression(0));
-  var lm := new CGMethodDefinition('GetIndex',
+  var lm := new CGMethodDefinition("GetIndex",
                           Parameters := [par_aValue, par_aStartFrom].ToList,
                           Visibility := CGMemberVisibilityKind.Public,
                           Overloaded := true,
                           ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                           CallingConvention := CGCallingConventionKind.Register);
   lm.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self,
-                                               'IndexOf',
+                                               "IndexOf",
                                                [par_aValue.AsCallParameter,
                                                 par_aStartFrom.AsCallParameter].ToList,
                                                CallSiteKind := CGCallSiteKind.Reference).AsReturnStatement);
@@ -4671,20 +4585,20 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateArray_GetIndex1: CGMethodDefinition;
 begin
-  var par_aPropertyName := new CGParameterDefinition('aPropertyName',
+  var par_aPropertyName := new CGParameterDefinition("aPropertyName",
                                                      ResolveStdtypes(CGPredefinedTypeReference.String),
                                                      Modifier := CGParameterModifierKind.Const);
-  var par_aPropertyValue := new CGParameterDefinition('aPropertyValue',
-                                                      'Variant'.AsTypeReference,
+  var par_aPropertyValue := new CGParameterDefinition("aPropertyValue",
+                                                      "Variant".AsTypeReference,
                                                       Modifier := CGParameterModifierKind.Const);
-  var par_aStartFrom := new CGParameterDefinition('aStartFrom',
+  var par_aStartFrom := new CGParameterDefinition("aStartFrom",
                                                   ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                   DefaultValue := new CGIntegerLiteralExpression(0));
-  var par_Options := new CGParameterDefinition('Options',
-                                               new CGNamedTypeReference('TROSearchOptions') isClasstype(false),
-                                               DefaultValue := new CGSetLiteralExpression([CGExpression('soIgnoreCase'.AsNamedIdentifierExpression)].ToList,
-                                                                                          'TROSearchOptions'.AsTypeReference));
-  exit new CGMethodDefinition('GetIndex',
+  var par_Options := new CGParameterDefinition("Options",
+                                               new CGNamedTypeReference("TROSearchOptions") isClasstype(false),
+                                               DefaultValue := new CGSetLiteralExpression([CGExpression("soIgnoreCase".AsNamedIdentifierExpression)].ToList,
+                                                                                          "TROSearchOptions".AsTypeReference));
+  exit new CGMethodDefinition("GetIndex",
                               [new CGIntegerLiteralExpression(-1).AsReturnStatement],
                               Parameters := [par_aPropertyName, par_aPropertyValue, par_aStartFrom, par_Options].ToList,
                               Virtuality := CGMemberVirtualityKind.Override,
@@ -4700,16 +4614,16 @@ begin
   var fCount_subtract_1    := new CGBinaryOperatorExpression(fCount,            //fCount-1
                                                           new CGIntegerLiteralExpression(1),
                                                           CGBinaryOperatorKind.Subtraction);
-  var par_aValue := new CGParameterDefinition('aValue',
+  var par_aValue := new CGParameterDefinition("aValue",
                                               aElementType,
                                               Modifier := CGParameterModifierKind.Const);
-  var par_aStartFrom := new CGParameterDefinition('aStartFrom',
+  var par_aStartFrom := new CGParameterDefinition("aStartFrom",
                                                   ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                                   Modifier := CGParameterModifierKind.Const,
                                                   DefaultValue := new CGIntegerLiteralExpression(0));
-  var localvar_lResult := new CGVariableDeclarationStatement('lResult', ResolveStdtypes(CGPredefinedTypeReference.Int32));
+  var localvar_lResult := new CGVariableDeclarationStatement("lResult", ResolveStdtypes(CGPredefinedTypeReference.Int32));
   var fItems_Result := new CGArrayElementAccessExpression(fItems,[localvar_lResult.AsExpression]);  //fItems[Result]
-  var lm := new CGMethodDefinition('IndexOf',
+  var lm := new CGMethodDefinition("IndexOf",
                                   Parameters := [par_aValue, par_aStartFrom].ToList,
                                   LocalVariables := [localvar_lResult].ToList,
                                   Visibility := CGMemberVisibilityKind.Public,
@@ -4731,7 +4645,7 @@ method DelphiRodlCodeGen.Intf_GenerateArray_Add1(aElementType: CGTypeReference; 
 begin
   var localvar_lres := new CGVariableDeclarationStatement("lres", aElementType);
   var lres := localvar_lres.AsExpression;
-  var lm := new CGMethodDefinition('Add',
+  var lm := new CGMethodDefinition("Add",
                               Overloaded := true,
                               LocalVariables := [localvar_lres].ToList,
                               Visibility := CGMemberVisibilityKind.Public,
@@ -4740,19 +4654,19 @@ begin
 
   if aIsException then
     lm.Statements.Add(new CGAssignmentStatement(lres, new CGNewInstanceExpression(aElementType,
-                                                                                  [''.AsLiteralExpression.AsCallParameter,
+                                                                                  ["".AsLiteralExpression.AsCallParameter,
                                                                                    new CGArrayLiteralExpression().AsCallParameter].ToList,
-                                                                                   ConstructorName := 'CreateFmt')))
+                                                                                   ConstructorName := "CreateFmt")))
   else
     lm.Statements.Add(new CGAssignmentStatement(lres, new CGNewInstanceExpression(aElementType)));
-  lm.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, 'Add',[localvar_lres.AsCallParameter],CallSiteKind := CGCallSiteKind.Reference));
+  lm.Statements.Add(new CGMethodCallExpression(CGSelfExpression.Self, "Add",[localvar_lres.AsCallParameter],CallSiteKind := CGCallSiteKind.Reference));
   lm.Statements.Add(lres.AsReturnStatement);
   exit lm;
 end;
 
 method DelphiRodlCodeGen.Intf_GenerateArray_GetEnumerator(aEnumeratorType: CGTypeReference): CGMethodDefinition;
 begin
-  exit new CGMethodDefinition('GetEnumerator',
+  exit new CGMethodDefinition("GetEnumerator",
                                [new CGNewInstanceExpression(aEnumeratorType, [CGSelfExpression.Self.AsCallParameter]).AsReturnStatement],
                                Visibility := CGMemberVisibilityKind.Public,
                                ReturnType := aEnumeratorType,
@@ -4763,7 +4677,7 @@ method DelphiRodlCodeGen.Intf_GenerateArray_Count: CGPropertyDefinition;
 begin
   exit new CGPropertyDefinition("Count",
                                  ResolveStdtypes(CGPredefinedTypeReference.Int32),
-                                 new CGMethodAccessExpression(nil, 'GetCount'),
+                                 new CGMethodAccessExpression(nil, "GetCount"),
                                  Visibility := CGMemberVisibilityKind.Public
                                 );
 end;
@@ -4772,10 +4686,10 @@ method DelphiRodlCodeGen.Intf_GenerateArray_Items(aElementType: CGTypeReference)
 begin
   exit new CGPropertyDefinition("Items",
                                 aElementType,
-                                new CGMethodAccessExpression(nil, 'GetItems'),
-                                new CGMethodAccessExpression(nil, 'SetItems'),
+                                new CGMethodAccessExpression(nil, "GetItems"),
+                                new CGMethodAccessExpression(nil, "SetItems"),
                                 Visibility := CGMemberVisibilityKind.Public,
-                                Parameters := [new CGParameterDefinition('Index', ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
+                                Parameters := [new CGParameterDefinition("Index", ResolveStdtypes(CGPredefinedTypeReference.Int32))].ToList,
                                 &Default := true
                     );
 end;
@@ -4784,7 +4698,7 @@ method DelphiRodlCodeGen.Intf_GenerateArray_InnerArray(aInnerArrayType: CGTypeRe
 begin
   exit new CGPropertyDefinition("InnerArray",
                                 aInnerArrayType,
-                                new CGFieldAccessExpression(nil, 'fItems'),
+                                new CGFieldAccessExpression(nil, "fItems"),
                                 Visibility := CGMemberVisibilityKind.Public);
 end;
 
@@ -4848,15 +4762,25 @@ begin
     var lTransportChannel := localvar_lTransportChannel.AsExpression;
 
     mem.Statements.Add(new CGAssignmentStatement(lMessage, new CGMethodCallExpression(nil, "__GetMessage")));
+    for litem in lmem.Items do begin
+      if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
+        mem.Statements.Add(new CGMethodCallExpression(lMessage,
+                                                      "CheckForOutputParameters",
+                                                      CallSiteKind := CGCallSiteKind.Reference
+                                                      ));
+        break;
+      end;
+    end;
     mem.Statements.Add(new CGMethodCallExpression(lMessage,"SetAutoGeneratedNamespaces",[new CGMethodCallExpression(nil,"DefaultNamespaces").AsCallParameter],CallSiteKind := CGCallSiteKind.Reference));
     mem.Statements.Add(new CGAssignmentStatement(lTransportChannel, new CGPropertyAccessExpression(nil, "__TransportChannel")));
     ////
     var p1: List<CGExpression>;
     var p2: List<CGExpression>;
     GenerateAttributes(aLibrary, aEntity, lmem,out p1, out p2);
-    if p1.Count > 0 then begin
+
+    if p1.Count > 0 then
       cpp_SetAttributes(mem.Statements, lMessage, lTransportChannel, p1, p2);
-    end;
+
     var ltry :=new CGTryFinallyCatchStatement();
 
 
@@ -4876,19 +4800,11 @@ begin
                                                     CallSiteKind := CGCallSiteKind.Reference));
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.In,ParamFlags.InOut]) then begin
-        //ltry.Statements.Add(
-          //Intf_generateWriteStatement(aLibrary,
-                                      //litem.DataType,
-                                      //lMessage,
-                                      //litem.Name.AsLiteralExpression.AsCallParameter,
-                                      //new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      //nil));
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                        'Write',
+                                                        "Write",
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
                                                         GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -4897,41 +4813,26 @@ begin
     ltry.Statements.Add(new CGEmptyStatement);
     ltry.Statements.Add(new CGMethodCallExpression(lTransportChannel,"Dispatch",[lMessage.AsCallParameter].ToList,CallSiteKind := CGCallSiteKind.Reference));
     ltry.Statements.Add(new CGEmptyStatement);
+
     {$REGION ! DataSnap}
     if not aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        //ltry.Statements.Add(
-          //Intf_generateReadStatement(aLibrary,
-                                      //lmem.Result.DataType,
-                                      //lMessage,
-                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      //localvar_lResult.AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary, lmem.Result.DataType, Intf_name),
-                                      //nil));
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                      'Read',
+                                                      "Read",
                                                       [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
-                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                                       GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind := CGCallSiteKind.Reference));
       end;
     {$ENDREGION}
     for litem in lmem.Items do begin
       if (litem.ParamFlag in [ParamFlags.Out,ParamFlags.InOut]) then begin
-        //ltry.Statements.Add(
-          //Intf_generateReadStatement(aLibrary,
-                                      //litem.DataType,
-                                      //lMessage,
-                                      //litem.Name.AsLiteralExpression.AsCallParameter,
-                                      //new CGParameterAccessExpression(litem.Name).AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name),
-                                      //nil));
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                        'Read',
+                                                        "Read",
                                                         [litem.Name.AsLiteralExpression.AsCallParameter,
                                                         GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
-                                                        new CGCallParameter(litem.Name.AsNamedIdentifierExpression, Modifier := CGParameterModifierKind.Var),
+                                                        new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
                                                         GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                                         CallSiteKind := CGCallSiteKind.Reference));
       end;
@@ -4940,19 +4841,11 @@ begin
     {$REGION DataSnap}
     if aLibrary.DataSnap then
       if assigned(lmem.Result) then begin
-        //ltry.Statements.Add(
-          //Intf_generateReadStatement(aLibrary,
-                                      //lmem.Result.DataType,
-                                      //lMessage,
-                                      //lmem.Result.Name.AsLiteralExpression.AsCallParameter,
-                                      //localvar_lResult.AsCallParameter,
-                                      //ResolveDataTypeToTypeRefFullQualified(aLibrary, lmem.Result.DataType, Intf_name),
-                                      //nil));
         ltry.Statements.Add(new CGMethodCallExpression(lMessage,
-                                                      'Read',
+                                                      "Read",
                                                       [lmem.Result.Name.AsLiteralExpression.AsCallParameter,
                                                       GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,lmem.Result.DataType,Intf_name)).AsCallParameter,
-                                                      new CGCallParameter(localvar_lResult.AsExpression, Modifier := CGParameterModifierKind.Var),
+                                                      localvar_lResult.AsExpression.AsCallParameter(CGParameterModifierKind.Var),
                                                       GenerateParamAttributes(lmem.Result.DataType).AsCallParameter].ToList,
                                                       CallSiteKind := CGCallSiteKind.Reference));
 

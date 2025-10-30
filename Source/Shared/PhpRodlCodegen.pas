@@ -5,6 +5,7 @@ interface
 type
   PhpRodlCodeGen = public class(RodlCodeGen)
   private
+    property GenerateTypes: Boolean := false;
     method _FixDataType(aValue: String): String;
     method GetScalarType(aValue: String): CGTypeReference;
     method GetGlobalVariable(aName: String): CGExpression;
@@ -37,7 +38,6 @@ type
 
   public
     property MergeAll: Boolean := true; override;
-    property GenerateTypes: Boolean := false;
   end;
 
 implementation
@@ -92,7 +92,7 @@ begin
       for each p in op.Items do
         if p.ParamFlag in [ParamFlags.Out, ParamFlags.InOut] then begin
           if not f then begin
-            aFile.HeaderComment.Lines.Add("Out and InOut parameters are supported only if WrapResult property is set to true on both sides (client and server)");
+            aFile.HeaderComment.Lines.Add("WrapResult property has to set to true for these methods on both sides (client and server):");
             f := true;
           end;
           aFile.HeaderComment.Lines.Add($"  * {svc.Name}.{op.Name}");
@@ -633,6 +633,7 @@ begin
   var f_session := new CGFieldAccessExpression(CGSelfExpression.Self, "SessionID");
 
   var l_comment := "";
+  var lNeedCheck := false;
   for each p in aOperation.Items do begin
     var l_type :=
       if not isEnum(aLibrary, p.DataType) and IsScalar(aLibrary, p.DataType) then
@@ -645,11 +646,27 @@ begin
       ParamFlags.Out: l_p.Modifier := CGParameterModifierKind.Out;
       ParamFlags.InOut: l_p.Modifier := CGParameterModifierKind.Var;
     end;
+    if not lNeedCheck then
+      lNeedCheck := p.ParamFlag in [ParamFlags.Out, ParamFlags.InOut];
+
     lresult.Parameters.Add(l_p);
     if l_comment <> "" then l_comment := l_comment + ", ";
     l_comment := l_comment + ParamToComment(aLibrary, p);
   end;
   lresult.Comment :=  new CGCommentStatement(lname + "(" + l_comment + ")");
+  if lNeedCheck then begin
+  lresult.Statements.Add(
+    new CGIfThenElseStatement(
+      new CGUnaryOperatorExpression(
+        new CGFieldAccessExpression(CGSelfExpression.Self, "WrappedResult"),
+        CGUnaryOperatorKind.Not
+      ),
+      new CGThrowExpression(
+        new CGNewInstanceExpression("Exception".AsTypeReference,
+                                    [$"WrappedResult has to set for calling {lname} method".AsLiteralExpression.AsCallParameter]))
+    ));
+  end;
+
   var l_msg := new CGVariableDeclarationStatement("$___msg",
                                                   nil,
                                                   new CGNewInstanceExpression("xmlrpcmsg".AsTypeReference,
