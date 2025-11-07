@@ -62,6 +62,7 @@ func writeSyntax() {
 	writeLn("  --excludeclasses (valid for --type:intf only)")
 	writeLn("  --excludeservices (valid for --type:intf only)")
 	writeLn("  --excludeeventsinks (valid for --type:intf only)")
+	writeLn("  --ignoreda (valid for --type:intf only)")
 	writeLn()
 	writeLn("  --outpath:<path> (optional target folder for generated files)")
 	writeLn("  --outfilename:<name> (optional base filename for generated files, w/o extension)")
@@ -396,6 +397,10 @@ do {
 	if options["excludeeventsinks"] != nil {
 		activeRodlCodeGen?.ExcludeEventSinks = true
 	}
+	var IgnoreDA = false
+	if options["ignoreda"] != nil {
+		IgnoreDA = true
+	}
 
 	if (options["platform"] == "bcb") {
 		let lcodegen = (activeRodlCodeGen as? CPlusPlusBuilderRodlCodeGen)?
@@ -524,8 +529,9 @@ do {
 
 			switch type.ToLowerInvariant() {
 				case "intf":
+					let rodlLibrary1 = iif(IgnoreDA, rodlLibrary.RemoveDA(), rodlLibrary)
 					if codegen is CGJavaCodeGenerator {
-						let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
+						let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary1, options["namespace"])
 						for name in sourceFiles.Keys {
 							var fileName = Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
 							_WriteText(fileName, sourceFiles[name]);
@@ -534,7 +540,7 @@ do {
 					} else {
 						if (activeRodlCodeGen is CPlusPlusBuilderRodlCodeGen) && (options["splittypes"] != nil) {
 							let generateIntf = {
-								let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary, options["namespace"])
+								let sourceFiles = activeRodlCodeGen.GenerateInterfaceFiles(rodlLibrary1, options["namespace"])
 								for name in sourceFiles.Keys {
 									var fileName = Path.Combine(Path.GetParentDirectory(targetRodlFileName), name)
 									_WriteText(fileName, sourceFiles[name]);
@@ -547,20 +553,20 @@ do {
 						}
 						else {
 							let intf_file = targetFileNameWithSuffix("Intf");
-							let source = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], intf_file)
+							let source = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary1, options["namespace"], intf_file)
 							_WriteText(intf_file, source);
 							writeLn("Wrote file \(intf_file)")
 
 							if options["language"] == "objc" {
 								activeRodlCodeGen?.Generator = CGObjectiveCHCodeGenerator()
-								let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], intf_file)
+								let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary1, options["namespace"], intf_file)
 								fileExtension = "h";
 								let intf_fileH = Path.ChangeExtension(intf_file, fileExtension);
 								_WriteText(intf_fileH, sourceH);
 								writeLn("Wrote file \(intf_fileH)")
 							} else if options["language"] == "cpp" {
 								activeRodlCodeGen?.Generator = CGCPlusPlusHCodeGenerator(dialect: .CPlusPlusBuilder)
-								let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary, options["namespace"], intf_file)
+								let sourceH = activeRodlCodeGen?.GenerateInterfaceFile(rodlLibrary1, options["namespace"], intf_file)
 								fileExtension = "h";
 								let intf_fileH = Path.ChangeExtension(intf_file, fileExtension);
 								_WriteText(intf_fileH, sourceH);

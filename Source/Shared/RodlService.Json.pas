@@ -114,6 +114,7 @@ type
     begin
       inherited LoadFromJsonNode(node);
       LoadFromJsonNode(node, -> new RodlOperation);
+      self.AncestorName := nil; // interface can't use ancestorname
     end;
   end;
 

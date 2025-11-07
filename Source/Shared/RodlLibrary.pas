@@ -45,12 +45,17 @@ type
       LoadFromUrl(aURL);
     end;
 
+    method RemoveDA: RodlLibrary;
+    begin
+      exit IgnoreDAHelper.RemoveDA(self);
+    end;
+
     method LoadFromString(aString: String; aUse: RodlUse := nil);
     begin
       if length(aString) > 0 then begin
         case aString[0] of
           '<': LoadFromXmlNode(XmlDocument.FromString(aString).Root, aUse);
-          '{': LoadFromJsonNode(JsonDocument.FromString(aString).Root, aUse);
+          '{': LoadFromJsonNode(JsonDocument.FromString(aString), aUse);
           else raise new Exception("Unexpected file format for rodl.");
         end;
       end;
@@ -70,6 +75,9 @@ type
       if lServerUris.Count ≠ 1 then
         raise new Exception("lServerUris element not found in remoteRODL.");
       LoadFromUrl(Url.UrlWithString(lServerUris.FirstOrDefault.Value));
+      var ignoreDA := lServers.FirstOrDefault.FirstElementWithName("IgnoreDataAbstract");
+      if assigned(ignoreDA) and (ignoreDA.Value = "1") then
+        IgnoreDAHelper.RemoveDA(self, true);
     end;
 
     method LoadFromFile(aFilename: String);

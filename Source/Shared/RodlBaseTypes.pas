@@ -109,7 +109,10 @@ type
   private
     method setAncestorEntity(value: RodlEntity);
     begin
-      value := getAncestorEntity;
+      if assigned(value) then
+        AncestorName := value.Name
+      else
+        AncestorName := nil;
     end;
 
     method getAncestorEntity: RodlEntity;

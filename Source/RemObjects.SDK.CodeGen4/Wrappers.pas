@@ -62,29 +62,30 @@ type
   [ClassInterface(ClassInterfaceType.AutoDual)]
   Codegen4Wrapper = public class
   public const
-    TargetNameSpace = 'Namespace';
-    ServiceName = 'ServiceName';
-    CustomAncestor = 'CustomAncestor';
-    CustomUses = 'CustomUses';
-    ServerAddress = 'ServerAddress';
-    FullFramework = 'FullFramework';
-    AsyncSupport = 'AsyncSupport';
-    DelphiFullQualifiedNames = 'DelphiFullQualified';
-    DelphiScopedEnums = 'DelphiScopedEnums';
-    DelphiLegacyStrings = 'DelphiLegacyStrings';
-    DelphiCodeFirstCompatible = 'DelphiCodeFirstCompatible';   // deprecated
-    DelphiGenerateGenericArray = 'DelphiGenerateGenericArray'; // deprecated
-    DelphiHydra = 'DelphiHydra';
-    RODLFileName = 'RodlFileName';
-    DelphiXE2Mode = 'DelphiXE2Mode';
-    DelphiFPCMode = 'DelphiFPCMode';
-    DelphiCodeFirstMode = 'DelphiCodeFirstMode';
-    DelphiGenericArrayMode = 'DelphiGenericArrayMode';
-    CBuilderSplitTypes = 'CBuilderSplitTypes';
-    GenerateDocumentation = 'GenerateDocumentation';
-    ExcludeClasses = 'ExcludeClasses';
-    ExcludeServices = 'ExcludeServices';
+    TargetNameSpace = "Namespace";
+    ServiceName = "ServiceName";
+    CustomAncestor = "CustomAncestor";
+    CustomUses = "CustomUses";
+    ServerAddress = "ServerAddress";
+    FullFramework = "FullFramework";
+    AsyncSupport = "AsyncSupport";
+    DelphiFullQualifiedNames = "DelphiFullQualified";
+    DelphiScopedEnums = "DelphiScopedEnums";
+    DelphiLegacyStrings = "DelphiLegacyStrings";
+    DelphiCodeFirstCompatible = "DelphiCodeFirstCompatible";   // deprecated
+    DelphiGenerateGenericArray = "DelphiGenerateGenericArray"; // deprecated
+    DelphiHydra = "DelphiHydra";
+    RODLFileName = "RodlFileName";
+    DelphiXE2Mode = "DelphiXE2Mode";
+    DelphiFPCMode = "DelphiFPCMode";
+    DelphiCodeFirstMode = "DelphiCodeFirstMode";
+    DelphiGenericArrayMode = "DelphiGenericArrayMode";
+    CBuilderSplitTypes = "CBuilderSplitTypes";
+    GenerateDocumentation = "GenerateDocumentation";
+    ExcludeClasses = "ExcludeClasses";
+    ExcludeServices = "ExcludeServices";
     ExcludeEventSinks = "ExcludeEventSinks";
+    IgnoreDataAbstract = "IgnoreDataAbstract";
     DelphiGenerateServerSideAttributes = "GenerateServerSideAttributes";
   private
     method ParseAddParams(aParams: Dictionary<String,String>; aParamName:String):String;
@@ -136,6 +137,8 @@ begin
   //var llang := Language.ToString;
   var lfileext:= '';
   var codegen: RodlCodeGen;
+  var op_IgnoreDataAbstract := ParseAddParams(lparams,IgnoreDataAbstract) = '1';
+
   case &Platform of
     Codegen4Platform.Delphi: begin
       codegen := new DelphiRodlCodeGen;
@@ -314,14 +317,26 @@ begin
 //  if String.IsNullOrEmpty(ltargetnamespace) then ltargetnamespace := rodl.Name;
 
   case Mode of
-    Codegen4Mode.Intf: GenerateInterfaceFiles(result, codegen, rodl, ltargetnamespace, lfileext);
+    Codegen4Mode.Intf: begin
+      var rodl1 :=
+        if op_IgnoreDataAbstract then
+          rodl.RemoveDA
+        else
+          rodl;
+      GenerateInterfaceFiles(result, codegen, rodl1, ltargetnamespace, lfileext);
+    end;
     Codegen4Mode.Invk: GenerateInvokerFiles(result, codegen, rodl, ltargetnamespace, lfileext);
     Codegen4Mode.Impl: GenerateImplFiles(result, codegen, rodl, ltargetnamespace, lparams, nil);
     Codegen4Mode.Async: GenerateAsyncFiles(result, codegen, rodl, ltargetnamespace, lfileext);
     Codegen4Mode.All_Impl: GenerateAllImplFiles(result, codegen, rodl, ltargetnamespace, lparams);
     Codegen4Mode._ServerAccess: GenerateServerAccess(result, codegen, rodl, ltargetnamespace, lfileext, lparams, &Platform);
     Codegen4Mode.All: begin
-      GenerateInterfaceFiles(result, codegen, rodl, ltargetnamespace, lfileext);
+      var rodl1 :=
+        if op_IgnoreDataAbstract then
+          rodl.RemoveDA
+        else
+          rodl;
+      GenerateInterfaceFiles(result, codegen, rodl1, ltargetnamespace, lfileext);
       GenerateServerAccess(result, codegen, rodl, ltargetnamespace, lfileext, lparams, &Platform);
       if (Platform in [Codegen4Platform.Delphi,Codegen4Platform.CppBuilder, Codegen4Platform.Net]) then begin
         GenerateInvokerFiles(result, codegen, rodl, ltargetnamespace, lfileext);

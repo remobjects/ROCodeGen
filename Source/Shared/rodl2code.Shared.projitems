@@ -94,5 +94,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)PhpRodlCodegen.pas">
       <VirtualFolder>CodeGens</VirtualFolder>
     </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)IgnoreDAHelper.pas">
+      <VirtualFolder>RodlReader</VirtualFolder>
+    </Compile>
   </ItemGroup>
 </Project>

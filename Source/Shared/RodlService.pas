@@ -12,6 +12,26 @@ type
     end;
 
     property DefaultInterface: RodlInterface read if Count > 0 then Item[0];
+
+    method GetInheritedOperations: List<RodlOperation>;
+    begin
+      var lancestor := AncestorEntity;
+      if assigned(lancestor) and (lancestor is RodlServiceEntity) and assigned(RodlServiceEntity(lancestor).DefaultInterface) then begin
+        result := RodlServiceEntity(lancestor).GetInheritedOperations;
+        result.Add(RodlServiceEntity(lancestor).DefaultInterface.Items);
+      end
+      else begin
+        result := new List<RodlOperation>;
+      end;
+    end;
+
+    method GetAllOperations: List<RodlOperation>;
+    begin
+      result := GetInheritedOperations;
+      if assigned(DefaultInterface) then
+        result.Add(DefaultInterface.Items);
+    end;
+
   end;
 
   RodlEventSink = public partial class(RodlServiceEntity)

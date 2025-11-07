@@ -43,6 +43,7 @@ type
     method LoadFromXmlNode(node: XmlElement); override;
     begin
       LoadFromXmlNode(node, ->new RodlOperation);
+      AncestorName := nil; // interface can't have AncestorName
     end;
   end;
 
