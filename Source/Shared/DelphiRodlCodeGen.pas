@@ -1978,9 +1978,9 @@ begin
       if not EntityNeedsCodeGen(aEntity) and aEntity.IsFromUsedRodl and IncludeUnitNameForOtherTypes then begin
         var suffix: String;
         case aDefaultUnitName of
-          Intf_name: suffix := "intf";
-          Invk_name: suffix := "invk";
-          Impl_name: suffix := "impl";
+          Intf_name: suffix := "Intf";
+          Invk_name: suffix := "Invk";
+          Impl_name: suffix := "Impl";
         end;
         if String.IsNullOrEmpty(aEntity.FromUsedRodl:Includes:DelphiModule) then begin
           if CanUseNameSpace and not String.IsNullOrEmpty(aEntity.FromUsedRodl:&Namespace) then
