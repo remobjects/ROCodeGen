@@ -1465,7 +1465,7 @@ begin
     lservice.Attributes.Add(new CGAttribute("ServiceRequiresLogin".AsTypeReference_NotNullable));
 
   if aEntity.HasCustomAttributes then begin
-    var l_groups := aEntity.CustomAttributes["ROServiceGroups"];
+    var l_groups := aEntity.CustomAttributes_lower["roservicegroups"];
     if not String.IsNullOrEmpty(l_groups) then begin
       for each it in l_groups.Split(",") do
         lservice.Attributes.Add(new CGAttribute("RemObjects.SDK.Server.ServiceGroup".AsTypeReference_NotNullable, [it.AsLiteralExpression.AsCallParameter]));
