@@ -1792,7 +1792,7 @@ begin
                                            Visibility := CGMemberVisibilityKind.Protected));
   var param_message := new CGParameterDefinition("message", "RemObjects.SDK.IMessage".AsTypeReference_NotNullable);
   var param_channel := new CGParameterDefinition("channel", "RemObjects.SDK.Server.IServerEventChannel".AsTypeReference_NotNullable);
-  var param_eventTargets := new CGParameterDefinition("eventTargets", "RemObjects.SDK.Server.IEventTargets".AsTypeReference_NotNullable);
+  var param_eventTargets := new CGParameterDefinition("eventTargets", "RemObjects.SDK.Server.IEventTargets".AsTypeReference_Nullable);
   ltype.Members.Add(
     new CGConstructorDefinition("",
                                new CGConstructorCallStatement(
