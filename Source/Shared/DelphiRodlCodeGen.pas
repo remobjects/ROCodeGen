@@ -2060,6 +2060,7 @@ begin
   aFile.Imports.Add(GenerateCGImport("uROClasses"));
   aFile.Imports.Add(GenerateCGImport("uROTypes"));
   aFile.Imports.Add(GenerateCGImport("uROClientIntf"));
+  aFile.Imports.Add(GenerateCGImport("uROEventRepository"));
   var list := new List<String>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
     if not lu.DontCodegen then continue;
@@ -2102,7 +2103,6 @@ end;
 method DelphiRodlCodeGen.Invk_GenerateImplImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
   aFile.ImplementationImports.Add(GenerateCGImport("uROSystem"));
-  aFile.ImplementationImports.Add(GenerateCGImport("uROEventRepository"));
   aFile.ImplementationImports.Add(GenerateCGImport("uRORes"));
   aFile.ImplementationImports.Add(GenerateCGImport("uROClient"));
 end;
@@ -2420,13 +2420,13 @@ begin
 
   {$REGION T%eventsink%_Writer}
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
-    lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, "T"+aEntity.AncestorName+"_Writer",Intf_name,aEntity.AncestorName)
+    lancestor := ResolveDataTypeToTypeRefFullQualified(aLibrary, "T"+aEntity.AncestorName+"_Writer",Invk_name,aEntity.AncestorName)
   else
     lancestor := "TROEventWriter".AsTypeReference;
   var ltype1 := new CGClassTypeDefinition(l_Twriter,
                                           lancestor,
                                           [ResolveDataTypeToTypeRefFullQualified(aLibrary, l_IWriter, Invk_name, l_EntityName)].ToList,
-                                          Visibility := CGTypeVisibilityKind.Unit);
+                                          Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(ltype1);
   var param__Sender := new CGParameterDefinition("__Sender", l_guidtype , Modifier := CGParameterModifierKind.Const);
   for lmem in aEntity.DefaultInterface.Items do begin
