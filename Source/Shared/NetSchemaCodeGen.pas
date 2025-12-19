@@ -212,7 +212,7 @@ type
 
         var fieldDefinition := new CGFieldDefinition(NetTableDefinitionsCodeGen.CODE_FIELD_PREFIX + fieldName, fieldTypeReference);
         if fieldTypeReference is CGArrayTypeReference then
-          fieldDefinition.Initializer := new CGArrayLiteralExpression();
+          fieldDefinition.Initializer := new CGArrayLiteralExpression(new List<CGExpression>,CGArrayTypeReference(fieldTypeReference).Type);
         fieldDefinition.Visibility := CGMemberVisibilityKind.Private;
         typeDefinition.Members.Add(fieldDefinition);
 
