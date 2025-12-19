@@ -1441,7 +1441,7 @@ begin
                                             [litem.Name.AsLiteralExpression.AsCallParameter,
                                             GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType, Intf_name)).AsCallParameter,
                                             new CGLocalVariableAccessExpression($"l_{litem.Name}").AsCallParameter(CGParameterModifierKind.Var),
-                                            new CGArrayLiteralExpression().AsCallParameter].ToList,
+                                            GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                             CallSiteKind:= CGCallSiteKind.Reference));
       for lmemparam in lmem.Items do
         lcall.Parameters.Add(new CGLocalVariableAccessExpression($"l_{lmemparam.Name}").AsCallParameter);
@@ -2462,7 +2462,7 @@ begin
                                           [litem.Name.AsLiteralExpression.AsCallParameter,
                                           GenerateTypeInfoCall(aLibrary,ResolveDataTypeToTypeRefFullQualified(aLibrary,litem.DataType,Intf_name)).AsCallParameter,
                                           new CGLocalVariableAccessExpression(litem.Name).AsCallParameter(CGParameterModifierKind.Var),
-                                          new CGArrayLiteralExpression().AsCallParameter].ToList,
+                                          GenerateParamAttributes(litem.DataType).AsCallParameter].ToList,
                                           CallSiteKind:= CGCallSiteKind.Reference));
     end;
     ltry.Add(new CGMethodCallExpression(lmessage,"Finalize",CallSiteKind := CGCallSiteKind.Reference));
