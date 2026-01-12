@@ -833,9 +833,18 @@ begin
   var lEnumerator := $"{larrayname}Enumerator";
 
   if PureDelphi and IsGenericArrayCompatible then begin
-    aFile.Types.Add(new CGClassTypeDefinition(aEntity.Name, ($"TROArray<{lElementType}>").AsTypeReference,
-                                             Visibility := CGTypeVisibilityKind.Public,
-                                             Condition := cond_ROUseGenerics));
+    var ar := new CGClassTypeDefinition(aEntity.Name, ($"TROArray<{lElementType}>").AsTypeReference,
+                                       Visibility := CGTypeVisibilityKind.Public,
+                                       Condition := cond_ROUseGenerics);
+    var x := GenerateParamAttributes(aEntity.ElementType);
+    if x.Elements.Count > 0 then begin
+      ar.Members.Add( new CGMethodDefinition("ElementAttributes",
+                                       [x.AsReturnStatement],
+                                       ReturnType := fParamAttributes_typeref,
+                                       Virtuality := CGMemberVirtualityKind.Override,
+                                       Visibility := CGMemberVisibilityKind.Public));
+    end;
+    aFile.Types.Add(ar);
   end;
   if GenericArrayMode = State.On then exit;
 
