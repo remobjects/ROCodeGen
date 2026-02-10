@@ -28,6 +28,7 @@ type
     property attr_ROSkip: CGAttribute;
     property attr_ROLibraryAttributes: CGAttribute;
     property attr_ROAbstract: CGAttribute;
+    property attr_ROServiceRequiresLogin: CGAttribute;
     property cond_ROUseGenerics: CGConditionalDefine;
     property cond_ROUseGenerics_inverted: CGConditionalDefine;
     method AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
@@ -3073,6 +3074,8 @@ begin
     if aEntity.Private then
       AddCGAttribute(lservice, attr_ROSkip);
 
+    if aEntity.RequireSession then
+      AddCGAttribute(lservice, attr_ROServiceRequiresLogin);
     for lr in aEntity.Roles.Roles do
       AddCGAttribute(lservice,
                      new CGAttribute("RORole".AsTypeReference,
@@ -3850,7 +3853,8 @@ begin
                                  Condition := CF_condition);
   attr_ROAbstract := new CGAttribute("ROAbstract".AsTypeReference,
                                      Condition := CF_condition);
-
+  attr_ROServiceRequiresLogin := new CGAttribute("ROServiceRequiresLogin".AsTypeReference,
+                                     Condition := CF_condition);
 end;
 
 method DelphiRodlCodeGen.AddCGAttribute(aType: CGEntity; anAttribute:CGAttribute);
