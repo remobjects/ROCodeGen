@@ -490,14 +490,14 @@ type
       dataContext.Members.Add(constructorDefinition);
 
       for each table in items do begin
-        var field := new CGFieldDefinition(NetTableDefinitionsCodeGen.CODE_FIELD_PREFIX + table.Name);
-        field.Type := new CGNamedTypeReference("System.Collections.Generic.IEnumerable",
+        var lField := new CGFieldDefinition(NetTableDefinitionsCodeGen.CODE_FIELD_PREFIX + table.Name);
+        lField.Type := new CGNamedTypeReference("System.Collections.Generic.IEnumerable",
                         GenericArguments := new List<CGTypeReference>([ new CGNamedTypeReference(table.Name) ]));
-        dataContext.Members.Add(field);
+        dataContext.Members.Add(lField);
 
-        var tableFieldReference := new CGFieldAccessExpression(new CGSelfExpression(), field.Name);
+        var tableFieldReference := new CGFieldAccessExpression(new CGSelfExpression(), lField.Name);
 
-        var tableProperty := new CGPropertyDefinition(table.Name, field.Type, new List<CGStatement>(), new List<CGStatement>());
+        var tableProperty := new CGPropertyDefinition(table.Name, lField.Type, new List<CGStatement>(), new List<CGStatement>());
         tableProperty.Visibility := CGMemberVisibilityKind.Public;
         tableProperty.GetStatements.Add(new CGReturnStatement(tableFieldReference));
         tableProperty.SetStatements.Add(new CGAssignmentStatement(tableFieldReference, new CGPropertyValueExpression()));
