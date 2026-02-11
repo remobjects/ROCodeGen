@@ -143,17 +143,17 @@ begin
 
   var lAncestorEntity := aEntity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
-    for field: RodlField in lAncestorEntity.Items do
-      lSortedFields.Add(field.Name.ToLowerInvariant, field);
+    for f: RodlField in lAncestorEntity.Items do
+      lSortedFields.Add(f.Name.ToLowerInvariant, f);
 
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
-  for field: RodlField in aEntity.Items do
-    if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
-      lSortedFields.Add(field.Name.ToLowerInvariant, field);
+  for f: RodlField in aEntity.Items do
+    if not lSortedFields.ContainsKey(f.Name.ToLowerInvariant) then begin
+      lSortedFields.Add(f.Name.ToLowerInvariant, f);
       lIfRecordStrictOrder_True.Statements.Add(
-        iif(useDefaultValues, GetWriterStatement_DefaultValues(aLibrary, field),GetWriterStatement(aLibrary, field))
+        iif(useDefaultValues, GetWriterStatement_DefaultValues(aLibrary, f),GetWriterStatement(aLibrary, f))
       );
     end;
 
@@ -901,16 +901,16 @@ begin
 
   var lAncestorEntity := aEntity.AncestorEntity as RodlStructEntity;
   while assigned(lAncestorEntity) do begin
-    for field: RodlField in lAncestorEntity.Items do
-      lSortedFields.Add(field.Name.ToLowerInvariant, field);
+    for f: RodlField in lAncestorEntity.Items do
+      lSortedFields.Add(f.Name.ToLowerInvariant, f);
 
     lAncestorEntity := lAncestorEntity.AncestorEntity as RodlStructEntity;
   end;
 
-  for field: RodlField in aEntity.Items do
-    if not lSortedFields.ContainsKey(field.Name.ToLowerInvariant) then begin
-      lSortedFields.Add(field.Name.ToLowerInvariant, field);
-      lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(aLibrary, field));
+  for f: RodlField in aEntity.Items do
+    if not lSortedFields.ContainsKey(f.Name.ToLowerInvariant) then begin
+      lSortedFields.Add(f.Name.ToLowerInvariant, f);
+      lIfRecordStrictOrder_True.Statements.Add(GetReaderStatement(aLibrary, f));
     end;
 
   for lvalue: String in lSortedFields.Keys.ToList.Sort_OrdinalIgnoreCase(b->b) do
