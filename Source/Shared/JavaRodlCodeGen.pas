@@ -811,14 +811,12 @@ begin
     for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
       lIEventAdapter.Members.Add(new CGMethodDefinition(SafeIdentifier(lop.Name),
                                                        Parameters := [new CGParameterDefinition("aEvent", SafeIdentifier(lop.Name+"Event").AsTypeReference)].ToList,
-                                                       Visibility := CGMemberVisibilityKind.Public,
-                                                       Virtuality := CGMemberVirtualityKind.Override
+                                                       Visibility := CGMemberVisibilityKind.Public
                                                        ));
     end;
     lIEventAdapter.Members.Add(new CGMethodDefinition("OnException",
                                                       Parameters := [new CGParameterDefinition("aEvent", GenerateROSDKType("OnExceptionEvent").AsTypeReference)].ToList,
-                                                      Visibility := CGMemberVisibilityKind.Public,
-                                                      Virtuality := CGMemberVirtualityKind.Override
+                                                      Visibility := CGMemberVisibilityKind.Public
                                                       ));
   end;
 end;
