@@ -14,6 +14,7 @@ type
       EntityID := Guid.TryParse(node.Attribute["UID"]:Value);
       FromUsedRodlId := Guid.TryParse(node.Attribute["FromUsedRodlUID"]:Value);
       &Abstract := node.Attribute["Abstract"]:Value = "1";
+      &Obsolete := node.Attribute["Obsolete"]:Value = "1";
       DontCodegen :=  node.Attribute["DontCodeGen"]:Value = "1";
 
       var lDoc := node.FirstElementWithName("Documentation");

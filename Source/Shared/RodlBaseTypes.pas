@@ -75,6 +75,7 @@ type
     property OriginalName: String read getOriginalName write fOriginalName;
     property Documentation: String;
     property &Abstract: Boolean;
+    property Obsolete: Boolean;
     property CustomAttributes: Dictionary<String,String> read fCustomAttributes;
     property CustomAttributes_lower: Dictionary<String,String> read fCustomAttributes_lower;
     //property PluginData :XmlDocument;  //????

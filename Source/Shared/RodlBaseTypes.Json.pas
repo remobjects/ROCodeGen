@@ -65,6 +65,7 @@ type
       EntityID := Guid.TryParse(node["ID"]:StringValue);
       FromUsedRodlId := Guid.TryParse(node["FromUsedRodlID"]:StringValue);
       &Abstract := node["Abstract"]:BooleanValue;
+      Obsolete := node["Obsolete"]:BooleanValue;
       DontCodegen :=  node["DontCodeGen"]:BooleanValue;
       Documentation := node["Documentation"]:StringValue;
 
