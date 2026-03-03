@@ -66,6 +66,7 @@ type
       FromUsedRodlId := Guid.TryParse(node["FromUsedRodlID"]:StringValue);
       &Abstract := node["Abstract"]:BooleanValue;
       Obsolete := node["Obsolete"]:BooleanValue;
+      ObsoleteMessage := if Obsolete then node["ObsoleteMessage"]:StringValue;
       DontCodegen :=  node["DontCodeGen"]:BooleanValue;
       Documentation := node["Documentation"]:StringValue;
 

@@ -76,6 +76,7 @@ type
     property Documentation: String;
     property &Abstract: Boolean;
     property Obsolete: Boolean;
+    property ObsoleteMessage: String;
     property CustomAttributes: Dictionary<String,String> read fCustomAttributes;
     property CustomAttributes_lower: Dictionary<String,String> read fCustomAttributes_lower;
     //property PluginData :XmlDocument;  //????
