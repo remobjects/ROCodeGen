@@ -1453,7 +1453,7 @@ begin
   if aReturnError then begin
     var lTry := new CGTryFinallyCatchStatement;
     lTry.Statements := result;
-    var lCatchException := new CGCatchBlockStatement("___exception", "Exception".AsTypeReference);
+    var lCatchException := new CGCatchBlockStatement("___exception", "NSException".AsTypeReference);
     lCatchException.Statements.Add(new CGAssignmentStatement(new CGLocalVariableAccessExpression("___error"),
                                                              new CGNewInstanceExpression("ROError".AsTypeReference,
                                                                                          [new CGLocalVariableAccessExpression(lCatchException.Name).AsCallParameter],
