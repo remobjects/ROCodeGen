@@ -1454,7 +1454,10 @@ begin
     var lTry := new CGTryFinallyCatchStatement;
     lTry.Statements := result;
     var lCatchException := new CGCatchBlockStatement("___exception", "NSException".AsTypeReference);
-    lCatchException.Statements.Add(new CGAssignmentStatement(new CGLocalVariableAccessExpression("___error"),
+    var l_error: CGExpression := new CGLocalVariableAccessExpression("___error");
+    if IsObjC then
+      l_error := new CGPointerDereferenceExpression(l_error);
+    lCatchException.Statements.Add(new CGAssignmentStatement(l_error,
                                                              new CGNewInstanceExpression("ROError".AsTypeReference,
                                                                                          [new CGLocalVariableAccessExpression(lCatchException.Name).AsCallParameter],
                                                                                          ConstructorName := "withException")));
