@@ -1185,12 +1185,17 @@ begin
                                       new CGMethodAccessExpression(nil, aEntity.Name)
                                     else
                                       new CGPropertyAccessExpression(nil, aEntity.Name);
+
+  var lWriteParameter := lIdentifier.AsCallParameter;
+  if isArray(aLibrary, aEntity.DataType) and IsAppleSwift then
+    lWriteParameter := new CGMethodCallExpression(nil, "eraseMutableArray", lIdentifier.AsCallParameter).AsCallParameter;
+
   if aEntity is RodlParameter then
     lIdentifier := ApplyParamDirectionExpression(lIdentifier,RodlParameter(aEntity).ParamFlag, aInOnly);
   if lIsComplex or lIsSimple then begin
     exit new CGMethodCallExpression(aVariableName,
                                     "write" +  lMethodName,
-                                    [lIdentifier.AsCallParameter,
+                                    [lWriteParameter,
                                      new CGCallParameter(CleanedWsdlName(aEntity.Name).AsLiteralExpression, "withName")].ToList);
   end
   else if lIsEnum then begin
@@ -1673,6 +1678,23 @@ begin
                                           Visibility := CGMemberVisibilityKind.Public,
                                           Initializer := lName.AsLiteralExpression).AsGlobal);
   end;
+
+  if IsAppleSwift then begin
+    aFile.RawHeader := new;
+    aFile.RawHeader.Add(##""
+      private func eraseMutableArray<T: AnyObject>(_ value: ROMutableArray<T>?) -> ROMutableArray<AnyObject>? {
+          guard let value else { return nil }
+          return unsafeDowncast(value, to: ROMutableArray<AnyObject>.self)
+      }
+
+      private func typedMutableArray<TArray>(_ value: ROMutableArray<AnyObject>?, as type: TArray.Type) -> TArray? {
+          guard let value else { return nil }
+          return unsafeDowncast(value, to: type)
+      }
+      "");
+  end;
+
+
 end;
 
 end.
