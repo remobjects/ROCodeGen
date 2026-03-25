@@ -1436,11 +1436,15 @@ begin
                                          GetReaderExpression(aLibrary, aEntity.Result, localvar___localMessage.AsExpression)));
 
   var (nil, lOutParameters) := GetInOutParameters(aEntity);
-  for p in lOutParameters do
-    result.Add(new CGAssignmentStatement(
-                                    ApplyParamDirectionExpression(new CGParameterAccessExpression(p.Name),p.ParamFlag),
-                                    GetReaderExpression(aLibrary,p,localvar___localMessage.AsExpression)
-                                    ));
+  for p in lOutParameters do begin
+    if aIsBlock then
+      result.Add(new CGVariableDeclarationStatement(p.Name,
+                                                    ResolveDataTypeToTypeRef(aLibrary, p.DataType),
+                                                    GetReaderExpression(aLibrary,p,localvar___localMessage.AsExpression) ))
+    else
+      result.Add(new CGAssignmentStatement(ApplyParamDirectionExpression(new CGParameterAccessExpression(p.Name),p.ParamFlag),
+                                           GetReaderExpression(aLibrary,p,localvar___localMessage.AsExpression)));
+  end;
 
   var lSelfMessage := new CGPropertyAccessExpression(CGSelfExpression.Self, "___message");
   result.Add(new CGMethodCallExpression(nil, "objc_sync_enter", [lSelfMessage.AsCallParameter].ToList));
