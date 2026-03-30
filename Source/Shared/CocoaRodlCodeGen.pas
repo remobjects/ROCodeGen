@@ -1237,13 +1237,22 @@ begin
   if isClassType(aLibrary, aEntity.DataType) then begin
     // %FIELD_NAME% := aMessage.read%FIELD_READER_WRITER%WithName("%FIELD_NAME_UNSAFE%") asClass(%FIELD_TYPE_NAME%.class) as %FIELD_TYPE_NAME%;
     var lType := ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);//.NotNullabeCopy;
-    if lIsComplex or lIsArray then begin
-      //var l_type1:= ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType).NotNullable;
+    if lIsArray then begin
       var lArgument1 := new CGCallParameter(new CGTypeOfExpression(lType.AsExpression), if IsSwift then "as" else "asClass");
       var l_methodCall := new CGMethodCallExpression(aVariableName,
                                      if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
                                      [lNameString, lArgument1].ToList);
-      exit new CGTypeCastExpression(l_methodCall, lType, ThrowsException := true)
+      if IsAppleSwift then
+        exit new CGMethodCallExpression(nil, "typedMutableArray", [l_methodCall.AsCallParameter, lArgument1])
+      else
+        exit new CGTypeCastExpression(l_methodCall, lType, ThrowsException := true);
+    end
+    else if lIsComplex then begin
+      var lArgument1 := new CGCallParameter(new CGTypeOfExpression(lType.AsExpression), if IsSwift then "as" else "asClass");
+      var l_methodCall := new CGMethodCallExpression(aVariableName,
+                                     if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
+                                     [lNameString, lArgument1].ToList);
+      exit new CGTypeCastExpression(l_methodCall, lType, ThrowsException := true);
     end
     else begin
       var l_methodCall := new CGMethodCallExpression(aVariableName,
