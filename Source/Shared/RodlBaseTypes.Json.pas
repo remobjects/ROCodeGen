@@ -8,9 +8,14 @@ type
   protected
     const def_DontCodegen: Boolean = false;
     const def_Abstract: Boolean = false;
+    const def_Obsolete: Boolean = false;
 
     method SaveAttributesToJson(node: JsonObject);
     begin
+      if Obsolete ≠ def_Obsolete then begin
+        SaveBooleanToJson(node, "Obsolete", Obsolete);
+        SaveStringToJson(node, "ObsoleteMessage", ObsoleteMessage);
+      end;
       SaveStringToJson(node, "Documentation", Documentation);
 
       if CustomAttributes.Count > 0  then begin

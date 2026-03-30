@@ -71,6 +71,20 @@ type
     method DuplicateType(aTypeRef: CGTypeReference; isClass: Boolean): CGTypeReference;
     method CreateCodeFirstAttributes;
     method GenerateDestroyExpression(aExpr: CGExpression):CGStatement;
+    method Type_SetObsoleteAttr(aType: CGTypeDefinition; aEntity: RodlEntity);
+    begin
+      if aEntity.Obsolete then begin
+        aType.Deprecated := true;
+        aType.DeprecationMessage := aEntity.ObsoleteMessage;
+      end;
+    end;
+    method Member_SetObsoleteAttr(aMember: CGMemberDefinition; aEntity: RodlEntity);
+    begin
+      if aEntity.Obsolete then begin
+        aMember.Deprecated := true;
+        aMember.DeprecationMessage := aEntity.ObsoleteMessage;
+      end;
+    end;
     {$ENDREGION}
 
     method Add_RemObjects_Inc(aFile: CGCodeUnit; aLibrary: RodlLibrary); virtual;
@@ -234,7 +248,7 @@ type
     property GenerateServerSideAttributes: Boolean := false;
 
     method GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
-    method GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
+    method GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): nullable CGCodeUnit; override;
     method GenerateImplementationCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit; override;
     method GenerateImplementationFiles(aFile: CGCodeUnit; aLibrary: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;override;
 
@@ -305,6 +319,7 @@ begin
                             Visibility := CGTypeVisibilityKind.Public
                             );
   aFile.Types.Add(lenum);
+  Type_SetObsoleteAttr(lenum, aEntity);
   lenum.XmlDocumentation := GenerateDocumentation(aEntity);
   AddCGAttribute(lenum, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(aFile,"docs_"+aEntity.Name, lenum, aEntity.Documentation);
@@ -323,6 +338,8 @@ begin
                                              Condition := CF_condition));
     end;
     lenum.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, rodl_member);
   end;
 
 
@@ -361,6 +378,7 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public
                                          );
   aFile.Types.Add(ltype);
+  Type_SetObsoleteAttr(ltype, aEntity);
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(aFile,"docs_"+aEntity.Name,ltype, aEntity.Documentation);
@@ -530,12 +548,9 @@ begin
                                                  new CGTypeCastExpression(aSourceExpr, l_FullEntityTypeRef)));
     lct.Statements.Add(new CGEmptyStatement);
     for lprop :RodlTypedEntity in aEntity.Items do begin
-      var propname := lprop.Name;
       var fpropname := $"f{lprop.Name}";
       var l_Self_fpropname_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, fpropname, CallSiteKind := CGCallSiteKind.Reference);
-      var l_Self_propname_Expr := new CGPropertyAccessExpression(CGSelfExpression.Self, propname, CallSiteKind := CGCallSiteKind.Reference);
       var l_Source_fpropname_Expr := new CGFieldAccessExpression(lSourceExpr, fpropname, CallSiteKind := CGCallSiteKind.Reference);
-      var l_Source_propname_Expr := new CGPropertyAccessExpression(lSourceExpr, propname, CallSiteKind := CGCallSiteKind.Reference);
       if isComplex(aLibrary,lprop.DataType) then begin
         var ltemp := lct;
 
@@ -547,7 +562,7 @@ begin
         var lclone_method := new CGAssignmentStatement(l_Self_fpropname_Expr,
                                                        new CGTypeCastExpression(new CGMethodCallExpression(l_Source_fpropname_Expr, "Clone", CallSiteKind := CGCallSiteKind.Reference),
                                                                                 ResolveDataTypeToTypeRefFullQualified(aLibrary,lprop.DataType,Intf_name)));
-        var lassign_method := new CGMethodCallExpression(l_Self_propname_Expr,
+        var lassign_method := new CGMethodCallExpression(l_Self_fpropname_Expr,
                                                          "Assign",
                                                          [l_Source_fpropname_Expr.AsCallParameter].ToList,
                                                          CallSiteKind := CGCallSiteKind.Reference);
@@ -563,7 +578,7 @@ begin
       end
       else begin
         lNeedInitSimpleTypeWithDefaultValues := lNeedInitSimpleTypeWithDefaultValues or (lprop.CustomAttributes_lower.ContainsKey("default"));
-        lct.Statements.Add(new CGAssignmentStatement(l_Self_propname_Expr,l_Source_propname_Expr));
+        lct.Statements.Add(new CGAssignmentStatement(l_Self_fpropname_Expr, l_Source_fpropname_Expr));
       end;
     end;
     {$ENDREGION}
@@ -648,6 +663,9 @@ begin
       if IsUTF8String(rodl_member.DataType) then AddCGAttribute(cg4_member,attr_ROSerializeAsUTF8String);
     end;
     ltype.Members.Add(cg4_member);
+    // if type is obsolete don't mark members
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, rodl_member);
   end;
   {$ENDREGION}
 
@@ -846,6 +864,7 @@ begin
                                        Visibility := CGMemberVisibilityKind.Public));
     end;
     aFile.Types.Add(ar);
+    Type_SetObsoleteAttr(ar, aEntity);
   end;
   if GenericArrayMode = State.On then exit;
 
@@ -871,6 +890,7 @@ begin
   end;
 
   aFile.Types.Add(ltype);
+  Type_SetObsoleteAttr(ltype, aEntity);
 
   // private fCount: Integer
   ltype.Members.Add(new CGFieldDefinition("fCount",
@@ -1040,6 +1060,7 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public
                                          );
   aFile.Types.Add(ltype);
+  Type_SetObsoleteAttr(ltype, aEntity);
   ltype.XmlDocumentation := GenerateDocumentation(aEntity);
   AddCGAttribute(ltype, attr_ROLibraryAttributes);
   GenerateCodeFirstDocumentation(aFile,"docs_"+aEntity.Name,ltype, aEntity.Documentation);
@@ -1162,16 +1183,15 @@ begin
                                                  new CGTypeCastExpression(param_Source.AsExpression, exception_typeref)));
     for lprop :RodlTypedEntity in aEntity.Items do begin
       var l_prop := lprop.Name;
-
-      var l_lSource_prop_Expr := new CGPropertyAccessExpression(l_lSource, l_prop, CallSiteKind := CGCallSiteKind.Reference);
-      var l_Self_prop_Expr := new CGPropertyAccessExpression(CGSelfExpression.Self, l_prop, CallSiteKind := CGCallSiteKind.Reference);
+      var l_fprop := $"f{l_prop}";
+      var l_Self_fprop_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, l_fprop, CallSiteKind := CGCallSiteKind.Reference);
+      var l_lSource_fprop_Expr := new CGFieldAccessExpression(l_lSource, l_fprop, CallSiteKind := CGCallSiteKind.Reference);
       if isComplex(aLibrary,lprop.DataType) then begin
 
-        var l_fprop := $"f{l_prop}";
 
-        var l_Self_fprop_Expr := new CGFieldAccessExpression(CGSelfExpression.Self, l_fprop, CallSiteKind := CGCallSiteKind.Reference);
-        var l_lSource_fprop_Expr := new CGFieldAccessExpression(l_lSource, l_fprop, CallSiteKind := CGCallSiteKind.Reference);
-        var lassign_method := new CGMethodCallExpression(l_Self_prop_Expr,
+
+
+        var lassign_method := new CGMethodCallExpression(l_Self_fprop_Expr,
                                                          "Assign",
                                                          [l_lSource_fprop_Expr.AsCallParameter].ToList,
                                                          CallSiteKind := CGCallSiteKind.Reference);
@@ -1182,8 +1202,8 @@ begin
         var ifs := new CGIfThenElseStatement(new CGAssignedExpression(l_lSource_fprop_Expr),
                                              new CGIfThenElseStatement(
                                                             new CGAssignedExpression(l_Self_fprop_Expr),
-                                                            lassign_method,
-                                                            lclone_method),
+                                                              lassign_method,
+                                                              lclone_method),
                                              new CGBeginEndBlockStatement([
                                                                             GenerateDestroyExpression(l_Self_fprop_Expr),
                                                                             new CGAssignmentStatement(l_Self_fprop_Expr, CGNilExpression.Nil)]));
@@ -1193,7 +1213,7 @@ begin
           lct.Statements.Add(ifs);
       end
       else begin
-        lct.Statements.Add(new CGAssignmentStatement(l_Self_prop_Expr, l_lSource_prop_Expr));
+        lct.Statements.Add(new CGAssignmentStatement(l_Self_fprop_Expr, l_lSource_fprop_Expr));
       end;
     end;
     {$ENDREGION}
@@ -1288,6 +1308,8 @@ begin
     end;
 
     ltype.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, rodl_member);
   end;
   {$ENDREGION}
   {$REGION initialization/finalization}
@@ -1358,7 +1380,7 @@ begin
 
   ltype.InterfaceGuid := aEntity.DefaultInterface.GetOrGenerateEntityID;
   aFile.Types.Add(ltype);
-
+  Type_SetObsoleteAttr(ltype, aEntity);
   for rodl_member in aEntity.DefaultInterface.Items do begin
     {$REGION eventsink methods}
     var cg4_member := new CGMethodDefinition(rodl_member.Name,
@@ -1388,6 +1410,8 @@ begin
       cg4_member.ReturnType := ResolveDataTypeToTypeRefFullQualified(aLibrary,rodl_member.Result.DataType, Intf_name);
     end;
     ltype.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, rodl_member);
     {$ENDREGION}
   end;
   {$ENDREGION}
@@ -1402,6 +1426,7 @@ begin
   var ltype1 := new CGClassTypeDefinition(l_invoker, lancestor,
                                           Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(ltype1);
+  Type_SetObsoleteAttr(ltype1, aEntity);
   var IUnknown_typeref := ResolveInterfaceTypeRef(nil, "IInterface","");
 
   var param___EventReceiver := new CGParameterDefinition("__EventReceiver", "TROEventReceiver".AsTypeReference);
@@ -1483,6 +1508,8 @@ begin
     mem.Statements.Add(new CGTryFinallyCatchStatement(ltry_10, FinallyStatements := lfin_10));
 
     ltype1.Members.Add(mem);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(mem, lmem);
     {$ENDREGION}
   end;
 
@@ -1828,7 +1855,10 @@ end;
 method DelphiRodlCodeGen.Intf_GenerateRead(aFile: CGCodeUnit; aLibrary: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>;aSerializeInitializedStructValues:Boolean; aSerializer: CGExpression);
 begin
   for lmem in ItemList do begin
-    var local_name := new CGPropertyAccessExpression(CGSelfExpression.Self, lmem.Name, CallSiteKind := CGCallSiteKind.Reference);
+    var local_name := new CGPropertyAccessExpression(
+                                  CGSelfExpression.Self,
+                                  if lmem.IsFromUsedRodl then lmem.Name else $"f{lmem.Name}",
+                                  CallSiteKind := CGCallSiteKind.Reference);
     var local_int_name := new CGPropertyAccessExpression(CGSelfExpression.Self, $"int_{lmem.Name}", CallSiteKind := CGCallSiteKind.Reference);
     var local_l_name := new CGLocalVariableAccessExpression($"l_{lmem.Name}");
 
@@ -1850,7 +1880,9 @@ end;
 method DelphiRodlCodeGen.Intf_GenerateWrite(aFile: CGCodeUnit; aLibrary: RodlLibrary; ItemList: List<RodlField>; aStatements: List<CGStatement>; aSerializeInitializedStructValues: Boolean; aSerializer: CGExpression);
 begin
   for lmem in ItemList do begin
-    var lt1 := new CGPropertyAccessExpression(CGSelfExpression.Self, lmem.Name,CallSiteKind := CGCallSiteKind.Reference);
+    var lt1 := new CGPropertyAccessExpression(CGSelfExpression.Self,
+                                              if lmem.IsFromUsedRodl then lmem.Name else $"f{lmem.Name}",
+                                              CallSiteKind := CGCallSiteKind.Reference);
     var lt2 := new CGPropertyAccessExpression(CGSelfExpression.Self, "int_"+lmem.Name,CallSiteKind := CGCallSiteKind.Reference);
     var lt3 := new CGLocalVariableAccessExpression($"l_{lmem.Name}");
     if isComplex(aLibrary, lmem.DataType) and not aSerializeInitializedStructValues then
@@ -3458,6 +3490,10 @@ begin
   targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace, iif(CanUseNameSpace, aLibrary.Namespace,aLibrary.Name), aLibrary.Name, "Unknown");
   var lUnit := new CGCodeUnit();
   lUnit.Namespace := new CGNamespaceReference(targetNamespace);
+  if aLibrary.Obsolete then begin
+    lUnit.Deprecated := true;
+    lUnit.DeprecationMessage := aLibrary.ObsoleteMessage;
+  end;
 
   if String.IsNullOrEmpty(aUnitName) then
     lUnit.FileName := coalesce(GetIncludesNamespace(aLibrary), aLibrary.Name, "Unknown") + "_Intf"
@@ -3546,7 +3582,7 @@ begin
   exit lUnit;
 end;
 
-method DelphiRodlCodeGen.GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String): CGCodeUnit;
+method DelphiRodlCodeGen.GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String): nullable CGCodeUnit;
 begin
   CreateCodeFirstAttributes;
   if CodeFirstMode = State.On then exit nil;
@@ -3969,6 +4005,15 @@ end;
 method DelphiRodlCodeGen.GenerateCodeFirstCustomAttributes(aType: CGEntity; aEntity:RodlEntity; aExcludeServiceGroups: Boolean := true);
 begin
   if IsCodeFirstCompatible then begin
+    if aEntity.Obsolete then begin
+      var attr := new CGAttribute("ROObsolete".AsTypeReference);
+      if not String.IsNullOrEmpty(aEntity.ObsoleteMessage) then begin
+        attr.Parameters := new List<CGCallParameter>;
+        attr.Parameters.Add(aEntity.ObsoleteMessage.AsLiteralExpression.AsCallParameter);
+      end;
+      if CodeFirstMode = State.Auto then attr.Condition := CF_condition;
+      AddCGAttribute(aType, attr);
+    end;
     for k in aEntity.CustomAttributes.Keys do begin
 
       if IsHttpAPIAttribute(k) then continue;
@@ -4731,6 +4776,7 @@ begin
                                       Visibility := CGTypeVisibilityKind.Public);  //TROProxy or T%service%Proxy
   ltype.ImplementedInterfaces.Add(ResolveDataTypeToTypeRefFullQualified(aLibrary, $"I{aEntity.Name}", Intf_name, aEntity.Name));  //I%service%
   aFile.Types.Add(ltype);
+  Type_SetObsoleteAttr(ltype, aEntity);
   {$REGION protected function __GetInterfaceName:string; override;}
   lmember := new CGMethodDefinition("__GetInterfaceName",
                                   [aEntity.Name.AsLiteralExpression.AsReturnStatement],
@@ -4904,7 +4950,7 @@ begin
                                       new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
                                       Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(ltype);
-
+  Type_SetObsoleteAttr(ltype, aEntity);
   {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_AsyncEx; overload;}
   lmember := new CGMethodDefinition("Create",
                                   &Static := true,
@@ -4993,6 +5039,7 @@ begin
                                          [ResolveDataTypeToTypeRefFullQualified(aLibrary, $"I{aEntity.Name}_AsyncEx",Intf_name, aEntity.Name)].ToList,
                                          Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(ltype);
+  Type_SetObsoleteAttr(ltype, aEntity);
   {$REGION protected function __GetInterfaceName:string; override;}
   var lmember := new CGMethodDefinition("__GetInterfaceName",
                                   [aEntity.Name.AsLiteralExpression.AsReturnStatement],
@@ -5033,6 +5080,7 @@ begin
                                           [ResolveDataTypeToTypeRefFullQualified(aLibrary, $"I{aEntity.Name}_Async",Intf_name, aEntity.Name)].ToList,
                                           Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(ltype);
+  Type_SetObsoleteAttr(ltype, aEntity);
   {$REGION protected function __GetInterfaceName:string; override;}
   var lmember1 := new CGMethodDefinition("__GetInterfaceName",
                                   [aEntity.Name.AsLiteralExpression.AsReturnStatement],
@@ -5083,7 +5131,7 @@ begin
                                           new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
                                           Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(ltype);
-
+  Type_SetObsoleteAttr(ltype, aEntity);
   {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%_Async; overload;}
   lmember := new CGMethodDefinition("Create",
                                   &Static := true,
@@ -5170,7 +5218,7 @@ begin
                                           new CGNamedTypeReference("TObject") &namespace(new CGNamespaceReference("System")),
                                           Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(ltype);
-
+  Type_SetObsoleteAttr(ltype, aEntity);
 
 
   {$REGION public class function Create(const aMessage: IROMessage; aTransportChannel: IROTransportChannel): I%service%; overload;}
@@ -5263,18 +5311,29 @@ begin
                                              Visibility := CGTypeVisibilityKind.Public);
   if not PureDelphi then ltype.InterfaceGuid := Guid.NewGuid;
   aFile.Types.Add(ltype);
+  Type_SetObsoleteAttr(ltype, aEntity);
 
   {$REGION Invoke_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do begin
-    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, false, true));
-    ltype.Members.Add(Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, true, true));
+    var cg4_member := Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, false, true);
+    ltype.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, lmem);
+    cg4_member := Intf_GenerateAsyncExBegin(aLibrary, aEntity, lmem, false, true, true);
+    ltype.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, lmem);
   end;
 
   {$ENDREGION}
 
   {$REGION Retrieve_%service_method%}
-  for lmem in aEntity.DefaultInterface.Items do
-    ltype.Members.Add(Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, false, true));
+  for lmem in aEntity.DefaultInterface.Items do begin
+    var cg4_member := Intf_GenerateAsyncExEnd(aLibrary, aEntity, lmem, false, true);
+    ltype.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, lmem);
+  end;
   {$ENDREGION}
 end;
 
@@ -5292,16 +5351,24 @@ begin
   if not PureDelphi then ltype.InterfaceGuid := Guid.NewGuid;
 
   aFile.Types.Add(ltype);
-
+  Type_SetObsoleteAttr(ltype, aEntity);
   {$REGION Invoke_%service_method%}
-  for lmem in aEntity.DefaultInterface.Items do
-    ltype.Members.Add(Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, false, true));
+  for lmem in aEntity.DefaultInterface.Items do begin
+    var cg4_member := Intf_GenerateAsyncInvoke(aLibrary, aEntity, lmem, false, true);
+    ltype.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, lmem);
+  end;
   {$ENDREGION}
 
   {$REGION Retrieve_%service_method%}
   for lmem in aEntity.DefaultInterface.Items do
-    if NeedsAsyncRetrieveOperationDefinition(lmem) then
-      ltype.Members.Add(Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, false, true));
+    if NeedsAsyncRetrieveOperationDefinition(lmem) then begin
+      var cg4_member := Intf_GenerateAsyncRetrieve(aLibrary, aEntity, lmem, false, true);
+      ltype.Members.Add(cg4_member);
+      if not aEntity.Obsolete then
+        Member_SetObsoleteAttr(cg4_member, lmem);
+    end;
   {$ENDREGION}
 end;
 
@@ -5322,7 +5389,7 @@ begin
   GenerateCodeFirstCustomAttributes(ltype, aEntity);
   ltype.InterfaceGuid := aEntity.DefaultInterface.GetOrGenerateEntityID;
   aFile.Types.Add(ltype);
-
+  Type_SetObsoleteAttr(ltype, aEntity);
   for rodl_member in aEntity.DefaultInterface.Items do begin
     {$REGION service methods}
     var cg4_member := new CGMethodDefinition(rodl_member.Name,
@@ -5351,6 +5418,8 @@ begin
     end;
     if assigned(rodl_member.Result) then cg4_member.ReturnType := ResolveDataTypeToTypeRefFullQualified(aLibrary,rodl_member.Result.DataType, Intf_name);
     ltype.Members.Add(cg4_member);
+    if not aEntity.Obsolete then
+      Member_SetObsoleteAttr(cg4_member, rodl_member);
     {$ENDREGION}
   end;
   {$ENDREGION}

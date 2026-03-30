@@ -24,6 +24,19 @@ type
     method Intf_GenerateCoService(aUnit: CGCodeUnit; aName: String; aIntfName: String; aProxyName: String);
     method GenerateAttributes(aLibrary: RodlLibrary; aService: RodlService; aOperation: RodlOperation; out aNames: List<CGExpression>; out aValues: List<CGExpression>);
     method GenerateObfuscationAttribute: CGAttribute;
+    method GenerateObsoleteAttribute(aCGEntity: CGEntity; aRODLEntity: RodlEntity);
+    begin
+      if aRODLEntity.Obsolete then begin
+        var attr := new CGAttribute("ObsoleteAttribute".AsTypeReference_NotNullable);
+        if not String.IsNullOrEmpty(aRODLEntity.ObsoleteMessage) then
+          attr.Parameters := [aRODLEntity.ObsoleteMessage.AsLiteralExpression.AsCallParameter].ToList();
+
+        if aCGEntity is CGTypeDefinition then
+          CGTypeDefinition(aCGEntity).Attributes.Add(attr)
+        else if aCGEntity is CGMemberDefinition then
+          CGMemberDefinition(aCGEntity).Attributes.Add(attr)
+      end;
+    end;
   protected
     method ResolveDataTypeToTypeRef(aLibrary: RodlLibrary; aDataType: String; aOrigType: String := nil): CGTypeReference;
     method AddDefaultClientNamespaces(aUnit: CGCodeUnit);
@@ -46,7 +59,7 @@ type
     property AsyncSupport: Boolean := true;
     method GetGlobalName(aLibrary: RodlLibrary): String; override;
     method GenerateInterfaceCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
-    method GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit; override;
+    method GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): nullable CGCodeUnit; override;
     method GenerateLegacyEventsFile(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): not nullable String;
     method GenerateImplementationCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aServiceName: String): CGCodeUnit; override;
     method GenerateImplementationFiles(aFile: CGCodeUnit; aLibrary: RodlLibrary; aServiceName: String): not nullable Dictionary<String,String>;override;
@@ -188,7 +201,7 @@ begin
   exit lUnit;
 end;
 
-method EchoesRodlCodeGen.GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): CGCodeUnit;
+method EchoesRodlCodeGen.GenerateInvokerCodeUnit(aLibrary: RodlLibrary; aTargetNamespace: String; aUnitName: String := nil): nullable CGCodeUnit;
 begin
   targetNamespace := coalesce(GetIncludesNamespace(aLibrary), aTargetNamespace,  aLibrary.Namespace, aLibrary.Name, "Unknown");
 
@@ -265,8 +278,10 @@ begin
                                                 [rodl_member.OriginalName.AsLiteralExpression.AsCallParameter]));
     end;
     cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
+    GenerateObsoleteAttribute(cg4_member, rodl_member);
     ltype.Members.Add(cg4_member);
   end;
+  GenerateObsoleteAttribute(ltype, aEntity);
   aFile.Types.Add(ltype);
 end;
 
@@ -286,69 +301,80 @@ begin
   ltype.Attributes.Add(GenerateObfuscationAttribute);
 
   {$REGION private ___%fldname%: %fldtype%}
-  for laEntityItem: RodlTypedEntity in aEntity.Items do begin
-    var l_fld := new CGFieldDefinition($"___{SafeIdentifier(laEntityItem.Name)}" ,
-                                        ResolveDataTypeToTypeRef(aLibrary, laEntityItem.DataType),
+  for rodl_member: RodlTypedEntity in aEntity.Items do begin
+    var l_type := ResolveDataTypeToTypeRef(aLibrary, rodl_member.DataType);
+    var cg4_member := new CGFieldDefinition($"___{SafeIdentifier(rodl_member.Name)}" ,
+                                        l_type,
                                         Visibility := CGMemberVisibilityKind.Private);
     {$REGION default value}
-    if laEntityItem.CustomAttributes_lower.ContainsKey("default") then begin
-      if CodeGenTypes.ContainsKey(laEntityItem.DataType.ToLowerInvariant) then begin
-        var l_val := laEntityItem.CustomAttributes_lower.Item["default"];
-        case laEntityItem.DataType.ToLowerInvariant of
-          "integer":    l_fld.Initializer := Convert.ToInt32(l_val).AsLiteralExpression;
+    if rodl_member.CustomAttributes_lower.ContainsKey("default") then begin
+      if CodeGenTypes.ContainsKey(rodl_member.DataType.ToLowerInvariant) then begin
+        var l_val := rodl_member.CustomAttributes_lower.Item["default"];
+        case rodl_member.DataType.ToLowerInvariant of
+          "integer":    cg4_member.Initializer := Convert.ToInt32(l_val).AsLiteralExpression;
           //"datetime"
-          "double":     l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
-          "currency":   l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
-          "widestring": l_fld.Initializer := l_val.AsLiteralExpression;
-          "ansistring": l_fld.Initializer := l_val.AsLiteralExpression;
-          "int64":      l_fld.Initializer := Convert.ToInt64(l_val).AsLiteralExpression;
-          "boolean":    l_fld.Initializer := Convert.ToBoolean(l_val).AsLiteralExpression;
+          "double":     cg4_member.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
+          "currency":   cg4_member.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
+          "widestring": cg4_member.Initializer := l_val.AsLiteralExpression;
+          "ansistring": cg4_member.Initializer := l_val.AsLiteralExpression;
+          "int64":      cg4_member.Initializer := Convert.ToInt64(l_val).AsLiteralExpression;
+          "boolean":    cg4_member.Initializer := Convert.ToBoolean(l_val).AsLiteralExpression;
           //"variant"
           //"binary"
           //"xml"
-          "guid":       l_fld.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference_NotNullable, [l_val.AsLiteralExpression.AsCallParameter]);
-          "decimal":    l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
-          "utf8string": l_fld.Initializer := l_val.AsLiteralExpression;
+          "guid":       cg4_member.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference_NotNullable, [l_val.AsLiteralExpression.AsCallParameter]);
+          "decimal":    cg4_member.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
+          "utf8string": cg4_member.Initializer := l_val.AsLiteralExpression;
           //"xsdatetime"
-          "nullableinteger": l_fld.Initializer := Convert.ToInt32(l_val).AsLiteralExpression;
+          "nullableinteger": cg4_member.Initializer := Convert.ToInt32(l_val).AsLiteralExpression;
           //"nullabledatetime"
-          "nullabledouble":  l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
-          "nullablecurrency":l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
-          "nullableint64":   l_fld.Initializer := Convert.ToInt64(l_val).AsLiteralExpression;
-          "nullableboolean": l_fld.Initializer := Convert.ToBoolean(l_val).AsLiteralExpression;
-          "nullableguid":    l_fld.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference_NotNullable,[l_val.AsLiteralExpression.AsCallParameter]);
-          "nullabledecimal": l_fld.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
+          "nullabledouble":  cg4_member.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
+          "nullablecurrency":cg4_member.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
+          "nullableint64":   cg4_member.Initializer := Convert.ToInt64(l_val).AsLiteralExpression;
+          "nullableboolean": cg4_member.Initializer := Convert.ToBoolean(l_val).AsLiteralExpression;
+          "nullableguid":    cg4_member.Initializer := new CGNewInstanceExpression("System.Guid".AsTypeReference_NotNullable,[l_val.AsLiteralExpression.AsCallParameter]);
+          "nullabledecimal": cg4_member.Initializer := Convert.ToDoubleInvariant(l_val).AsLiteralExpression;
         end;
       end;
     end;
     {$ENDREGION}
-    ltype.Members.Add(l_fld);
+    // swift support
+    if (Generator is CGSwiftCodeGenerator) then begin
+      if (cg4_member.Initializer = nil) and isEnum(aLibrary, rodl_member.DataType) then begin
+        var enum_ent := aLibrary.Enums.FindEntity(rodl_member.DataType) as RodlEnum;
+        if enum_ent <> nil then
+          cg4_member.Initializer := new CGEnumValueAccessExpression(l_type, enum_ent.Items[0].Name);
+      end;
+    end;
+    ltype.Members.Add(cg4_member);
   end;
   {$ENDREGION}
   {$REGION public %fldname%: %fldtype% read ___%fldname% write set_%fldname%; virtual;}
-  for laEntityItem: RodlTypedEntity in aEntity.Items do begin
-    var l_safe := laEntityItem.Name;
+  for rodl_member: RodlTypedEntity in aEntity.Items do begin
+    var l_safe := rodl_member.Name;
     var l_fld := $"___{l_safe}";
     var expr_fld := new CGFieldAccessExpression(nil, l_fld);
-    var l_prop := new CGPropertyDefinition(l_safe,
-                                          ResolveDataTypeToTypeRef(aLibrary, laEntityItem.DataType),
+    var cg4_member := new CGPropertyDefinition(l_safe,
+                                          ResolveDataTypeToTypeRef(aLibrary, rodl_member.DataType),
                                           Virtuality := CGMemberVirtualityKind.Virtual,
                                           Visibility := CGMemberVisibilityKind.Public);
-    l_prop.XmlDocumentation := GenerateDocumentation(laEntityItem);
-    l_prop.GetExpression := expr_fld;
-    l_prop.SetStatements := [new CGAssignmentStatement(expr_fld, CGPropertyValueExpression.PropertyValue),
+    cg4_member.XmlDocumentation := GenerateDocumentation(rodl_member);
+    cg4_member.GetExpression := expr_fld;
+    cg4_member.SetStatements := [new CGAssignmentStatement(expr_fld, CGPropertyValueExpression.PropertyValue),
                              new CGMethodCallExpression(CGSelfExpression.Self, "TriggerPropertyChanged",[l_safe.AsLiteralExpression.AsCallParameter])].ToList;
-    var sf := GetStreamingFormat(aLibrary, laEntityItem.DataType);
+    var sf := GetStreamingFormat(aLibrary, rodl_member.DataType);
     if sf <> nil then begin
-      l_prop.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference_NotNullable,[sf.AsCallParameter]));
+      cg4_member.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference_NotNullable,[sf.AsCallParameter]));
     end;
-    ltype.Members.Add(l_prop);
+    GenerateObsoleteAttribute(cg4_member, rodl_member);
+    ltype.Members.Add(cg4_member);
   end;
 
   {$ENDREGION}
   Intf_StructReadMethod(aLibrary, ltype, aEntity);
   Intf_StructWriteMethod(aLibrary, ltype, aEntity);
   GenerateCustomAttributeHandlers(ltype, aEntity);
+  GenerateObsoleteAttribute(ltype, aEntity);
   aFile.Types.Add(ltype);
 end;
 
@@ -364,6 +390,7 @@ begin
     ltype.Attributes.Add(new CGAttribute("System.Serializable".AsTypeReference_NotNullable));
     ltype.Attributes.Add(new CGAttribute("RemObjects.SDK.Remotable".AsTypeReference_NotNullable));
     GenerateCustomAttributeHandlers(ltype, aEntity);
+    GenerateObsoleteAttribute(ltype, aEntity);
     aFile.Types.Add(ltype);
   end;
 end;
@@ -414,21 +441,30 @@ begin
     end;
 
     {$REGION public %fldname%: %fldtype% read ___%fldname% write ___%fldname%; virtual;}
-    for laEntityItem: RodlTypedEntity in aEntity.Items do begin
-      var l_name := laEntityItem.Name;
-      var l_type := ResolveDataTypeToTypeRef(aLibrary, laEntityItem.DataType);
-      var l_prop := new CGPropertyDefinition(l_name,
+    for rodl_member: RodlTypedEntity in aEntity.Items do begin
+      var l_name := rodl_member.Name;
+      var l_type := ResolveDataTypeToTypeRef(aLibrary, rodl_member.DataType);
+      var cg4_member := new CGPropertyDefinition(l_name,
                                              l_type,
                                              Virtuality := CGMemberVirtualityKind.Virtual,
                                              Visibility := CGMemberVisibilityKind.Public);
-      var sf := GetStreamingFormat(aLibrary, laEntityItem.DataType);
-      if sf <> nil then begin
-        l_prop.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference_NotNullable,[sf.AsCallParameter]));
-      end;
-      ltype.Members.Add(l_prop);
+      // swift support
+      if (Generator is CGSwiftCodeGenerator) then
+        if isEnum(aLibrary, rodl_member.DataType) then begin
+          var enum_ent := aLibrary.Enums.FindEntity(rodl_member.DataType) as RodlEnum;
+          if enum_ent <> nil then begin
+            cg4_member.Initializer := new CGEnumValueAccessExpression(l_type, enum_ent.Items[0].Name);
+          end;
+        end;
+      var sf := GetStreamingFormat(aLibrary, rodl_member.DataType);
+      if sf <> nil then
+        cg4_member.Attributes.Add(new CGAttribute("RemObjects.SDK.StreamAs".AsTypeReference_NotNullable,[sf.AsCallParameter]));
+
+      GenerateObsoleteAttribute(cg4_member, rodl_member);
+      ltype.Members.Add(cg4_member);
 
       if l_ctor <> nil then begin
-        var param_name := new CGParameterDefinition($"a{laEntityItem.Name}", l_type);
+        var param_name := new CGParameterDefinition($"a{rodl_member.Name}", l_type);
         l_ctor.Parameters.Add(param_name);
         l_ctor.Statements.Add(new CGAssignmentStatement(new CGPropertyAccessExpression(CGSelfExpression.Self, l_name),
                                                         param_name.AsExpression));
@@ -437,6 +473,7 @@ begin
     {$ENDREGION}
   end;
   GenerateCustomAttributeHandlers(ltype, aEntity);
+  GenerateObsoleteAttribute(ltype, aEntity);
   aFile.Types.Add(ltype);
 end;
 
@@ -477,10 +514,11 @@ begin
         cg4_member.Parameters.Add(cg4_param);
       end;
     end;
+    GenerateObsoleteAttribute(cg4_member, rodl_member);
     ltype.Members.Add(cg4_member);
     {$ENDREGION}
   end;
-
+  GenerateObsoleteAttribute(ltype, aEntity);
   aFile.Types.Add(ltype);
   {$REGION %eventsink%_EventSinkInvoker}
   lAncestorName := aEntity.AncestorName;
@@ -568,8 +606,7 @@ end;
 
 method EchoesRodlCodeGen.Intf_GenerateServiceSync(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
-  var l_EntityName := aEntity.Name;
-  var l_IName := $"I{l_EntityName}";
+  var l_IName := $"I{aEntity.Name}";
 
   var l_intf := new CGInterfaceTypeDefinition(l_IName,
                                              Visibility := CGTypeVisibilityKind.Public);
@@ -579,6 +616,7 @@ begin
   else
     l_intf.Ancestors.Add("RemObjects.SDK.IROService".AsTypeReference_NotNullable);
 
+  GenerateObsoleteAttribute(l_intf, aEntity);
   aFile.Types.Add(l_intf);
   var l_proxy := new CGClassTypeDefinition($"{aEntity.Name}_Proxy", //%service%_Proxy
                                            &Partial := true,
@@ -621,6 +659,7 @@ begin
       l_intfmethod.ReturnType := ResolveDataTypeToTypeRef(aLibrary, rodl_member.Result.DataType);
       l_proxymethod.ReturnType := l_intfmethod.ReturnType;
     end;
+    GenerateObsoleteAttribute(l_intfmethod, rodl_member);
     l_intf.Members.Add(l_intfmethod);
     l_proxy.Members.Add(l_proxymethod);
     var localvar___localMessage := new CGVariableDeclarationStatement("___localMessage",
@@ -691,7 +730,7 @@ begin
     l_proxymethod.Statements.Add(l_try);
   end;
 
-  Intf_GenerateCoService(aFile, $"Co{l_EntityName}", l_intf.Name, l_proxy.Name);
+  Intf_GenerateCoService(aFile, $"Co{aEntity.Name}", l_intf.Name, l_proxy.Name);
 end;
 
 method EchoesRodlCodeGen.GetIncludesNamespace(aLibrary: RodlLibrary): String;
@@ -820,7 +859,7 @@ method EchoesRodlCodeGen.GetStreamingFormat(aLibrary: RodlLibrary; dataType: Str
 begin
   var lLower: String := dataType.ToLowerInvariant();
   if fStreamingFormats.ContainsKey(lLower) then
-    exit $"RemObjects.SDK.StreamingFormat.{fStreamingFormats[lLower]}".AsNamedIdentifierExpression;
+    exit $"StreamingFormat.{fStreamingFormats[lLower]}".AsNamedIdentifierExpression;
 
   var lArray: RodlArray := RodlArray(aLibrary.Arrays.FindEntity(dataType));
   if assigned(lArray) then
@@ -902,7 +941,7 @@ begin
     else
       le := ltype.AsExpression;
     var lformat := GetStreamingFormat(aLibrary, aEntity.DataType);
-    if lformat = nil then lformat := "RemObjects.SDK.StreamingFormat.Default".AsNamedIdentifierExpression;
+    if lformat = nil then lformat := "StreamingFormat.Default".AsNamedIdentifierExpression;
     exit new CGTypeCastExpression(
           new CGMethodCallExpression(aSerializer,
                                      "Read",
@@ -955,7 +994,7 @@ begin
     else
       le := ltype.AsExpression;
     var lformat := GetStreamingFormat(aLibrary, aEntity.DataType);
-    if lformat = nil then lformat := "RemObjects.SDK.StreamingFormat.Default".AsNamedIdentifierExpression;
+    if lformat = nil then lformat := "StreamingFormat.Default".AsNamedIdentifierExpression;
     exit new CGMethodCallExpression(aSerializer,
                                    "Write",
                                    [l_name,
@@ -994,15 +1033,14 @@ end;
 
 method EchoesRodlCodeGen.Intf_GenerateServiceAsync(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);
 begin
-  var l_EntityName := aEntity.Name;
-  var l_IName := $"I{l_EntityName}_Async";
+  var l_IName := $"I{aEntity.Name}_Async";
   var l_intf := new CGInterfaceTypeDefinition(l_IName,
                                               Visibility := CGTypeVisibilityKind.Public);
   if not String.IsNullOrEmpty(aEntity.AncestorName) then
     l_intf.Ancestors.Add(ResolveDataTypeToTypeRef(aLibrary, $"I{aEntity.AncestorName}_Async", aEntity.AncestorName))  //I%ancestor%_Async
   else
     l_intf.Ancestors.Add("RemObjects.SDK.IROService_Async".AsTypeReference_NotNullable);
-
+  GenerateObsoleteAttribute(l_intf, aEntity);
   aFile.Types.Add(l_intf);
 
   var l_proxy := new CGClassTypeDefinition($"{aEntity.Name}_AsyncProxy", //%service%_AsyncProxy
@@ -1030,6 +1068,9 @@ begin
                                             Visibility := CGMemberVisibilityKind.Public);
     var l_intfAsync := new CGMethodDefinition($"{rodl_member.Name}Async",
                                               Visibility := CGMemberVisibilityKind.Public);
+    GenerateObsoleteAttribute(l_intfAsync, rodl_member);
+    GenerateObsoleteAttribute(l_intfBegin, rodl_member);
+    GenerateObsoleteAttribute(l_intfEnd, rodl_member);
     l_intf.Members.Add(l_intfBegin);
     l_intf.Members.Add(l_intfEnd);
 
@@ -1228,7 +1269,7 @@ begin
     end;
     {$ENDREGION}
   end;
-  Intf_GenerateCoService(aFile, $"Co{l_EntityName}Async", l_intf.Name, l_proxy.Name);
+  Intf_GenerateCoService(aFile, $"Co{aEntity.Name}Async", l_intf.Name, l_proxy.Name);
 end;
 
 method EchoesRodlCodeGen.Intf_GenerateServiceProxyConstructors(aType: CGClassTypeDefinition);
@@ -1415,8 +1456,8 @@ begin
                                         DefaultNullability := CGTypeNullabilityKind.NullableUnwrapped)
         else
           exit new CGArrayTypeReference(ResolveDataTypeToTypeRef(aLibrary, RodlArray(lent).ElementType),
-                                        DefaultNullability :=
-                                        CGTypeNullabilityKind.NullableUnwrapped);
+                                        DefaultNullability := CGTypeNullabilityKind.NullableUnwrapped,
+                                        ArrayKind := CGArrayKind.HighLevel);
       end;
       if lent.IsFromUsedRodl then begin
         if not String.IsNullOrWhiteSpace(lent.FromUsedRodl:Includes:NetModule) then begin
@@ -1534,11 +1575,13 @@ begin
         l_intfmethod.Parameters.Add(cg4_param);
       end;
     end;
-    if rodl_member.Result <> nil then
+    if rodl_member.Result <> nil then begin
       l_intfmethod.ReturnType := ResolveDataTypeToTypeRef(aLibrary, rodl_member.Result.DataType);
-
+    end;
+    GenerateObsoleteAttribute(l_intfmethod, rodl_member);
     lservice.Members.Add(l_intfmethod);
   end;
+  GenerateObsoleteAttribute(lservice, aEntity);
   aFile.Types.Add(lservice);
 end;
 
@@ -1599,7 +1642,7 @@ begin
   var param___Instance := new CGParameterDefinition("___Instance", "RemObjects.SDK.IROService".AsTypeReference_NotNullable);
   var param___Message := new CGParameterDefinition("___Message", "RemObjects.SDK.IMessage".AsTypeReference_NotNullable);
   var param___ServerChannelInfo := new CGParameterDefinition("___ServerChannelInfo", "RemObjects.SDK.Server.IServerChannelInfo".AsTypeReference_NotNullable);
-  var param___oResponseOptions := new CGParameterDefinition("___oResponseOptions", "RemObjects.SDK.Server.ResponseOptions".AsTypeReference_NotNullable, Modifier := CGParameterModifierKind.Out);
+  var param___oResponseOptions := new CGParameterDefinition("___oResponseOptions", "ResponseOptions".AsTypeReference_NotNullable, Modifier := CGParameterModifierKind.Out);
   plist.Add(param___Instance);
   plist.Add(param___Message);
   plist.Add(param___ServerChannelInfo);
@@ -1695,9 +1738,13 @@ begin
       l_body.Add(localvar_result);
     end;
     for rodl_param in rodl_member.Items do
-      if rodl_param.ParamFlag in [ParamFlags.Out] then
-        l_body.Add(new CGVariableDeclarationStatement(rodl_param.Name,
-                                                      ResolveDataTypeToTypeRef(aLibrary, rodl_param.DataType)));
+      if rodl_param.ParamFlag in [ParamFlags.Out] then begin
+        var l_type: CGTypeReference := ResolveDataTypeToTypeRef(aLibrary, rodl_param.DataType);
+        var l_var: CGVariableDeclarationStatement := new CGVariableDeclarationStatement(rodl_param.Name, l_type);
+        if Generator is CGSwiftCodeGenerator then
+          l_var.Value := new CGNewInstanceExpression(l_type);
+        l_body.Add(l_var);
+      end;
 
     var l_paramlist := new List<CGCallParameter>;
     for rodl_param in rodl_member.Items do begin
@@ -1756,7 +1803,7 @@ begin
 
     l_body.Add(new CGMethodCallExpression(l_message, "FinalizeMessage"));
     l_body.Add(new CGAssignmentStatement(param___oResponseOptions.AsExpression,
-                                         new CGFieldAccessExpression("RemObjects.SDK.Server.ResponseOptions".AsTypeReferenceExpression,
+                                         new CGFieldAccessExpression("ResponseOptions".AsTypeReferenceExpression,
                                                                       if l_hasout then "roDefault" else "roNoResponse")));
     ltype.Members.Add(mem);
   end;

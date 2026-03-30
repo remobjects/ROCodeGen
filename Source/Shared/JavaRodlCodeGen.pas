@@ -5,6 +5,7 @@ interface
 type
   JavaRodlCodeGen = public class (RodlCodeGen)
   private
+    method GenerateObsoleteAttribute(aCGEntity: CGEntity; aRODLEntity: RodlEntity);
     method isPrimitive(aType: String):Boolean;
     method GenerateROSDKType(aName: String): String;
     method GenerateGetProperty(aParent:CGExpression;Name:String): CGExpression;
@@ -31,20 +32,21 @@ type
     method ConvertToObject(aElementType_str: String; aElementType: CGTypeReference): CGTypeReference;
     method IsSimpleType(aElementType_str: String): Boolean;
   protected
-    method AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary);override;
-    method AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary);override;
+    method AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary); override;
+    method AddGlobalConstants(aFile: CGCodeUnit; aLibrary: RodlLibrary); override;
     method GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum); override;
-    method GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);override;
-    method GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);override;
-    method GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException);override;
-    method GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService);override;
-    method GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink);override;
-    method GetGlobalName(aLibrary: RodlLibrary): String;override;
+    method GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct); override;
+    method GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray); override;
+    method GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException); override;
+    method GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService); override;
+    method GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink); override;
+    method GetGlobalName(aLibrary: RodlLibrary): String; override;
     method GetIncludesNamespace(aLibrary: RodlLibrary): String; override;
   public
     constructor;
     property addROSDKPrefix: Boolean := true;
-    property isCooperMode: Boolean := false;
+    property IsStandard: Boolean read -> ((Generator is CGJavaCodeGenerator) and CGJavaCodeGenerator(Generator).isStandard);
+    property IsCooperMode: Boolean read -> not IsStandard;
     method GenerateInterfaceFiles(aLibrary: RodlLibrary; aTargetNamespace: String): not nullable Dictionary<String,String>; override;
   end;
 
@@ -194,9 +196,10 @@ begin
 
   var lstruct := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), lAncestorName.AsTypeReference,
                             &Partial := true,
-                            Visibility := CGTypeVisibilityKind.Public
+                            Visibility := CGTypeVisibilityKind.Public,
+                            XmlDocumentation := GenerateDocumentation(aEntity)
                             );
-  lstruct.XmlDocumentation := GenerateDocumentation(aEntity);
+  GenerateObsoleteAttribute(lstruct, aEntity);
   aFile.Types.Add(lstruct);
   {$REGION private class _attributes: HashMap<String, String>;}
   if (aEntity.CustomAttributes.Count > 0) then
@@ -242,13 +245,15 @@ begin
 
       var expr_s_field := new CGFieldAccessExpression(nil, $"s_{lm.Name}");
       lstruct.Members.Add(temp_field);
-      if not isCooperMode then begin
+      if not IsCooperMode then begin
         var param_aValue := new CGParameterDefinition("aValue",ltype);
-        lstruct.Members.Add(new CGMethodDefinition($"set{lm.Name}",
-                                                    [new CGAssignmentStatement(temp_field.AsExpression, param_aValue.AsExpression)],
-                                                    Parameters := [param_aValue].ToList,
-                                                    Visibility := CGMemberVisibilityKind.Public,
-                                                    XmlDocumentation := GenerateDocumentation(lm)));
+        var cg4_setter := new CGMethodDefinition($"set{lm.Name}",
+                                                [new CGAssignmentStatement(temp_field.AsExpression, param_aValue.AsExpression)],
+                                                Parameters := [param_aValue].ToList,
+                                                Visibility := CGMemberVisibilityKind.Public,
+                                                XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_setter, lm);
+        lstruct.Members.Add(cg4_setter);
         var l_st: CGStatement;
         if IsSimpleType(lm.DataType) then
           l_st := temp_field.AsExpression.AsReturnStatement
@@ -256,11 +261,13 @@ begin
           l_st := new CGIfThenElseStatement(new CGBinaryOperatorExpression(temp_field.AsExpression, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
                                                       temp_field.AsExpression.AsReturnStatement,
                                                       expr_s_field.AsReturnStatement);
-        lstruct.Members.Add(new CGMethodDefinition($"get{lm.Name}",
+        var cg4_getter := new CGMethodDefinition($"get{lm.Name}",
                                                     [l_st],
                                                     ReturnType := ltype,
                                                     Visibility := CGMemberVisibilityKind.Public,
-                                                    XmlDocumentation := GenerateDocumentation(lm)));
+                                                    XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_getter, lm);
+        lstruct.Members.Add(cg4_getter);
       end;
     end;
     {$ENDREGION}
@@ -271,7 +278,7 @@ begin
     lstruct.Members.Add(ReadFromMessage_Method(aLibrary,aEntity));
     {$ENDREGION}
     {$REGION public property %fldname%: %fldtype%}
-    if isCooperMode then begin
+    if IsCooperMode then begin
       for lm :RodlTypedEntity in aEntity.Items do begin
         var f_name := new CGFieldAccessExpression(nil, $"f_{lm.Name}");
         var s_name := new CGFieldAccessExpression(nil, $"s_{lm.Name}");
@@ -282,12 +289,14 @@ begin
           l_st := new CGIfThenElseStatement(new CGBinaryOperatorExpression(f_name, CGNilExpression.Nil, CGBinaryOperatorKind.NotEquals),
                                                       f_name.AsReturnStatement,
                                                       s_name.AsReturnStatement);
-        lstruct.Members.Add(new CGPropertyDefinition(lm.Name,
-                            ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
-                            [l_st],
-                            SetExpression := f_name,
-                            Visibility := CGMemberVisibilityKind.Public,
-                            XmlDocumentation := GenerateDocumentation(lm)));
+        var cg4_member := new CGPropertyDefinition(lm.Name,
+                                    ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
+                                    [l_st],
+                                    SetExpression := f_name,
+                                    Visibility := CGMemberVisibilityKind.Public,
+                                    XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_member, lm);
+        lstruct.Members.Add(cg4_member);
       end;
     end;
     {$ENDREGION}
@@ -305,12 +314,12 @@ begin
 
   var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), GenerateROSDKType("ArrayType").AsTypeReference,
                                           Visibility := CGTypeVisibilityKind.Public,
-                                          &Partial := true
-                                          );
-  lArray.XmlDocumentation := GenerateDocumentation(aEntity);
+                                          &Partial := true,
+                                          XmlDocumentation := GenerateDocumentation(aEntity));
+  GenerateObsoleteAttribute(lArray, aEntity);
   aFile.Types.Add(lArray);
 
-  if not isCooperMode then begin
+  if not IsCooperMode then begin
     lArray.Attributes.Add(new CGAttribute("SuppressWarnings".AsTypeReference,
                            ["rawtypes".AsLiteralExpression.AsCallParameter].ToList));
   end;
@@ -591,11 +600,12 @@ begin
   var lexception := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name),
                                               GenerateROSDKType("ExceptionType").AsTypeReference,
                                               Visibility := CGTypeVisibilityKind.Public,
-                                              &Partial := true
+                                              &Partial := true,
+                                              XmlDocumentation := GenerateDocumentation(aEntity)
                                               );
-  lexception.XmlDocumentation := GenerateDocumentation(aEntity);
+  GenerateObsoleteAttribute(lexception, aEntity);
   aFile.Types.Add(lexception);
-  if not isCooperMode then
+  if not IsCooperMode then
     lexception.Attributes.Add(new CGAttribute("SuppressWarnings".AsTypeReference,
                                              ["serial".AsLiteralExpression.AsCallParameter].ToList));
 
@@ -609,7 +619,7 @@ begin
     lexception.Members.Add(HandleAtributes_public(aLibrary,aEntity));
   {$ENDREGION}
 
-  if not isCooperMode then begin
+  if not IsCooperMode then begin
   {$REGION private property %f_fldname%: %fldtype% + public getter/setter}
     for lm :RodlTypedEntity in aEntity.Items do begin
       var ltype := ResolveDataTypeToTypeRef(aLibrary,lm.DataType);
@@ -617,18 +627,22 @@ begin
                                               ltype,
                                               Visibility := CGMemberVisibilityKind.Private);
       lexception.Members.Add(temp_field);
-      if not isCooperMode then begin
+      if not IsCooperMode then begin
         var param_aValue := new CGParameterDefinition("aValue",ltype);
-        lexception.Members.Add(new CGMethodDefinition($"set{lm.Name}",
+        var cg4_setter := new CGMethodDefinition($"set{lm.Name}",
                                       [new CGAssignmentStatement(temp_field.AsExpression, param_aValue.AsExpression)],
                                       Parameters := [param_aValue].ToList,
                                       Visibility := CGMemberVisibilityKind.Public,
-                                      XmlDocumentation := GenerateDocumentation(lm)));
-        lexception.Members.Add(new CGMethodDefinition($"get{lm.Name}",
+                                      XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_setter, lm);
+        lexception.Members.Add(cg4_setter);
+        var cg4_getter := new CGMethodDefinition($"get{lm.Name}",
                                       [temp_field.AsExpression.AsReturnStatement],
                                       ReturnType := ltype,
                                       Visibility := CGMemberVisibilityKind.Public,
-                                      XmlDocumentation := GenerateDocumentation(lm)));
+                                      XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_getter, lm);
+        lexception.Members.Add(cg4_getter);
       end;
     end;
   {$ENDREGION}
@@ -669,13 +683,16 @@ begin
   end;
 
   {$REGION public property %fldname%: %fldtype%}
-  if isCooperMode then begin
-    for lm :RodlTypedEntity in aEntity.Items do
-      lexception.Members.Add(new CGPropertyDefinition(
-      lm.Name,
-      ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
-      Visibility := CGMemberVisibilityKind.Public,
-      XmlDocumentation := GenerateDocumentation(lm)));
+  if IsCooperMode then begin
+    for lm :RodlTypedEntity in aEntity.Items do begin
+      var cg4_member := new CGPropertyDefinition(
+                                  lm.Name,
+                                  ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
+                                  Visibility := CGMemberVisibilityKind.Public,
+                                  XmlDocumentation := GenerateDocumentation(lm));
+      GenerateObsoleteAttribute(cg4_member, lm);
+      lexception.Members.Add(cg4_member);
+    end;
   end;
   {$ENDREGION}
 end;
@@ -684,12 +701,14 @@ method JavaRodlCodeGen.GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary;
 begin
   {$REGION I%SERVICE_NAME%}
   var lIService := new CGInterfaceTypeDefinition(SafeIdentifier("I"+aEntity.Name),
-                                                 Visibility := CGTypeVisibilityKind.Public);
-  lIService.XmlDocumentation := GenerateDocumentation(aEntity);
+                                                  Visibility := CGTypeVisibilityKind.Public,
+                                                  XmlDocumentation := GenerateDocumentation(aEntity));
+  GenerateObsoleteAttribute(lIService, aEntity);
   aFile.Types.Add(lIService);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     var m := GenerateServiceProxyMethodDeclaration(aLibrary, lop);
     m.XmlDocumentation := GenerateDocumentation(lop);
+    GenerateObsoleteAttribute(m, lop);
     lIService.Members.Add(m);
   end;
 
@@ -701,8 +720,15 @@ begin
                                                       );
   aFile.Types.Add(lIServiceAsync);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, lop));
-    lIServiceAsync.Members.Add(GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary, lop,false));
+    var m: CGMethodDefinition := GenerateServiceAsyncProxyBeginMethodDeclaration(aLibrary, lop);
+    m.XmlDocumentation := GenerateDocumentation(lop);
+    GenerateObsoleteAttribute(m, lop);
+    lIServiceAsync.Members.Add(m);
+
+    m := GenerateServiceAsyncProxyEndMethodDeclaration(aLibrary, lop, false);
+    m.XmlDocumentation := GenerateDocumentation(lop);
+    GenerateObsoleteAttribute(m, lop);
+    lIServiceAsync.Members.Add(m);
   end;
   {$ENDREGION}
 
@@ -744,11 +770,12 @@ end;
 
 method JavaRodlCodeGen.GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink);
 begin
-  var i_name := "I"+aEntity.Name;
-  var i_adaptername := i_name+"_Adapter";
-  var lIEvent := new CGInterfaceTypeDefinition(i_name,GenerateROSDKType("IEvents").AsTypeReference,
-                            Visibility := CGTypeVisibilityKind.Public);
-  lIEvent.XmlDocumentation := GenerateDocumentation(aEntity);
+  var i_name := $"I{aEntity.Name}";
+  var lIEvent := new CGInterfaceTypeDefinition(i_name,
+                            GenerateROSDKType("IEvents").AsTypeReference,
+                            Visibility := CGTypeVisibilityKind.Public,
+                            XmlDocumentation := GenerateDocumentation(aEntity));
+  GenerateObsoleteAttribute(lIEvent, aEntity);
   aFile.Types.Add(lIEvent);
 
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
@@ -757,7 +784,7 @@ begin
                                                 Visibility := CGTypeVisibilityKind.Public,
                                                 &Partial := true
                                                 );
-    if not isCooperMode then begin
+    if not IsCooperMode then begin
       for lm :RodlParameter in lop.Items do begin
         var ltype := ResolveDataTypeToTypeRef(aLibrary,lm.DataType);
         var temp_field := new CGFieldDefinition($"f_{lm.Name}",
@@ -765,16 +792,20 @@ begin
                                                Visibility := CGMemberVisibilityKind.Private);
         lOperation.Members.Add(temp_field);
         var param_aValue := new CGParameterDefinition("aValue",ltype);
-        lOperation.Members.Add(new CGMethodDefinition($"set{lm.Name}",
-                                                      [new CGAssignmentStatement(temp_field.AsExpression, param_aValue.AsExpression)],
-                                                      Parameters := [param_aValue].ToList,
-                                                      Visibility := CGMemberVisibilityKind.Public,
-                                                      XmlDocumentation := GenerateDocumentation(lm)));
-        lOperation.Members.Add(new CGMethodDefinition($"get{lm.Name}",
-                                                      [temp_field.AsExpression.AsReturnStatement],
-                                                      ReturnType := ltype,
-                                                      Visibility := CGMemberVisibilityKind.Public,
-                                                      XmlDocumentation := GenerateDocumentation(lm)));
+        var cg4_setter := new CGMethodDefinition($"set{lm.Name}",
+                                                [new CGAssignmentStatement(temp_field.AsExpression, param_aValue.AsExpression)],
+                                                Parameters := [param_aValue].ToList,
+                                                Visibility := CGMemberVisibilityKind.Public,
+                                                XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_setter, lm);
+        lOperation.Members.Add(cg4_setter);
+        var cg4_getter := new CGMethodDefinition($"get{lm.Name}",
+                                                [temp_field.AsExpression.AsReturnStatement],
+                                                ReturnType := ltype,
+                                                Visibility := CGMemberVisibilityKind.Public,
+                                                XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_getter, lm);
+        lOperation.Members.Add(cg4_getter);
        end;
     end;
     var param_aBuffer := new CGParameterDefinition("aBuffer", GenerateROSDKType("Message").AsTypeReference);
@@ -784,35 +815,39 @@ begin
     lOperation.Members.Add(lop_method);
 
     for lm :RodlParameter in lop.Items do begin
-      if isCooperMode then begin
-        lOperation.Members.Add(new CGPropertyDefinition(
-                                                        lm.Name,
-                                                        ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
-                                                        Visibility := CGMemberVisibilityKind.Public,
-                                                        XmlDocumentation := GenerateDocumentation(lm)));
+      if IsCooperMode then begin
+        var cg4_member := new CGPropertyDefinition(
+                                                  lm.Name,
+                                                  ResolveDataTypeToTypeRef(aLibrary,lm.DataType),
+                                                  Visibility := CGMemberVisibilityKind.Public,
+                                                  XmlDocumentation := GenerateDocumentation(lm));
+        GenerateObsoleteAttribute(cg4_member, lm);
+        lOperation.Members.Add(cg4_member);
       end;
       lop_method.Statements.Add(GetReaderStatement(aLibrary, lm, param_aBuffer.AsExpression));
     end;
 
     aFile.Types.Add(lOperation);
     {$ENDREGION}
-    lIEvent.Members.Add(new CGMethodDefinition(SafeIdentifier(lop.Name),
-                                               Parameters := [new CGParameterDefinition("aEvent", lOperation.Name.AsTypeReference)].ToList,
-                                               Visibility := CGMemberVisibilityKind.Public,
-                                               XmlDocumentation := GenerateDocumentation(lop)
-    ));
+    var cg4_member := new CGMethodDefinition(SafeIdentifier(lop.Name),
+                                              Parameters := [new CGParameterDefinition("aEvent", lOperation.Name.AsTypeReference)].ToList,
+                                              Visibility := CGMemberVisibilityKind.Public,
+                                              XmlDocumentation := GenerateDocumentation(lop));
+    GenerateObsoleteAttribute(cg4_member, lop);
+    lIEvent.Members.Add(cg4_member);
   end;
-  if not isCooperMode then begin
-    var lIEventAdapter := new CGClassTypeDefinition(i_adaptername,
+  if not IsCooperMode then begin
+    var lIEventAdapter := new CGClassTypeDefinition($"I{aEntity.Name}_Adapter",
                               ImplementedInterfaces := [i_name.AsTypeReference].ToList,
                               Visibility := CGTypeVisibilityKind.Public);
-
+    GenerateObsoleteAttribute(lIEventAdapter, aEntity);
     aFile.Types.Add(lIEventAdapter);
     for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
-      lIEventAdapter.Members.Add(new CGMethodDefinition(SafeIdentifier(lop.Name),
-                                                       Parameters := [new CGParameterDefinition("aEvent", SafeIdentifier(lop.Name+"Event").AsTypeReference)].ToList,
-                                                       Visibility := CGMemberVisibilityKind.Public
-                                                       ));
+      var cg4_member := new CGMethodDefinition(SafeIdentifier(lop.Name),
+                                                Parameters := [new CGParameterDefinition("aEvent", SafeIdentifier(lop.Name+"Event").AsTypeReference)].ToList,
+                                                Visibility := CGMemberVisibilityKind.Public);
+      GenerateObsoleteAttribute(cg4_member, lop);
+      lIEventAdapter.Members.Add(cg4_member);
     end;
     lIEventAdapter.Members.Add(new CGMethodDefinition("OnException",
                                                       Parameters := [new CGParameterDefinition("aEvent", GenerateROSDKType("OnExceptionEvent").AsTypeReference)].ToList,
@@ -1381,14 +1416,14 @@ end;
 
 method JavaRodlCodeGen.GenerateGetProperty(aParent: CGExpression; Name: String): CGExpression;
 begin
-  exit iif(isCooperMode,
+  exit iif(IsCooperMode,
           new CGFieldAccessExpression(aParent, Name),
           new CGMethodCallExpression(aParent, $"get{Name}"));
 end;
 
 method JavaRodlCodeGen.GenerateSetProperty(aParent: CGExpression; Name: String; aValue:CGExpression): CGStatement;
 begin
-  exit iif(isCooperMode,
+  exit iif(IsCooperMode,
           new CGAssignmentStatement(new CGFieldAccessExpression(aParent, Name), aValue),
           new CGMethodCallExpression(aParent, $"set{Name}",[aValue.AsCallParameter].ToList));
 end;
@@ -1396,14 +1431,16 @@ end;
 method JavaRodlCodeGen.GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum);
 begin
   var lenum := new CGEnumTypeDefinition(SafeIdentifier(aEntity.Name),
-                                        Visibility := CGTypeVisibilityKind.Public);
-  if isCooperMode then lenum.BaseType := new CGNamedTypeReference("Enum");
-  lenum.XmlDocumentation := GenerateDocumentation(aEntity);
+                                        Visibility := CGTypeVisibilityKind.Public,
+                                        XmlDocumentation := GenerateDocumentation(aEntity));
+  if IsCooperMode then lenum.BaseType := new CGNamedTypeReference("Enum");
+  GenerateObsoleteAttribute(lenum, aEntity);
   aFile.Types.Add(lenum);
   for enummember: RodlEnumValue in aEntity.Items do begin
     var lname := GenerateEnumMemberName(aLibrary, aEntity, enummember);
-    var lenummember := new CGEnumValueDefinition(lname);
-    lenummember.XmlDocumentation := GenerateDocumentation(enummember);
+    var lenummember := new CGEnumValueDefinition(lname,
+                                                  XmlDocumentation := GenerateDocumentation(enummember));
+    GenerateObsoleteAttribute(lenummember, enummember);
     lenum.Members.Add(lenummember);
   end;
 end;
@@ -1413,7 +1450,7 @@ begin
 
   var ltype : CGTypeDefinition;
 
-  if isCooperMode then
+  if IsCooperMode then
     ltype := new CGClassTypeDefinition(GetGlobalName(aLibrary), Visibility:= CGTypeVisibilityKind.Public)
   else
     ltype := new CGInterfaceTypeDefinition(GetGlobalName(aLibrary), Visibility:= CGTypeVisibilityKind.Public);
@@ -1458,7 +1495,7 @@ end;
 
 method JavaRodlCodeGen.ConvertToSimple(aElementType_str: String; aElementType: CGTypeReference; aValue: CGExpression): CGStatement;
 begin
-  if not isCooperMode then begin
+  if not IsCooperMode then begin
     case aElementType_str of
       "integer": aElementType := CGPredefinedTypeReference.Int32.NullableNotUnwrapped;
       "double":  aElementType := CGPredefinedTypeReference.Double.NullableNotUnwrapped;
@@ -1471,7 +1508,7 @@ begin
                     aElementType,
                     ThrowsException := true
                   );
-  if not isCooperMode then begin
+  if not IsCooperMode then begin
     case aElementType_str of
       "integer": l_result := new CGMethodCallExpression(l_result, "intValue");
       "double":  l_result := new CGMethodCallExpression(l_result, "doubleValue");
@@ -1489,9 +1526,26 @@ end;
 
 method JavaRodlCodeGen.ConvertToObject(aElementType_str: String; aElementType: CGTypeReference): CGTypeReference;
 begin
-  if not isCooperMode and IsSimpleType(aElementType_str) then
+  if not IsCooperMode and IsSimpleType(aElementType_str) then
     aElementType := aElementType.NullableNotUnwrapped;
   exit aElementType;
+end;
+
+method JavaRodlCodeGen.GenerateObsoleteAttribute(aCGEntity: CGEntity; aRODLEntity: RodlEntity);
+begin
+  if aRODLEntity.Obsolete then begin
+    var attr := new CGAttribute("Deprecated".AsTypeReference_NotNullable);
+
+    if not String.IsNullOrEmpty(aRODLEntity.ObsoleteMessage) then
+      attr.Comment := new CGSingleLineCommentStatement(aRODLEntity.ObsoleteMessage);
+
+    if aCGEntity is CGTypeDefinition then begin
+      CGTypeDefinition(aCGEntity).Attributes.Add(attr);
+    end
+    else if aCGEntity is CGMemberDefinition then begin
+      CGMemberDefinition(aCGEntity).Attributes.Add(attr);
+    end;
+  end;
 end;
 
 end.
