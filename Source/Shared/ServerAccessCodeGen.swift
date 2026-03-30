@@ -5,6 +5,7 @@ public __abstract class ServerAccessCodeGen {
 	let rodl: RodlLibrary
 	public var serverAddress: String?
 	public var namespace: String?
+	public var ignoreRODLnamespace: Boolean = false
 
 	public init(rodl: RodlLibrary) {
 		self.rodl = rodl
@@ -48,7 +49,21 @@ public __abstract class ServerAccessCodeGen {
 		return false;
 	}
 
-	public func generateCodeUnit() -> CGCodeUnit {
+	func hasServices() -> Boolean {
+		for i in 0 ..< rodl.Services.Count {
+			let service = rodl.Services[i]
+			if isCodeGenerationRequired(service) {
+				return true
+			}
+		}
+		return false;
+	}
+
+	public func generateCodeUnit() -> CGCodeUnit? {
+
+		if !hasServices() {
+			return nil
+		}
 
 		let unit = CGCodeUnit()
 		unit.FileName =  rodl.Name+"_ServerAccess"
@@ -297,7 +312,7 @@ public class NetServerAccessCodeGen : ServerAccessCodeGen {
 		} else {
 			rodl_namespace = self.rodl.Name;
 		}
-		if (length(self.namespace) > 0) && (length(rodl_namespace) > 0) && (self.namespace != rodl_namespace) {
+		if !ignoreRODLnamespace && (length(self.namespace) > 0) && (length(rodl_namespace) > 0) && (self.namespace != rodl_namespace) {
 			unit.Imports.Add(CGImport(rodl_namespace))
 		}
 	}
@@ -428,9 +443,10 @@ public class JavaServerAccessCodeGen : ServerAccessCodeGen {
 	func generateFiles(_ generator: CGCodeGenerator) -> Dictionary<String,String> {
 		let result = Dictionary<String,String>()
 		//var lnamespace := iif(String.IsNullOrEmpty(aTargetNamespace), aLibrary.Namespace,aTargetNamespace);
-		let unit = generateCodeUnit()
-		for k in unit.Types {
-			result.Add(Path.ChangeExtension(k.Name, generator.defaultFileExtension), generator.GenerateUnitForSingleType(k, unit: unit))
+		if let unit = generateCodeUnit() {
+			for k in unit.Types {
+				result.Add(Path.ChangeExtension(k.Name, generator.defaultFileExtension), generator.GenerateUnitForSingleType(k, unit: unit))
+			}
 		}
 		return result
 	}
