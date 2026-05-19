@@ -36,6 +36,25 @@ type
                    "nullableint64", "nullableinteger"];
     end;
 
+    method IsDAUses(aUse: RodlUse): Boolean;
+    begin
+      exit caseInsensitive(aUse:UsedRodlId:ToString) in ["DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6",
+                                                         "367FA81F-09B7-4294-85AD-68C140EF1FA7"];
+    end;
+
+    method IsDAProject(aLibrary: RodlLibrary; aCheckOnlyInUses: Boolean = False): Boolean;
+    begin
+      if not aCheckOnlyInUses then begin
+        case caseInsensitive(aLibrary.GetOrGenerateEntityID:ToString) of
+          "DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6": exit true; //"DataAbstract4.RODL"
+          "367FA81F-09B7-4294-85AD-68C140EF1FA7": exit true; //"DataAbstract-Simple.RODL"
+        end;
+      end;
+      for k: RodlUse in aLibrary.Uses:Items do
+        if Path.GetFileName(k.FileName).ToUpperInvariant in ["DATAABSTRACT.RODL", "DATAABSTRACT4.RODL", "DATAABSTRACT-SIMPLE.RODL"] then exit true;
+      exit false;
+    end;
+
     method FindEnum(aLibrary: RodlLibrary; aDataType: String): nullable RodlEnum;
 
     method SafeIdentifier(aValue: String): String;

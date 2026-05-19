@@ -15,7 +15,6 @@ type
     fIROMessage_typeref: CGTypeReference;
     fCustomAncestor: String;
     fParamAttributes_typeref: CGNamedTypeReference;
-    method isDAProject(aLibrary:RodlLibrary): Boolean;
     method GetRODLName(aLibrary:RodlLibrary): String;
     method GenerateGlobalVarName(aName, aUnitName: String): CGExpression;
     {$REGION CodeFirst attributes}
@@ -307,7 +306,7 @@ end;
 
 method DelphiRodlCodeGen.Add_RemObjects_Inc(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  if isDAProject(aLibrary) then
+  if IsDAProject(aLibrary) then
     aFile.Directives.Add("{$I DataAbstract.inc}".AsCompilerDirective)
   else
     aFile.Directives.Add("{$I RemObjects.inc}".AsCompilerDirective);
@@ -4043,17 +4042,6 @@ begin
     exit aUse.Includes.DelphiModule + "_Intf" // std RODL like DA, DA_simple => delphi mode
   else
     exit aUse.Name+"_Intf";
-end;
-
-method DelphiRodlCodeGen.isDAProject(aLibrary: RodlLibrary): Boolean;
-begin
-  case caseInsensitive(aLibrary.GetOrGenerateEntityID:ToString) of
-    "DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6": exit true; //"DataAbstract4.RODL"
-    "367FA81F-09B7-4294-85AD-68C140EF1FA7": exit true; //"DataAbstract-Simple.RODL"
-  end;
-  for k: RodlUse in aLibrary.Uses:Items do
-    if Path.GetFileName(k.FileName).ToUpperInvariant in ["DATAABSTRACT4.RODL", "DATAABSTRACT-SIMPLE.RODL"] then exit true;
-  exit false;
 end;
 
 method DelphiRodlCodeGen.GetRODLName(aLibrary: RodlLibrary): String;

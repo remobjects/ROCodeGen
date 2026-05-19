@@ -534,7 +534,9 @@ do {
 				}
 				let intf_file = targetFileNameWithSuffix("Intf")
 				if activeRodlCodeGen.CodeUnitSupport {
-					if (activeRodlCodeGen is JavaRodlCodeGen) && (codegen is CGJavaCodeGenerator) {
+					if ((activeRodlCodeGen is JavaRodlCodeGen) && (codegen is CGJavaCodeGenerator)) ||
+						(activeRodlCodeGen is JavaScriptRodlCodeGen)
+					{
 						generateIntf1()
 					} else {
 						if (activeRodlCodeGen is CPlusPlusBuilderRodlCodeGen) && (options["splittypes"] != nil) {

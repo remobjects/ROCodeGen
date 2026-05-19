@@ -187,7 +187,7 @@ begin
         CPlusPlusBuilderRodlCodeGen(codegen).AsyncSupport := false;
     end;
     Codegen4Platform.Java: begin
-      codegen := new JavaRodlCodeGen(isCooperMode := Language = Codegen4Language.Java_Iodine);
+      codegen := new JavaRodlCodeGen; // (isCooperMode := Language <> Codegen4Language.Java_Standard);
     end;
     Codegen4Platform.Cocoa: codegen := new CocoaRodlCodeGen;
     Codegen4Platform.Net: begin
@@ -217,39 +217,33 @@ begin
   case Language of
     Codegen4Language.Oxygene_Standard: begin
       codegen.Generator := new CGOxygeneCodeGenerator(Style := CGOxygeneCodeGeneratorStyle.Standard);
-      //llang := 'oxygene';
-      lfileext := 'pas';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.CSharp_Hydrogene: begin
       codegen.Generator := new CGCSharpCodeGenerator(Dialect := CGCSharpCodeGeneratorDialect.Hydrogene);
-      //llang := 'c#';
-      lfileext := 'cs';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.CSharp_Standard: begin
       codegen.Generator := new CGCSharpCodeGenerator(Dialect := CGCSharpCodeGeneratorDialect.Standard);
-      //llang := 'standard-c#';
-      lfileext := 'cs';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.VB_Standard: begin
       codegen.Generator := new CGVisualBasicNetCodeGenerator(Dialect := CGVisualBasicCodeGeneratorDialect.Standard);
-      //llang := 'vb';
-      lfileext := 'vb';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.VB_Mercury: begin
       codegen.Generator := new CGVisualBasicNetCodeGenerator(Dialect := CGVisualBasicCodeGeneratorDialect.Mercury);
-      lfileext := 'vb';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.Swift_Silver: begin
       codegen.Generator := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Silver);
-      //llang := 'swift';
-      lfileext := 'swift';
+      lfileext := codegen.Generator.defaultFileExtension;
       if codegen is CocoaRodlCodeGen then
         CocoaRodlCodeGen(codegen).SwiftDialect := CGSwiftCodeGeneratorDialect.Silver;
     end;
     Codegen4Language.Swift_Standard: begin
       codegen.Generator := new CGSwiftCodeGenerator(Dialect := CGSwiftCodeGeneratorDialect.Standard);
-      //llang := 'standard-swift';
-      lfileext := 'swift';
+      lfileext := codegen.Generator.defaultFileExtension;
       if codegen is CocoaRodlCodeGen then begin
         CocoaRodlCodeGen(codegen).SwiftDialect := CGSwiftCodeGeneratorDialect.Standard;
         CocoaRodlCodeGen(codegen).FixUpForAppleSwift;
@@ -257,37 +251,31 @@ begin
     end;
     Codegen4Language.ObjC: begin
       codegen.Generator := new CGObjectiveCMCodeGenerator();
-      //llang := 'objc';
-      lfileext := 'm';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.Delphi: begin
       codegen.Generator := new CGDelphiCodeGenerator(splitLinesLongerThan := 200);
       if codegen is DelphiRodlCodeGen then
         if DelphiRodlCodeGen(codegen).DelphiXE2Mode = State.On then
           CGDelphiCodeGenerator(codegen.Generator).Dialect := CGPascalCodeGeneratorDialect.Delphi2009;
-      //llang := 'delphi';
-      lfileext := 'pas';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.Java_Standard: begin
       codegen.Generator := new CGJavaCodeGenerator( Dialect := CGJavaCodeGeneratorDialect.Standard);
-      //llang := 'java';
-      lfileext := 'java';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.Java_Iodine: begin
       codegen.Generator := new CGJavaCodeGenerator( Dialect := CGJavaCodeGeneratorDialect.Iodine);
-      //llang := 'java';
-      lfileext := 'java';
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.JavaScript: begin
-      codegen.Generator := new CGJavaScriptCodeGenerator();
-      //llang := 'js';
-      lfileext := 'js';
+      codegen.Generator := new CGJavaScriptCodeGenerator(Dialect := CGJavaScriptCodeGeneratorDialect.Standard);
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.CPlusPlus_CPlusPlusBuilder: begin
       codegen.Generator := new CGCPlusPlusCPPCodeGenerator(Dialect := CGCPlusPlusCodeGeneratorDialect.CPlusPlusBuilder,
-                                                           splitLinesLongerThan := 200);
-      //llang := 'c++builder';
-      lfileext := 'cpp';
+                                                            splitLinesLongerThan := 200);
+      lfileext := codegen.Generator.defaultFileExtension;
     end;
     Codegen4Language.Php: begin
       codegen.Generator := new CGPhpCodeGenerator();
@@ -374,7 +362,8 @@ begin
 
   var lunitname := rodl.Name + '_Intf.'+fileext;
   if codegen.CodeUnitSupport then begin
-    if (codegen is JavaRodlCodeGen) and (codegen.Generator is CGJavaCodeGenerator) then begin
+    if ((codegen is JavaRodlCodeGen) and (codegen.Generator is CGJavaCodeGenerator)) or
+      (codegen is JavaScriptRodlCodeGen) then begin
       genIntfFiles();
     end
     else begin
@@ -474,7 +463,7 @@ begin
       Res.Add(new Codegen4Record(k, r[k], if Path.GetExtension(k) = ".dfm" then Codegen4FileType.Form else Codegen4FileType.Unit));
     if codegen.Generator is CGCPlusPlusCPPCodeGenerator then begin
       var gen := new CGCPlusPlusHCodeGenerator(Dialect:=CGCPlusPlusCodeGenerator(codegen.Generator).Dialect, splitLinesLongerThan := codegen.Generator.splitLinesLongerThan);
-      var rKeys := r.Keys; // 77314: Compiler gets confused about parameter to `Keys[]` indexer, also GTD shows lots of styff as dynamic.
+      var rKeys := r.Keys; // 77314: Compiler gets confused about parameter to `Keys[]` indexer, also GTD shows lots of stuff as dynamic.
       var lunitname := Path.ChangeExtension(rKeys[0], gen.defaultFileExtension);
       //var lunitname := Path.ChangeExtension(r.Keys.FirstOrDefault, gen.defaultFileExtension);
       Res.Add(new Codegen4Record(lunitname, gen.GenerateUnit(lunit), Codegen4FileType.Header));
@@ -491,7 +480,7 @@ end;
 method Codegen4Wrapper.GenerateAllImplFiles(Res: Codegen4Records; codegen: RodlCodeGen; rodl: RodlLibrary; &namespace: String; &params: Dictionary<String,String>);
 begin
   for serv in rodl.Services.Items do begin
-    if serv.DontCodegen or serv.IsFromUsedRodl then continue;
+    if serv.DontCodegen or (serv.IsFromUsedRodl and serv.FromUsedRodl.DontCodegen) then continue;
     GenerateImplFiles(Res, codegen,rodl,&namespace, &params, serv.Name);
   end;
 end;
@@ -527,6 +516,7 @@ begin
   if lServerAddress.ToLowerInvariant.StartsWith('file:///') then lServerAddress := '';
   if not String.IsNullOrEmpty(lServerAddress) then sa.serverAddress := lServerAddress;
   var lunit := sa.generateCodeUnit;
+  if lunit = nil then exit;
   var lunitname := rodl.Name+'_ServerAccess.'+fileext;
   Res.Add(new Codegen4Record(lunitname, codegen.Generator.GenerateUnit(lunit), Codegen4FileType.Unit));
   if sa is DelphiServerAccessCodeGen then begin

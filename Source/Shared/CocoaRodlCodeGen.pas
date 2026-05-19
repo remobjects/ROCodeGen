@@ -48,7 +48,7 @@ type
     method GenerateEnum(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEnum); override;
     method GenerateStruct(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct); override;
     method GenerateArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray); override;
-    method GenerateOldStyleArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
+    //method GenerateOldStyleArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
     method GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException); override;
     method GenerateService(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlService); override;
     method GenerateEventSink(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlEventSink); override;
@@ -434,6 +434,7 @@ begin
   {$ENDREGION}
 end;
 
+(*
 method CocoaRodlCodeGen.GenerateOldStyleArray(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlArray);
 begin
   var lArray := new CGClassTypeDefinition(SafeIdentifier(aEntity.Name), "ROArray".AsTypeReference,
@@ -658,6 +659,7 @@ begin
       Statements := lList as not nullable));
   {$ENDREGION}
 end;
+*)
 
 method CocoaRodlCodeGen.GenerateException(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlException);
 begin
