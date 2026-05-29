@@ -1923,10 +1923,7 @@ begin
     "binary":     k := new CGMethodCallExpression(aSerializer, "ReadBinaryWithErrorHandling",[aName, aValue].ToList);
     "xml":        k := new CGMethodCallExpression(aSerializer, "ReadXmlWithErrorHandling",[aName, aValue].ToList);
     "guid":       k := new CGMethodCallExpression(aSerializer, "ReadGuidWithErrorHandling",[aName, aValue].ToList);
-    "decimal":    begin
-                    k := new CGMethodCallExpression(aSerializer, "ReadDecimalWithErrorHandling",[aName, aValue].ToList);
-                    if not PureDelphi then k.Name := "ReadDecimalWithErrorHandling_cpp";
-                  end;
+    "decimal":    k := new CGMethodCallExpression(aSerializer, "ReadDecimalWithErrorHandling",[aName, aValue].ToList);
     "xsdatetime": begin aValue.Modifier := CGParameterModifierKind.Var; k := new CGMethodCallExpression(aSerializer, "ReadStructWithErrorHandling",[aName, cpp_ClassId(DuplicateType(aDataType, false).AsExpression).AsCallParameter, aValue].ToList);end;
     "widestring": k := new CGMethodCallExpression(aSerializer, "ReadUnicodeStringWithErrorHandling",[aName, aValue].ToList, CallSiteKind := CGCallSiteKind.Reference);
     "nullableboolean": k := new CGMethodCallExpression(aSerializer, "ReadNullableBooleanWithErrorHandling",[aName, aValue].ToList);
@@ -1948,6 +1945,11 @@ begin
                                                                                                             aValue].ToList)
     else
       raise new Exception(String.Format("unknown type: {0}",[aElementType]));
+  end;
+  if not PureDelphi and (aElementType.ToLowerInvariant in ["decimal", "nullableboolean", "nullablecurrency", "nullabledatetime",
+                                                           "nullabledecimal", "nullabledouble", "nullableguid", "nullableint64",
+                                                           "nullableinteger"]) then begin
+    k.Name := k.Name + "_cpp";
   end;
   if assigned(aIndex) then k.Parameters.Add(aIndex);
   k.CallSiteKind := CGCallSiteKind.Reference;
