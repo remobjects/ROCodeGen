@@ -4107,6 +4107,7 @@ begin
   aFile.Imports.Add(GenerateCGImport("SysUtils","System"));
   aFile.Imports.Add(GenerateCGImport("Classes","System"));
   aFile.Imports.Add(GenerateCGImport("TypInfo","System"));
+  aFile.Imports.Add(GenerateCGImport("Variants","System"));
   if PureDelphi then begin
     if IsCodeFirstCompatible    then aFile.Imports.Add(GenerateCGImport("uRORTTIAttributes", CF_condition));
     if IsGenericArrayCompatible then aFile.Imports.Add(GenerateCGImport("uROArray",cond_ROUseGenerics));
@@ -4677,11 +4678,23 @@ begin
                                   Visibility := CGMemberVisibilityKind.Public,
                                   ReturnType := ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                   CallingConvention := CGCallingConventionKind.Register);
+  var lCompare := new CGBinaryOperatorExpression(fItems_Result, par_aValue.AsExpression, CGBinaryOperatorKind.Equals);
+  if aElementType is CGNamedTypeReference then begin
+    var lName := CGNamedTypeReference(aElementType).Name;
+    if IsNullableType(lName) then begin
+      lCompare := new CGBinaryOperatorExpression(
+                     new CGMethodCallExpression(nil, $"{NormalizeNullableTypeName(lName)}_Compare",[fItems_Result.AsCallParameter,par_aValue.AsExpression.AsCallParameter]),
+                     "vrEqual".AsNamedIdentifierExpression,
+                     CGBinaryOperatorKind.Equals
+        );
+    end;
+  end;
+
   lm.Statements.Add(new CGForToLoopStatement(localvar_lResult.Name,
                                             ResolveStdtypes(CGPredefinedTypeReference.Int32),
                                             par_aStartFrom.AsExpression,
                                             fCount_subtract_1,
-                                            new CGIfThenElseStatement(new CGBinaryOperatorExpression(fItems_Result, par_aValue.AsExpression, CGBinaryOperatorKind.Equals),
+                                            new CGIfThenElseStatement(lCompare,
                                                                       new CGBeginEndBlockStatement([localvar_lResult.AsExpression.AsReturnStatement]))
                                             ));
 

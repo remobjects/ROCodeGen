@@ -36,6 +36,22 @@ type
                    "nullableint64", "nullableinteger"];
     end;
 
+    method NormalizeNullableTypeName(aDataType: String): String;
+    begin
+      case aDataType.ToLowerInvariant of
+        "nullableboolean": exit "NullableBoolean";
+        "nullablecurrency": exit "NullableCurrency";
+        "nullabledatetime": exit "NullableDateTime";
+        "nullabledecimal": exit "NullableDecimal";
+        "nullabledouble": exit "NullableDouble";
+        "nullableguid": exit "NullableGuid";
+        "nullableint64": exit "NullableInt64";
+        "nullableinteger": exit "NullableInteger";
+      else
+        exit aDataType;
+      end;
+    end;
+
     method IsDAUses(aUse: RodlUse): Boolean;
     begin
       exit caseInsensitive(aUse:UsedRodlId:ToString) in ["DC8B7BE2-14AF-402D-B1F8-E1008B6FA4F6",
