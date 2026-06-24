@@ -324,16 +324,17 @@
 			if let serverAccessCodegen = serverAccessCodegen {
 				if generateServerAccessClass.state == NSOnState {
 					let serverAccessUnit = serverAccessCodegen.generateCodeUnit()
-					let serverAccessSource = codegen.GenerateUnit(serverAccessUnit)
-					files[serverAccessFilename+fileExtension] = serverAccessSource
-					if language == "ObjC" {
-						let serverAccessSourceH = CGObjectiveCHCodeGenerator().GenerateUnit(serverAccessUnit)
-						files[serverAccessFilename+".h"] = serverAccessSourceH
-					} else if language == "BCB" {
-						let serverAccessSourceH = CGCPlusPlusHCodeGenerator().GenerateUnit(serverAccessUnit)
-						files[serverAccessFilename+"h"] = serverAccessSourceH
+					if let serverAccessUnit = serverAccessUnit as? CGCodeUnit {
+						let serverAccessSource = codegen.GenerateUnit(serverAccessUnit)
+						files[serverAccessFilename+fileExtension] = serverAccessSource
+						if language == "ObjC" {
+							let serverAccessSourceH = CGObjectiveCHCodeGenerator().GenerateUnit(serverAccessUnit)
+							files[serverAccessFilename+".h"] = serverAccessSourceH
+						} else if language == "BCB" {
+							let serverAccessSourceH = CGCPlusPlusHCodeGenerator().GenerateUnit(serverAccessUnit)
+							files[serverAccessFilename+"h"] = serverAccessSourceH
+						}
 					}
-
 				}
 			}
 		}
