@@ -1011,7 +1011,7 @@ begin
   if aEntity is RodlException then exit "ROException";
   if aEntity is RodlEventSink then exit "ROEventSink";
   if aEntity is RodlService then exit "ROService";
-  raise new Exception($"unknown type:{aEntity.GetType.Name}");
+  raise new Exception("unknown type");
 end;
 
 
