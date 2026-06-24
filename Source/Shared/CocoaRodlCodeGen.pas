@@ -92,6 +92,7 @@ begin
   aFile.Types.Add(lenum);
 
   var field__Instance := new CGFieldDefinition("instance",
+                                          lenum.Name.AsTypeReference,
                                           Visibility := CGMemberVisibilityKind.Public,
                                           &Constant := true,
                                           &Static := true,
