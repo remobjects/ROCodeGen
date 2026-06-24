@@ -91,26 +91,33 @@ begin
                                          Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lenum);
 
-  var field__EnumMetaDataInstance := new CGFieldDefinition($"{lname}__EnumMetaDataInstance",
-                                          lenum.Name.AsTypeReference,
-                                          Visibility := CGMemberVisibilityKind.Private,
-                                          &Static := True,
-                                          Initializer := new CGNilExpression);
-  lenum.Members.Add(field__EnumMetaDataInstance);
+  var field__Instance := new CGFieldDefinition("instance",
+                                          Visibility := CGMemberVisibilityKind.Public,
+                                          &Constant := true,
+                                          &Static := true,
+                                          Initializer := new CGNewInstanceExpression(lenum.Name.AsTypeReference)
+                                              );
+  lenum.Members.Add(field__Instance);
+  //var field__EnumMetaDataInstance := new CGFieldDefinition($"{lname}__EnumMetaDataInstance",
+                                          //lenum.Name.AsTypeReference,
+                                          //Visibility := CGMemberVisibilityKind.Private,
+                                          //&Static := True,
+                                          //Initializer := new CGNilExpression);
+  //lenum.Members.Add(field__EnumMetaDataInstance);
 
-  {$REGION class method instance: %ENUM_NAME%__EnumMetaData;}
-  lenum.Members.Add(new CGMethodDefinition("instance",
-                                           [new CGIfThenElseStatement(new CGAssignedExpression(field__EnumMetaDataInstance.AsExpression, Inverted := true),
-                                                new CGAssignmentStatement(
-                                                    field__EnumMetaDataInstance.AsExpression,
-                                                    new CGNewInstanceExpression(lenum.Name.AsTypeReference)),
-                                                nil),
-                                              field__EnumMetaDataInstance.AsExpression.AsReturnStatement].ToList,
-                               ReturnType:= lenum.Name.AsTypeReference,
-                               &Static := True,
-                               Visibility := CGMemberVisibilityKind.Public
-          ));
-  {$ENDREGION}
+  //{$REGION class method instance: %ENUM_NAME%__EnumMetaData;}
+  //lenum.Members.Add(new CGMethodDefinition("instance",
+                                           //[new CGIfThenElseStatement(new CGAssignedExpression(field__EnumMetaDataInstance.AsExpression, Inverted := true),
+                                                //new CGAssignmentStatement(
+                                                    //field__EnumMetaDataInstance.AsExpression,
+                                                    //new CGNewInstanceExpression(lenum.Name.AsTypeReference)),
+                                                //nil),
+                                              //field__EnumMetaDataInstance.AsExpression.AsReturnStatement].ToList,
+                               //ReturnType:= lenum.Name.AsTypeReference,
+                               //&Static := True,
+                               //Visibility := CGMemberVisibilityKind.Public
+          //));
+  //{$ENDREGION}
 
   {$REGION method typeName: NSString; override;}
   lenum.Members.Add(
@@ -284,7 +291,7 @@ begin
                                           Visibility := CGTypeVisibilityKind.Public,
                                           XmlDocumentation := GenerateDocumentation(aEntity));
 
-  if isComplex(aLibrary, aEntity.ElementType) then begin
+//  if isComplex(aLibrary, aEntity.ElementType) then begin
     lAncestor.GenericArguments := new List<CGTypeReference>;
     lAncestor.GenericArguments.Add(ResolveDataTypeToTypeRef(aLibrary, aEntity.ElementType));
 
@@ -297,7 +304,7 @@ begin
     ////lArrayGetter.Reintroduced := true;
 
     //lArray.Members.add(lArrayGetter);
-  end;
+//  end;
 
   aFile.Types.Add(lArray);
 
@@ -380,7 +387,7 @@ begin
   lArguments.Add(localvar___item.AsCallParameter);
   lArguments.Add(new CGCallParameter(new CGNilExpression(), "withName"));
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
+    lArguments.Add(new CGCallParameter(new CGFieldAccessExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
 
   lList.Add(new CGMethodCallExpression(param_aMessage.AsExpression, "write" +  lMethodName, lArguments));
   lArray.Members.Add(
@@ -399,7 +406,7 @@ begin
   lArguments:= new List<CGCallParameter>;
   lArguments.Add(new CGNilExpression().AsCallParameter(if IsSwift then "withName"));
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGMethodCallExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
+    lArguments.Add(new CGCallParameter(new CGFieldAccessExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
   if lIsComplex or lIsArray then
     lArguments.Add(new CGCallParameter(new CGPropertyAccessExpression(nil, "itemClass"), if IsSwift then "as" else "asClass"));
 
@@ -1207,7 +1214,7 @@ begin
                                     [if IsAppleSwift then new CGPropertyAccessExpression(lIdentifier, "rawValue").AsCallParameter
                                                      else new CGTypeCastExpression(lIdentifier, NSUIntegerType, ThrowsException := true).AsCallParameter,
                                      new CGCallParameter(CleanedWsdlName(aEntity.Name).AsLiteralExpression, "withName"),
-                                     new CGCallParameter(new CGMethodCallExpression((aEntity.DataType+"__EnumMetaData").AsTypeReferenceExpression, "instance"), if IsAppleSwift then "as" else "asEnum")].ToList);
+                                     new CGCallParameter(new CGFieldAccessExpression((aEntity.DataType+"__EnumMetaData").AsTypeReferenceExpression, "instance"), if IsAppleSwift then "as" else "asEnum")].ToList);
   end
   else begin
     raise new Exception(String.Format("unknown type: {0}",[aEntity.DataType]));
@@ -1266,7 +1273,7 @@ begin
   else if lIsEnum then begin
     // %FIELD_NAME% := %FIELD_TYPE_RAW%(aMessage.read%FIELD_READER_WRITER%WithName("%FIELD_NAME_UNSAFE%") asEnum(%FIELD_TYPE_RAW%__EnumMetaData.instance));
     var lType := ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);
-    var lArgument1 := new CGCallParameter(new CGMethodCallExpression((SafeIdentifier(aEntity.DataType)+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum");
+    var lArgument1 := new CGCallParameter(new CGFieldAccessExpression((SafeIdentifier(aEntity.DataType)+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum");
     var lMethodCall :=         new CGMethodCallExpression(aVariableName,
                                    if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
                                    [lNameString, lArgument1].ToList);
