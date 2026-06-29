@@ -41,6 +41,14 @@ type
     method HandleAtributes_public(aLibrary: RodlLibrary; aEntity: RodlEntity): CGMethodDefinition;
     method ApplyParamDirection(paramFlag: ParamFlags; aInOnly: Boolean := false): CGParameterModifierKind;
     method ApplyParamDirectionExpression(aExpr: CGExpression; paramFlag: ParamFlags; aInOnly: Boolean := false): CGExpression;
+    method GenerateEnumMetaData(aEntity: String): CGExpression;
+    begin
+      if IsObjC then 
+        exit new CGMethodCallExpression($"{aEntity}__EnumMetaData".AsTypeReferenceExpression,"instance")
+      else
+        exit new CGFieldAccessExpression($"{aEntity}__EnumMetaData".AsTypeReferenceExpression,"instance");
+    end;
+    property AppleSwift_Sendable: CGTypeReference := new CGNamedTypeReference("Sendable", Attribute := new CGAttribute("unchecked".AsTypeReference() isClassType(false)));
   protected
     method isClassType(aLibrary: RodlLibrary; aDataType: String): Boolean;
     method AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary); override;
@@ -90,36 +98,40 @@ begin
   var lenum := new CGClassTypeDefinition($"{lname}__EnumMetaData", "ROEnumMetaData".AsTypeReference,
                                          Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lenum);
+  if IsAppleSwift then 
+    lenum.ImplementedInterfaces.Add(AppleSwift_Sendable);   
 
-  var field__Instance := new CGFieldDefinition("instance",
-                                          lenum.Name.AsTypeReference,
-                                          Visibility := CGMemberVisibilityKind.Public,
-                                          &Constant := true,
-                                          &Static := true,
-                                          Initializer := new CGNewInstanceExpression(lenum.Name.AsTypeReference)
-                                              );
-  lenum.Members.Add(field__Instance);
-  //var field__EnumMetaDataInstance := new CGFieldDefinition($"{lname}__EnumMetaDataInstance",
-                                          //lenum.Name.AsTypeReference,
-                                          //Visibility := CGMemberVisibilityKind.Private,
-                                          //&Static := True,
-                                          //Initializer := new CGNilExpression);
-  //lenum.Members.Add(field__EnumMetaDataInstance);
+  if IsSwift then begin
+    var field__Instance := new CGFieldDefinition("instance",
+                                            Visibility := CGMemberVisibilityKind.Public,
+                                            &Constant := true,
+                                            &Static := true,
+                                            Initializer := new CGNewInstanceExpression(lenum.Name.AsTypeReference)
+                                                );
+    lenum.Members.Add(field__Instance);
+  end
+  else begin
+    var field__EnumMetaDataInstance := new CGFieldDefinition($"{lname}__EnumMetaDataInstance",
+                                            lenum.Name.AsTypeReference,
+                                            Visibility := CGMemberVisibilityKind.Private,
+                                            &Static := True,
+                                            Initializer := new CGNilExpression);
+    lenum.Members.Add(field__EnumMetaDataInstance);
 
-  //{$REGION class method instance: %ENUM_NAME%__EnumMetaData;}
-  //lenum.Members.Add(new CGMethodDefinition("instance",
-                                           //[new CGIfThenElseStatement(new CGAssignedExpression(field__EnumMetaDataInstance.AsExpression, Inverted := true),
-                                                //new CGAssignmentStatement(
-                                                    //field__EnumMetaDataInstance.AsExpression,
-                                                    //new CGNewInstanceExpression(lenum.Name.AsTypeReference)),
-                                                //nil),
-                                              //field__EnumMetaDataInstance.AsExpression.AsReturnStatement].ToList,
-                               //ReturnType:= lenum.Name.AsTypeReference,
-                               //&Static := True,
-                               //Visibility := CGMemberVisibilityKind.Public
-          //));
-  //{$ENDREGION}
-
+    {$REGION class method instance: %ENUM_NAME%__EnumMetaData;}
+    lenum.Members.Add(new CGMethodDefinition("instance",
+                                             [new CGIfThenElseStatement(new CGAssignedExpression(field__EnumMetaDataInstance.AsExpression, Inverted := true),
+                                                  new CGAssignmentStatement(
+                                                      field__EnumMetaDataInstance.AsExpression,
+                                                      new CGNewInstanceExpression(lenum.Name.AsTypeReference)),
+                                                  nil),
+                                                field__EnumMetaDataInstance.AsExpression.AsReturnStatement].ToList,
+                                 ReturnType:= lenum.Name.AsTypeReference,
+                                 &Static := True,
+                                 Visibility := CGMemberVisibilityKind.Public
+            ));
+    {$ENDREGION}
+  end;
   {$REGION method typeName: NSString; override;}
   lenum.Members.Add(
     new CGPropertyDefinition("typeName", CGPredefinedTypeReference.String.NotNullable,
@@ -246,6 +258,9 @@ begin
                                            XmlDocumentation := GenerateDocumentation(aEntity));
   lStruct.Attributes.Add(new CGAttribute("objc".AsTypeReference, GenerateTypeExpression(aEntity.Name).AsCallParameter));
   aFile.Types.Add(lStruct);
+  if IsAppleSwift then 
+    lStruct.ImplementedInterfaces.Add(AppleSwift_Sendable);   
+
   {$REGION private class class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
     lStruct.Members.Add(HandleAtributes_private(aLibrary,aEntity));
@@ -308,6 +323,8 @@ begin
 //  end;
 
   aFile.Types.Add(lArray);
+  if IsAppleSwift then 
+    lArray.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   {$REGION private class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
@@ -388,7 +405,7 @@ begin
   lArguments.Add(localvar___item.AsCallParameter);
   lArguments.Add(new CGCallParameter(new CGNilExpression(), "withName"));
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGFieldAccessExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
+    lArguments.Add(new CGCallParameter(GenerateEnumMetaData(aEntity.ElementType), if IsAppleSwift then "as" else "asEnum"));
 
   lList.Add(new CGMethodCallExpression(param_aMessage.AsExpression, "write" +  lMethodName, lArguments));
   lArray.Members.Add(
@@ -407,7 +424,7 @@ begin
   lArguments:= new List<CGCallParameter>;
   lArguments.Add(new CGNilExpression().AsCallParameter(if IsSwift then "withName"));
   if lIsEnum then
-    lArguments.Add(new CGCallParameter(new CGFieldAccessExpression((aEntity.ElementType+"__EnumMetaData").AsTypeReferenceExpression,"instance"), if IsAppleSwift then "as" else "asEnum"));
+    lArguments.Add(new CGCallParameter(GenerateEnumMetaData(aEntity.ElementType), if IsAppleSwift then "as" else "asEnum"));
   if lIsComplex or lIsArray then
     lArguments.Add(new CGCallParameter(new CGPropertyAccessExpression(nil, "itemClass"), if IsSwift then "as" else "asClass"));
 
@@ -677,7 +694,8 @@ begin
                                               Visibility := CGTypeVisibilityKind.Public,
                                               XmlDocumentation := GenerateDocumentation(aEntity));
   aFile.Types.Add(lException);
-
+  if IsAppleSwift then 
+    lException.ImplementedInterfaces.Add(AppleSwift_Sendable);
   {$REGION private class class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
     lException.Members.Add(HandleAtributes_private(aLibrary,aEntity));
@@ -699,7 +717,8 @@ begin
   {$REGION public method initWithMessage(anExceptionMessage: NSString; a%FIELD_NAME_UNSAFE%: %FIELD_TYPE%);dynamic;}
   var param_anExceptionMessage := new CGParameterDefinition("anExceptionMessage", CGPredefinedTypeReference.String.NotNullable);
   var lInitWithMessage := new CGConstructorDefinition("withMessage", Visibility := CGMemberVisibilityKind.Public);
-  lInitWithMessage.Virtuality := CGMemberVirtualityKind.Override;
+  if not IsAppleSwift then 
+    lInitWithMessage.Virtuality := CGMemberVirtualityKind.Override;
   lInitWithMessage.Visibility := CGMemberVisibilityKind.Public;
   lException.Members.Add(lInitWithMessage);
   var lAncestorEntity := aEntity as RodlStructEntity;
@@ -734,13 +753,13 @@ begin
 
 
   if IsAppleSwift then begin
-    var lInitWithCoder := new CGConstructorDefinition("withCoder", Visibility := CGMemberVisibilityKind.Public);
-    lInitWithCoder.Virtuality := CGMemberVirtualityKind.Override;
-    lInitWithCoder.Visibility := CGMemberVisibilityKind.Public;
-    lInitWithCoder.Required := true;
-    lInitWithCoder.Failable := true;
+    var lInitWithCoder := new CGConstructorDefinition("withCoder", 
+                                                      Visibility := CGMemberVisibilityKind.Public,
+                                                      Virtuality := CGMemberVirtualityKind.Override,
+                                                     // &Required := true,
+                                                      Failable := true);
     var param_coder := new CGParameterDefinition("coder", "NSCoder".AsTypeReference(CGTypeNullabilityKind.NotNullable));
-    lInitWithCoder.Parameters := [param_coder].ToList;
+    lInitWithCoder.Parameters.Add(param_coder);
     lInitWithCoder.Statements.Add(new CGConstructorCallStatement(CGInheritedExpression.Inherited, param_coder.AsCallParameter, ConstructorName := "withCoder"));
     lException.Members.Add(lInitWithCoder);
   end;
@@ -814,6 +833,8 @@ begin
                                                  [lIService.Name.AsTypeReference].ToList,
                                                  Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lServiceProxy);
+  if IsAppleSwift then 
+    lServiceProxy.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   GenerateServiceMethods(aLibrary,aEntity, lServiceProxy);
 
@@ -832,6 +853,9 @@ begin
                                                       [lIServiceAsync.Name.AsTypeReference, lIServiceAsync2.Name.AsTypeReference].ToList,
                                                       Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lServiceAsyncProxy);
+  if IsAppleSwift then 
+    lServiceAsyncProxy.ImplementedInterfaces.Add(AppleSwift_Sendable);
+
   GenerateServiceMethods(aLibrary,aEntity,lServiceAsyncProxy);
   for lop : RodlOperation in aEntity.DefaultInterface:Items do begin
     lServiceAsyncProxy.Members.Add(GenerateServiceAsyncProxyBeginMethod(aLibrary, lop));
@@ -856,6 +880,8 @@ begin
                             );
   lEventInvoker.Attributes.Add(new CGAttribute("objc".AsTypeReference, GenerateTypeExpression(lEventInvoker.Name).AsCallParameter));
   aFile.Types.Add(lEventInvoker);
+  if IsAppleSwift then 
+    lEventInvoker.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   var param_aMessage := new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference);
   var param_aHandler := new CGParameterDefinition("aHandler", ResolveStdtypes(CGPredefinedTypeReference.Object), ExternalName := "handler");
@@ -1093,6 +1119,8 @@ begin
                         Parameters := [param_aMessage, param_aName].ToList,
                         Visibility := CGMemberVisibilityKind.Public);
   if not (aEntity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
+  // seems this is needed only for Cocoa target!
+  if IsAppleSwift then result.Virtuality := CGMemberVirtualityKind.Override;
   var lIfRecordStrictOrder_True := new CGBeginEndBlockStatement;
   var lIfRecordStrictOrder_False := new CGBeginEndBlockStatement;
   var lIfRecordStrictOrder := new CGIfThenElseStatement(
@@ -1139,6 +1167,9 @@ begin
                                   Parameters := [param_aMessage, param_aName].ToList,
                                   Visibility := CGMemberVisibilityKind.Public);
   if not (aEntity is RodlException) then result.Virtuality := CGMemberVirtualityKind.Override;
+  // seems this is needed only for Cocoa target!
+  if IsAppleSwift then result.Virtuality := CGMemberVirtualityKind.Override;
+
   var lIfRecordStrictOrder_True := new CGBeginEndBlockStatement;
   var lIfRecordStrictOrder_False := new CGBeginEndBlockStatement;
   var lIfRecordStrictOrder := new CGIfThenElseStatement(
@@ -1215,7 +1246,7 @@ begin
                                     [if IsAppleSwift then new CGPropertyAccessExpression(lIdentifier, "rawValue").AsCallParameter
                                                      else new CGTypeCastExpression(lIdentifier, NSUIntegerType, ThrowsException := true).AsCallParameter,
                                      new CGCallParameter(CleanedWsdlName(aEntity.Name).AsLiteralExpression, "withName"),
-                                     new CGCallParameter(new CGFieldAccessExpression((aEntity.DataType+"__EnumMetaData").AsTypeReferenceExpression, "instance"), if IsAppleSwift then "as" else "asEnum")].ToList);
+                                     new CGCallParameter(GenerateEnumMetaData(aEntity.DataType), if IsAppleSwift then "as" else "asEnum")].ToList);
   end
   else begin
     raise new Exception(String.Format("unknown type: {0}",[aEntity.DataType]));
@@ -1274,7 +1305,7 @@ begin
   else if lIsEnum then begin
     // %FIELD_NAME% := %FIELD_TYPE_RAW%(aMessage.read%FIELD_READER_WRITER%WithName("%FIELD_NAME_UNSAFE%") asEnum(%FIELD_TYPE_RAW%__EnumMetaData.instance));
     var lType := ResolveDataTypeToTypeRef(aLibrary, aEntity.DataType);
-    var lArgument1 := new CGCallParameter(new CGFieldAccessExpression((SafeIdentifier(aEntity.DataType)+"__EnumMetaData").AsTypeReferenceExpression,"instance"), "asEnum");
+    var lArgument1 := new CGCallParameter(GenerateEnumMetaData(aEntity.DataType), "asEnum");
     var lMethodCall :=         new CGMethodCallExpression(aVariableName,
                                    if IsSwift then "read"+lMethodName else "read"+lMethodName+"WithName",
                                    [lNameString, lArgument1].ToList);
