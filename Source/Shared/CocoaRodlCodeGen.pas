@@ -43,7 +43,7 @@ type
     method ApplyParamDirectionExpression(aExpr: CGExpression; paramFlag: ParamFlags; aInOnly: Boolean := false): CGExpression;
     method GenerateEnumMetaData(aEntity: String): CGExpression;
     begin
-      if IsObjC then 
+      if IsObjC then
         exit new CGMethodCallExpression($"{aEntity}__EnumMetaData".AsTypeReferenceExpression,"instance")
       else
         exit new CGFieldAccessExpression($"{aEntity}__EnumMetaData".AsTypeReferenceExpression,"instance");
@@ -98,8 +98,8 @@ begin
   var lenum := new CGClassTypeDefinition($"{lname}__EnumMetaData", "ROEnumMetaData".AsTypeReference,
                                          Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lenum);
-  if IsAppleSwift then 
-    lenum.ImplementedInterfaces.Add(AppleSwift_Sendable);   
+  if IsAppleSwift then
+    lenum.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   if IsSwift then begin
     var field__Instance := new CGFieldDefinition("instance",
@@ -258,8 +258,8 @@ begin
                                            XmlDocumentation := GenerateDocumentation(aEntity));
   lStruct.Attributes.Add(new CGAttribute("objc".AsTypeReference, GenerateTypeExpression(aEntity.Name).AsCallParameter));
   aFile.Types.Add(lStruct);
-  if IsAppleSwift then 
-    lStruct.ImplementedInterfaces.Add(AppleSwift_Sendable);   
+  if IsAppleSwift then
+    lStruct.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   {$REGION private class class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
@@ -323,7 +323,7 @@ begin
 //  end;
 
   aFile.Types.Add(lArray);
-  if IsAppleSwift then 
+  if IsAppleSwift then
     lArray.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   {$REGION private class __attributes: NSDictionary;}
@@ -694,7 +694,7 @@ begin
                                               Visibility := CGTypeVisibilityKind.Public,
                                               XmlDocumentation := GenerateDocumentation(aEntity));
   aFile.Types.Add(lException);
-  if IsAppleSwift then 
+  if IsAppleSwift then
     lException.ImplementedInterfaces.Add(AppleSwift_Sendable);
   {$REGION private class class __attributes: NSDictionary;}
   if (aEntity.CustomAttributes.Count > 0) then
@@ -717,7 +717,7 @@ begin
   {$REGION public method initWithMessage(anExceptionMessage: NSString; a%FIELD_NAME_UNSAFE%: %FIELD_TYPE%);dynamic;}
   var param_anExceptionMessage := new CGParameterDefinition("anExceptionMessage", CGPredefinedTypeReference.String.NotNullable);
   var lInitWithMessage := new CGConstructorDefinition("withMessage", Visibility := CGMemberVisibilityKind.Public);
-  if not IsAppleSwift then 
+  if not IsAppleSwift then
     lInitWithMessage.Virtuality := CGMemberVirtualityKind.Override;
   lInitWithMessage.Visibility := CGMemberVisibilityKind.Public;
   lException.Members.Add(lInitWithMessage);
@@ -753,7 +753,7 @@ begin
 
 
   if IsAppleSwift then begin
-    var lInitWithCoder := new CGConstructorDefinition("withCoder", 
+    var lInitWithCoder := new CGConstructorDefinition("withCoder",
                                                       Visibility := CGMemberVisibilityKind.Public,
                                                       Virtuality := CGMemberVirtualityKind.Override,
                                                      // &Required := true,
@@ -833,7 +833,7 @@ begin
                                                  [lIService.Name.AsTypeReference].ToList,
                                                  Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lServiceProxy);
-  if IsAppleSwift then 
+  if IsAppleSwift then
     lServiceProxy.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   GenerateServiceMethods(aLibrary,aEntity, lServiceProxy);
@@ -853,7 +853,7 @@ begin
                                                       [lIServiceAsync.Name.AsTypeReference, lIServiceAsync2.Name.AsTypeReference].ToList,
                                                       Visibility := CGTypeVisibilityKind.Public);
   aFile.Types.Add(lServiceAsyncProxy);
-  if IsAppleSwift then 
+  if IsAppleSwift then
     lServiceAsyncProxy.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   GenerateServiceMethods(aLibrary,aEntity,lServiceAsyncProxy);
@@ -880,7 +880,7 @@ begin
                             );
   lEventInvoker.Attributes.Add(new CGAttribute("objc".AsTypeReference, GenerateTypeExpression(lEventInvoker.Name).AsCallParameter));
   aFile.Types.Add(lEventInvoker);
-  if IsAppleSwift then 
+  if IsAppleSwift then
     lEventInvoker.ImplementedInterfaces.Add(AppleSwift_Sendable);
 
   var param_aMessage := new CGParameterDefinition("aMessage", "ROMessage".AsTypeReference);
@@ -1518,7 +1518,11 @@ begin
       lError := new CGPointerDereferenceExpression(lError);
     lCatchException.Statements.Add(new CGAssignmentStatement(lError,
                                                              new CGNewInstanceExpression("ROError".AsTypeReference,
-                                                                                         [new CGLocalVariableAccessExpression(lCatchException.Name).AsCallParameter],
+                                                                                         [new CGTypeCastExpression(
+                                                                                              new CGLocalVariableAccessExpression(lCatchException.Name),
+                                                                                              "NSException".AsTypeReference,
+                                                                                              true
+                                                                                          ).AsCallParameter],
                                                                                          ConstructorName := "withException")));
     if assigned(aEntity.Result) then
       lCatchException.Statements.Add(new CGReturnStatement(ResolveDataTypeToDefaultExpression(aLibrary, aEntity.Result.DataType)))
@@ -1737,7 +1741,7 @@ begin
           return unsafeDowncast(value, to: ROMutableArray<AnyObject>.self)
       }
 
-      private func typedMutableArray<TArray>(_ value: ROMutableArray<AnyObject>?, as type: TArray.Type) -> TArray? {
+      private func typedMutableArray<TArray: AnyObject>(_ value: ROMutableArray<AnyObject>?, as type: TArray.Type) -> TArray? {
           guard let value else { return nil }
           return unsafeDowncast(value, to: type)
       }
