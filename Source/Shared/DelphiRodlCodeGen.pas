@@ -1856,7 +1856,7 @@ begin
   for lmem in ItemList do begin
     var local_name := new CGPropertyAccessExpression(
                                   CGSelfExpression.Self,
-                                  if not PureDelphi or lmem.IsFromUsedRodl then lmem.Name else $"f{lmem.Name}",
+                                  if not PureDelphi or lmem.Owner.IsFromUsedRodl then lmem.Name else $"f{lmem.Name}",
                                   CallSiteKind := CGCallSiteKind.Reference);
     var local_int_name := new CGPropertyAccessExpression(CGSelfExpression.Self, $"int_{lmem.Name}", CallSiteKind := CGCallSiteKind.Reference);
     var local_l_name := new CGLocalVariableAccessExpression($"l_{lmem.Name}");
@@ -1880,7 +1880,7 @@ method DelphiRodlCodeGen.Intf_GenerateWrite(aFile: CGCodeUnit; aLibrary: RodlLib
 begin
   for lmem in ItemList do begin
     var lt1 := new CGPropertyAccessExpression(CGSelfExpression.Self,
-                                              if not PureDelphi or lmem.IsFromUsedRodl then lmem.Name else $"f{lmem.Name}",
+                                              if not PureDelphi or lmem.Owner.IsFromUsedRodl then lmem.Name else $"f{lmem.Name}",
                                               CallSiteKind := CGCallSiteKind.Reference);
     var lt2 := new CGPropertyAccessExpression(CGSelfExpression.Self, "int_"+lmem.Name,CallSiteKind := CGCallSiteKind.Reference);
     var lt3 := new CGLocalVariableAccessExpression($"l_{lmem.Name}");
