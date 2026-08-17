@@ -3084,7 +3084,7 @@ begin
       aFile.Finalization.Add(new CGAssignmentStatement(l_fClassFactoryExpr, CGNilExpression.Nil));
     end;
     if IsHydra then
-      aFile.Initialization.Add(new CGMethodCallExpression(nil, "RegisterServicePlugin",[field__ServiceName.AsCallParameter]));
+      aFile.Initialization.Add(new CGMethodCallExpression(nil, "RegisterServicePlugin",["HInstance".AsNamedIdentifierExpression.AsCallParameter, field__ServiceName.AsCallParameter]));
   {$ENDREGION}
   end;
 
