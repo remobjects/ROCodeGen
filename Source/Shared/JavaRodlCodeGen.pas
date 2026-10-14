@@ -171,21 +171,21 @@ method  JavaRodlCodeGen.AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibra
 begin
   for Rodl: RodlUse in aLibrary.Uses.Items do begin
     if length(Rodl.Includes:JavaModule) > 0 then
-      aFile.Imports.Add(new CGImport(Rodl.Includes:JavaModule))
+      AddUniqueImport(aFile, new CGImport(Rodl.Includes:JavaModule))
      else if not String.IsNullOrEmpty(Rodl.Namespace) then
-      aFile.Imports.Add(new CGImport(Rodl.Namespace));
+      AddUniqueImport(aFile, new CGImport(Rodl.Namespace));
   end;
   if not addROSDKPrefix then
-    aFile.Imports.Add(new CGImport("com.remobjects.sdk"));
+    AddUniqueImport(aFile, new CGImport("com.remobjects.sdk"));
 {
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("java.net.URI")));
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("java.util.Collection")));
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ClientChannel")));
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.Message")));
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ReferenceType")));
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.TypeManager")));
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncRequest")));
-  aFile.Imports.Add(new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncProxy")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("java.net.URI")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("java.util.Collection")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ClientChannel")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("com.remobjects.sdk.Message")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("com.remobjects.sdk.ReferenceType")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("com.remobjects.sdk.TypeManager")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncRequest")));
+  AddUniqueImport(aFile, new CGImport(new CGNamedTypeReference("com.remobjects.sdk.AsyncProxy")));
 }
 end;
 

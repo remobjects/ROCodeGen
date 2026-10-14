@@ -14,6 +14,13 @@ type
     ReservedWords: List<String> := new List<String>;
     PredefinedTypes: Dictionary<CGPredefinedTypeKind, CGTypeReference>:= new Dictionary<CGPredefinedTypeKind, CGTypeReference>;
     property targetNamespace: String;
+    method AddUniqueImport(file: CGCodeUnit; aImport: CGImport);
+    begin
+      for each i in file.Imports do
+        if i.Name = aImport.Name then
+          exit;
+      file.Imports.Add(aImport);
+    end;
 
     {$REGION support methods}
     method ResolveDataTypeToTypeRef(aLibrary: RodlLibrary; aDataType: String): CGTypeReference; virtual;

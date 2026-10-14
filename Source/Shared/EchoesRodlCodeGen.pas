@@ -745,12 +745,12 @@ begin
   for each rodl in aLibrary.Uses.Items do begin
 
     if not String.IsNullOrEmpty(rodl.Namespace) then begin
-      file.Imports.Add(new CGImport(rodl.Namespace));
+      AddUniqueImport(file, new CGImport(rodl.Namespace));
       continue;
     end;
 
     if rodl.Name.StartsWith("DataAbstract") then begin
-      file.Imports.Add(new CGImport("RemObjects.DataAbstract.Server"));
+      AddUniqueImport(file, new CGImport("RemObjects.DataAbstract.Server"));
       continue;
     end;
 
@@ -767,17 +767,17 @@ method EchoesRodlCodeGen.AddDefaultServerNamespaces(aUnit: CGCodeUnit);
 begin
   AddDefaultClientNamespaces(aUnit);
 
-  aUnit.Imports.Add(new CGImport("RemObjects.SDK.Server"));
-  aUnit.Imports.Add(new CGImport("RemObjects.SDK.Server.ClassFactories"));
+  AddUniqueImport(aUnit, new CGImport("RemObjects.SDK.Server"));
+  AddUniqueImport(aUnit, new CGImport("RemObjects.SDK.Server.ClassFactories"));
 end;
 
 
 method EchoesRodlCodeGen.AddDefaultClientNamespaces(aUnit: CGCodeUnit);
 begin
-  aUnit.Imports.Add(new CGImport("System"));
-  aUnit.Imports.Add(new CGImport("System.Collections.Generic"));
-  aUnit.Imports.Add(new CGImport("RemObjects.SDK"));
-  aUnit.Imports.Add(new CGImport("RemObjects.SDK.Types"));
+  AddUniqueImport(aUnit, new CGImport("System"));
+  AddUniqueImport(aUnit, new CGImport("System.Collections.Generic"));
+  AddUniqueImport(aUnit, new CGImport("RemObjects.SDK"));
+  AddUniqueImport(aUnit, new CGImport("RemObjects.SDK.Types"));
 end;
 
 method EchoesRodlCodeGen.GenerateEntityActivator(aFile: CGCodeUnit; aLibrary: RodlLibrary; aEntity: RodlStruct);

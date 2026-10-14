@@ -79,13 +79,13 @@ implementation
 
 method CocoaRodlCodeGen.AddUsedNamespaces(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  aFile.Imports.Add(new CGImport(new CGNamespaceReference("Foundation")));
-  aFile.Imports.Add(new CGImport(new CGNamespaceReference("RemObjectsSDK")));
+  AddUniqueImport(aFile, new CGImport(new CGNamespaceReference("Foundation")));
+  AddUniqueImport(aFile, new CGImport(new CGNamespaceReference("RemObjectsSDK")));
   for rodl: RodlUse in aLibrary.Uses.Items do begin
     if length(rodl.Includes:CocoaModule) > 0 then
-      aFile.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Includes.CocoaModule)))
+      AddUniqueImport(aFile, new CGImport(new CGNamespaceReference(rodl.Includes.CocoaModule)))
     else if length(rodl.Namespace) > 0 then
-      aFile.Imports.Add(new CGImport(new CGNamespaceReference(rodl.Namespace)))
+      AddUniqueImport(aFile, new CGImport(new CGNamespaceReference(rodl.Namespace)))
     else
       aFile.HeaderComment.Lines.Add(String.Format("Requires RODL aFile {0} ({1}) in same namespace.", [rodl.Name, rodl.FileName]));
   end;

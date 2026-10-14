@@ -507,7 +507,7 @@ end;
 
 method PhpRodlCodeGen.AddUsedNamespaces(file: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  file.Imports.Add(new CGPhpImport("xmlrpc.inc", Mode := CGPhpImportMode.RequireOnce));
+  AddUniqueImport(file, new CGPhpImport("xmlrpc.inc", Mode := CGPhpImportMode.RequireOnce));
 end;
 
 method PhpRodlCodeGen.Decrement1(aExpression: CGExpression): CGExpression;

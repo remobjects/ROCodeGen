@@ -855,7 +855,7 @@ begin
       Intf_GenerateStruct(l_unit, aLibrary, aEntity);
 
       var l_unitCol := Intf_CreateCodeUnit(aLibrary, aEntity.Name + 'Collection', false);
-      l_unitCol.Imports.Add(GenerateCGImport(l_unit.FileName,'','h', false));
+      AddUniqueImport(l_unitCol, GenerateCGImport(l_unit.FileName,'','h', false));
       if (aEntity.AncestorEntity <> nil) and (not aEntity.AncestorEntity.IsFromUsedRodl) then
         AddImport(l_unitCol, GenerateCGImport(aEntity.AncestorName + 'Collection', '', 'h', false));
       var arr := aLibrary.Arrays.Items.Where(ar-> ar.ElementType.EqualsIgnoringCaseInvariant(aEntity.Name)).ToList;
@@ -969,10 +969,7 @@ end;
 
 method CPlusPlusBuilderRodlCodeGen.AddImport(aFile: CGCodeUnit; aImport: CGImport);
 begin
-  for each imp in aFile.Imports do begin
-    if imp.Name = aImport.Name then exit;
-  end;
-  aFile.Imports.Add(aImport);
+  AddUniqueImport(aFile, aImport);
 end;
 
 method CPlusPlusBuilderRodlCodeGen.GenerateInvokerCodeUnits(aLibrary: RodlLibrary; aTargetNamespace: String): List<CGCodeUnit>;

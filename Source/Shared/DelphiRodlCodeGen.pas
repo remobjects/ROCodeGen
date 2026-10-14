@@ -2092,18 +2092,18 @@ end;
 {$REGION generate _Invk}
 method DelphiRodlCodeGen.Invk_GenerateInterfaceImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  aFile.Imports.Add(GenerateCGImport("SysUtils","System"));
-  aFile.Imports.Add(GenerateCGImport("Classes","System"));
-  aFile.Imports.Add(GenerateCGImport("TypInfo","System"));
-  aFile.Imports.Add(GenerateCGImport("uROEncoding"));
-  aFile.Imports.Add(GenerateCGImport("uRONullable"));
-  aFile.Imports.Add(GenerateCGImport("uROXMLIntf"));
-  aFile.Imports.Add(GenerateCGImport("uROServer"));
-  aFile.Imports.Add(GenerateCGImport("uROServerIntf"));
-  aFile.Imports.Add(GenerateCGImport("uROClasses"));
-  aFile.Imports.Add(GenerateCGImport("uROTypes"));
-  aFile.Imports.Add(GenerateCGImport("uROClientIntf"));
-  aFile.Imports.Add(GenerateCGImport("uROEventRepository"));
+  AddUniqueImport(aFile, GenerateCGImport("SysUtils","System"));
+  AddUniqueImport(aFile, GenerateCGImport("Classes","System"));
+  AddUniqueImport(aFile, GenerateCGImport("TypInfo","System"));
+  AddUniqueImport(aFile, GenerateCGImport("uROEncoding"));
+  AddUniqueImport(aFile, GenerateCGImport("uRONullable"));
+  AddUniqueImport(aFile, GenerateCGImport("uROXMLIntf"));
+  AddUniqueImport(aFile, GenerateCGImport("uROServer"));
+  AddUniqueImport(aFile, GenerateCGImport("uROServerIntf"));
+  AddUniqueImport(aFile, GenerateCGImport("uROClasses"));
+  AddUniqueImport(aFile, GenerateCGImport("uROTypes"));
+  AddUniqueImport(aFile, GenerateCGImport("uROClientIntf"));
+  AddUniqueImport(aFile, GenerateCGImport("uROEventRepository"));
   var list := new List<String>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
     if not lu.DontCodegen then continue;
@@ -2117,7 +2117,7 @@ begin
     end;
     s1 := s1+ "_Intf";
     if not list.Contains(s1) then begin
-      aFile.Imports.Add(GenerateCGImport(s1,"",lext));
+      AddUniqueImport(aFile, GenerateCGImport(s1,"",lext));
       list.Add(s1);
     end;
   end;
@@ -2135,12 +2135,12 @@ begin
     end;
     s1 := s1+ "_Invk";
     if not list.Contains(s1) then begin
-      aFile.Imports.Add(GenerateCGImport(s1,"",lext));
+      AddUniqueImport(aFile, GenerateCGImport(s1,"",lext));
       cpp_pragmalink(aFile,CapitalizeString(s1));
       list.Add(s1);
     end;
   end;
-  aFile.Imports.Add(GenerateCGImport(Intf_name,"","h", false));
+  AddUniqueImport(aFile, GenerateCGImport(Intf_name,"","h", false));
 end;
 
 method DelphiRodlCodeGen.Invk_GenerateImplImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
@@ -3658,33 +3658,33 @@ begin
   lUnit.HeaderComment := GenerateUnitComment(true);
   Add_RemObjects_Inc(lUnit, aLibrary);
   {$REGION interface uses}
-  lUnit.Imports.Add(GenerateCGImport("SysUtils","System"));
-  lUnit.Imports.Add(GenerateCGImport("Classes","System"));
-  lUnit.Imports.Add(GenerateCGImport("TypInfo","System"));
+  AddUniqueImport(lUnit, GenerateCGImport("SysUtils","System"));
+  AddUniqueImport(lUnit, GenerateCGImport("Classes","System"));
+  AddUniqueImport(lUnit, GenerateCGImport("TypInfo","System"));
   if PureDelphi then begin
-    if IsCodeFirstCompatible then lUnit.Imports.Add(GenerateCGImport("uRORTTIAttributes", CF_condition));
-    if IsGenericArrayCompatible then lUnit.Imports.Add(GenerateCGImport("uROArray", cond_ROUseGenerics));
+    if IsCodeFirstCompatible then AddUniqueImport(lUnit, GenerateCGImport("uRORTTIAttributes", CF_condition));
+    if IsGenericArrayCompatible then AddUniqueImport(lUnit, GenerateCGImport("uROArray", cond_ROUseGenerics));
   end;
-  lUnit.Imports.Add(GenerateCGImport("uROEncoding"));
-  lUnit.Imports.Add(GenerateCGImport("uROXMLIntf"));
-  lUnit.Imports.Add(GenerateCGImport("uROClientIntf"));
-  lUnit.Imports.Add(GenerateCGImport("uRONullable"));
-  lUnit.Imports.Add(GenerateCGImport("uROClasses"));
-  lUnit.Imports.Add(GenerateCGImport("uROTypes"));
-  lUnit.Imports.Add(GenerateCGImport("uROServer"));
-  lUnit.Imports.Add(GenerateCGImport("uROServerIntf"));
-  lUnit.Imports.Add(GenerateCGImport("uROSessions"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROEncoding"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROXMLIntf"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROClientIntf"));
+  AddUniqueImport(lUnit, GenerateCGImport("uRONullable"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROClasses"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROTypes"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROServer"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROServerIntf"));
+  AddUniqueImport(lUnit, GenerateCGImport("uROSessions"));
   case DefaultServerAncestor of
     DelphiServerAncestor.Remotable: ;
-    DelphiServerAncestor.RemoteDataModule: lUnit.Imports.Add(GenerateCGImport("uRORemoteDataModule"));
+    DelphiServerAncestor.RemoteDataModule: AddUniqueImport(lUnit, GenerateCGImport("uRORemoteDataModule"));
     DelphiServerAncestor.Custom: begin
       for each it in CustomUses.Split(",", true) do
-        lUnit.Imports.Add(GenerateCGImport(it.Trim()));
+        AddUniqueImport(lUnit, GenerateCGImport(it.Trim()));
     end;
   end;
 
   if IsHydra then begin
-    lUnit.Imports.Add(GenerateCGImport("Hydra.Core.ModuleController"));
+    AddUniqueImport(lUnit, GenerateCGImport("Hydra.Core.ModuleController"));
   end;
   if service.AncestorEntity <> nil then begin
     var anc_unit := RodlService(service.AncestorEntity).ImplUnit;
@@ -3700,11 +3700,11 @@ begin
       ls := ls.AncestorEntity as RodlEntityWithAncestor;
     end;
     if isDAFound then begin
-      lUnit.Imports.Add(GenerateCGImport("uDAInterfaces"));
-      lUnit.Imports.Add(GenerateCGImport("uDAServerInterfaces"));
-      lUnit.Imports.Add(GenerateCGImport("uDADelta"));
-      lUnit.Imports.Add(GenerateCGImport("uDABusinessProcessor"));
-      lUnit.Imports.Add(GenerateCGImport("uDASchema"));
+      AddUniqueImport(lUnit, GenerateCGImport("uDAInterfaces"));
+      AddUniqueImport(lUnit, GenerateCGImport("uDAServerInterfaces"));
+      AddUniqueImport(lUnit, GenerateCGImport("uDADelta"));
+      AddUniqueImport(lUnit, GenerateCGImport("uDABusinessProcessor"));
+      AddUniqueImport(lUnit, GenerateCGImport("uDASchema"));
     end;
     {$ENDREGION}
     var lext := "hpp";
@@ -3718,7 +3718,7 @@ begin
     end;
 
 
-    lUnit.Imports.Add(GenerateCGImport(anc_unit, "", lext, service.AncestorEntity:OwnerLibrary <> aLibrary));
+    AddUniqueImport(lUnit, GenerateCGImport(anc_unit, "", lext, service.AncestorEntity:OwnerLibrary <> aLibrary));
     cpp_pragmalink(lUnit, CapitalizeString(anc_unit));
   end;
 
@@ -3735,12 +3735,12 @@ begin
     end;
     s1 := s1+ "_Intf";
     if not list.Contains(s1) then begin
-      lUnit.Imports.Add(GenerateCGImport(s1,"",lext));
+      AddUniqueImport(lUnit, GenerateCGImport(s1,"",lext));
       list.Add(s1);
     end;
   end;
 
-  lUnit.Imports.Add(GenerateCGImport(Intf_name,"","h", false));
+  AddUniqueImport(lUnit, GenerateCGImport(Intf_name,"","h", false));
   {$ENDREGION}
   cpp_smartInit(lUnit);
   cpp_pragmalink(lUnit,CapitalizeString("uRORemoteDataModule"));
@@ -4104,26 +4104,26 @@ end;
 
 method DelphiRodlCodeGen.Intf_GenerateInterfaceImports(aFile: CGCodeUnit; aLibrary: RodlLibrary);
 begin
-  aFile.Imports.Add(GenerateCGImport("SysUtils","System"));
-  aFile.Imports.Add(GenerateCGImport("Classes","System"));
-  aFile.Imports.Add(GenerateCGImport("TypInfo","System"));
-  aFile.Imports.Add(GenerateCGImport("Variants","System"));
+  AddUniqueImport(aFile, GenerateCGImport("SysUtils","System"));
+  AddUniqueImport(aFile, GenerateCGImport("Classes","System"));
+  AddUniqueImport(aFile, GenerateCGImport("TypInfo","System"));
+  AddUniqueImport(aFile, GenerateCGImport("Variants","System"));
   if PureDelphi then begin
-    if IsCodeFirstCompatible    then aFile.Imports.Add(GenerateCGImport("uRORTTIAttributes", CF_condition));
-    if IsGenericArrayCompatible then aFile.Imports.Add(GenerateCGImport("uROArray",cond_ROUseGenerics));
+    if IsCodeFirstCompatible    then AddUniqueImport(aFile, GenerateCGImport("uRORTTIAttributes", CF_condition));
+    if IsGenericArrayCompatible then AddUniqueImport(aFile, GenerateCGImport("uROArray",cond_ROUseGenerics));
   end;
 
-  aFile.Imports.Add(GenerateCGImport("uROEncoding"));
-  aFile.Imports.Add(GenerateCGImport("uROUri"));
-  aFile.Imports.Add(GenerateCGImport("uROProxy"));
-  aFile.Imports.Add(GenerateCGImport("uROExceptions"));
-  aFile.Imports.Add(GenerateCGImport("uROXMLIntf"));
-  aFile.Imports.Add(GenerateCGImport("uRONullable"));
-  aFile.Imports.Add(GenerateCGImport("uROClasses"));
-  aFile.Imports.Add(GenerateCGImport("uROTypes"));
-  aFile.Imports.Add(GenerateCGImport("uROClientIntf"));
-  aFile.Imports.Add(GenerateCGImport("uROAsync"));
-  aFile.Imports.Add(GenerateCGImport("uROEventReceiver"));
+  AddUniqueImport(aFile, GenerateCGImport("uROEncoding"));
+  AddUniqueImport(aFile, GenerateCGImport("uROUri"));
+  AddUniqueImport(aFile, GenerateCGImport("uROProxy"));
+  AddUniqueImport(aFile, GenerateCGImport("uROExceptions"));
+  AddUniqueImport(aFile, GenerateCGImport("uROXMLIntf"));
+  AddUniqueImport(aFile, GenerateCGImport("uRONullable"));
+  AddUniqueImport(aFile, GenerateCGImport("uROClasses"));
+  AddUniqueImport(aFile, GenerateCGImport("uROTypes"));
+  AddUniqueImport(aFile, GenerateCGImport("uROClientIntf"));
+  AddUniqueImport(aFile, GenerateCGImport("uROAsync"));
+  AddUniqueImport(aFile, GenerateCGImport("uROEventReceiver"));
 
   var list := new List<String>;
   for lu: RodlUse in aLibrary.Uses.Items do begin
@@ -4138,7 +4138,7 @@ begin
     end;
     s1 := s1+ "_Intf";
     if not list.Contains(s1) then begin
-      aFile.Imports.Add(GenerateCGImport(s1, "", lExt));
+      AddUniqueImport(aFile, GenerateCGImport(s1, "", lExt));
       cpp_pragmalink(aFile,CapitalizeString(s1));
       list.Add(s1);
     end;
